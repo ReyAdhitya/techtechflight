@@ -24,6 +24,36 @@ FastAPI backend, MQTT transport, mock drone simulator, React/MapLibre Mission Co
 dashboard. Its architecture independently matches the decisions recorded here. Check it
 before building anything twice.
 
+## Running it
+
+```bash
+npm install
+npm run dev:ground-station   # simulated Fleet + WebSocket on :4321
+npm run dev:dashboard        # the board on :5173
+```
+
+The ground station prints a set of demo keys on start — press `f` for a Fault, `l` to
+drop a link, `t` to take off, and so on, so a demonstration never has to wait for one.
+Building the dashboard (`npm run build --workspace=dashboard`) makes the ground station
+serve it too, so the whole thing is one process on one laptop.
+
+```bash
+npm test        # both seams, one runner
+npm run typecheck
+```
+
+## Layout
+
+- **`contract/`** — the types both programs share, and nothing else. `Drone`, `Status`,
+  `Telemetry`, `FleetState`, `TelemetrySource`, `Clock`.
+- **`ground-station/`** — owns the Telemetry Source, derives Status, ages Telemetry into
+  Stale and then Offline, serves Fleet State over one WebSocket. Ships with the
+  simulated Telemetry Source (ADR-0001).
+- **`dashboard/`** — a pure view over Fleet State. Knows nothing about radios or
+  protocols.
+
 ## Status
 
-Design and decisions only. No implementation yet.
+The Fleet status board of [issue #1](https://github.com/ReyAdhitya/techtechflight/issues/1)
+is implemented against the simulated Telemetry Source. No real hardware adapter yet — that
+is one new implementation of `TelemetrySource` and nothing else.

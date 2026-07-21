@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"],
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "contract/src/**/*.ts",
+    "ground-station/src/**/*.ts",
+    "dashboard/src/**/*.ts",
+    "dashboard/src/**/*.tsx",
+    "dashboard/vite.config.ts",
+    "vitest.config.ts"
+  ]
+}

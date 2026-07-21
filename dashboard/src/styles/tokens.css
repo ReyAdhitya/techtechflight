@@ -1,0 +1,107 @@
+/*
+ * Tokens from crewai.design.md, adapted per ADR-0004.
+ *
+ * The source system documents a marketing site. The deviations below are deliberate
+ * and recorded in that ADR — do not "fix" them back toward the source.
+ */
+
+:root {
+  /* Canvas and surfaces. There is no shadow tier: elevation is lightness alone. */
+  --canvas: #000000;
+  --surface-1: #161616;
+  --hairline: #333333;
+
+  /* Text */
+  --white: #ffffff;
+  --ink-muted: #8e8e8e;
+  --ink-subtle: #afafaf;
+
+  /* Brand voltage. Borders and CTAs only — never a surface fill larger than a button. */
+  --coral: #f75a36;
+  --coral-dark: #ca472a;
+
+  /*
+   * ADR-0004 calls for amber on Not Ready, and the source palette has no amber — its
+   * warmest non-coral tone is a pale salmon that reads as washed-out coral. This amber
+   * is chosen to sit far enough from the coral in hue (~38° against ~11°) that the two
+   * stay tellable apart on a projector, which is the whole point of the split.
+   */
+  --amber: #f5a524;
+
+  /*
+   * Status colour. A board with nothing wrong is monochrome: colour appears only when something
+   * needs the Teacher. Never the sole carrier of meaning — every Status also has a
+   * text label and a glyph.
+   */
+  --status-ready: var(--white);
+  --status-flying: var(--white);
+  --status-offline: var(--ink-muted);
+  --status-not-ready: var(--amber);
+  --status-fault: var(--coral);
+
+  /* Type. Plus Jakarta Sans and Inter substitute for the licensed Gellix/Interdisplay. */
+  --font-display: 'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', Arial, sans-serif;
+
+  /* Nothing in this system goes above 500. */
+  --weight-regular: 400;
+  --weight-medium: 500;
+
+  /* A status board has no headline; the largest element is the fleet summary count. */
+  --size-summary: 44px;
+  /* Below the summary count, so nothing on a sub-screen outranks the board itself. */
+  --size-dialog-title: 32px;
+  --size-heading: 24px;
+  --size-tile-name: 24px;
+  --size-body: 16px;
+  --size-label: 14px;
+  --size-caption: 13px;
+
+  /* 4px on dashboard surfaces. The 100px pill is kept for buttons only. */
+  --radius-surface: 4px;
+  --radius-pill: 100px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  font-weight: var(--weight-regular);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

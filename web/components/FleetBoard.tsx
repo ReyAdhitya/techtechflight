@@ -63,7 +63,7 @@ export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
    * The summary is built to answer one question, and with no Fleet behind it there is no
    * question to answer — it rendered "0 of 0 ready" over an empty grid, which is
    * indistinguishable from a board that has failed. Saying so plainly is the same rule
-   * the tiles follow for a Drone never heard from: an absence a Teacher can understand
+   * the tiles follow for a Drone that has never responded: an absence a Teacher can understand
    * must never be shown as an empty version of a normal reading.
    *
    * The ConnectionBanner stays above it, because an empty Fleet and an unreachable

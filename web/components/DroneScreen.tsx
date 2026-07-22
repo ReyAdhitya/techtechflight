@@ -115,8 +115,8 @@ export function DroneScreen() {
         data-stale={drone.stale || undefined}
       >
         {drone.lastContact === null
-          ? 'Never heard from'
-          : `Heard from ${formatAge(age ?? 0)} · ${formatExactTime(drone.lastContact)}`}
+          ? 'No response yet'
+          : `Response ${formatAge(age ?? 0)} · ${formatExactTime(drone.lastContact)}`}
         {drone.stale && ' — these are last known values, not current ones.'}
       </p>
 
@@ -180,7 +180,7 @@ export function DroneScreen() {
         </div>
       ) : (
         <p className="m-0 text-body text-ink-muted">
-          Nothing has ever been heard from this Drone, so there is nothing to show. This is
+          Nothing has ever responded this Drone, so there is nothing to show. This is
           a Drone the School owns, not a failed one.
         </p>
       )}

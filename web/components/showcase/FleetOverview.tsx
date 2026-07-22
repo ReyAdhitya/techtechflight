@@ -87,8 +87,8 @@ export function FleetOverview({ drones, focus, focusAgeMs, dark }: FleetOverview
               <Badge status={focus.status} />
               <span className="sc-tnum text-sm text-[var(--sc-ink-muted)]">
                 {focus.lastContact === null
-                  ? 'Never heard from'
-                  : `Heard from ${formatAge(focusAgeMs ?? 0)}`}
+                  ? 'No response yet'
+                  : `Response ${formatAge(focusAgeMs ?? 0)}`}
               </span>
             </div>
             <p className="m-0 max-w-[46ch] text-sm text-[var(--sc-ink-muted)]">

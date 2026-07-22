@@ -7,7 +7,7 @@ import { FleetConnection, browserSocket, type FleetSnapshot } from '@/lib/fleet-
 import { FleetBoard } from './FleetBoard'
 
 /**
- * Before anything has been heard from the ground station.
+ * Before the ground station has sent anything.
  *
  * Rendered on the server and as the first client paint, so the board says it is
  * connecting rather than flashing an empty Fleet — a blank board and a School with no

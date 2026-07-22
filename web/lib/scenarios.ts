@@ -2,7 +2,7 @@ import {
   aDroneState,
   aFleetState,
   aTelemetry,
-  aNeverHeardFromDrone,
+  aNoResponseDrone,
 } from '@techtechflight/contract/fixtures'
 import type {
   BatterySample,
@@ -40,7 +40,7 @@ export const SCENARIOS: readonly Scenario[] = [
   {
     id: 'stale',
     label: 'Stale Telemetry',
-    note: 'Every Drone still in contact, but nothing heard recently enough to trust.',
+    note: 'Every Drone still in contact, but no response recently enough to trust.',
   },
   {
     id: 'lost',
@@ -61,7 +61,7 @@ const MINUTE = 60 * SECOND
  * Between them they cover every case the display has to get right: a linked pair in the
  * air, a Drone too close to something, a latched emergency stop, an airframe with no
  * rangefinder at all (which must not look like one that sees nothing), an estimated
- * battery, and a Drone nobody has heard from in minutes.
+ * battery, and a Drone that has not responded in minutes.
  */
 function classroomFleet(at: number) {
   return [
@@ -193,7 +193,7 @@ function motorsAt(base: number, pitchDegrees: number, rollDegrees: number) {
 
 const clamp = (value: number) => Number(Math.min(1, Math.max(0, value)).toFixed(3))
 
-/** Everything in contact, nothing heard recently enough for the reading to be trusted. */
+/** Everything in contact, no response recently enough for the reading to be trusted. */
 function staleFleet(at: number) {
   return classroomFleet(at).map((drone) =>
     drone.lastContact === null
@@ -235,13 +235,13 @@ export function buildScenario(id: ScenarioId, at: number): FleetSnapshot | null 
        * sits in the past so the ages a Teacher reads keep climbing while the board
        * retries — the whole point of retaining the state rather than blanking.
        */
-      const heardAt = at - 38 * SECOND
-      const drones = classroomFleet(heardAt)
+      const respondedAt = at - 38 * SECOND
+      const drones = classroomFleet(respondedAt)
       return {
         connection: 'unreachable',
-        state: aFleetState(drones, heardAt),
-        receivedAt: heardAt,
-        history: buildHistory(drones, heardAt),
+        state: aFleetState(drones, respondedAt),
+        receivedAt: respondedAt,
+        history: buildHistory(drones, respondedAt),
       }
     }
     case 'empty':
@@ -254,9 +254,9 @@ export function buildScenario(id: ScenarioId, at: number): FleetSnapshot | null 
   }
 }
 
-/** A School that owns a Drone it has never heard from. Used by the empty-Fleet copy. */
-export function neverHeardFrom(name: string) {
-  return aNeverHeardFromDrone({ id: `ttf-${name}`, name })
+/** A School that owns a Drone that has never responded. Used by the empty-Fleet copy. */
+export function noResponseYet(name: string) {
+  return aNoResponseDrone({ id: `ttf-${name}`, name })
 }
 
 /* --- A morning that already happened ------------------------------------- */
@@ -351,13 +351,13 @@ function batteryHistory(drone: DroneState, at: number): DroneBatteryHistory {
   }
 
   /*
-   * A Drone nobody has heard from stops having a curve at the point it fell silent. A
+   * A Drone that has fallen silent stops having a curve at the point it fell silent. A
    * line that carried on to the present would be the board inventing readings, which is
    * the one thing it exists not to do.
    */
-  const lastHeard = drone.lastContact
+  const lastResponse = drone.lastContact
   return {
     droneId: drone.id,
-    samples: lastHeard === null ? [] : samples.filter((sample) => sample.at <= lastHeard),
+    samples: lastResponse === null ? [] : samples.filter((sample) => sample.at <= lastResponse),
   }
 }

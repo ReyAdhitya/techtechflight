@@ -2,37 +2,17 @@ import type {
   Clock,
   FleetEvent,
   FleetHistory,
-  FleetState,
   ServerMessage,
   Unsubscribe,
 } from '@techtechflight/contract'
+import type { FleetLink, FleetSnapshot } from './fleet-link'
 
 /** How many events a board keeps once the ground station starts streaming them. */
 const MAX_RETAINED_EVENTS = 500
 
-/**
- * Whether the board is in touch with the ground station.
- *
- * This is deliberately not a Status: a broken dashboard and a cupboard full of switched
- * off Drones must never look the same, so the two live in different vocabularies.
- */
-export type ConnectionStatus = 'connecting' | 'live' | 'unreachable'
-
-export interface FleetSnapshot {
-  readonly connection: ConnectionStatus
-  /** The last Fleet State received, kept while reconnecting so the board is not blank. */
-  readonly state: FleetState | null
-  /** Browser clock reading when `state` arrived — the anchor for computing ages. */
-  readonly receivedAt: number | null
-  /**
-   * The recent past, as far back as the ground station kept it.
-   *
-   * Optional rather than required: a ground station running without a recorder, and
-   * every board built before this existed, simply have none — and a missing timeline
-   * has to degrade to no timeline rather than to a broken screen.
-   */
-  readonly history?: FleetHistory | null
-}
+// The shape of what a board reads lives with the seam rather than with this
+// implementation of it, so the browser-hosted one describes itself the same way.
+export type { ConnectionStatus, FleetSnapshot } from './fleet-link'
 
 /** The bit of a WebSocket this needs, so tests can hand it something simpler. */
 export interface FleetSocket {
@@ -60,7 +40,7 @@ const DEFAULT_BACKOFF: readonly number[] = [500, 1_000, 2_000, 4_000, 8_000]
  * the gap — it is still the truth as of when it arrived, and every value on the board
  * carries its age.
  */
-export class FleetConnection {
+export class FleetConnection implements FleetLink {
   readonly #options: FleetConnectionOptions
   readonly #backoff: readonly number[]
   #listeners = new Set<(snapshot: FleetSnapshot) => void>()

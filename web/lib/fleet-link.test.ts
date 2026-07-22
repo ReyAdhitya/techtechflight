@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { FleetHistory, FleetState } from '@techtechflight/contract'
+import type { CommandOutcomeMessage, FleetHistory, FleetState } from '@techtechflight/contract'
 import { TestClock } from '@techtechflight/contract/testing'
 import { FleetConnection, type FleetSocket } from './fleet-connection'
 import { LocalFleetLink } from './local-fleet-link'
@@ -30,6 +30,10 @@ class FakeSocket implements FleetSocket {
   onClose(listener: () => void) {
     this.#close = listener
   }
+  send(_data: string) {
+    // What the board sends is not what these tests are about; the ground station's
+    // replies are delivered explicitly, below.
+  }
   close() {
     this.#close?.()
   }
@@ -37,7 +41,8 @@ class FakeSocket implements FleetSocket {
   accept() {
     this.#open?.()
   }
-  send(message: unknown) {
+  /** What a ground station running the same Fleet core would put on the wire. */
+  deliver(message: unknown) {
     this.#message?.(JSON.stringify(message))
   }
 }
@@ -55,8 +60,8 @@ function acrossASocket(state: FleetState | null, history: FleetHistory | null | 
   })
   connection.start()
   socket.accept()
-  if (state) socket.send({ type: 'fleet-state', state })
-  if (history) socket.send({ type: 'fleet-history', history })
+  if (state) socket.deliver({ type: 'fleet-state', state })
+  if (history) socket.deliver({ type: 'fleet-history', history })
   return connection
 }
 
@@ -144,5 +149,80 @@ describe('a Fleet here and a Fleet across a socket', () => {
     expect(kinds(remote.snapshot.history)).toEqual(kinds(local.snapshot.history))
     expect(kinds(local.snapshot.history)).toContain('ttf-0005:fault-raised')
     local.stop()
+  })
+})
+
+/**
+ * Asking a Drone to do something, over both links.
+ *
+ * Sending is not doing, and the two are separated on purpose: an outcome says only that
+ * the Fleet took the request. What the aircraft did is read from the Telemetry that
+ * follows and from nowhere else (ADR-0011).
+ */
+describe('a Command over either link', () => {
+  const asked = { id: 'c-1', droneId: 'ttf-0001', kind: 'land' as const, issuedAt: 1 }
+
+  it('is accepted by a Fleet running here, and lands the Drone', () => {
+    local.start()
+    clock.advance(2_000)
+    local.scenarios.takeOff('ttf-0001')
+    clock.advance(3_000)
+    expect(local.snapshot.state?.drones[0]?.status).toBe('Flying')
+
+    const outcomes: CommandOutcomeMessage[] = []
+    local.onCommandOutcome((outcome) => outcomes.push(outcome))
+    local.send(asked)
+
+    expect(outcomes).toEqual([
+      { type: 'command-outcome', commandId: 'c-1', outcome: 'accepted', reason: null },
+    ])
+
+    // And only now, after Telemetry has caught up, is it actually down.
+    clock.advance(6_000)
+    expect(local.snapshot.state?.drones[0]?.status).not.toBe('Flying')
+    local.stop()
+  })
+
+  it('surfaces a refusal from across a socket in the same shape', () => {
+    const socket = new FakeSocket()
+    const connection = new FleetConnection({
+      url: 'ws://localhost:4321/fleet',
+      clock,
+      createSocket: () => socket,
+    })
+    connection.start()
+    socket.accept()
+
+    const outcomes: CommandOutcomeMessage[] = []
+    connection.onCommandOutcome((outcome) => outcomes.push(outcome))
+    connection.send(asked)
+
+    // What a ground station in front of real hardware would answer.
+    socket.deliver({
+      type: 'command-outcome',
+      commandId: 'c-1',
+      outcome: 'refused',
+      reason: 'This Fleet does not accept Commands from the board.',
+    })
+
+    expect(outcomes[0]?.outcome).toBe('refused')
+    expect(outcomes[0]?.reason).toMatch(/does not accept Commands/i)
+  })
+
+  it('does not disturb the Fleet on screen when an outcome arrives', () => {
+    const socket = new FakeSocket()
+    const connection = new FleetConnection({
+      url: 'ws://localhost:4321/fleet',
+      clock,
+      createSocket: () => socket,
+    })
+    connection.start()
+    socket.accept()
+    const before = connection.snapshot
+
+    socket.deliver({ type: 'command-outcome', commandId: 'c-1', outcome: 'accepted', reason: null })
+
+    // An outcome is news about a request, not about a Drone. Nothing on the board moves.
+    expect(connection.snapshot).toBe(before)
   })
 })

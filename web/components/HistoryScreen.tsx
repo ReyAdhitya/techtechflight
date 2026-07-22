@@ -12,13 +12,13 @@ import { useFleet } from './FleetProvider'
 type Lens = 'everything' | 'attention' | 'faults'
 
 /**
- * What has happened, and where everything is.
+ * The timeline, as a section of Reports rather than a screen of its own.
  *
- * The board is a photograph. This is the roll of film — and it exists because the two
- * questions a Teacher asks after a lesson ("did that Drone do it again?", "when did we
- * lose it?") are the two the board is structurally incapable of answering.
+ * Kept whole: every filter and every behaviour moved with it. This is a relocation, not a
+ * rewrite, and the questions it answers — "when did we lose it", "did that Drone do it
+ * again" — are the ones the board is structurally incapable of answering.
  */
-export function HistoryScreen() {
+export function HistorySections() {
   const { snapshot, now } = useFleet()
   const [lens, setLens] = useState<Lens>('everything')
   const [droneId, setDroneId] = useState<string>('')
@@ -47,30 +47,26 @@ export function HistoryScreen() {
 
   if (!history) {
     return (
-      <main id="content" tabIndex={-1} className="mx-auto w-full max-w-5xl p-8">
-        <h1 className="m-0 font-display text-heading font-medium">No history yet</h1>
+      <section className="flex flex-col gap-2">
+        <h2 className="m-0 font-display text-heading font-medium">No history yet</h2>
         <p className="m-0 mt-2 max-w-[52ch] text-body text-ink-muted">
           This ground station has not sent a record of the recent past. The board shows
           what is true now; a timeline needs a ground station that has been running long
           enough to have watched something happen.
         </p>
-      </main>
+      </section>
     )
   }
 
   const window = Math.max(0, (snapshot.state?.generatedAt ?? now) - history.since)
 
   return (
-    <main
-      id="content"
-      tabIndex={-1}
-      className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 min-[26rem]:p-8"
-    >
+    <>
       <div className="flex flex-col gap-1">
-        <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
+        <h2 className="m-0 flex items-baseline gap-3 font-display text-heading font-medium">
           <span className="tnum tracking-[-0.02em]">{counts.total}</span>
-          <span className="text-heading text-ink-subtle">things happened</span>
-        </h1>
+          <span className="text-ink-subtle">things happened</span>
+        </h2>
         {/*
          * The window is stated rather than implied. The ground station keeps a bounded
          * record, and a timeline that quietly began at the oldest thing it still had
@@ -133,6 +129,6 @@ export function HistoryScreen() {
         <h2 className="label m-0">Where the Fleet is now</h2>
         <Scope drones={drones} />
       </section>
-    </main>
+    </>
   )
 }

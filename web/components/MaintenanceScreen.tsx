@@ -35,30 +35,23 @@ import { StatusGlyph } from './StatusBadge'
  * retained window, which is the only thing that distinguishes a Drone having a bad day
  * from a Drone that should go back to the supplier.
  */
-export function MaintenanceScreen() {
+/**
+ * What needs doing to the Fleet this morning.
+ *
+ * A question about the Drones right now, which is what the Fleet screen is for — so it
+ * lives there. It was on Maintenance beside a question about the past, and the Maintenance
+ * screen's own comment called those "two different questions, deliberately on one screen".
+ * That was true, and it is exactly why they separate cleanly.
+ */
+export function WhatNeedsDoing() {
   const { snapshot, now } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const drones = snapshot.state?.drones ?? []
-  const events = snapshot.history?.events ?? []
-
-  const reliability = useMemo(() => rank(drones, events, book), [drones, events, book])
   const todo = drones.filter((drone) => needsAttention(drone.status))
-  const lessonsCounted = talliedLessonCount(book)
 
-  if (!snapshot.state) {
-    return (
-      <main id="content" tabIndex={-1} className="p-8">
-        <p className="m-0 text-body text-ink-muted">Waiting for the first Fleet State.</p>
-      </main>
-    )
-  }
+  if (!snapshot.state) return null
 
   return (
-    <main
-      id="content"
-      tabIndex={-1}
-      className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-4 min-[26rem]:p-8"
-    >
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
@@ -117,8 +110,27 @@ export function MaintenanceScreen() {
           ))}
         </ul>
       </section>
+  )
+}
 
-      <section className="flex flex-col gap-4 border-t border-hairline pt-6">
+/**
+ * Which Drone keeps giving trouble, across everything still remembered.
+ *
+ * A question about the past, so it belongs with the other questions about the past. This
+ * is the number a Teacher takes to the supplier, which is why it must not be inflated by
+ * counting the same fault from the live history and from a saved Lesson.
+ */
+export function FleetReliability() {
+  const { snapshot, now } = useFleet()
+  const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+  const drones = snapshot.state?.drones ?? []
+  const events = snapshot.history?.events ?? []
+
+  const reliability = useMemo(() => rank(drones, events, book), [drones, events, book])
+  const lessonsCounted = talliedLessonCount(book)
+
+  return (
+      <section className="flex flex-col gap-4 ">
         <div className="flex flex-col gap-1">
           <h2 className="m-0 font-display text-heading font-medium">
             Which Drones keep giving trouble
@@ -193,7 +205,6 @@ export function MaintenanceScreen() {
           })}
         </ul>
       </section>
-    </main>
   )
 }
 
@@ -204,15 +215,6 @@ interface Reliability {
   readonly flights: number
 }
 
-/**
- * Worst first, so the Drone worth arguing about is at the top.
- *
- * Two sources, because neither alone answers the question. The ground station's history
- * is complete but short — restart it and every Drone looks blameless. The Teacher's saved
- * lessons go back a term but stop at the last one that was closed. A live event that falls
- * inside a lesson already tallied is dropped rather than added, or the overlap between the
- * two would be counted twice.
- */
 function rank(
   drones: readonly DroneState[],
   events: readonly FleetEvent[],

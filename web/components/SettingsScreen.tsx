@@ -111,11 +111,15 @@ export function SettingsScreen() {
               const file = event.target.files?.[0]
               if (!file) return
               try {
-                const parsed = JSON.parse(await file.text()) as Logbook
+                // Every field defaulted rather than trusted: a logbook exported by an
+                // older build has none of the newer ones, and a Teacher importing last
+                // term's records should get them back, not an error.
+                const parsed = JSON.parse(await file.text()) as Partial<Logbook>
                 replaceLogbook({
                   notes: parsed.notes ?? {},
                   service: parsed.service ?? {},
                   lessons: parsed.lessons ?? [],
+                  pilots: parsed.pilots ?? {},
                 })
                 setMessage('Imported.')
               } catch {

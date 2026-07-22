@@ -61,6 +61,12 @@ export interface DroneVitals {
   readonly callsign: string
   readonly status: Status
   readonly phase: FlightPhase
+  /**
+   * Straight from the airframe, not inferred from phase. A latched emergency stop
+   * resolves to `emergency` whether the Drone is on a desk or falling out of the air,
+   * so phase cannot answer "is this thing off the ground".
+   */
+  readonly airborne: boolean
   readonly altitudeM: number | null
   readonly verticalRateMps: number | null
   readonly batteryFraction: number | null
@@ -98,6 +104,19 @@ export interface VitalsInput {
   /** Metres per second, per Drone. Absent or null when the direction is not yet known. */
   readonly rates: ReadonlyMap<DroneId, number | null>
   readonly thresholds?: FleetThresholds
+  /**
+   * When each condition was first seen, keyed by `alertKey`. Absent for one that has
+   * just appeared, which is stamped with `now`.
+   *
+   * Without this every alert carried the Drone's Last Contact, which moves with every
+   * snapshot — so all alerts shared one timestamp and "oldest first" sorted nothing.
+   */
+  readonly firstSeen?: ReadonlyMap<string, number>
+}
+
+/** Identity of a condition, stable while it lasts and reused once it returns. */
+export function alertKey(droneId: DroneId, kind: AlertKind): string {
+  return `${droneId}:${kind}`
 }
 
 export function fleetVitals(input: VitalsInput): readonly DroneVitals[] {
@@ -118,6 +137,7 @@ export function fleetVitals(input: VitalsInput): readonly DroneVitals[] {
       callsign: drone.name,
       status: drone.status,
       phase,
+      airborne: telemetry?.airborne === true,
       altitudeM: telemetry?.altitudeM ?? null,
       verticalRateMps: rate,
       batteryFraction: telemetry?.batteryFraction ?? null,
@@ -129,9 +149,14 @@ export function fleetVitals(input: VitalsInput): readonly DroneVitals[] {
       alerts: [],
     }
 
-    return { ...vitals, alerts: alertsFor(drone, vitals, thresholds) }
+    return {
+      ...vitals,
+      alerts: alertsFor(drone, vitals, thresholds, input.firstSeen ?? EMPTY_FIRST_SEEN, input.now),
+    }
   })
 }
+
+const EMPTY_FIRST_SEEN: ReadonlyMap<string, number> = new Map()
 
 /**
  * Which situation the aircraft is in, first match winning.
@@ -218,10 +243,12 @@ function alertsFor(
   drone: DroneState,
   vitals: DroneVitals,
   thresholds: FleetThresholds,
+  firstSeen: ReadonlyMap<string, number>,
+  now: number,
 ): readonly VitalsAlert[] {
   const telemetry = drone.telemetry
-  const since = drone.lastContact ?? 0
-  const alerts: VitalsAlert[] = []
+  // Raised without a time; when each condition actually started is attached at the end.
+  const alerts: { kind: AlertKind; severity: AlertSeverity; text: string }[] = []
   const airborne = telemetry?.airborne === true
 
   if (telemetry?.emergencyStopTriggered) {
@@ -229,7 +256,6 @@ function alertsFor(
       kind: 'emergency-stop',
       severity: 'critical',
       text: 'Go to it and release the emergency stop. The motors stay cut until someone does.',
-      since,
     })
   }
 
@@ -238,7 +264,6 @@ function alertsFor(
       kind: 'fault',
       severity: 'critical',
       text: `Take it out of service — ${telemetry.fault.description}`,
-      since,
     })
   }
 
@@ -247,7 +272,6 @@ function alertsFor(
       kind: 'separation',
       severity: 'critical',
       text: `Separate it from ${vitals.conflictWith} — ${vitals.separationM.toFixed(1)}m apart.`,
-      since,
     })
   }
 
@@ -262,7 +286,6 @@ function alertsFor(
       text: airborne
         ? `It is up and has not responded for ${Math.round(vitals.responseAgeMs / 1_000)}s. Look at the room, not the screen.`
         : `No response for ${Math.round(vitals.responseAgeMs / 1_000)}s. Check it is switched on.`,
-      since,
     })
   }
 
@@ -272,7 +295,6 @@ function alertsFor(
       kind: 'obstacle',
       severity: 'warning',
       text: `Move it away from what it is near — ${proximity.metres.toFixed(1)}m.`,
-      since,
     })
   }
 
@@ -281,7 +303,6 @@ function alertsFor(
       kind: 'low-endurance',
       severity: 'warning',
       text: 'Bring it down — under two minutes of useful charge left.',
-      since,
     })
   }
 
@@ -294,8 +315,7 @@ function alertsFor(
         kind: 'uneven-motors',
         severity: 'warning',
         text: 'Land it and look at the motors — they are working unevenly.',
-        since,
-      })
+        })
     }
   }
 
@@ -308,11 +328,15 @@ function alertsFor(
       kind: 'battery-low',
       severity: 'info',
       text: 'Put it on charge before it is handed out.',
-      since,
     })
   }
 
-  return sortAlerts(alerts)
+  return sortAlerts(
+    alerts.map((alert) => ({
+      ...alert,
+      since: firstSeen.get(alertKey(drone.id, alert.kind)) ?? now,
+    })),
+  )
 }
 
 /** Worst first, and among equals the one that has been waiting longest. */
@@ -337,6 +361,58 @@ export function alertQueue(
 /** The worst severity among a Drone's alerts, for ordering strips. */
 export function worstSeverity(vitals: DroneVitals): AlertSeverity | null {
   return vitals.alerts[0]?.severity ?? null
+}
+
+/**
+ * Strip order: worst first, and among Drones with the same worst severity, the one with
+ * more of them.
+ *
+ * A Drone with two criticals and a Drone with one are not in the same trouble, and
+ * falling back to alphabetical between them buried the worse aircraft under a callsign.
+ */
+export function compareStrips(a: DroneVitals, b: DroneVitals): number {
+  const count = (vitals: DroneVitals, severity: AlertSeverity) =>
+    vitals.alerts.filter((alert) => alert.severity === severity).length
+
+  return (
+    count(b, 'critical') - count(a, 'critical') ||
+    count(b, 'warning') - count(a, 'warning') ||
+    count(b, 'info') - count(a, 'info') ||
+    a.callsign.localeCompare(b.callsign)
+  )
+}
+
+/**
+ * When each condition began, so an alert can say how long it has been waiting.
+ *
+ * A condition that clears forgets its start time. If the same Drone raises the same
+ * alert again an hour later that is new news, not something that has been outstanding
+ * all lesson, and a queue sorted oldest-first would otherwise pin it to the top forever.
+ */
+export class AlertTracker {
+  readonly #firstSeen = new Map<string, number>()
+
+  observe(vitals: readonly DroneVitals[], at: number): void {
+    const live = new Set<string>()
+    for (const entry of vitals) {
+      for (const alert of entry.alerts) {
+        const key = alertKey(entry.droneId, alert.kind)
+        live.add(key)
+        if (!this.#firstSeen.has(key)) this.#firstSeen.set(key, at)
+      }
+    }
+    for (const key of [...this.#firstSeen.keys()]) {
+      if (!live.has(key)) this.#firstSeen.delete(key)
+    }
+  }
+
+  get firstSeen(): ReadonlyMap<string, number> {
+    return this.#firstSeen
+  }
+
+  reset(): void {
+    this.#firstSeen.clear()
+  }
 }
 
 /**

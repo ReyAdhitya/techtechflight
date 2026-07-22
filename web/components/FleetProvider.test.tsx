@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { FleetProvider, useFleet } from './FleetProvider'
+import { SimulationLabel } from './SimulationLabel'
 
 /**
  * Which Fleet a screen is given, and how it is told.
@@ -94,6 +95,33 @@ describe('the demonstration path', () => {
     })
 
     expect(read('contacted')).toBe('6')
+  })
+})
+
+describe('saying which Fleet this is', () => {
+  it('says so in words wherever a simulated Fleet is on screen', () => {
+    render(
+      <FleetProvider>
+        <SimulationLabel />
+      </FleetProvider>,
+    )
+
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /Simulated Fleet — no aircraft are being contacted/i,
+    )
+  })
+
+  it('says nothing at all when the Fleet is real', () => {
+    pathname.current = '/'
+    render(
+      <FleetProvider>
+        <SimulationLabel />
+      </FleetProvider>,
+    )
+
+    // Absent rather than reworded. A label that is always there stops being read, and
+    // this one only means something when it is unusual.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })
 

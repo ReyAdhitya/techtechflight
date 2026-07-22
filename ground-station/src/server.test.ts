@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import WebSocket from 'ws'
 import type { FleetStateMessage } from '@techtechflight/contract'
 import { TestClock } from '@techtechflight/contract/testing'
-import { GroundStation } from './fleet.ts'
+import { GroundStation } from '@techtechflight/fleet-core'
+import { FakeTelemetrySource } from '@techtechflight/fleet-core/testing'
 import { startFleetServer, type FleetServer } from './server.ts'
-import { FakeTelemetrySource } from './testing.ts'
 
 /**
  * The transport around seam 1. These cover only what the socket itself promises — a

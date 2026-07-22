@@ -6,6 +6,8 @@ import {
   readLogbook,
   readServerLogbook,
   replaceLogbook,
+  recordsAreHeavy,
+  recordsSize,
   studentsFrom,
   subscribeLogbook,
 } from '@/lib/logbook'
@@ -75,6 +77,19 @@ export function SettingsScreen() {
           — which means they do not follow you to another laptop, and clearing site data
           clears them. Export them if they matter.
         </p>
+
+        {recordsAreHeavy(book) && (
+          /*
+           * Said before the quota is reached rather than after. The failure this prevents
+           * is silent: a save throws, the board carries on working perfectly, and a term
+           * of a Teacher's own records is simply not there.
+           */
+          <p className="m-0 text-value text-status-not-ready" role="status">
+            These records are getting large for a browser to hold
+            ({Math.round(recordsSize(book) / 1_000)} KB). Export them and clear the older
+            lessons before the browser starts refusing to save.
+          </p>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <button

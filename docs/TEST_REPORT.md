@@ -117,6 +117,41 @@ Each was caught by a check rather than by luck, which is the part worth keeping.
 | Every navigation link **aborted a prefetch** — a static export has no RSC payload behind a route, so six wasted requests per screen and a console full of them | Audit F7, task 8.5 | Driving a real browser through every link |
 | Every navigation link was **40px tall**, four pixels short of a reliable tap, on every screen and every device | Task 8.3 | Probing 44px around each control on 8 devices |
 
+## Final verification
+
+Run at the close of Phase 6, against the real deployment path rather than a test harness.
+
+| Check | Result |
+|---|---|
+| `npm test` | **337 passing, 25 files** |
+| `npm run typecheck` | Clean — `contract`, `fleet-core`, `web` |
+| `npm run build --workspace=web` | Compiled, all routes prerendered static |
+| `npm run audit:devices` | Clean — 8 devices, 3 widths, 6 routes |
+| Console and network | No failed requests, no console errors across a full navigation |
+| Ground station, live | Serves every screen at 200 with correct titles; every retired route forwards |
+| Socket, live | 6 Drones, `fleet-state` → `fleet-history` in order |
+
+The live check matters more than it looks. A runtime error white-screens a page that still
+returns 200, and the ground station's own `main.ts` has no test covering it — so the only
+honest way to know a School gets a working board is to start one and ask it.
+
+## Requirements, point by point
+
+Against [`REQUIREMENTS.md`](./REQUIREMENTS.md). 79 requirements: 46 Exists, 8 Extend, 24
+New, 1 out of scope.
+
+| Group | State |
+|---|---|
+| **A. Fleet monitoring** (12) | All met. Nothing marked Exists regressed; `FleetBoard`'s 43 tests still pass unchanged |
+| **B. Flight Control Center** (9) | 8 met. **B7 dropped** by decision — behaviour is not compared to intent, because no Exercise declares an expected phase |
+| **C. Flight control** (10) | All met. Commands reach a simulated Fleet only; a hardware source refuses structurally |
+| **D. Student management** (9) | All met |
+| **E. Mission Planner** (8) | 7 met. **E8 out of scope** — the flight area, deferred by ADR-0012 |
+| **F. Alerts** (10) | All met, including acknowledgement and all three ways a taken Alert returns |
+| **G. Flight reports** (6) | All met, including printing |
+| **H. Records** (6) | All met. **H6 mitigated rather than solved** — see O6 |
+| **I. Conditions of use** (9) | All met. I9 closed by task 1.4 |
+
 ## Verification method
 
 Two rules applied throughout, and both earned their place:

@@ -14,8 +14,10 @@ The person who uses the dashboard. A classroom educator, not a trained drone ope
 _Avoid_: user, operator, pilot, admin
 
 **Student**:
-A pupil who flies a drone during a lesson. Does not use the dashboard.
-_Avoid_: kid, child, learner
+A pupil who flies a drone during a lesson. Does not use the dashboard. A Student is
+assigned one Drone for a Lesson, and that pairing is something the Teacher records — no
+Drone can report whose hands are on the controller.
+_Avoid_: kid, child, learner, pilot, operator, user
 
 **School**:
 The customer. Owns a set of drones and the teachers who use them.
@@ -31,6 +33,16 @@ _Avoid_: swarm, group, batch, class set
 One physical aircraft. Has a stable identity that survives being powered off, and a
 human-readable name a teacher can match to the object in their hands.
 _Avoid_: UAV, unit, vehicle, aircraft, device
+
+**Drone Name**:
+The human-readable name written on the aircraft — "Drone 3". What a teacher says out loud
+across a room, and what every screen shows.
+_Avoid_: callsign, tail number, label, title
+
+**Drone ID**:
+The stable machine identity that survives being powered off and outlives the name. Shown
+only where a teacher needs to be certain which airframe a record refers to.
+_Avoid_: callsign, serial, key
 
 **Status**:
 The single summary state of a drone. Exactly one of: Offline, Ready, Not Ready, Flying,
@@ -84,3 +96,58 @@ _Avoid_: cached, old, expired, outdated
 **Telemetry Source**:
 Where the dashboard gets telemetry from. Interchangeable: a real drone, or a simulator.
 _Avoid_: feed, provider, backend, connection
+
+### The lesson
+
+The vocabulary is education-first. Aviation words are kept only where they carry
+understanding a classroom word would lose — Telemetry, Alert, Flight Control Center — and
+are avoided everywhere else. A teacher is preparing a lesson, not planning a sortie.
+
+**Lesson**:
+One period of teaching, from the check before it to the summary after it. The unit
+everything else in this section belongs to. A Lesson contains one or more Exercises.
+_Avoid_: session, class, flight, sortie, mission
+
+**Exercise**:
+One task within a Lesson — hovering, flying a square, landing on a mark. What a Student is
+meant to be doing right now, which is the thing no Telemetry can report and the thing a
+teacher compares behaviour against.
+_Avoid_: task, activity, manoeuvre, waypoint, objective
+
+**Mission Planner**:
+Where a teacher prepares a Lesson before it runs: which Students are flying, which Drone
+each one takes, and the sequence of Exercises. Lesson preparation — nothing about the word
+is military, and nothing in it plans a flight path.
+_Avoid_: mission control, flight plan, ops plan, itinerary
+
+**Assignment**:
+The record of which Student flies which Drone for a Lesson. Written by the teacher, cleared
+at the end of the lesson.
+_Avoid_: pairing, allocation, booking, roster
+
+### Oversight and control
+
+**Flight Control Center**:
+The screen a teacher watches while a Lesson is running: what needs them first, where every
+Drone is, and what each one is doing. The Fleet board answers "can I hand this out"; this
+answers "who needs me next".
+_Avoid_: tower, control room, cockpit, command centre
+
+**Alert**:
+A condition raised during a Lesson that needs the teacher to act now — two Drones too close,
+a Drone that has stopped responding while airborne, a charge about to run out. Every Alert
+says what to do rather than what is true.
+
+Deliberately **not** a synonym for Needs Attention, and the two must never be used for one
+another. Needs Attention is a grouping of Status, asked before a lesson, about whether a
+Drone can be handed out. An Alert is a live condition during one. A Ready Drone can raise an
+Alert the moment it flies too close to another; a Needs Attention Drone sitting on a shelf
+raises none.
+_Avoid_: warning, notification, error, event
+
+**Command**:
+A request the teacher sends to a Drone — land, hold, stop. A request and never a guarantee:
+what the Drone actually did is only ever known from the Telemetry that follows. Commands
+reach simulated Drones only, and a Telemetry Source backed by real hardware refuses them
+(ADR-0011).
+_Avoid_: control, instruction, order, action

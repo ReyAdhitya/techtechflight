@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import { HistoryScreen } from '@/components/HistoryScreen'
+import { MovedTo } from '@/components/MovedTo'
 
 export const metadata: Metadata = {
-  title: 'History · TechTech Readyboard',
-  description: 'Everything that has happened to the Fleet in the window the ground station keeps.',
+  title: 'Moved · TechTech Readyboard',
+  description: 'The timeline is now part of Reports.',
 }
 
 export default function HistoryPage() {
-  return <HistoryScreen />
+  return <MovedTo href="/reports" what="The timeline is now part of Reports." label="Go to Reports" />
 }

@@ -65,25 +65,25 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 5 | 5.3 Fleet core routes or refuses | ✅ | `f82a618` |
 | 5 | 5.4 Both links can send | ✅ | `9587b28` |
 | 5 | 5.5 Commands on the strip | ✅ | `1ab1353` |
-| 5 | 5.6 Scenario panel, separated | ✅ | `pending` |
+| 5 | 5.6 Scenario panel, separated | ✅ | `4b3e568` |
 | 5 | 5.7 The simulation label | ✅ | `2f05910` |
-| 6 | 6.1 Logbook grows | ✅ | `pending` |
-| 6 | 6.2 Assignment column | ✅ | `pending` |
-| 6 | 6.3 Exercise list | ✅ | `pending` |
-| 6 | 6.4 Starting with no plan at all | ✅ | `pending` |
-| 6 | 6.5 Exercise on the flight strip | ✅ | `pending` |
-| 6 | 6.6 Students screen | ✅ | `pending` |
-| 7 | 7.1 The Reports shell | ✅ | `pending` |
-| 7 | 7.2 "What needs doing" moves to Fleet | ✅ | `pending` |
-| 7 | 7.3 Navigation reduces to five | ✅ | `pending` |
-| 7 | 7.4 The Lesson report | ✅ | `pending` |
-| 7 | 7.5 Printing | ✅ | `pending` |
-| 8 | 8.1 Motion | ✅ | `pending` |
-| 8 | 8.2 States sweep | ✅ | `pending` |
-| 8 | 8.3 Device and desktop audits | ✅ | `pending` |
-| 8 | 8.4 Records weight | ✅ | `pending` |
-| 8 | 8.5 Boundary and dead-prefetch check | ✅ | `pending` |
-| 8 | 8.6 Final verification | ✅ | `pending` |
+| 6 | 6.1 Logbook grows | ✅ | `484f743` |
+| 6 | 6.2 Assignment column | ✅ | `4311e67` |
+| 6 | 6.3 Exercise list | ✅ | `5053fa2` |
+| 6 | 6.4 Starting with no plan at all | ✅ | `f1854eb` |
+| 6 | 6.5 Exercise on the flight strip | ✅ | `a3b7829` |
+| 6 | 6.6 Students screen | ✅ | `eb27ace` |
+| 7 | 7.1 The Reports shell | ✅ | `faf5f90` |
+| 7 | 7.2 "What needs doing" moves to Fleet | ✅ | `56b3a73` |
+| 7 | 7.3 Navigation reduces to five | ✅ | `7fbbb17` |
+| 7 | 7.4 The Lesson report | ✅ | `52ce62f` |
+| 7 | 7.5 Printing | ✅ | `f729fc3` |
+| 8 | 8.1 Motion | ✅ | `317a473` |
+| 8 | 8.2 States sweep | ✅ | `6c15848` |
+| 8 | 8.3 Device and desktop audits | ✅ | `bb11cb5` |
+| 8 | 8.4 Records weight | ✅ | `155c013` |
+| 8 | 8.5 Boundary and dead-prefetch check | ✅ | `197f614` |
+| 8 | 8.6 Final verification | ✅ | `b7d8694` |
 
 Findings from tasks already done are logged in [`TEST_REPORT.md`](./TEST_REPORT.md).
 

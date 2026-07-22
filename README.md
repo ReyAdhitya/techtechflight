@@ -33,14 +33,13 @@ before building anything twice.
 npm install
 npm run dev:ground-station   # simulated Fleet + WebSocket on :4321
 npm run dev:web              # the board on :3000
-npm run dev:dashboard        # the board it replaces, on :5173
 ```
 
 The ground station prints a set of demo keys on start — press `f` for a Fault, `l` to
 drop a link, `t` to take off, `p` to put a Drone on charge, and so on, so a demonstration
 never has to wait for one.
-Building the dashboard (`npm run build --workspace=dashboard`) makes the ground station
-serve it too, so the whole thing is one process on one laptop.
+Building the board (`npm run build --workspace=web`) makes the ground station serve it
+too, so the whole thing is one process on one laptop.
 
 ```bash
 npm test        # both seams, one runner
@@ -51,14 +50,14 @@ npm run typecheck
 
 - **`contract/`** — the types both programs share, and nothing else. `Drone`, `Status`,
   `Telemetry`, `FleetState`, `TelemetrySource`, `Clock`.
-- **`ground-station/`** — owns the Telemetry Source, derives Status, ages Telemetry into
-  Stale and then Offline, serves Fleet State over one WebSocket. Ships with the
-  simulated Telemetry Source (ADR-0001).
-- **`web/`** — a pure view over Fleet State, and the board being built. Next.js exported
-  as static files, so it is still a bundle with no server behind it (ADR-0005). Carries
-  the light theme (ADR-0006).
-- **`dashboard/`** — the Vite board `web/` replaces. Kept runnable while the two can
-  still be compared; both run the same suite against the same Fleet State fixtures.
+- **`fleet-core/`** — owns the Fleet: derives Status, ages Telemetry into Stale and then
+  Offline, forecasts a return to Ready, records what happened, and ships the simulated
+  Telemetry Source (ADR-0001). No Node APIs, so the same code runs on a laptop and in a
+  Teacher's browser (ADR-0013).
+- **`ground-station/`** — the Node half: one WebSocket carrying Fleet State, and the
+  static board served beside it.
+- **`web/`** — a pure view over Fleet State. Next.js exported as static files, so it is a
+  bundle with no server behind it (ADR-0005). Carries the light theme (ADR-0006).
 
 ## Status
 

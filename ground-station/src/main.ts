@@ -99,6 +99,8 @@ function installScenarioKeys(): void {
     t: { label: `Take off ${target}`, run: () => simulator.takeOff(target) },
     d: { label: `Land ${target}`, run: () => simulator.land(target) },
     b: { label: `Flatten battery on ${target}`, run: () => simulator.setBattery(target, 0.08) },
+    p: { label: `Plug in ${target}`, run: () => simulator.plugIn(target) },
+    u: { label: `Unplug ${target}`, run: () => simulator.unplug(target) },
   }
 
   console.log(

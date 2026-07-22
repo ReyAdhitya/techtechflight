@@ -1,0 +1,655 @@
+@import "tailwindcss";
+
+/*
+ * The board's design system — Tech Tech Technology's paper-and-marigold palette.
+ *
+ * See `design.md`. Sections 1–8 of that file are the system as written for the
+ * Proposal Console; section 9 records what the Fleet board adds, and ADR-0009 records
+ * why we moved. Two positions survive the move unchanged and are the reason this file
+ * is not simply the shared system pasted in:
+ *
+ *   Colour means exception. The board is monochrome while the Fleet is healthy.
+ *   Marigold is identity — it brands the product, it is never sprayed across the
+ *   instrument, because an ambient amber a few degrees from the Not Ready hue would
+ *   teach a Teacher's eye to stop reading amber as news.
+ *
+ *   Colour is never the only signal. Every Status also carries a word and a shape.
+ *
+ * Status colours come from ADR-0006 and are re-checked against these warm canvases
+ * rather than assumed — every pair drops a little and every pair still clears AA.
+ */
+
+/* The theme is an attribute, not a class, so the same mechanism drives the Vite board
+ * (which has no next-themes) and this one. See design.md §2. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  /* --- Base palette, shared with the Proposal Console ------------------- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-popover: var(--popover);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* The two-step marigold. `brand` fills, `primary` carries text. Never collapse them. */
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-wash: var(--brand-wash);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-destructive: var(--destructive);
+
+  /* Chrome. The floating bar carries its own surface so it can sit above the board. */
+  --color-console: var(--console);
+  --color-console-elev: var(--console-elev);
+  --color-console-foreground: var(--console-foreground);
+  --color-console-muted: var(--console-muted);
+  --color-console-line: var(--console-line);
+
+  /* --- Fleet Status ------------------------------------------------------
+   * Not the base system's success/info/destructive, which describe how an operation
+   * went. These describe what a physical aircraft is. See design.md §9. */
+  --color-status-ready: var(--status-ready);
+  --color-status-flying: var(--status-flying);
+  --color-status-offline: var(--status-offline);
+  --color-status-not-ready: var(--status-not-ready);
+  --color-status-fault: var(--status-fault);
+
+  /* Stale telemetry is one step, applied the same way everywhere it appears. */
+  --color-stale: var(--muted-foreground);
+
+  /*
+   * The board's own vocabulary, kept as a semantic layer over the shared palette.
+   * Markup goes on saying `surface-1` and `hairline` — the words ADR-0004 taught it —
+   * while the values underneath are now the shared ones.
+   */
+  --color-canvas: var(--background);
+  --color-surface-1: var(--card);
+  --color-hairline: var(--border);
+  --color-ink: var(--foreground);
+  --color-ink-muted: var(--muted-foreground);
+  --color-ink-subtle: var(--ink-subtle);
+
+  /* --- Type -------------------------------------------------------------- */
+  --font-display: "Schibsted Grotesk", "Segoe UI", Arial, sans-serif;
+  --font-sans: "Hanken Grotesk", "Segoe UI", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+
+  /*
+   * The scale is in rem, not px, so it follows the Teacher's own browser font size
+   * rather than overriding it (WCAG 1.4.4, ADR-0008).
+   *
+   * A status board has no headline; the largest element is the Fleet summary count.
+   */
+  --text-summary: 2.75rem;
+  --text-summary--line-height: 1;
+  --text-dialog-title: 2rem;
+  --text-heading: 1.5rem;
+  --text-tile-name: 1.5rem;
+  --text-body: 1rem;
+  /* Data. Larger than the label naming it — the value is what a Teacher came to read. */
+  --text-value: 1rem;
+  /* Labels only, always uppercase with tracking. Small because it names, never informs. */
+  --text-label: 0.75rem;
+
+  /* --- Shape ------------------------------------------------------------- */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  /* Board surfaces. Was 4px under ADR-0004; the shared system's 12px replaces it. */
+  --radius-surface: var(--radius);
+  --radius-pill: 100px;
+}
+
+/*
+ * Light — warm paper. The neutrals keep a little yellow rather than the cold slate a
+ * stock theme ships with, which is most of what separates considered from generic.
+ */
+:root {
+  --background: #f4f3f0;
+  --foreground: #1b1815;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --secondary: #faf9f6;
+  --muted: #f1eee8;
+  --muted-foreground: #726c62;
+  --accent: #f6f1e8;
+  --border: #e5e0d7;
+  --input: #ddd7cc;
+  --ring: #e57a10;
+
+  --brand: #e57a10;
+  --brand-strong: #c26509;
+  --brand-hover: #c26509;
+  --brand-wash: #fdf1e2;
+  --primary: #a55206;
+  --primary-foreground: #ffffff;
+
+  --success: #0f7d5b;
+  --success-wash: #e6f4ef;
+  --info: #356a9c;
+  --info-wash: #e8eff7;
+  --destructive: #c0392b;
+  --destructive-wash: #fbeceb;
+
+  /*
+   * Between foreground and muted-foreground. The board needs a secondary tier that is
+   * still comfortably readable — the line qualifying every value with its age is not
+   * decoration, and dropping it to the muted step would make a Teacher squint at the
+   * one thing that says whether the number above it is still true.
+   */
+  --ink-subtle: #4a463f;
+
+  /*
+   * Fleet Status, from ADR-0006, re-checked against this canvas rather than carried
+   * across on trust: Fault 4.83:1, Not Ready 5.34:1 on #f4f3f0. Both clear AA, and
+   * both sit lower than they did on the old near-white — recorded so the next person
+   * changing the canvas knows there is less headroom than there was.
+   */
+  --status-fault-colour: #c3391a;
+  --status-not-ready-colour: #8a5a00;
+
+  --status-ready: var(--foreground);
+  --status-flying: var(--foreground);
+  --status-offline: var(--muted-foreground);
+  --status-not-ready: var(--status-not-ready-colour);
+  --status-fault: var(--status-fault-colour);
+
+  --radius: 0.75rem;
+
+  --shadow-sm: 0 1px 2px rgb(27 22 16 / 0.06);
+  --shadow: 0 2px 8px rgb(27 22 16 / 0.08);
+  --shadow-lg: 0 12px 32px rgb(27 22 16 / 0.12);
+
+  /* Chrome. The floating bar carries its own surface so it can sit above the board. */
+  --console: #ffffff;
+  --console-elev: #ffffff;
+  --console-foreground: var(--foreground);
+  --console-muted: var(--muted-foreground);
+  --console-line: rgb(27 22 16 / 0.13);
+  --console-shadow: var(--shadow);
+  --console-shadow-hover: var(--shadow-lg);
+
+  /* A transient ring marks news that arrives while the board is already open. */
+  --status-change-duration: 1100ms;
+  --status-change-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  /* The shared system's signature easing, for chrome rather than for Drone state. */
+  --chrome-duration: 620ms;
+  --chrome-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /*
+   * Large format, for a projector or a board read across the room (ADR-0008). A
+   * multiplier on the root rather than a second set of larger values, so it magnifies
+   * whatever font size the Teacher already asked their browser for.
+   */
+  --display-scale: 1;
+}
+
+/* Dark — warm near-black, not the blue-black a stock dark theme ships with. */
+[data-theme="dark"] {
+  --background: #17130e;
+  --foreground: #f2ece2;
+  --card: #201b15;
+  --popover: #201b15;
+  --secondary: #29231b;
+  --muted: #262019;
+  --muted-foreground: #a1978a;
+  --accent: #2b241c;
+  --border: #362d23;
+  --input: #40362a;
+  --ring: #f0902f;
+
+  --brand: #f0902f;
+  --brand-strong: #f0902f;
+  /* Lighter on dark, not darker — the hover step moves away from the canvas. */
+  --brand-hover: #f5a44c;
+  --brand-wash: #2e2015;
+  --primary: #f0902f;
+  /* On dark, text on brand must be near-black. White would land at 2.4:1. */
+  --primary-foreground: #1a1410;
+
+  --success: #37bd86;
+  --success-wash: #16281f;
+  --info: #6aa7dc;
+  --info-wash: #172431;
+  --destructive: #f07d6d;
+  --destructive-wash: #2f1a17;
+
+  --ink-subtle: #cdc3b5;
+
+  /* ADR-0006's dark pair, re-checked: Fault 5.69:1, Not Ready 9.06:1 on #17130e. */
+  --status-fault-colour: #f75a36;
+  --status-not-ready-colour: #f5a524;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow: 0 2px 10px rgb(0 0 0 / 0.55);
+  --shadow-lg: 0 14px 36px rgb(0 0 0 / 0.6);
+
+  --console: #201b15;
+  --console-elev: #201b15;
+  --console-line: rgb(255 255 255 / 0.09);
+}
+
+/*
+ * No-JS only. The boot script stamps `data-theme` before first paint, so this block is
+ * the fallback for a browser that never ran it — never the mechanism.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #17130e;
+    --foreground: #f2ece2;
+    --card: #201b15;
+    --popover: #201b15;
+    --secondary: #29231b;
+    --muted: #262019;
+    --muted-foreground: #a1978a;
+    --accent: #2b241c;
+    --border: #362d23;
+    --input: #40362a;
+    --ring: #f0902f;
+
+    --brand: #f0902f;
+    --brand-strong: #f0902f;
+    --brand-wash: #2e2015;
+    --primary: #f0902f;
+    --primary-foreground: #1a1410;
+
+    --ink-subtle: #cdc3b5;
+    --status-fault-colour: #f75a36;
+    --status-not-ready-colour: #f5a524;
+
+    --console: #201b15;
+    --console-elev: #201b15;
+    --console-line: rgb(255 255 255 / 0.09);
+  }
+}
+
+/*
+ * Large format (ADR-0008), the half that was lost in the port.
+ *
+ * `display-scale.ts` has always stamped `data-display="large"` on the root and
+ * `--display-scale` has always been consumed by `html` below, but the rule joining them
+ * was left behind in the Vite board (`dashboard/src/styles/tokens.css`). The toggle
+ * moved, remembered its choice across reloads, relabelled itself, and resized nothing.
+ *
+ * Unlayered, like the palette above, so it outranks the `@layer base` rule it feeds.
+ *
+ * 1.375 is the Vite board's value, kept so the two boards stay comparable while both are
+ * runnable. It is not yet a defended number: `reference/glanceability.md` measures it as
+ * buying roughly one metre of viewing distance, well short of the projector this exists
+ * for. Raising it is a decision for its own ADR, not a quiet edit here.
+ */
+:root[data-display='large'] {
+  --display-scale: 1.375;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--border);
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  html {
+    background: var(--background);
+    color: var(--foreground);
+    /* Multiplied, never set: `100%` is whatever the Teacher's browser was already told. */
+    font-size: calc(100% * var(--display-scale));
+  }
+
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    font-weight: 400;
+    letter-spacing: 0.002em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * Focus takes the text-safe marigold step, not the fill step: a ring has to be seen
+   * against both canvases. Zero specificity so component styles still win.
+   */
+  :where(:focus-visible) {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /*
+   * Hard-stopped rather than raced. A half-transitioned colour is what leaves a stale
+   * ring in a print, and a Teacher who has asked for less motion means it.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  @media print {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  /*
+   * The floor.
+   *
+   * Below this the board still held its desktop type, leaving the summary count
+   * fighting the screen edges for room. In rem, so the breakpoint follows the same
+   * font size everything else does.
+   */
+  @media (max-width: 26rem) {
+    :root {
+      --text-summary: 2rem;
+      --text-dialog-title: 1.5rem;
+    }
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /*
+   * A label names a value; it never carries one. Uppercase and tracked so it reads as
+   * a label at a size that would be too small for anything a Teacher has to act on.
+   */
+  .label,
+  .eyebrow {
+    font-size: var(--text-label);
+    line-height: 1.2;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--muted-foreground);
+  }
+
+  /* Every numeral on the board, so digits do not shift width as values tick. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    transform: translateY(calc(-100% - 1rem));
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radius-md);
+    background: var(--foreground);
+    color: var(--background);
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 180ms var(--chrome-ease);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
+  /*
+   * The summary is the answer the board exists to give, so it remains in view with a
+   * large Fleet. The room controls stay above it; the offset is expressed in rem so both
+   * pieces move together in large format.
+   */
+  .fleet-summary-shell {
+    position: sticky;
+    top: 4.75rem;
+    z-index: 20;
+    margin-inline: -0.25rem;
+    padding: 0.5rem 0.25rem 0;
+    background: var(--background);
+  }
+
+  /*
+   * `auto-fill` deliberately keeps empty tracks. One Drone therefore remains the same
+   * readable tile width as six instead of stretching into a full-width banner.
+   */
+  .fleet-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  }
+
+  /*
+   * Merge → float chrome (design.md §6).
+   *
+   * Docked: full-bleed, transparent, reads as part of the page.
+   * Floating: contracts, hairline, elevation — opaque console surface so tiles never
+   * read through the bar (same rule the board had before).
+   */
+  .site-header-shell {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem 1rem 0;
+    pointer-events: none;
+    transition: padding var(--chrome-duration) var(--chrome-ease);
+  }
+
+  .site-header {
+    pointer-events: auto;
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--console-foreground);
+    box-shadow: none;
+    transition:
+      max-width var(--chrome-duration) var(--chrome-ease),
+      border-radius var(--chrome-duration) var(--chrome-ease),
+      border-color var(--chrome-duration) var(--chrome-ease),
+      background-color var(--chrome-duration) var(--chrome-ease),
+      box-shadow var(--chrome-duration) var(--chrome-ease),
+      backdrop-filter var(--chrome-duration) var(--chrome-ease),
+      padding var(--chrome-duration) var(--chrome-ease);
+  }
+
+  .site-header[data-floating='true'] {
+    max-width: 1240px;
+    border-radius: var(--radius-lg);
+    border-color: var(--console-line);
+    background: var(--console-elev);
+    box-shadow: var(--console-shadow);
+    padding-inline: 1rem;
+  }
+
+  .site-header__controls {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 26rem) {
+    .site-header-shell {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* Company mark with its original gold colour and a real transparent background. */
+  .brand-lockup {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .brand-mark {
+    height: 1.75rem;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .brand-product {
+    padding-inline-start: 0.75rem;
+    border-inline-start: 1px solid var(--console-line);
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* Shown only when the logo asset is absent. Same weight, same restraint. */
+  .brand-wordmark {
+    font-family: var(--font-display);
+    font-size: var(--text-body);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+
+  .brand-wordmark strong {
+    font-weight: 600;
+  }
+
+  @media (max-width: 28rem) {
+    .brand-product {
+      display: none;
+    }
+  }
+
+  /*
+   * A broad Status rail replaces the hairline as the glance signal. Fault is solid;
+   * Not Ready is broken into intervals, so the distinction survives without colour.
+   * The word and glyph remain beside it as the other two channels.
+   */
+  .drone-tile {
+    --tile-status-accent: var(--foreground);
+    transition:
+      transform var(--chrome-duration) var(--chrome-ease),
+      box-shadow var(--chrome-duration) var(--chrome-ease);
+  }
+
+  .drone-tile::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.75rem;
+    inset-inline-start: 0;
+    width: 0.375rem;
+    border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .drone-tile[data-status='Not Ready'] {
+    --tile-status-accent: var(--status-not-ready);
+  }
+
+  .drone-tile[data-status='Not Ready']::before {
+    opacity: 1;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--status-not-ready) 0 0.75rem,
+      transparent 0.75rem 1.125rem
+    );
+  }
+
+  .drone-tile[data-status='Fault'] {
+    --tile-status-accent: var(--status-fault);
+  }
+
+  .drone-tile[data-status='Fault']::before {
+    opacity: 1;
+    background: var(--status-fault);
+  }
+
+  .drone-tile[data-status='Offline'] {
+    --tile-status-accent: var(--status-offline);
+  }
+
+  @keyframes tile-status-change {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--tile-status-accent) 55%, transparent);
+    }
+    72% {
+      box-shadow:
+        0 0 0 0.75rem color-mix(in oklab, var(--tile-status-accent) 0%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--tile-status-accent) 0%, transparent);
+    }
+  }
+
+  .drone-tile[data-changed='true'] {
+    animation: tile-status-change var(--status-change-duration) var(--status-change-ease) 1;
+  }
+
+  .drone-tile:hover,
+  .drone-tile:focus-within {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .drone-tile:has(.tile-details:active) {
+    transform: translateY(0) scale(0.995);
+  }
+
+  .drone-tile:has(.tile-details:focus-visible) {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .tile-details:focus-visible {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drone-tile:hover,
+    .drone-tile:focus-within,
+    .drone-tile:has(.tile-details:active) {
+      transform: none;
+    }
+  }
+}

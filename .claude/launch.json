@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ground-station",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:ground-station"],
+      "port": 4321
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:web"],
+      "port": 3000
+    },
+    {
+      "name": "dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:dashboard"],
+      "port": 5173
+    }
+  ]
+}

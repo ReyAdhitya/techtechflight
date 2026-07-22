@@ -26,6 +26,9 @@ export function aDroneState(overrides: Partial<DroneState> = {}): DroneState {
     telemetry: aTelemetry(),
     lastContact: 0,
     stale: false,
+    // Null is the resting value. Most Drones are not charging, and the ground station
+    // says nothing rather than guessing.
+    timeToReadyMs: null,
     ...overrides,
   }
 }

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reference — The state inventory</title>
+<link rel="stylesheet" href="../assets/lesson.css">
+<link rel="stylesheet" href="../assets/practice.css">
+<style>
+  /* Reference cards are denser than lessons: tables over prose. */
+  .states {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    margin: 1.2rem 0 2rem;
+  }
+  .states th, .states td {
+    text-align: left;
+    vertical-align: top;
+    padding: 0.7rem 0.8rem 0.7rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .states thead th {
+    font-family: var(--sans);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--ink-faint);
+  }
+  .states tbody th {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--accent-deep);
+    white-space: nowrap;
+    padding-right: 1.2rem;
+  }
+  .states td:last-child { color: var(--ink-soft); font-size: 0.88rem; }
+  .wide { max-width: none; }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">Reference card <span class="dim">TechTech Flight · UI</span></p>
+    <h1>The state inventory</h1>
+    <p class="standfirst">Every screen is more than one screen. This is the list you walk
+      before you decide anything looks finished.</p>
+  </header>
+
+  <h2>The five states</h2>
+
+  <p>Scott Hurff's <strong>UI Stack</strong>, extending 37signals' earlier three-state
+    solution. A screen is not designed until all five are.</p>
+
+  <div class="wide">
+  <table class="states">
+    <thead>
+      <tr><th scope="col">State</th><th scope="col">When</th><th scope="col">The failure mode</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row">Ideal</th>
+        <td>Full, useful, working. The screenshot you'd put in the store listing.</td>
+        <td>Designing only this one. It is the default, and it is the trap.</td>
+      </tr>
+      <tr>
+        <th scope="row">Empty</th>
+        <td>No data at all. Three distinct causes — see below.</td>
+        <td>A blank rectangle. The user cannot tell broken from new.</td>
+      </tr>
+      <tr>
+        <th scope="row">Error</th>
+        <td>Something went wrong: bad input, dead connection, refused request.</td>
+        <td>Losing what the user typed. Hurff: their input is <em>sacred</em>.</td>
+      </tr>
+      <tr>
+        <th scope="row">Partial</th>
+        <td>Real data, but sparse. One row. Two photos. Half a profile.</td>
+        <td>Layout built for abundance falls apart, and the user gives up early.</td>
+      </tr>
+      <tr>
+        <th scope="row">Loading</th>
+        <td>Fetching, connecting, or moving between screens.</td>
+        <td>No signal of progress, or a spinner that lies about how long.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Empty has three causes</h2>
+
+  <p>They need different words on the screen. Collapsing them into one message is the
+    most common empty-state mistake.</p>
+
+  <ul>
+    <li><strong>First use</strong> — nothing has been added yet. Teach and invite.</li>
+    <li><strong>User cleared it</strong> — they emptied it themselves. Acknowledge, offer undo.</li>
+    <li><strong>No results</strong> — the filter or search matched nothing. Say what was
+      searched, and how to widen it.</li>
+  </ul>
+
+  <h2>What goes on an empty screen</h2>
+
+  <p>Nielsen Norman Group's three guidelines. In order.</p>
+
+  <ol>
+    <li><strong>Communicate system status.</strong> Say why it is empty. Never show
+      &ldquo;no records&rdquo; while data is still on its way — a message that is
+      contradicted two seconds later costs more trust than a blank would have.</li>
+    <li><strong>Provide learning cues.</strong> The empty screen is the best teaching
+      moment you will get. &ldquo;Star your favourites to list them here.&rdquo;</li>
+    <li><strong>Provide a direct pathway.</strong> A button or a link to the thing that
+      would fill it. Do not make them go and find the feature.</li>
+  </ol>
+
+  <h2>The procedure</h2>
+
+  <p>Point this at one screen at a time. It takes about five minutes and it is the
+    cheapest quality pass available.</p>
+
+  <ol class="task">
+    <li>Name the screen and the one question its user opens it to answer.</li>
+    <li>Walk the five states in order. For each, write the sentence the screen should say.</li>
+    <li>Find the code path for each. If you cannot point at a file and line, it does not exist.</li>
+    <li>For Empty, decide which of the three causes apply. Usually more than one.</li>
+    <li>For Partial, check the layout at <em>n</em> = 1. Grids in particular.</li>
+    <li>Write the misses down as issues. Do not fix them now — finish the inventory first.</li>
+  </ol>
+
+  <h2>Gotcha: grids at <em>n</em> = 1</h2>
+
+  <p>The partial state's usual hiding place in CSS. These two look interchangeable and
+    are not:</p>
+
+  <pre><code>grid-template-columns: repeat(auto-<b>fill</b>, minmax(240px, 1fr));
+grid-template-columns: repeat(auto-<b>fit</b>,  minmax(240px, 1fr));</code></pre>
+
+  <p><code>auto-fill</code> keeps the empty tracks it created. <code>auto-fit</code>
+    <em>collapses</em> them, so the surviving items stretch to fill the row. With a full
+    grid the two are identical. With one item, <code>auto-fit</code> gives you a single
+    tile as wide as the screen.</p>
+
+  <p class="callout"><span class="callout__label">Rule of thumb</span>
+    Want items to hold their size when there are few of them? <code>auto-fill</code>.
+    Want them to stretch and fill the space? <code>auto-fit</code>. Decide it on
+    purpose — most codebases have <code>auto-fit</code> because it was typed first.</p>
+
+  <h2>Sources</h2>
+
+  <ul>
+    <li><a href="https://www.scotthurff.com/posts/why-your-user-interface-is-awkward-youre-ignoring-the-ui-stack/">How to fix a bad user interface</a> — Scott Hurff. The UI Stack, primary source.</li>
+    <li><a href="https://www.nngroup.com/articles/empty-state-interface-design/">Designing Empty States in Complex Applications: 3 Guidelines</a> — Nielsen Norman Group.</li>
+    <li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/grid-template-columns">grid-template-columns</a> — MDN. Normative on <code>auto-fit</code> vs <code>auto-fill</code>.</li>
+  </ul>
+
+  <footer class="footer">
+    <h2>Where this came from</h2>
+    <ul class="onward">
+      <li><a href="../lessons/0001-the-states-you-did-not-draw.html">Lesson 1 — The states you didn't draw</a></li>
+      <li><a href="../MISSION.md">Mission</a></li>
+      <li><a href="../RESOURCES.md">Resources</a></li>
+    </ul>
+  </footer>
+
+</div>
+</body>
+</html>

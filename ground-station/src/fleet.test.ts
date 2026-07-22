@@ -262,6 +262,91 @@ describe('telling the dashboard about it', () => {
   })
 })
 
+describe('saying when a Not Ready Drone will be usable again', () => {
+  const forecastFor = (name: string) => droneNamed(station.fleetState(), name).timeToReadyMs
+
+  it('says nothing from a single reading, because one point is not a rate', () => {
+    source.report('ttf-0001', { batteryFraction: 0.1 })
+
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+
+  it('says nothing while a battery is only draining', () => {
+    source.report('ttf-0001', { batteryFraction: 0.2 })
+    clock.advance(60_000)
+    source.report('ttf-0001', { batteryFraction: 0.18 })
+
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+
+  it('waits for readings that span long enough to mean anything', () => {
+    source.report('ttf-0001', { batteryFraction: 0.1 })
+    clock.advance(5_000)
+    source.report('ttf-0001', { batteryFraction: 0.12 })
+
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+
+  it('forecasts from charge it has actually watched go in', () => {
+    source.report('ttf-0001', { batteryFraction: 0.1 })
+    clock.advance(60_000)
+    source.report('ttf-0001', { batteryFraction: 0.16 })
+
+    // 0.06 went in over a minute and 0.14 is left to go: a little over two minutes,
+    // said to the minute it will be read in.
+    expect(forecastFor('Drone 1')).toBe(2 * 60_000)
+  })
+
+  it('does not mistake a swapped battery for charge going in', () => {
+    // The case this whole feature has to survive. A School that swaps packs rather than
+    // charging them in place gives the ground station a step, not a rate — and nothing
+    // about the pack that came out predicts the one that went in.
+    source.report('ttf-0001', { batteryFraction: 0.05 })
+    clock.advance(60_000)
+    source.report('ttf-0001', { batteryFraction: 0.25 })
+
+    expect(droneNamed(station.fleetState(), 'Drone 1').status).toBe('Not Ready')
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+
+  it('stops forecasting once the Drone is Ready, because it has arrived', () => {
+    source.report('ttf-0001', { batteryFraction: 0.1 })
+    clock.advance(60_000)
+    source.report('ttf-0001', { batteryFraction: 0.16 })
+    expect(forecastFor('Drone 1')).not.toBeNull()
+
+    clock.advance(60_000)
+    source.report('ttf-0001', { batteryFraction: 0.31 })
+
+    expect(droneNamed(station.fleetState(), 'Drone 1').status).toBe('Ready')
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+
+  it('says nothing about a Drone whose problem time cannot fix', () => {
+    source.report('ttf-0001', { batteryFraction: 0.1 })
+    clock.advance(60_000)
+    source.report('ttf-0001', {
+      batteryFraction: 0.16,
+      fault: { code: 'MOTOR_STALL', description: 'A motor did not spin up' },
+    })
+
+    expect(droneNamed(station.fleetState(), 'Drone 1').status).toBe('Fault')
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+
+  it('forgets a Drone it has stopped hearing from rather than counting down regardless', () => {
+    source.report('ttf-0001', { batteryFraction: 0.1 })
+    clock.advance(60_000)
+    source.report('ttf-0001', { batteryFraction: 0.16 })
+    expect(forecastFor('Drone 1')).not.toBeNull()
+
+    clock.advance(THRESHOLDS.offlineAfterMs)
+
+    expect(droneNamed(station.fleetState(), 'Drone 1').status).toBe('Offline')
+    expect(forecastFor('Drone 1')).toBeNull()
+  })
+})
+
 describe('Drones the Fleet does not know about', () => {
   it('ignores Telemetry from an unregistered Drone rather than inventing a tile', () => {
     source.report('ttf-9999', { batteryFraction: 0.8 })

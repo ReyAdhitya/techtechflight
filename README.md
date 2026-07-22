@@ -14,8 +14,11 @@ Built by TechTech Technology, who sell STEM curriculum and drones to schools.
   the way it is, including the decisions that look wrong until you know the reason.
 - **[docs/questions-for-drone-team.md](./docs/questions-for-drone-team.md)** — open
   hardware questions. None of them block dashboard work; that is the point of ADR-0001.
-- **[crewai.design.md](./crewai.design.md)** — the design system, in Google Labs'
-  DESIGN.md format. See ADR-0004 for the deviations we make from it deliberately.
+- **[design.md](./design.md)** — the design system: Tech Tech Technology's warm paper
+  neutrals and two-step marigold, shared with the Proposal Console. Sections 1–8 are the
+  shared system; section 9 records what the Fleet board adds. See ADR-0009 for why we
+  moved off the CrewAI system, and ADR-0006 for the Status colours, which the shared
+  system does not define and which are kept and re-checked against the new canvases.
 
 ## Related work
 
@@ -29,11 +32,13 @@ before building anything twice.
 ```bash
 npm install
 npm run dev:ground-station   # simulated Fleet + WebSocket on :4321
-npm run dev:dashboard        # the board on :5173
+npm run dev:web              # the board on :3000
+npm run dev:dashboard        # the board it replaces, on :5173
 ```
 
 The ground station prints a set of demo keys on start — press `f` for a Fault, `l` to
-drop a link, `t` to take off, and so on, so a demonstration never has to wait for one.
+drop a link, `t` to take off, `p` to put a Drone on charge, and so on, so a demonstration
+never has to wait for one.
 Building the dashboard (`npm run build --workspace=dashboard`) makes the ground station
 serve it too, so the whole thing is one process on one laptop.
 
@@ -49,11 +54,20 @@ npm run typecheck
 - **`ground-station/`** — owns the Telemetry Source, derives Status, ages Telemetry into
   Stale and then Offline, serves Fleet State over one WebSocket. Ships with the
   simulated Telemetry Source (ADR-0001).
-- **`dashboard/`** — a pure view over Fleet State. Knows nothing about radios or
-  protocols.
+- **`web/`** — a pure view over Fleet State, and the board being built. Next.js exported
+  as static files, so it is still a bundle with no server behind it (ADR-0005). Carries
+  the light theme (ADR-0006).
+- **`dashboard/`** — the Vite board `web/` replaces. Kept runnable while the two can
+  still be compared; both run the same suite against the same Fleet State fixtures.
 
 ## Status
 
 The Fleet status board of [issue #1](https://github.com/ReyAdhitya/techtechflight/issues/1)
 is implemented against the simulated Telemetry Source. No real hardware adapter yet — that
 is one new implementation of `TelemetrySource` and nothing else.
+
+A Not Ready Drone also says when it is expected back ("Ready in ~12 min"), derived only
+from charge the ground station has watched go in — see ADR-0007 for why it stays silent
+rather than guessing. The board carries a large format for a projector or a room read
+from a distance, on a type scale that now follows the Teacher's own browser setting
+(ADR-0008).

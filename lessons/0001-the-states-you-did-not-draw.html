@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 1 — The states you didn't draw</title>
+<link rel="stylesheet" href="../assets/lesson.css">
+<link rel="stylesheet" href="../assets/practice.css">
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <p class="eyebrow">Lesson 01 <span class="dim">Building good web apps and UI</span> <span class="dim">≈ 10 minutes</span></p>
+    <h1>The states you didn't draw</h1>
+    <p class="standfirst">Your board is careful about every condition you thought of.
+      This lesson is about finding the ones you didn't — and there are two of them,
+      sitting in your code right now.</p>
+  </header>
+
+  <h2>Why this first</h2>
+
+  <p>You said you want to build a <em>good</em> web app, and you picked all four layers:
+    information design, visual craft, real conditions, states. We start here because
+    state coverage is the layer where the gap between "built" and "shipped" is widest,
+    and because it is the only one that can be made <strong>systematic</strong>. Taste
+    takes years. A checklist takes ten minutes and catches the failures that make
+    software feel amateur.</p>
+
+  <p class="sidenote">It also happens to be where your board is weakest — which is not
+    obvious, because it is very strong everywhere else. That is normal. Careful people
+    tend to be careful about the things they thought about.</p>
+
+  <h2>The idea</h2>
+
+  <p>In 2015 Scott Hurff named the thing designers keep getting wrong. We build the
+    screen as it looks when everything has gone right — the app-store screenshot, the
+    demo. He calls it the <strong>Ideal State</strong>, and it is a trap, because the
+    other states then get "tacked on as an afterthought."</p>
+
+  <blockquote>
+    The world in which we live isn't perfect, and things go wrong.
+    <cite>Scott Hurff, <a href="https://www.scotthurff.com/posts/why-your-user-interface-is-awkward-youre-ignoring-the-ui-stack/">How to fix a bad user interface</a></cite>
+  </blockquote>
+
+  <p>His fix is a list of five. A screen is not designed until all five are. He calls it
+    the <strong>UI Stack</strong>, extending an older 37signals idea that had only three.</p>
+
+  <ul>
+    <li><strong>Ideal</strong> — full, useful, working.</li>
+    <li><strong>Empty</strong> — no data at all.</li>
+    <li><strong>Error</strong> — something went wrong.</li>
+    <li><strong>Partial</strong> — real data, but barely any.</li>
+    <li><strong>Loading</strong> — on its way.</li>
+  </ul>
+
+  <p>That is the whole of the knowledge. The skill is pointing it at a real screen
+    without flinching, so let's do that now — at yours.</p>
+
+  <h2>The audit</h2>
+
+  <p>Five conditions your Fleet board can be in. For each one, decide from what you know
+    of your own code: does the board handle it, or does it not? Answer before you look
+    anything up. Getting one wrong is more useful than getting it right.</p>
+
+  <div class="audit">
+
+    <div class="check" data-check>
+      <p class="check__q"><span class="state">Ideal</span> Twelve Drones, mixed Statuses,
+        live link to the ground station.</p>
+      <div class="check__options">
+        <button class="check__opt" data-correct>Handled</button>
+        <button class="check__opt">Missing</button>
+      </div>
+      <div class="check__feedback">
+        <p><strong>Handled, and thoroughly.</strong> <code>DroneTile.tsx</code> plus
+          <code>StatusBadge</code> give all five Statuses a colour, a shape and a word,
+          so no meaning rides on colour alone (<code>board.css:243</code>). This is the
+          state you designed, and it shows.</p>
+      </div>
+    </div>
+
+    <div class="check" data-check>
+      <p class="check__q"><span class="state">Empty</span> A School opens the board before
+        any Drone has been registered. <code>state.drones</code> is <code>[]</code>.</p>
+      <div class="check__options">
+        <button class="check__opt">Handled</button>
+        <button class="check__opt" data-correct>Missing</button>
+      </div>
+      <div class="check__feedback">
+        <p><strong>Missing.</strong> <code>FleetBoard.tsx:44</code> maps over the array
+          unconditionally, so you get an empty <code>&lt;ul&gt;</code>. Above it,
+          <code>FleetSummary</code> renders <em>"0 of 0 ready"</em> and
+          <em>"0 need attention"</em>.</p>
+        <p>A Teacher sees a black screen with two zeroes on it and no way to tell
+          <em>nothing is registered</em> from <em>this thing is broken</em>. Note this is
+          a registry state, not a power state — <code>ground-station/src/fleet.ts:16</code>
+          gives every owned Drone a tile whether it has ever been heard from or not.</p>
+      </div>
+    </div>
+
+    <div class="check" data-check>
+      <p class="check__q"><span class="state">Error</span> The WebSocket to the ground
+        station drops in the middle of a lesson.</p>
+      <div class="check__options">
+        <button class="check__opt" data-correct>Handled</button>
+        <button class="check__opt">Missing</button>
+      </div>
+      <div class="check__feedback">
+        <p><strong>Handled, and better than most production apps.</strong>
+          <code>ConnectionBanner.tsx</code> speaks about <em>the board</em>, never about a
+          Drone, and deliberately avoids the entire Status vocabulary so it cannot be
+          misread as "Offline". It also keeps showing the last known Fleet rather than
+          blanking it. Hurff's rule that the user's context is sacred — you already do
+          this.</p>
+      </div>
+    </div>
+
+    <div class="check" data-check>
+      <p class="check__q"><span class="state">Partial</span> A School pilots the programme
+        with a single Drone. The Fleet renders one tile.</p>
+      <div class="check__options">
+        <button class="check__opt">Handled</button>
+        <button class="check__opt" data-correct>Missing</button>
+      </div>
+      <div class="check__feedback">
+        <p><strong>Missing — and this one is invisible until it happens.</strong>
+          <code>board.css:104</code> reads:</p>
+        <pre><code>grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));</code></pre>
+        <p><code>auto-fit</code> <em>collapses</em> the tracks it has no items for, and
+          the survivors stretch. One Drone on a laptop gives you a single tile roughly
+          1300px wide, holding a name, a badge and a battery bar. Change one word to
+          <code>auto-fill</code> and the tile keeps its 240px.</p>
+      </div>
+    </div>
+
+    <div class="check" data-check>
+      <p class="check__q"><span class="state">Loading</span> The board is opened and the
+        first Fleet State has not arrived yet.</p>
+      <div class="check__options">
+        <button class="check__opt" data-correct>Handled</button>
+        <button class="check__opt">Missing</button>
+      </div>
+      <div class="check__feedback">
+        <p><strong>Handled.</strong> <code>FleetBoard.tsx:28</code> guards on
+          <code>!state</code> and shows the banner's connecting copy: <em>"Waiting for
+          the first Fleet State."</em> Crucially it does <em>not</em> claim the Fleet is
+          empty while it is still loading — which is exactly the trust-destroying mistake
+          NN/g warns about, and you avoided it.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="score" data-score>Called correctly, first time: <b data-score-value>0 of 5</b>.</p>
+
+  <h2>What the pattern tells you</h2>
+
+  <p>Look at which three you got right and which two you missed. The three handled
+    states — Ideal, Error, Loading — are all about <strong>the link</strong>. The two
+    missing states — Empty and Partial — are both about <strong>how much data there
+    is</strong>.</p>
+
+  <p class="callout callout--finding">
+    <span class="callout__label">The finding</span>
+    You thought hard about the connection and not at all about the collection. That is
+    the actual lesson here, and it is worth more than either bug: <em>the states you
+    cover are the states you worried about.</em> A checklist is how you cover the ones
+    you didn't worry about, and it is the only reliable way, because by definition you
+    cannot remember to think of them.
+  </p>
+
+  <h2>Fix the empty state</h2>
+
+  <p>Nielsen Norman Group give three guidelines, in order. Applied to your board, and
+    using your own vocabulary from <code>CONTEXT.md</code>:</p>
+
+  <ol class="task">
+    <li><strong>Communicate system status.</strong> Say why it is empty, in Teacher
+      language, without borrowing a Status word: <em>"No Drones have been added to this
+      School yet."</em> Not "no data", not "empty fleet".</li>
+    <li><strong>Provide a learning cue.</strong> Say what would fill it — that every
+      Drone the School owns gets a tile here, switched on or not. This is your best
+      chance to teach that the board shows the cupboard, not the sky.</li>
+    <li><strong>Provide a direct pathway.</strong> A link to however registration
+      actually happens. <strong>You need to decide this one</strong> — the roster is
+      passed into <code>GroundStation</code> at construction, so today there is no
+      in-app route to add a Drone. That is a genuine product question, not a CSS one.
+      Ask me and we can work it through.</li>
+  </ol>
+
+  <p>Where it goes: in <code>FleetBoard.tsx</code>, between the guard at line 28 and the
+    grid at line 44. Note that this is a distinct branch from the loading guard — the two
+    must not collapse into one, or you reintroduce the mistake you currently avoid.</p>
+
+  <div class="callout">
+    <span class="callout__label">One judgement call</span>
+    <p>Should <code>FleetSummary</code> still render <em>"0 of 0 ready"</em> above an
+      empty state? Your <code>FleetSummary</code> comment argues the attention count must
+      be present at zero so a change reads as a number moving rather than an element
+      appearing. Does that argument still hold when the whole Fleet is empty, or is
+      <em>"0 of 0"</em> just noise on a screen that has already explained itself? There
+      is a defensible answer either way — have one.</p>
+  </div>
+
+  <h2>From memory</h2>
+
+  <div class="recall" data-recall="Show the five">
+    <p class="recall__prompt"><strong>Retrieval, no scrolling up</strong>
+      Name all five states of the UI Stack. Say them out loud — the effort of pulling
+      them back is what makes them stick, and re-reading the list would feel like
+      learning without being it.</p>
+    <div class="recall__answer">
+      <p><strong>Ideal, Empty, Error, Partial, Loading.</strong></p>
+      <p>If you missed one, it was probably <em>Partial</em>. It is the one with no
+        obvious moment of failure — nothing throws, nothing disconnects, the layout is
+        just quietly wrong. It is also the one you missed in your own board.</p>
+    </div>
+  </div>
+
+  <h2>Three questions</h2>
+
+  <div class="check" data-check>
+    <p class="check__q">A dashboard shows "No records found", then fills with rows two
+      seconds later. Which guideline did it break?</p>
+    <div class="check__options">
+      <button class="check__opt" data-correct>Communicating true system status</button>
+      <button class="check__opt">Providing helpful learning cues</button>
+      <button class="check__opt">Providing direct task pathways</button>
+    </div>
+    <div class="check__feedback">
+      <p>It reported a state that was not true yet. NN/g single this out because a
+        message contradicted seconds later costs more trust than a blank would have —
+        the user now knows the screen is willing to lie. It is the Loading state wearing
+        the Empty state's clothes.</p>
+    </div>
+  </div>
+
+  <div class="check" data-check>
+    <p class="check__q">One Drone is left in the Fleet. Under
+      <code>repeat(auto-fit, minmax(240px, 1fr))</code>, that tile renders…</p>
+    <div class="check__options">
+      <button class="check__opt" data-correct>stretched across the full row</button>
+      <button class="check__opt">collapsed to its minimum width</button>
+      <button class="check__opt">centred within one narrow track</button>
+    </div>
+    <div class="check__feedback">
+      <p><code>auto-fit</code> collapses the empty tracks, so the one surviving track
+        takes the whole <code>1fr</code>. <code>auto-fill</code> keeps the empty tracks
+        and the tile stays 240px. With a full grid the two behave identically, which is
+        why this survives review — it only diverges when the data is sparse.</p>
+    </div>
+  </div>
+
+  <div class="check" data-check>
+    <p class="check__q">Hurff splits Empty into three causes. Which is <em>not</em> one
+      of them?</p>
+    <div class="check__options">
+      <button class="check__opt" data-correct>The server refused the request</button>
+      <button class="check__opt">The person cleared it themselves</button>
+      <button class="check__opt">The search returned no matches</button>
+    </div>
+    <div class="check__feedback">
+      <p>A refused request is the <strong>Error</strong> state, not the Empty one. The
+        three causes of Empty are first use, user-cleared, and no results — and they
+        want different words on the screen. Your board's empty state is the first kind.</p>
+    </div>
+  </div>
+
+  <h2>Read this next</h2>
+
+  <p class="callout callout--source">
+    <span class="callout__label">Primary source · 15 minutes</span>
+    <a href="https://www.scotthurff.com/posts/why-your-user-interface-is-awkward-youre-ignoring-the-ui-stack/">How
+    to fix a bad user interface</a> — Scott Hurff. The original, and still the clearest
+    statement of the idea. Read the Partial State section slowly; it is the part everyone
+    skims and the part you just failed.
+  </p>
+
+  <p>Then keep <a href="../reference/ui-state-inventory.html">the state inventory
+    reference card</a> to hand — it has the five states, the three causes of Empty, NN/g's
+    three guidelines and the <code>auto-fit</code> trap on one printable page. That card,
+    not this lesson, is the thing you'll come back to.</p>
+
+  <footer class="footer">
+    <h2>Onward</h2>
+    <ul class="onward">
+      <li><a href="../reference/ui-state-inventory.html">Reference — The state inventory</a></li>
+      <li><a href="../MISSION.md">Mission</a></li>
+      <li><a href="../RESOURCES.md">Resources</a></li>
+    </ul>
+
+    <p class="ask"><strong>I'm your teacher here — ask me things.</strong> Anything in
+      this lesson that didn't land, any disagreement with the finding, or the open
+      question above about how a Drone gets registered. If you want, say the word and
+      we'll fix both holes in your board together; or if you'd rather try it yourself
+      first, do that and I'll review what you wrote.</p>
+  </footer>
+
+</div>
+<script src="../assets/practice.js"></script>
+</body>
+</html>

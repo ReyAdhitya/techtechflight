@@ -1,5 +1,11 @@
 # We use the CrewAI DESIGN.md, adapted for a product surface, with colour reserved for exceptions
 
+> **Superseded by [ADR-0009](./0009-paper-and-marigold-shared-with-the-proposal-console.md).**
+> The palette, type and radius below are no longer what the board runs; `crewai.design.md`
+> is deleted and `design.md` replaces it. Kept because the reasoning under "Colour carries
+> only exceptions" did **not** change with the palette — it is restated in ADR-0009 and is
+> still the rule the board is built on.
+
 The visual system comes from `crewai.design.md` — pure black canvas, coral `#f75a36` as
 border-and-CTA voltage only, no font weight above 500, and no shadow tier (elevation is
 lightness contrast alone). Components are built on Radix Primitives, which are headless

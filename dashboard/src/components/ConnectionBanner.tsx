@@ -7,6 +7,11 @@ import type { ConnectionStatus } from '../fleet-connection.ts'
  * same, so this speaks about the board rather than about any Drone. It stays clear of
  * the Status vocabulary entirely — not just Offline, but the words the glossary bars as
  * synonyms for it, so that nothing here can be misread as something about a Drone.
+ *
+ * It is named, because the board has a second live region — the Needs Attention count —
+ * and an unnamed pair leaves a Teacher hearing an announcement with no way to tell
+ * whether it was about a Drone or about the board. The name observes the same rule as
+ * the words below it and stays clear of the Status vocabulary.
  */
 export function ConnectionBanner({ connection }: { connection: ConnectionStatus }) {
   if (connection === 'live') return null
@@ -14,7 +19,12 @@ export function ConnectionBanner({ connection }: { connection: ConnectionStatus 
   const connecting = connection === 'connecting'
 
   return (
-    <div className="connection" role="status" data-connection={connection}>
+    <div
+      className="connection"
+      role="status"
+      aria-label="Ground station connection"
+      data-connection={connection}
+    >
       <strong className="connection__headline">
         {connecting
           ? 'Connecting to the ground station'

@@ -111,6 +111,7 @@ function PreFlight({
             {blocking.map((drone) => (
               <li key={drone.id}>
                 <Link
+                  prefetch={false}
                   href={`/drone?id=${encodeURIComponent(drone.id)}`}
                   className={cn(
                     // py-3 rather than py-2: at py-2 the row came to 41px, just under the

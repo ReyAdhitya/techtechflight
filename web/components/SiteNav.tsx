@@ -50,6 +50,14 @@ export function SiteNav() {
             <li key={destination.href}>
               <Link
                 href={destination.href}
+                /*
+                 * Nothing to prefetch. A static export has no RSC payload behind a route,
+                 * so every prefetch asked for one, got HTML, and aborted — six wasted
+                 * requests on every screen, and a console full of them on a projector in
+                 * front of a class. Turning it off costs nothing: none of it was ever
+                 * being cached.
+                 */
+                prefetch={false}
                 className={cn('site-nav__link', active && 'site-nav__link--active')}
                 aria-current={active ? 'page' : undefined}
                 title={destination.hint}

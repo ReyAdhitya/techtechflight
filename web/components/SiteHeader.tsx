@@ -45,7 +45,7 @@ export function SiteHeader() {
           <ThemeToggle />
           <DisplayScaleToggle />
           {/* Not in the navigation: the room and the records, rather than a place to go. */}
-          <Link href="/settings" className="site-header__settings">
+          <Link href="/settings" prefetch={false} className="site-header__settings">
             Settings
           </Link>
         </div>

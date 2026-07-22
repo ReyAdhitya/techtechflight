@@ -6,6 +6,7 @@ import {
   readLogbook,
   readServerLogbook,
   replaceLogbook,
+  exportLogbook,
   recordsAreHeavy,
   recordsSize,
   studentsFrom,
@@ -96,15 +97,7 @@ export function SettingsScreen() {
             type="button"
             className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
             onClick={() => {
-              const blob = new Blob([JSON.stringify(book, null, 2)], {
-                type: 'application/json',
-              })
-              const url = URL.createObjectURL(blob)
-              const link = document.createElement('a')
-              link.href = url
-              link.download = 'techtechflight-logbook.json'
-              link.click()
-              URL.revokeObjectURL(url)
+              exportLogbook(book)
               setMessage('Exported.')
             }}
           >

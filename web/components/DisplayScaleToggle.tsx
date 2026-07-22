@@ -46,7 +46,7 @@ export function DisplayScaleToggle() {
       // Positioned by the control cluster in the page, not here. Hover uses the plain
       // colour transition rather than the board's settle speed — interaction feedback
       // should be immediate, where news about a Drone is meant to be caught in passing.
-      className="label inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-pill border border-hairline bg-canvas px-3 py-1.5 text-ink-muted transition-colors hover:border-ink hover:text-ink"
+      className="label inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-pill border border-hairline bg-canvas px-3 py-1.5 text-ink-muted transition-colors hover:border-ink hover:text-ink"
       onClick={toggle}
       aria-label={
         mounted
@@ -57,7 +57,9 @@ export function DisplayScaleToggle() {
       }
     >
       <ScaleIcon className="size-4" strokeWidth={1.75} aria-hidden="true" />
-      {mounted ? (large ? 'Standard size' : 'Large format') : 'Size'}
+      <span className="room-control-label">
+        {mounted ? (large ? 'Standard size' : 'Large format') : 'Size'}
+      </span>
     </button>
   )
 }

@@ -302,9 +302,17 @@
     border-color: var(--border);
   }
 
-  html,
-  body {
+  html {
     height: 100%;
+  }
+
+  /*
+   * A fixed body height makes a sticky child stop at the first viewport's lower edge.
+   * The Fleet can be much taller than that, especially in phone landscape, so the body
+   * must grow with its Drones while retaining a full-viewport floor.
+   */
+  body {
+    min-height: 100%;
   }
 
   html {
@@ -432,20 +440,6 @@
   }
 
   /*
-   * The summary is the answer the board exists to give, so it remains in view with a
-   * large Fleet. The room controls stay above it; the offset is expressed in rem so both
-   * pieces move together in large format.
-   */
-  .fleet-summary-shell {
-    position: sticky;
-    top: 4.75rem;
-    z-index: 20;
-    margin-inline: -0.25rem;
-    padding: 0.5rem 0.25rem 0;
-    background: var(--background);
-  }
-
-  /*
    * `auto-fill` deliberately keeps empty tracks. One Drone therefore remains the same
    * readable tile width as six instead of stretching into a full-width banner.
    */
@@ -466,9 +460,21 @@
     z-index: 30;
     display: flex;
     justify-content: center;
-    padding: 0.75rem 1rem 0;
+    padding-block: max(0.75rem, env(safe-area-inset-top)) 0;
+    padding-inline-start: max(0.5rem, env(safe-area-inset-left));
+    padding-inline-end: max(0.5rem, env(safe-area-inset-right));
+    background-color: transparent;
     pointer-events: none;
     transition: padding var(--chrome-duration) var(--chrome-ease);
+  }
+
+  /*
+   * Once the bar floats, the whole sticky layer has to become an occluder. Leaving the
+   * shell transparent let the Status rails of scrolling Drone tiles show through its
+   * side gutters on phones, as if the rails belonged to the room controls.
+   */
+  .site-header-shell[data-floating='true'] {
+    background-color: var(--background);
   }
 
   .site-header {
@@ -511,9 +517,26 @@
     gap: 0.5rem;
   }
 
-  @media (min-width: 26rem) {
+  /*
+   * Mobile browsers shrink a page to fit any unbreakable row wider than the device.
+   * Keep both controls as full touch targets, but let their icons carry the compact
+   * phone treatment so the header never changes the layout viewport width.
+   */
+  @media (max-width: 48rem) {
+    .site-header {
+      gap: 0.5rem;
+      padding-inline: 0.5rem;
+    }
+
+    .room-control-label {
+      display: none;
+    }
+  }
+
+  @media (min-width: 48rem) {
     .site-header-shell {
-      padding-inline: 2rem;
+      padding-inline-start: max(2rem, env(safe-area-inset-left));
+      padding-inline-end: max(2rem, env(safe-area-inset-right));
     }
   }
 
@@ -556,6 +579,13 @@
 
   @media (max-width: 28rem) {
     .brand-product {
+      display: none;
+    }
+  }
+
+  /* Large format needs the same escape hatch a phone gets, one size tier earlier. */
+  @media (max-width: 56rem) {
+    :root[data-display='large'] .brand-product {
       display: none;
     }
   }

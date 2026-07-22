@@ -4,8 +4,9 @@ Phase 7, opened early and kept running. Findings are written down when they are 
 rather than reconstructed at the end, because the ones worth having are the ones nobody
 would remember to look for afterwards.
 
-**Current state:** 337 tests passing, three typechecks clean, the board builds, and the
-device audit is clean across 8 devices, 3 widths and 6 routes. Progress against the plan is in
+**Current state:** 338 tests passing, three typechecks clean, the board builds, and the
+device audit is clean across 8 devices, 3 widths and 6 routes. Every finding raised during
+implementation is closed, measured, or recorded as a decision with its reasoning. Progress against the plan is in
 [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md#progress).
 
 ## Coverage by project
@@ -19,56 +20,40 @@ device audit is clean across 8 devices, 3 widths and 6 routes. Progress against 
 
 ## Open findings
 
-Ordered by what would hurt most.
+### O6 — Teacher records live in one browser
+**Severity: medium · Requirement H6 · Mitigated, not solved**
 
-### O2 — `mergeEvents` publishes on every batch
-**Severity: low · Found in task 2.3**
+`localStorage` only. Both halves of the agreed mitigation are in place: Settings warns
+before the quota is reached rather than after, and ending a Lesson offers the export at
+the moment the records are worth most and have just grown.
 
-`web/lib/fleet-connection.ts` builds a new history object unconditionally, so the identity
-check in `#update` never matches and every `fleet-events` frame notifies every screen —
-including one carrying nothing new. Harmless while the ground station only sends a batch
-when it has something to say. Recorded in the test that found it.
+What remains is not a defect but a limitation with a name. Records still do not follow a
+Teacher to another laptop, and clearing site data still clears them. The eventual answer
+is a ground-station-backed record, and it needs its own ADR before any of it is written:
+it opens a **second write path** — with its own authority, conflict and multi-Teacher
+questions — and opening it in the same stretch of work as the Command path would mean two
+new directions of travel at once. **This is a decision for the product, not a task.**
 
-### O3 — Altitude is sampled at React's cadence, not Telemetry's
-**Severity: low · Found in task 3.5**
+### O5 — `/showcase` carries `three.js`
+**Severity: low · Audit F8 · Measured, and accepted**
 
-`AltitudeTracker.observe` runs in an effect, so it sees one reading per render rather than
-one per Fleet State. In production those coincide; under batching they do not, which is
-why the provider test advances a tick at a time. It means a vertical rate is derived from
-however many renders happened, not however many readings arrived.
+Measured rather than argued about:
 
-### O5 — `/showcase` ships `three.js`
-**Severity: low · Audit F8**
+| | |
+|---|---|
+| All JS chunks in a build | 2,006 KB |
+| Chunks containing `three.js` | 871 KB |
+| What `/control` actually loads | **820 KB across 13 chunks** |
+| Does `/control` include `three.js`? | **No** |
 
-~1,500 LOC and a 908-line stylesheet, sole consumer of `three`, `@react-three/*` and
-`framer-motion`. Route-level splitting keeps it out of the product bundle; it is in every
-install and build. Untouched by the redesign. A decision, not a defect.
+So it costs a Teacher nothing at runtime — route splitting does what it was assumed to do.
+What it does cost is install time, and 871 KB sitting unused in the `web/out` a School is
+served. That is small enough to accept, and `/showcase` earns its place as the design
+argument the restrained board was chosen against.
 
-### O6 — Teacher records still live in one browser
-**Severity: medium · Requirement H6 · Partly mitigated**
-
-`localStorage` only, and the redesign added Exercises, plans and Command records to it.
-Settings now warns before the quota is reached rather than after, which prevents the
-silent failure — a save throwing while the board carries on working perfectly. It does
-not solve the underlying limitation: records still do not follow a Teacher to another
-laptop, and clearing site data still clears them. A ground-station-backed record is the
-eventual answer and needs its own ADR, because it opens a second write path with its own
-authority and conflict questions.
-
-### O7 — One transient test failure, not reproduced
-**Severity: watch**
-
-`FleetProvider > brings the Fleet into contact` failed once during task 7.1 and passed on
-three subsequent full runs and three isolated ones. It ran concurrently with a `tsc`
-invocation at the time, so the likeliest explanation is timer starvation under load rather
-than a real race. Recorded rather than dismissed: if it returns, the fake-timer advance in
-that test is the first place to look.
-
-### O8 — An empty `dashboard/` directory persists on disk
-**Severity: cosmetic**
-
-A file handle blocked `rmdir` after the contents were removed. Git is clean and does not
-track empty directories, so it affects nothing but a directory listing.
+**Retiring it is a one-line decision available at any time** — the same reasoning ADR-0010
+applied to `dashboard/` would apply — but it is somebody's design work rather than a
+defect, so it is not removed on the strength of a bundle measurement.
 
 ## The device audit
 
@@ -116,6 +101,10 @@ Each was caught by a check rather than by luck, which is the part worth keeping.
 | A test asserted behaviour the code **does not have** (O2). Replaced rather than the production code quietly changed | Task 2.3 | Running it |
 | Every navigation link **aborted a prefetch** — a static export has no RSC payload behind a route, so six wasted requests per screen and a console full of them | Audit F7, task 8.5 | Driving a real browser through every link |
 | Every navigation link was **40px tall**, four pixels short of a reliable tap, on every screen and every device | Task 8.3 | Probing 44px around each control on 8 devices |
+| `mergeEvents` **republished a record that had not changed**, re-rendering every screen on every replayed batch | O2 | A test that had only described it in a comment |
+| Altitude was sampled at **React's render cadence, not Telemetry's** — several Fleet States in one batch collapsed to one reading, so a steadily climbing Drone produced no rate at all | O3 | Writing the test the batched way and watching it fail |
+| A **transient test failure** that did not reproduce across ten subsequent full runs; ran alongside a `tsc` invocation, and has not returned since | O7 | Repeating the run rather than dismissing it |
+| An empty `dashboard/` directory | O8 | Contents removed; the directory itself is held by a file handle and is untracked, so it survives only until the handle is released |
 
 ## Final verification
 

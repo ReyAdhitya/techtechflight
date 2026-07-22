@@ -7,7 +7,7 @@ import type {
 } from '@techtechflight/contract'
 import { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 import { CLASSROOM_FLEET, SimulatedTelemetrySource } from '@techtechflight/fleet-core/simulator'
-import type { FleetLink, FleetSnapshot } from './fleet-link'
+import type { FleetLink, FleetSnapshot, ScenarioControls } from './fleet-link'
 
 /**
  * A Fleet that runs in this browser, with no ground station behind it.
@@ -77,7 +77,7 @@ export class LocalFleetLink implements FleetLink {
    * Drone to land is a request to an aircraft, and inventing a fault is the world
    * misbehaving. Only the first can exist on real hardware.
    */
-  get scenarios(): SimulatedTelemetrySource {
+  get scenarios(): ScenarioControls {
     return this.#simulator
   }
 

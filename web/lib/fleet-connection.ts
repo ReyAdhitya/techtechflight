@@ -63,6 +63,14 @@ export class FleetConnection implements FleetLink {
     return this.#snapshot
   }
 
+  /**
+   * Nothing. A Fleet reached across a socket is whatever the ground station is talking to,
+   * and this board has no business pretending a real Drone has faulted.
+   */
+  get scenarios(): null {
+    return null
+  }
+
   subscribe(listener: (snapshot: FleetSnapshot) => void): Unsubscribe {
     this.#listeners.add(listener)
     return () => this.#listeners.delete(listener)

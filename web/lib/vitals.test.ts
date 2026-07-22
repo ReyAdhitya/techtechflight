@@ -7,8 +7,10 @@ import {
 } from '@techtechflight/contract/fixtures'
 import type { DroneState, FleetState } from '@techtechflight/contract'
 import {
+  AlertTracker,
   AltitudeTracker,
   alertQueue,
+  compareStrips,
   enduranceMs,
   fleetVitals,
   flightPhase,
@@ -341,6 +343,98 @@ describe('the Fleet-wide queue', () => {
   })
 })
 
+describe('when a condition began', () => {
+  const stopped = () =>
+    aDroneState({
+      lastContact: NOW,
+      telemetry: aTelemetry({ emergencyStopTriggered: true }),
+    })
+
+  it('stamps a brand new condition with the moment it appeared', () => {
+    const vitals = fleetVitals(input(aFleetState([stopped()], NOW), { now: 5_000 }))
+    expect(vitals[0]!.alerts[0]!.since).toBe(5_000)
+  })
+
+  it('keeps the original start time as the condition persists', () => {
+    const tracker = new AlertTracker()
+    const first = fleetVitals(input(aFleetState([stopped()], NOW), { now: 5_000 }))
+    tracker.observe(first, 5_000)
+
+    const later = fleetVitals(
+      input(aFleetState([stopped()], NOW), { now: 90_000, firstSeen: tracker.firstSeen }),
+    )
+    expect(later[0]!.alerts[0]!.since).toBe(5_000)
+  })
+
+  it('forgets a condition that has cleared, so its return is new news', () => {
+    const tracker = new AlertTracker()
+    tracker.observe(fleetVitals(input(aFleetState([stopped()], NOW), { now: 5_000 })), 5_000)
+    expect(tracker.firstSeen.size).toBe(1)
+
+    // Released. Nothing wrong with it now.
+    const released = aDroneState({ lastContact: NOW, telemetry: aTelemetry({}) })
+    tracker.observe(fleetVitals(input(aFleetState([released], NOW), { now: 60_000 })), 60_000)
+    expect(tracker.firstSeen.size).toBe(0)
+
+    // Pressed again an hour later — dated then, not an hour ago.
+    const again = fleetVitals(
+      input(aFleetState([stopped()], NOW), { now: 3_600_000, firstSeen: tracker.firstSeen }),
+    )
+    expect(again[0]!.alerts[0]!.since).toBe(3_600_000)
+  })
+})
+
+describe('strip order', () => {
+  const withAlerts = (id: string, name: string, telemetry: Parameters<typeof aTelemetry>[0]) =>
+    aDroneState({ id, name, lastContact: NOW, telemetry: aTelemetry(telemetry) })
+
+  it('puts two criticals above one, rather than falling back to the callsign', () => {
+    // 'Zulu' would sort last alphabetically, and has the worse aircraft.
+    const oneCritical = withAlerts('a', 'Alpha', { emergencyStopTriggered: true })
+    const twoCriticals = withAlerts('z', 'Zulu', {
+      emergencyStopTriggered: true,
+      fault: { code: 'IMU', description: 'Motion sensor needs recalibrating' },
+    })
+    const ordered = [...fleetVitals(input(aFleetState([oneCritical, twoCriticals], NOW)))].sort(
+      compareStrips,
+    )
+    expect(ordered[0]!.callsign).toBe('Zulu')
+  })
+
+  it('leaves a Fleet with nothing wrong in a stable callsign order', () => {
+    const fine = (id: string, name: string) =>
+      aDroneState({ id, name, lastContact: NOW, telemetry: aTelemetry({}) })
+    const ordered = [...fleetVitals(input(aFleetState([fine('c', 'Charlie'), fine('a', 'Alpha')], NOW)))].sort(
+      compareStrips,
+    )
+    expect(ordered.map((entry) => entry.callsign)).toEqual(['Alpha', 'Charlie'])
+  })
+
+  it('sinks a Drone with nothing wrong below one with only information', () => {
+    const fine = withAlerts('a', 'Alpha', {})
+    const lowOnCharge = withAlerts('z', 'Zulu', { batteryFraction: 0.1 })
+    const ordered = [...fleetVitals(input(aFleetState([fine, lowOnCharge], NOW)))].sort(compareStrips)
+    expect(ordered[0]!.callsign).toBe('Zulu')
+  })
+})
+
+describe('a Fleet with nothing wrong', () => {
+  it('produces no alerts at all, which is the tower\'s empty state', () => {
+    const healthy = [1, 2, 3].map((n) =>
+      aDroneState({
+        id: `d${n}`,
+        name: `Drone ${n}`,
+        status: 'Ready',
+        lastContact: NOW,
+        telemetry: aTelemetry({ batteryFraction: 0.9, airborne: false }),
+      }),
+    )
+    const vitals = fleetVitals(input(aFleetState(healthy, NOW)))
+    expect(vitals.every((entry) => entry.alerts.length === 0)).toBe(true)
+    expect(alertQueue(vitals)).toEqual([])
+  })
+})
+
 describe('the altitude tracker', () => {
   it('gives no rate from a single reading', () => {
     const tracker = new AltitudeTracker()
@@ -400,6 +494,18 @@ describe('vitals as a whole', () => {
   it('always gives an array of alerts, never null', () => {
     const vitals = fleetVitals(input(aFleetState([aNoResponseDrone()], NOW)))[0]!
     expect(Array.isArray(vitals.alerts)).toBe(true)
+  })
+
+  it('reads airborne from the airframe, not from the phase it resolved to', () => {
+    // A latched emergency stop resolves to `emergency` whichever way it happened, so
+    // phase cannot answer "is this thing off the ground" and a separate field must.
+    const stoppedOnADesk = aDroneState({
+      lastContact: NOW,
+      telemetry: aTelemetry({ airborne: false, emergencyStopTriggered: true, altitudeM: 0 }),
+    })
+    const vitals = fleetVitals(input(aFleetState([stoppedOnADesk], NOW)))[0]!
+    expect(vitals.phase).toBe('emergency')
+    expect(vitals.airborne).toBe(false)
   })
 
   it('threshold constants are the ones the spec fixed', () => {

@@ -54,6 +54,14 @@ class TestDashboard {
     })
   }
 
+  send(message: unknown): void {
+    this.#socket.send(JSON.stringify(message))
+  }
+
+  sendRaw(data: string): void {
+    this.#socket.send(data)
+  }
+
   close(): void {
     this.#socket.close()
   }
@@ -130,13 +138,57 @@ describe('a dashboard connecting', () => {
 })
 
 /**
+ * The one thing a board sends.
+ *
+ * The Fleet these tests run is fed by a Telemetry Source that only reports — which is what
+ * a hardware adapter looks like from here — so the ground station's honest answer is a
+ * refusal, and the refusal has to come back rather than being swallowed.
+ */
+describe('a dashboard asking for something', () => {
+  it('is told when the Fleet will not carry Commands', async () => {
+    const dashboard = await openDashboard()
+    await dashboard.next()
+
+    dashboard.send({
+      type: 'command',
+      command: { id: 'c-1', droneId: 'ttf-0001', kind: 'land', issuedAt: 1 },
+    })
+
+    const reply = (await dashboard.next()) as unknown as {
+      type: string
+      commandId: string
+      outcome: string
+      reason: string | null
+    }
+    expect(reply.type).toBe('command-outcome')
+    expect(reply.commandId).toBe('c-1')
+    expect(reply.outcome).toBe('refused')
+    expect(reply.reason).toMatch(/does not accept Commands/i)
+    dashboard.close()
+  })
+
+  it('carries on when a board sends something it cannot read', async () => {
+    const dashboard = await openDashboard()
+    await dashboard.next()
+
+    dashboard.sendRaw('not json at all')
+    dashboard.sendRaw(JSON.stringify({ type: 'command' }))
+
+    // Still serving: a malformed frame must not take the ground station down mid-lesson.
+    source.report('ttf-0001', { batteryFraction: 0.8 })
+    expect((await dashboard.next()).state.drones[0]?.status).toBe('Ready')
+    dashboard.close()
+  })
+})
+
+/**
  * The board, served beside the socket so a School runs one process (ADR-0002).
  *
- * The layout under test is the one a Next static export actually produces, which is not
- * the one a bundled single-page app produces: a page is a file called `tower.html`, and a
- * directory called `tower` sits beside it holding payload files and no index of its own.
- * A server that only knows how to look inside directories finds that directory, finds no
- * index in it, and returns 404 for every screen except the home page.
+ * The layout under test is the one a Next static export actually produces: a page is a
+ * file called `tower.html`, and a directory called `tower` sits beside it holding payload
+ * files and no index of its own. A server that only knows how to look inside directories
+ * finds that directory, finds nothing in it, and returns 404 for every screen but the home
+ * page.
  */
 describe('serving the board', () => {
   let boardDir: string

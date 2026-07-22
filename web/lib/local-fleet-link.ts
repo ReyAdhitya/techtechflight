@@ -1,4 +1,10 @@
-import type { Clock, DroneRegistration, Unsubscribe } from '@techtechflight/contract'
+import type {
+  Clock,
+  CommandOutcomeMessage,
+  DroneCommand,
+  DroneRegistration,
+  Unsubscribe,
+} from '@techtechflight/contract'
 import { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 import { CLASSROOM_FLEET, SimulatedTelemetrySource } from '@techtechflight/fleet-core/simulator'
 import type { FleetLink, FleetSnapshot } from './fleet-link'
@@ -39,6 +45,7 @@ export class LocalFleetLink implements FleetLink {
   readonly #simulator: SimulatedTelemetrySource
 
   #listeners = new Set<(snapshot: FleetSnapshot) => void>()
+  #outcomeListeners = new Set<(outcome: CommandOutcomeMessage) => void>()
   #snapshot: FleetSnapshot = { connection: 'connecting', state: null, receivedAt: null }
   #unsubscribe: Unsubscribe | null = null
   #started = false
@@ -81,6 +88,23 @@ export class LocalFleetLink implements FleetLink {
   subscribe(listener: (snapshot: FleetSnapshot) => void): Unsubscribe {
     this.#listeners.add(listener)
     return () => this.#listeners.delete(listener)
+  }
+
+  send(command: DroneCommand): void {
+    // The same GroundStation method the socket path reaches, so the guard that decides
+    // whether a Fleet accepts Commands at all lives in exactly one place.
+    const outcome = this.#station.command(command)
+    const message: CommandOutcomeMessage = {
+      type: 'command-outcome',
+      commandId: command.id,
+      ...outcome,
+    }
+    for (const listener of this.#outcomeListeners) listener(message)
+  }
+
+  onCommandOutcome(listener: (outcome: CommandOutcomeMessage) => void): Unsubscribe {
+    this.#outcomeListeners.add(listener)
+    return () => this.#outcomeListeners.delete(listener)
   }
 
   start(): void {

@@ -23,6 +23,9 @@ class FakeSocket implements FleetSocket {
   onClose(listener: () => void) {
     this.#close = listener
   }
+  send(_data: string) {
+    // The ground station's replies are delivered explicitly by these tests.
+  }
   close() {
     this.closed = true
   }

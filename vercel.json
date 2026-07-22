@@ -2,5 +2,8 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build --workspace=web",
   "outputDirectory": "web/out",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/", "destination": "/showcase", "permanent": false }
+  ]
 }

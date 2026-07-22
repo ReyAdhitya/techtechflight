@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { TelemetryObservation } from '@techtechflight/contract'
+import { isCommandable, type TelemetryObservation } from '@techtechflight/contract'
 import { TestClock } from '@techtechflight/contract/testing'
 import { CLASSROOM_FLEET } from './classroom-fleet.ts'
 import { SimulatedTelemetrySource } from './simulated-telemetry-source.ts'
@@ -286,5 +286,75 @@ describe('driving the real ground station', () => {
     expect(
       station.fleetState().drones.find((drone) => drone.name === 'Drone 5')?.status,
     ).toBe('Offline')
+  })
+})
+
+/**
+ * Commands, which are what a Teacher asks of an aircraft.
+ *
+ * Every one of these takes energy out of the Drone. The absence worth noticing is
+ * take-off: there is no Command that makes a Drone do more than it is already doing, so
+ * the worst outcome of a mistaken one is an aircraft that comes down when it need not
+ * have.
+ */
+describe('being asked to do something', () => {
+  const asked = (droneId: string, kind: 'land' | 'hold' | 'auto-land' | 'emergency-stop') => ({
+    id: `c-${kind}`,
+    droneId,
+    kind,
+    issuedAt: 1,
+  })
+
+  it('is recognised as a Fleet that accepts Commands at all', () => {
+    expect(isCommandable(simulator)).toBe(true)
+  })
+
+  it('brings a Drone down when asked to land', () => {
+    simulator.takeOff('ttf-0001')
+    clock.advance(3_000)
+    expect(latestFor('ttf-0001')?.telemetry?.airborne).toBe(true)
+
+    simulator.command(asked('ttf-0001', 'land'))
+    clock.advance(6_000)
+
+    expect(latestFor('ttf-0001')?.telemetry?.airborne).toBe(false)
+    expect(latestFor('ttf-0001')?.telemetry?.altitudeM).toBe(0)
+  })
+
+  it('stops a climb where it is when asked to hold', () => {
+    simulator.takeOff('ttf-0001')
+    clock.advance(1_000)
+    const partway = latestFor('ttf-0001')?.telemetry?.altitudeM ?? 0
+
+    simulator.command(asked('ttf-0001', 'hold'))
+    clock.advance(5_000)
+
+    // Still up, and no higher than it was told to stop at.
+    expect(latestFor('ttf-0001')?.telemetry?.airborne).toBe(true)
+    expect(latestFor('ttf-0001')?.telemetry?.altitudeM).toBeCloseTo(partway, 1)
+  })
+
+  it('leaves a Drone on the ground alone when asked to hold', () => {
+    simulator.command(asked('ttf-0002', 'hold'))
+    clock.advance(2_000)
+
+    expect(latestFor('ttf-0002')?.telemetry?.airborne).toBe(false)
+  })
+
+  it('latches the emergency stop, which stays latched', () => {
+    simulator.takeOff('ttf-0001')
+    clock.advance(2_000)
+
+    simulator.command(asked('ttf-0001', 'emergency-stop'))
+    clock.advance(10_000)
+
+    // Sticky on purpose: the physical thing it models is a button someone has to walk
+    // over and release, and a cut that cleared itself would let a Drone rejoin a lesson.
+    expect(latestFor('ttf-0001')?.telemetry?.emergencyStopTriggered).toBe(true)
+    expect(latestFor('ttf-0001')?.telemetry?.airborne).toBe(false)
+  })
+
+  it('ignores a Command for a Drone this Fleet does not have', () => {
+    expect(() => simulator.command(asked('ttf-9999', 'land'))).not.toThrow()
   })
 })

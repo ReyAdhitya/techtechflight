@@ -1,6 +1,8 @@
 import type {
   AutoLandingState,
   Clock,
+  CommandableSource,
+  DroneCommand,
   DroneId,
   DroneRegistration,
   FaultReport,
@@ -22,7 +24,7 @@ import type {
  *
  * It reports observations and nothing else. It has no opinion about Status.
  */
-export class SimulatedTelemetrySource implements TelemetrySource {
+export class SimulatedTelemetrySource implements TelemetrySource, CommandableSource {
   readonly #drones: Map<DroneId, SimulatedDrone>
   readonly #clock: Clock
   readonly #reportIntervalMs: number
@@ -103,9 +105,56 @@ export class SimulatedTelemetrySource implements TelemetrySource {
     return () => this.#listeners.delete(listener)
   }
 
+  /**
+   * Carry out something the Teacher has asked for.
+   *
+   * This method, and the interface it satisfies, is the entire reason a Command can reach
+   * a Fleet at all (ADR-0011). A hardware Telemetry Source does not implement it, so a
+   * hardware Fleet refuses Commands structurally rather than by remembering to.
+   *
+   * Every one of these takes energy out of the aircraft. There is no case here that makes
+   * a Drone do more than it is already doing.
+   */
+  command(command: DroneCommand): void {
+    // A Command for a Drone this Fleet does not have is dropped, the same way Telemetry
+    // from one is — rather than throwing at whatever asked.
+    if (!this.#drones.has(command.droneId)) return
+
+    switch (command.kind) {
+      case 'land':
+        this.land(command.droneId)
+        return
+      case 'hold':
+        this.hold(command.droneId)
+        return
+      case 'auto-land':
+        this.beginAutoLanding(command.droneId)
+        return
+      case 'emergency-stop':
+        this.triggerEmergencyStop(command.droneId)
+        return
+    }
+  }
+
+  /**
+   * Stop going anywhere vertically and stay at this height.
+   *
+   * The one Command with no existing behaviour behind it. A Drone climbing toward two
+   * metres that is asked to hold stays where it is rather than finishing the climb, which
+   * is what a Teacher means when a Student has taken it up faster than they meant to.
+   */
+  hold(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    if (!drone.airborne) return
+    drone.autoLanding = false
+    drone.targetAltitudeM = drone.altitudeM
+  }
+
   // --- Scenario triggers -------------------------------------------------------
   // So a Fault or a lost link can be shown during a demonstration without waiting
-  // for one to happen on its own.
+  // for one to happen on its own. These are NOT Commands and must never be offered as
+  // though they were: asking a Drone to land is a request to an aircraft, and inventing a
+  // fault is the world misbehaving. Only the first can exist on real hardware.
 
   /** Take this Drone off the air. It falls silent, and will age to Offline. */
   loseLink(droneId: DroneId): void {

@@ -1,7 +1,13 @@
 'use client'
 
 import type { FleetEvent } from '@techtechflight/contract'
-import { addIncident, endLesson, tallyEvents, type LessonRecord } from '@/lib/logbook'
+import {
+  addIncident,
+  currentExercise,
+  endLesson,
+  tallyEvents,
+  type LessonRecord,
+} from '@/lib/logbook'
 import { describeEvent } from '@/lib/telemetry-presentation'
 
 /**
@@ -23,6 +29,7 @@ export function LessonStrip({
   readonly now: number
 }) {
   const elapsed = Math.max(0, now - lesson.startedAt)
+  const onNow = currentExercise(lesson, now)
   const sinceStart = events.filter((event) => event.at >= lesson.startedAt)
   const incidents = sinceStart.filter((event) => event.severity !== 'routine')
 
@@ -32,6 +39,11 @@ export function LessonStrip({
         <span className="label">Lesson under way</span>
         <span className="font-display text-body font-medium text-ink">{lesson.label}</span>
         <span className="tnum text-value text-ink-subtle">{formatElapsed(elapsed)}</span>
+        {onNow && (
+          <span className="text-value text-ink">
+            Exercise {onNow.position} of {onNow.of}: {onNow.exercise.name}
+          </span>
+        )}
         {incidents.length > 0 && (
           <span className="tnum text-value text-status-fault">
             {incidents.length} {incidents.length === 1 ? 'incident' : 'incidents'}

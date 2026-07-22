@@ -396,6 +396,36 @@ export function addIncident(id: string, incident: LessonIncident): void {
   })
 }
 
+/**
+ * Which Exercise a Lesson is on, and how far through the sequence it is.
+ *
+ * Advances on the durations the Teacher gave. An Exercise with no duration has no end, so
+ * it becomes the current one and stays there — which is the honest answer rather than
+ * guessing a length nobody stated, and means a plan written without times still reads as
+ * a plan rather than as a countdown running out.
+ */
+export function currentExercise(
+  lesson: LessonRecord,
+  now: number,
+): { readonly exercise: Exercise; readonly position: number; readonly of: number } | null {
+  const exercises = lesson.exercises ?? []
+  if (exercises.length === 0) return null
+
+  let elapsed = Math.max(0, now - lesson.startedAt)
+  for (const [index, exercise] of exercises.entries()) {
+    if (exercise.minutes === undefined) {
+      return { exercise, position: index + 1, of: exercises.length }
+    }
+    const length = exercise.minutes * 60_000
+    if (elapsed < length) return { exercise, position: index + 1, of: exercises.length }
+    elapsed -= length
+  }
+
+  // Past the end of the plan. The Lesson carries on; there is simply nothing it is
+  // supposed to be doing, and saying so beats naming an Exercise that finished.
+  return null
+}
+
 /** The lesson currently under way, if there is one. */
 export function runningLesson(book: Logbook): LessonRecord | null {
   return book.lessons.find((lesson) => lesson.endedAt === null) ?? null

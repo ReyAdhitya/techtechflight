@@ -20,10 +20,13 @@ type Queue = ReturnType<typeof alertQueue>
 export function AttentionBar({
   queue,
   studentFor,
+  onAcknowledge,
 }: {
   readonly queue: Queue
   /** Who is flying it, so the instruction is "speak to Priya" rather than "look at Drone 3". */
   readonly studentFor: (droneId: DroneId) => string | null
+  /** Takes this one off the queue and reveals the next. Never touches the Drone. */
+  readonly onAcknowledge?: ((entry: Queue[number]) => void) | undefined
 }) {
   const worst = queue[0]
 
@@ -62,6 +65,15 @@ export function AttentionBar({
             <p className="m-0 text-value text-ink-subtle">
               Flown by {studentFor(worst.droneId)}.
             </p>
+          )}
+          {onAcknowledge && (
+            <button
+              type="button"
+              onClick={() => onAcknowledge(worst)}
+              className="mt-1 min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+            >
+              I have this
+            </button>
           )}
         </div>
       )}

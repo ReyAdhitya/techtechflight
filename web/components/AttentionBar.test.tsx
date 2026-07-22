@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { DroneId } from '@techtechflight/contract'
 import { alertQueue, type DroneVitals } from '@/lib/vitals'
 import { AttentionBar } from './AttentionBar'
@@ -100,5 +101,26 @@ describe('when several things need the Teacher', () => {
     bar(busy)
 
     expect(screen.queryByText(/Flown by/)).not.toBeInTheDocument()
+  })
+
+  it('offers to take the one it is showing, and hands back which one that was', async () => {
+    const taken: string[] = []
+    render(
+      <AttentionBar
+        queue={alertQueue(busy)}
+        studentFor={nobody}
+        onAcknowledge={(entry) => taken.push(`${entry.droneId}:${entry.kind}`)}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /I have this/i }))
+
+    expect(taken).toEqual(['ttf-0003:separation'])
+  })
+
+  it('offers nothing to take when there is nothing to take', () => {
+    render(<AttentionBar queue={alertQueue([aVitals()])} studentFor={nobody} onAcknowledge={() => {}} />)
+
+    expect(screen.queryByRole('button', { name: /I have this/i })).not.toBeInTheDocument()
   })
 })

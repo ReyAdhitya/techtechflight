@@ -3,7 +3,7 @@
 Phase 5. Work broken into tasks that can each be done, verified and committed on their own,
 in the order given: foundations before interface.
 
-Nothing here is built until Phase 6 is approved.
+Phase 6 executes it. Live progress is in the table below.
 
 Sources: [`REQUIREMENTS.md`](./REQUIREMENTS.md) · [`DESIGN.md`](./DESIGN.md) ·
 [`ARCHITECTURE.md`](./ARCHITECTURE.md) · ADRs
@@ -31,6 +31,61 @@ Verification beyond the suite, where a task calls for it:
 - **Desktop audit** — 3 widths.
 - **Live check** — the page loaded in a real browser. A runtime error white-screens a page
   that still returns HTTP 200, so an HTTP check proves nothing.
+
+---
+
+## Progress
+
+Updated as part of each task's own commit, so it cannot drift from what happened.
+
+| Stage | Task | Status | Commit |
+|---|---|---|---|
+| 1 | 1.1 Create the `fleet-core` workspace | ✅ | `0342412` |
+| 1 | 1.2 Move the pure modules | ✅ | `13b41c2` |
+| 1 | 1.3 Forbid Node APIs in `fleet-core` | ✅ | `94c0d9e` |
+| 1 | 1.4 Point the ground station at `web/out` | ✅ | `b60db43` |
+| 2 | 2.1 Port the 14 connection tests | ✅ | `ff5d006` |
+| 2 | 2.2 Fix the accidental assertion | ✅ | `d0c2630` |
+| 2 | 2.3 Cover history and event merging | ✅ | `95ea86d` |
+| 2 | 2.4 Retire `dashboard/` | ✅ | `abe5617` |
+| 3 | 3.1 Introduce `FleetLink` | ✅ | `f4d2fc6` |
+| 3 | 3.2 Build `LocalFleetLink` | ✅ | `a230195` |
+| 3 | 3.3 Equivalence between the links | ✅ | `4ddb5a7` |
+| 3 | 3.4 Choose the link, retire the fixtures | ✅ | `43de7a5` |
+| 3 | 3.5 Lift the observers into the provider | ✅ | `894d438` |
+| 3 | 3.6 Enforce the import boundary | ✅ | `847ff59` |
+| 4 | 4.1 Rename the route and the screen | ✅ | `32c1aab` |
+| 4 | 4.2 One Alert at a time | ✅ | `5b8317f` |
+| 4 | 4.3 Acknowledgement | ✅ | `7e9b863` |
+| 4 | 4.4 The scope | ✅ | `0f32b68` |
+| 4 | 4.5 Student wording | ✅ | `31c9ec4` |
+| 4 | 4.6 Running Lesson into Control | ✅ | `eda600c` |
+| 5 | 5.1 Contract: commands and the seam | ✅ | `7170692` |
+| 5 | 5.2 Simulator accepts commands | ✅ | `bc197be` |
+| 5 | 5.3 Fleet core routes or refuses | ✅ | `f82a618` |
+| 5 | 5.4 Both links can send | ✅ | `9587b28` |
+| 5 | 5.5 Commands on the strip | ✅ | `1ab1353` |
+| 5 | 5.6 Scenario panel, separated | ⬜ | |
+| 5 | 5.7 The simulation label | ✅ | `2f05910` |
+| 6 | 6.1 Logbook grows | ⬜ | |
+| 6 | 6.2 Assignment column | ⬜ | |
+| 6 | 6.3 Exercise list | ⬜ | |
+| 6 | 6.4 Starting with no plan at all | ⬜ | |
+| 6 | 6.5 Exercise on the flight strip | ⬜ | |
+| 6 | 6.6 Students screen | ⬜ | |
+| 7 | 7.1 The Reports shell | ⬜ | |
+| 7 | 7.2 "What needs doing" moves to Fleet | ⬜ | |
+| 7 | 7.3 Navigation reduces to five | ⬜ | |
+| 7 | 7.4 The Lesson report | ⬜ | |
+| 7 | 7.5 Printing | ⬜ | |
+| 8 | 8.1 Motion | ⬜ | |
+| 8 | 8.2 States sweep | ⬜ | |
+| 8 | 8.3 Device and desktop audits | ⬜ | |
+| 8 | 8.4 Records weight | ⬜ | |
+| 8 | 8.5 Boundary and dead-prefetch check | ⬜ | |
+| 8 | 8.6 Final verification | ⬜ | |
+
+Findings from tasks already done are logged in [`TEST_REPORT.md`](./TEST_REPORT.md).
 
 ---
 
@@ -85,8 +140,13 @@ files, `main.ts` and `server.ts`. This is a move, not a port.
 
 ### 1.2 Move the pure modules
 
-- **Objective:** `status.ts`, `charge.ts`, `fleet.ts`, `history.ts` and `simulator/` move to
-  `fleet-core/src/`, with their tests, unchanged.
+- **Objective:** `status.ts`, `charge.ts`, `fleet.ts`, `history.ts`, **`testing.ts`** and
+  `simulator/` move to `fleet-core/src/`, with their tests, unchanged.
+- **Corrected after doing it:** this plan said five modules; it is **seven**.
+  `testing.ts` holds `FakeTelemetrySource`, which both a moved test and the ground
+  station's own test need, so it moved and is published on a `/testing` subpath the way
+  `contract` already publishes its own. Leaving it behind would have made `fleet-core`
+  import upward from the ground station.
 - **Files:** the five modules and `fleet.test.ts`, `history.test.ts`,
   `simulator/simulated-telemetry-source.test.ts`; `ground-station/src/main.ts` and
   `server.ts` updated to import `@techtechflight/fleet-core`; `ground-station/package.json`
@@ -104,7 +164,13 @@ files, `main.ts` and `server.ts`. This is a move, not a port.
 
 - **Objective:** A `node:` import in the core fails the build rather than being discovered in
   the browser.
-- **Files:** `fleet-core/tsconfig.json` (no `@types/node`), lint or dependency rule.
+- **Files:** `fleet-core/tsconfig.json` (`types: []`, `lib: ES2022` only) **and the root
+  `typecheck` script**, which has to invoke it.
+- **Corrected after doing it:** a lint rule is not enough and neither is `types: []` on
+  its own. `@types/node` arrives *transitively* through `vitest`'s declarations, so the
+  first version of this guard passed with a `node:fs` import sitting in the core. The
+  strict config covers production sources only; test files are checked by the root
+  project.
 - **Depends on:** 1.2.
 - **Testing:** Add `import 'node:fs'` to a core file temporarily and confirm the build fails.
   Remove it. A guard nobody has seen fail is not a guard.
@@ -114,7 +180,12 @@ files, `main.ts` and `server.ts`. This is a move, not a port.
 
 - **Objective:** Audit finding **F2** — a School currently gets the old board.
 - **Files:** `ground-station/src/main.ts` (path), `ground-station/src/server.ts`
-  (`dashboardDir` → `boardDir`).
+  (`dashboardDir` → `boardDir`, **and `resolveFile`**), `server.test.ts` (5 new tests).
+- **Corrected after doing it:** this is **not** the two-line path change the plan assumed.
+  A static export names a screen `tower.html` and puts a `tower` directory beside it with
+  no index, so `resolveFile` found the directory, found nothing in it, and returned 404
+  for every screen but the home page. Verified against a running server before the fix:
+  `/` answered 200 and `/tower` answered 404.
 - **Depends on:** 1.2. Placed here rather than Stage 2 because it touches the files Stage 1
   already has open, and it is the highest-severity finding in the audit.
 - **Testing:** Build `web`, run the ground station, load the board it serves in a real

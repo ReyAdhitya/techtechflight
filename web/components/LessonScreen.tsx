@@ -12,6 +12,7 @@ import {
   serviceStateOf,
   startLesson,
   subscribeLogbook,
+  tallyEvents,
   type LessonRecord,
 } from '@/lib/logbook'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
@@ -196,12 +197,18 @@ function RunningLesson({
   const ready = drones.filter((drone) => isUsable(drone.status)).length
   const attention = drones.filter((drone) => needsAttention(drone.status)).length
 
-  const incidents = useMemo(
-    () =>
-      (snapshot.history?.events ?? []).filter(
-        (event) => event.at >= lesson.startedAt && event.severity !== 'routine',
-      ),
+  /*
+   * Everything since the lesson began, not just what went wrong. The timeline below only
+   * wants the incidents, but the tally kept at the end needs the routine events too — a
+   * fault means something quite different in two flights than it does in fifty.
+   */
+  const sinceStart = useMemo(
+    () => (snapshot.history?.events ?? []).filter((event) => event.at >= lesson.startedAt),
     [snapshot.history, lesson.startedAt],
+  )
+  const incidents = useMemo(
+    () => sinceStart.filter((event) => event.severity !== 'routine'),
+    [sinceStart],
   )
 
   const elapsed = Math.max(0, now - lesson.startedAt)
@@ -256,9 +263,16 @@ function RunningLesson({
               at: event.at,
               text: `${describeEvent(event)}${event.detail ? ` — ${event.detail}` : ''}`,
               severity: event.severity === 'fault' ? 'fault' : 'attention',
+              droneId: event.droneId,
+              droneName: event.droneName,
             })
           }
-          endLesson(lesson.id, at)
+          /*
+           * The counts go in at the same moment and for the same reason: this is the last
+           * point at which the events still exist. Maintenance reads them back so "which
+           * Drone keeps giving trouble" survives the ground station being restarted.
+           */
+          endLesson(lesson.id, at, tallyEvents(sinceStart))
         }}
       >
         End the lesson

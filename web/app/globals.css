@@ -536,6 +536,24 @@
   }
 
   /*
+   * Brings a small text link up to a 44px pointer target without moving anything.
+   *
+   * The Drone names in Maintenance are 24px of text sitting in a row already taller than
+   * that. Growing the text would change the layout to solve a problem that is only about
+   * where a finger lands, so the hit area grows instead and the type stays put. Kept
+   * strictly vertical so it never reaches sideways into the control beside it.
+   */
+  .tap-row {
+    position: relative;
+  }
+
+  .tap-row::after {
+    content: '';
+    position: absolute;
+    inset: -0.625rem 0;
+  }
+
+  /*
    * Wraps rather than scrolls. The bar is a scroller with its scrollbar hidden, which on
    * a 380px phone cut Settings off at the edge with nothing on screen to say it could be
    * swiped — indistinguishable from a section that had simply failed to render. Five

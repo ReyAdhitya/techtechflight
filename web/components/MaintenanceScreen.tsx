@@ -86,7 +86,7 @@ export function MaintenanceScreen() {
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <Link
                   href={`/drone?id=${encodeURIComponent(drone.id)}`}
-                  className="font-display text-body font-medium text-ink no-underline hover:underline"
+                  className="tap-row font-display text-body font-medium text-ink no-underline hover:underline"
                 >
                   {drone.name}
                 </Link>
@@ -145,7 +145,7 @@ export function MaintenanceScreen() {
               >
                 <Link
                   href={`/drone?id=${encodeURIComponent(entry.drone.id)}`}
-                  className="font-display text-body font-medium text-ink no-underline hover:underline"
+                  className="tap-row font-display text-body font-medium text-ink no-underline hover:underline"
                 >
                   {entry.drone.name}
                 </Link>

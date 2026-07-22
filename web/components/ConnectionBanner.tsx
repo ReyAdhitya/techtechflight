@@ -14,7 +14,34 @@ import { cn } from '@/lib/utils'
  * whether it was about a Drone or about the board. The name observes the same rule as
  * the words below it and stays clear of the Status vocabulary.
  */
-export function ConnectionBanner({ connection }: { connection: ConnectionStatus }) {
+export interface ConnectionBannerProps {
+  readonly connection: ConnectionStatus
+  /** True when what's on screen is a stand-in Fleet, not one the ground station sent. */
+  readonly demo?: boolean
+}
+
+export function ConnectionBanner({ connection, demo = false }: ConnectionBannerProps) {
+  /*
+   * A stand-in Fleet must never pass for real telemetry. Keep the notice compact and
+   * neutral, but visible: a Vercel preview is useful only if whoever opens it can tell
+   * that the Drones underneath are examples.
+   */
+  if (demo) {
+    return (
+      <div
+        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border border-hairline bg-muted px-4 py-3 text-ink"
+        role="status"
+        aria-label="Demonstration mode"
+        data-connection="demo"
+      >
+        <strong className="text-body font-medium">Demonstration Fleet</strong>
+        <span className="text-value text-ink-muted">
+          Sample classroom data — not live Drone telemetry.
+        </span>
+      </div>
+    )
+  }
+
   if (connection === 'live') return null
 
   const connecting = connection === 'connecting'

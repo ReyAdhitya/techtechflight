@@ -8,7 +8,7 @@ import type { DroneState, FleetState } from '@techtechflight/contract'
  * than comparing its Last Contact to the browser clock means a laptop whose clock is
  * wrong cannot invent or hide staleness.
  *
- * Null when the Drone has never been heard from — there is no age for silence that has
+ * Null when the Drone has never responded — there is no age for silence that has
  * always been.
  */
 export function ageMs(

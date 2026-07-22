@@ -104,8 +104,8 @@ export function deriveEvents(before: FleetState | null, after: FleetState): read
     if (!was) continue
 
     /*
-     * Being heard from for the first time is its own news, and it is not a Status
-     * change — a Drone the School has never heard from is already Offline, so the
+     * Being responded for the first time is its own news, and it is not a Status
+     * change — a Drone the School has never responded is already Offline, so the
      * moment it finally speaks would otherwise be silent unless it also happened to
      * arrive charged.
      */
@@ -210,7 +210,7 @@ export class FleetHistoryRecorder {
 
   /**
    * Readings are stamped with Last Contact rather than with the moment this ran, so a
-   * chart plots when a Drone was actually heard from. Without that, a Drone that fell
+   * chart plots when a Drone was actually responded. Without that, a Drone that fell
    * silent would draw a flat line at its last value instead of simply stopping — which
    * is the same lie the board spends its whole design avoiding.
    */
@@ -224,7 +224,7 @@ export class FleetHistoryRecorder {
       const last = samples.at(-1)
 
       if (last) {
-        // Nothing new has been heard, so there is nothing new to plot.
+        // Nothing new has responded, so there is nothing new to plot.
         if (drone.lastContact <= last.at) continue
         const moved = Math.abs(drone.telemetry.batteryFraction - last.fraction)
         if (drone.lastContact - last.at < minSampleIntervalMs && moved < minSampleDelta) continue

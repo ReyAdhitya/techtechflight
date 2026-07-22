@@ -2,7 +2,7 @@ import type { FleetThresholds, Status, Telemetry } from '@techtechflight/contrac
 
 export interface Ageing {
   readonly telemetry: Telemetry | null
-  /** Epoch milliseconds, or null when the Drone has never been heard from. */
+  /** Epoch milliseconds, or null when the Drone has never responded. */
   readonly lastContact: number | null
   readonly now: number
   readonly thresholds: FleetThresholds
@@ -19,7 +19,7 @@ function outOfContact({ lastContact, now, thresholds }: Ageing): boolean {
  *
  * Stale is a property of Telemetry; Offline is a Status. A Drone can be both, and that
  * is the intended presentation — last known values, shown with their age. A Drone never
- * heard from has no Telemetry to go stale.
+ * responded has no Telemetry to go stale.
  */
 export function isStale(ageing: Ageing): boolean {
   const { lastContact, now, thresholds } = ageing

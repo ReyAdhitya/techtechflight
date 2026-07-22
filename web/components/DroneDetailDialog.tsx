@@ -113,7 +113,7 @@ export function DroneDetailDialog({ drone, ageMs, onClose }: DroneDetailDialogPr
             <dt className="label self-center">Last Contact</dt>
             <dd className="tnum m-0 text-value">
               {drone.lastContact === null ? (
-                'Never heard from'
+                'No response yet'
               ) : (
                 <Tooltip.Provider delayDuration={200}>
                   <Tooltip.Root>

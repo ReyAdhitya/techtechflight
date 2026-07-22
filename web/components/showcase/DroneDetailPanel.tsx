@@ -98,7 +98,7 @@ export function DroneDetailPanel({ drone, ageMs, dark, onClose }: DroneDetailPan
               <dl className="m-0 grid grid-cols-[minmax(0,auto)_minmax(0,1fr)] gap-x-6 gap-y-2.5 border-t border-[var(--sc-line)] pt-4">
                 <Row label="Last Contact">
                   {drone.lastContact === null
-                    ? 'Never heard from'
+                    ? 'No response yet'
                     : `${formatAge(ageMs ?? 0)} · ${formatExactTime(drone.lastContact)}`}
                 </Row>
 

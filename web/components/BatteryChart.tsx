@@ -47,7 +47,7 @@ export function BatteryChart({ samples, since, until, className }: BatteryChartP
    *
    * Only said in words once it has been quiet for a real minute. Judging it by where the
    * line lands makes the caption a function of how wide the window happens to be, and a
-   * freshly started ground station has a window narrow enough that a Drone heard from a
+   * freshly started ground station has a window narrow enough that a Drone that responded a
    * second ago was being announced as silent for 0 min.
    */
   const silentFor = until - last.at
@@ -97,7 +97,7 @@ export function BatteryChart({ samples, since, until, className }: BatteryChartP
         <span>{formatClock(from)}</span>
         {stoppedShort && (
           <span className="italic text-stale" data-stale="true">
-            Nothing heard for {Math.round(silentFor / 60_000)} min
+            No response for {Math.round(silentFor / 60_000)} min
           </span>
         )}
         <span>{formatClock(until)}</span>

@@ -87,7 +87,7 @@ export interface LocalPosition {
  * (no sensor, older firmware), while **null means it can and there is nothing to
  * report**. A Drone with no rangefinder and a Drone with clear air around it are not
  * the same fact, and the board must never draw them the same way — the same rule that
- * keeps a never-heard-from Drone from looking like a flat one.
+ * keeps a Drone that has never responded from looking like a flat one.
  *
  * `extra` remains the escape hatch for anything the aircraft senses that this type has
  * not yet learned about, so a new reading reaches the detail view without a contract
@@ -182,7 +182,7 @@ export interface Clock {
   setTimeout(callback: () => void, delayMs: number): Unsubscribe
 }
 
-/** A Drone the School owns, whether or not it has ever been heard from. */
+/** A Drone the School owns, whether or not it has ever responded. */
 export interface DroneRegistration {
   readonly id: DroneId
   /** Short human-readable name a Teacher can match to the object in their hands. */
@@ -200,14 +200,14 @@ export interface DroneState {
   readonly name: string
   readonly status: Status
   /**
-   * Last known Telemetry, or null when the Drone has never been heard from. Retained
+   * Last known Telemetry, or null when the Drone has never responded. Retained
    * while Offline so yesterday's reading stays useful — it is always displayed with
    * its age and never as though it were current.
    */
   readonly telemetry: Telemetry | null
   /**
    * When Telemetry was last received, in epoch milliseconds. Null distinguishes
-   * "never heard from" from "not heard from recently"; a newly added Drone and a
+   * "never responded" from "without a recent response"; a newly added Drone and a
    * failed one must not look identical.
    */
   readonly lastContact: number | null

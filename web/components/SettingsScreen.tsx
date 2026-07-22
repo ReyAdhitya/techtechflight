@@ -6,8 +6,8 @@ import {
   readLogbook,
   readServerLogbook,
   replaceLogbook,
+  studentsFrom,
   subscribeLogbook,
-  type Logbook,
 } from '@/lib/logbook'
 import { useFleet } from './FleetProvider'
 
@@ -114,12 +114,15 @@ export function SettingsScreen() {
                 // Every field defaulted rather than trusted: a logbook exported by an
                 // older build has none of the newer ones, and a Teacher importing last
                 // term's records should get them back, not an error.
-                const parsed = JSON.parse(await file.text()) as Partial<Logbook>
+                const parsed = JSON.parse(await file.text()) as Parameters<
+                  typeof studentsFrom
+                >[0]
                 replaceLogbook({
                   notes: parsed.notes ?? {},
                   service: parsed.service ?? {},
                   lessons: parsed.lessons ?? [],
-                  pilots: parsed.pilots ?? {},
+                  // Reads the older name too, so a file exported last term still restores.
+                  students: studentsFrom(parsed),
                 })
                 setMessage('Imported.')
               } catch {

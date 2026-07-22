@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": [
     "contract",
+    "fleet-core",
     "ground-station",
     "dashboard",
     "web"

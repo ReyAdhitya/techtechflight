@@ -34,6 +34,9 @@ export const SEVERITY_PRESENTATION: Readonly<
 
 /** Height with its direction attached, because a number alone does not say what next. */
 export function formatVerticalMovement(vitals: DroneVitals): string {
+  // "0.0 m" for a Drone sitting on a desk is a measurement where a plain fact belongs,
+  // and the rest of the product already says this in words.
+  if (vitals.phase === 'on-ground') return 'On the ground'
   if (vitals.altitudeM === null) return 'Height not reported'
   const height = `${vitals.altitudeM.toFixed(1)} m`
   if (vitals.verticalRateMps === null) return height
@@ -42,10 +45,18 @@ export function formatVerticalMovement(vitals: DroneVitals): string {
   return `${height} · ${arrow} ${Math.abs(vitals.verticalRateMps).toFixed(1)} m/s`
 }
 
+/**
+ * Beyond this, a projection from a few minutes of discharge is arithmetic rather than a
+ * forecast. Saying "about 558 min left" from a nearly flat slope reads as precision the
+ * reading cannot carry, and one number like that costs the Teacher's trust in all of them.
+ */
+export const ENDURANCE_CONFIDENT_LIMIT_MS = 60 * 60_000
+
 /** Time left in words, rounded down so it never promises more than it can. */
 export function formatEndurance(enduranceMs: number | null): string {
   if (enduranceMs === null) return 'Not enough readings to say'
   if (enduranceMs === 0) return 'Already below usable'
+  if (enduranceMs >= ENDURANCE_CONFIDENT_LIMIT_MS) return 'over an hour left'
   const minutes = Math.floor(enduranceMs / 60_000)
   if (minutes < 1) return 'Under a minute'
   return `about ${minutes} min left`

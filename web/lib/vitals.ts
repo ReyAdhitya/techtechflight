@@ -257,9 +257,11 @@ function alertsFor(
       // Silence from an aircraft that is up is a different problem from silence from one
       // on a shelf: nobody can see what it is doing and it is still flying.
       severity: airborne ? 'critical' : 'warning',
+      // The magnitude goes in the sentence. "Has stopped responding" is true of eleven
+      // seconds and of ten minutes, and a Teacher needs to tell those apart at a glance.
       text: airborne
-        ? 'It is up and has stopped responding. Look at the room, not the screen.'
-        : 'It has stopped responding. Check it is switched on.',
+        ? `It is up and has not responded for ${Math.round(vitals.responseAgeMs / 1_000)}s. Look at the room, not the screen.`
+        : `No response for ${Math.round(vitals.responseAgeMs / 1_000)}s. Check it is switched on.`,
       since,
     })
   }

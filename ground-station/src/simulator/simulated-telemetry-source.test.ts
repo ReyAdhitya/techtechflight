@@ -127,6 +127,79 @@ describe('batteries draining', () => {
   })
 })
 
+describe('batteries charging', () => {
+  /*
+   * Without this the only direction a battery could ever move was down, and a long
+   * demonstration ended with a Fleet of flat Drones and no way back. It is also what the
+   * time-to-Ready forecast is developed against — a forecast is only worth anything if
+   * the thing it extrapolates from climbs the way a real pack does.
+   */
+
+  it('brings a plugged-in Drone back up rather than only ever down', () => {
+    simulator.setBattery('ttf-0001', 0.1)
+    simulator.plugIn('ttf-0001')
+    clock.advance(REPORT_INTERVAL)
+    const first = latestFor('ttf-0001')!.telemetry.batteryFraction
+
+    clock.advance(60_000)
+    const later = latestFor('ttf-0001')!.telemetry.batteryFraction
+
+    expect(later).toBeGreaterThan(first)
+    expect(later - first).toBeCloseTo(0.03, 3)
+  })
+
+  it('stops once the pack is full, the way a charger tapers off', () => {
+    simulator.setBattery('ttf-0001', 0.97)
+    simulator.plugIn('ttf-0001')
+    clock.advance(120_000)
+    const full = latestFor('ttf-0001')!.telemetry.batteryFraction
+
+    clock.advance(120_000)
+    const later = latestFor('ttf-0001')!.telemetry.batteryFraction
+
+    expect(full).toBeLessThanOrEqual(1)
+    // Draining again, which is only possible if charging stopped.
+    expect(later).toBeLessThan(full)
+  })
+
+  it('goes back to draining once unplugged', () => {
+    simulator.setBattery('ttf-0001', 0.2)
+    simulator.plugIn('ttf-0001')
+    clock.advance(60_000)
+    simulator.unplug('ttf-0001')
+    clock.advance(REPORT_INTERVAL)
+    const unplugged = latestFor('ttf-0001')!.telemetry.batteryFraction
+
+    clock.advance(60_000)
+
+    expect(latestFor('ttf-0001')!.telemetry.batteryFraction).toBeLessThan(unplugged)
+  })
+
+  it('refuses to charge a Drone that is in the air', () => {
+    simulator.setBattery('ttf-0001', 0.5)
+    simulator.takeOff('ttf-0001')
+    simulator.plugIn('ttf-0001')
+    clock.advance(REPORT_INTERVAL)
+    const first = latestFor('ttf-0001')!.telemetry.batteryFraction
+
+    clock.advance(60_000)
+
+    expect(latestFor('ttf-0001')!.telemetry.batteryFraction).toBeLessThan(first)
+  })
+
+  it('takes a Drone off the charger when it takes off', () => {
+    simulator.setBattery('ttf-0001', 0.5)
+    simulator.plugIn('ttf-0001')
+    clock.advance(REPORT_INTERVAL)
+
+    simulator.takeOff('ttf-0001')
+    const beforeFlight = latestFor('ttf-0001')!.telemetry.batteryFraction
+    clock.advance(60_000)
+
+    expect(latestFor('ttf-0001')!.telemetry.batteryFraction).toBeLessThan(beforeFlight)
+  })
+})
+
 describe('scenarios a demonstration needs on demand', () => {
   it('falls silent when a Drone loses its link, rather than reporting its silence', () => {
     clock.advance(REPORT_INTERVAL)

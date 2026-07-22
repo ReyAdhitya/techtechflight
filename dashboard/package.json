@@ -9,8 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/geist-mono": "^5.3.0",
+    "@fontsource/hanken-grotesk": "^5.3.0",
     "@fontsource/inter": "^5.1.0",
     "@fontsource/plus-jakarta-sans": "^5.1.0",
+    "@fontsource/schibsted-grotesk": "^5.3.0",
     "@radix-ui/react-dialog": "^1.1.4",
     "@radix-ui/react-progress": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",

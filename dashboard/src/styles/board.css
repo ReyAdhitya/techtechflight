@@ -38,9 +38,16 @@
   padding-bottom: var(--space-4);
 }
 
+/*
+ * An h1 rather than a p, so the board has a heading at all. The sizing here only
+ * neutralises the user-agent h1 defaults — the two spans below carry the real scale, and
+ * nothing in this system goes above weight 500.
+ */
 .summary__headline {
   margin: 0;
   font-family: var(--font-display);
+  font-size: var(--size-summary);
+  font-weight: var(--weight-medium);
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
@@ -68,10 +75,27 @@
   color: var(--ink-muted);
 }
 
-/* Present at zero, coloured only when it is not — so a Drone newly needing attention is a change. */
-.summary__attention[data-any] {
-  color: var(--coral);
+/* The count is already present at zero, so what a Teacher catches is this resolving. */
+.summary__attention {
+  transition: color var(--settle-duration) var(--settle-ease);
+}
+
+/*
+ * Present at zero, coloured only when it is not — so a Drone newly needing attention is
+ * a change. Which colour follows the same rule as the tiles: amber is fixable before the
+ * lesson, coral is a Drone coming out of the set. A summary that shouted coral at a flat
+ * battery would spend the loudest colour on the commonest problem.
+ */
+.summary__attention[data-severity] {
   font-weight: var(--weight-medium);
+}
+
+.summary__attention[data-severity='fixable'] {
+  color: var(--amber);
+}
+
+.summary__attention[data-severity='fault'] {
+  color: var(--coral);
 }
 
 /* --- Grid ---------------------------------------------------------------- */
@@ -82,7 +106,12 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  /*
+   * In rem, so a tile's minimum width scales with the type inside it. Left in px it
+   * would be the one measurement on the board that ignored large format, and tiles
+   * would tighten around their own text exactly when they were meant to open up.
+   */
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
   gap: var(--space-4);
   align-content: start;
 }
@@ -103,6 +132,15 @@
   border: 1px solid var(--hairline);
   border-radius: var(--radius-surface);
   padding: var(--space-5);
+  /*
+   * A Status change resolves rather than snaps. A transition rather than an animation,
+   * deliberately: transitions do not run on first paint, so a board opened on a Fleet
+   * that already has two Faults on it sits still, and only a change that happens while
+   * a Teacher is in the room actually moves.
+   */
+  transition:
+    border-color var(--settle-duration) var(--settle-ease),
+    background-color var(--settle-duration) var(--settle-ease);
 }
 
 /* Border-only voltage: colour outlines the tile, it never fills it. */
@@ -140,6 +178,22 @@
 }
 
 /*
+ * When the Drone is expected back.
+ *
+ * Sits with the battery rather than with the Last Contact line, because it qualifies
+ * the charge rather than the age of the reading. Amber, matching the Not Ready Status
+ * it only ever appears under — it is the same piece of news, said in time rather than
+ * in state. Absent entirely when the ground station has nothing honest to say, which is
+ * most of the time.
+ */
+.tile__ready-in {
+  margin: var(--space-1) 0 0;
+  font-size: var(--size-caption);
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
  * Fading is the meaning here: it marks Telemetry as Stale. The drop from ink-subtle to
  * ink-muted has to be a real step — if both tiers resolved to the same grey the cue
  * would read as decoration, and a Teacher could not tell current from last-known
@@ -150,7 +204,19 @@
   font-style: italic;
 }
 
+/*
+ * An Offline tile recedes as a whole. Without this, the hard-coded ink-subtle above wins
+ * on specificity over the tile's muted colour, and the contact line ends up brighter than
+ * the Drone's own name. Currently masked by Offline always being Stale as well; it would
+ * surface the moment those two thresholds stopped agreeing.
+ */
+.tile[data-status='Offline'] .tile__contact,
+.tile[data-status='Offline'] .tile__never {
+  color: inherit;
+}
+
 .tile__details {
+  position: relative;
   align-self: flex-start;
   margin-top: var(--space-2);
   background: none;
@@ -163,9 +229,22 @@
   cursor: pointer;
 }
 
+/*
+ * Takes the pointer target to the 44px this system asks of a button, without inflating
+ * the pill itself — at tile size a 44px-tall lozenge stops reading as the quiet
+ * secondary action it is. The label is already wider than 44px, so only height is short.
+ */
+.tile__details::after {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
 .tile__details:hover {
-  border-color: var(--white);
-  color: var(--white);
+  border-color: var(--ink);
+  color: var(--ink);
 }
 
 /* --- Status badge -------------------------------------------------------- */
@@ -176,6 +255,8 @@
   gap: var(--space-2);
   font-size: var(--size-label);
   font-weight: var(--weight-medium);
+  /* The shape is drawn in currentColor, so the badge and its glyph resolve together. */
+  transition: color var(--settle-duration) var(--settle-ease);
 }
 
 .status-badge[data-status='Ready'],
@@ -248,8 +329,11 @@
 .battery__fill {
   display: block;
   height: 100%;
-  background: var(--white);
-  transition: width 300ms ease-out;
+  background: var(--ink);
+  /* The board's one speed of change, shared with every other value that can move. */
+  transition:
+    width var(--settle-duration) var(--settle-ease),
+    background-color var(--settle-duration) var(--settle-ease);
 }
 
 .battery__fill[data-low] {
@@ -394,7 +478,7 @@
 }
 
 .tooltip {
-  background: var(--white);
+  background: var(--ink);
   color: var(--canvas);
   border-radius: var(--radius-surface);
   padding: 6px 10px;
@@ -403,7 +487,7 @@
 }
 
 .tooltip__arrow {
-  fill: var(--white);
+  fill: var(--ink);
 }
 
 /* The pill radius is kept for buttons only. */
@@ -422,9 +506,150 @@
 
 .button--primary {
   background: var(--coral);
-  color: var(--white);
+  color: var(--ink);
 }
 
 .button--primary:hover {
   background: var(--coral-dark);
+}
+
+/* --- Display scale ------------------------------------------------------- */
+
+/*
+ * The floating bar: identity on the left, the room controls on the right.
+ *
+ * It floats in the sense that matters — it travels with the page and keeps both within
+ * reach — but it is raised the way everything else here is raised: a hairline and a
+ * lighter surface, exactly as a tile is. ADR-0004 has no shadow tier, and a bar reaching
+ * for a drop shadow and a backdrop blur would be the only object on this board claiming
+ * a depth nothing else has.
+ *
+ * Opaque rather than translucent, because tiles scroll underneath it and a Teacher must
+ * never read a battery through a bar.
+ */
+.site-header {
+  position: sticky;
+  top: var(--space-3);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  /* Inline margin tracks the board's own padding, so the two share a gutter. */
+  margin: var(--space-3) var(--space-6) 0;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--console-line);
+  border-radius: var(--radius-surface);
+  background: var(--console-elev);
+  /* The one element that spends elevation, which is what the shared system reserves it
+   * for — it sits above the board and has to read as above it. Every other surface here
+   * is still raised by lightness alone. */
+  box-shadow: var(--shadow);
+  transition: box-shadow var(--chrome-duration) var(--chrome-ease),
+    background-color var(--settle-duration) var(--settle-ease);
+}
+
+.site-header__controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/*
+ * The logo in ink, not in marigold.
+ *
+ * `brightness(0)` crushes the artwork to black while keeping its alpha, and dark inverts
+ * that to the light ink — so the mark takes the ink of whichever theme is showing and
+ * never spends the status palette. A permanently marigold mark would put an amber within
+ * a few degrees of Not Ready on screen at all times.
+ */
+.brand-mark {
+  height: 1.75rem;
+  width: auto;
+  flex: none;
+  object-fit: contain;
+  filter: brightness(0);
+}
+
+:root[data-theme='dark'] .brand-mark {
+  filter: brightness(0) invert(1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .brand-mark {
+    filter: brightness(0) invert(1);
+  }
+}
+
+/* Shown only when the logo asset is absent. Same weight, same restraint. */
+.brand-wordmark {
+  font-family: var(--font-display);
+  font-size: var(--size-body);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/*
+ * Switches the board into large format. Kept as quiet as the rest of the bar: it is set
+ * once when a room is set up, not touched during a lesson.
+ */
+.display-toggle {
+  /* Transparent, like the tile's own Details button — it sits on the bar's surface
+   * rather than cutting a darker hole in it. */
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-size: var(--size-label);
+  padding: 6px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: color var(--settle-duration) var(--settle-ease),
+    border-color var(--settle-duration) var(--settle-ease);
+}
+
+.display-toggle:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* --- Narrow screens ------------------------------------------------------ */
+
+/*
+ * The floor.
+ *
+ * Below this the board was still holding desktop padding and a 44px summary, which on a
+ * 360px screen left the count fighting the edges for room. Only the two largest values
+ * step down — the tiles already reflow on their own, because the grid is auto-fit.
+ *
+ * In rem rather than px so the breakpoint follows the same font size everything else
+ * does: a Teacher who has scaled their type up meets the narrow layout sooner, which is
+ * when they actually need it.
+ */
+@media (max-width: 26rem) {
+  :root {
+    --size-summary: 2rem;
+    --size-dialog-title: 1.5rem;
+  }
+
+  .board {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+
+  /* The bar keeps sharing the board's gutter as that gutter narrows. */
+  .site-header {
+    margin-inline: var(--space-4);
+  }
+
+  .summary {
+    gap: var(--space-1) var(--space-4);
+  }
+
+  .tile {
+    padding: var(--space-4);
+  }
 }

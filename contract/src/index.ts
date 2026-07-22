@@ -113,6 +113,22 @@ export interface DroneState {
   readonly lastContact: number | null
   /** True when Telemetry is old enough that it may no longer be true. */
   readonly stale: boolean
+  /**
+   * How long until this Drone is expected to reach a usable charge, in milliseconds, or
+   * null whenever the ground station cannot honestly say.
+   *
+   * Derived from observed charge alone: the battery has to have been seen actually
+   * rising across several readings before anything is claimed. A Fleet whose batteries
+   * are swapped rather than charged in place therefore reports null here forever, and
+   * that is the correct answer rather than a missing feature — the charger is a device
+   * no Drone can see, so no honest forecast exists. Null is the resting value; a Teacher
+   * is never shown a number the Telemetry cannot support.
+   *
+   * Rounded to the minute it is displayed in, because an extrapolation does not deserve
+   * second precision and a value that changed every tick would republish the Fleet
+   * without a Teacher ever seeing it change.
+   */
+  readonly timeToReadyMs: number | null
 }
 
 /**

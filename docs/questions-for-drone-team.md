@@ -14,6 +14,7 @@ If it is not yet locked, we would like a say. Adopting an existing standard (MAV
 instead of inventing a custom format would save the software team weeks and give us a
 free simulator. If it is already locked, tell us what it is and we will conform.
 
+
 ---
 
 ## Tier 1 — blocks dashboard design today
@@ -64,6 +65,21 @@ retrofit.
 easiest to get wrong. Without a current sensor, "percent remaining" cannot be computed
 honestly; we can only show voltage and a rough state. We need to know which promise we
 are allowed to make.
+
+**7a. How does a flat Drone get charged — in place, or by swapping the pack?**
+Does the battery stay in the aircraft on a charger with the flight controller still
+powered and reporting, or does a flat pack come out and a charged one go in from a
+separate multi-bay charger?
+*Why we care:* the board tells a Teacher when a Not Ready Drone will be usable again
+(ADR-0007), and it derives that from watching the charge climb. Charging in place gives
+us a rising battery to forecast from. Swapping gives us a step, not a slope — the
+charger is a device the aircraft cannot see, so there is nothing to forecast and the
+board correctly says nothing.
+*This does not block us.* The feature is already built to be honest either way; the
+answer only decides how often it gets to speak. If swapping is the norm and Teachers
+want an estimate anyway, that is a different feature — learned from how long Drones have
+historically taken to come back — and we would want to know before building it.
+*Default we will assume:* charging in place.
 
 **8. How many aircraft will be in the air at the same time?**
 *Why we care:* one aircraft and a fleet are different products, and it is expensive to

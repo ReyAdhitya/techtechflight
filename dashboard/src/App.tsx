@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { Clock } from '@techtechflight/contract'
 import { FleetBoard } from './components/FleetBoard.tsx'
+import { SiteHeader } from './components/SiteHeader.tsx'
 import type { FleetConnection } from './fleet-connection.ts'
 
 export interface AppProps {
@@ -20,7 +21,18 @@ export function App({ connection, clock }: AppProps) {
     return () => connection.stop()
   }, [connection])
 
-  return <FleetBoard snapshot={snapshot} now={now} />
+  /*
+   * Identity and the room controls travel together in one bar above the Fleet. Both
+   * describe the room rather than the Drones, which is why they sit outside the board —
+   * and why a first Tab still lands on a Drone rather than on a control nobody touches
+   * mid-lesson.
+   */
+  return (
+    <>
+      <SiteHeader />
+      <FleetBoard snapshot={snapshot} now={now} />
+    </>
+  )
 }
 
 /**

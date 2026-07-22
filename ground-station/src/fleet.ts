@@ -9,6 +9,13 @@ import type {
   Unsubscribe,
 } from '@techtechflight/contract'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
+import {
+  DEFAULT_CHARGE_FORECAST,
+  forecastTimeToReady,
+  recordCharge,
+  type ChargeForecastOptions,
+  type ChargeSample,
+} from './charge.ts'
 import { deriveStatus, isStale } from './status.ts'
 
 export interface GroundStationOptions {
@@ -22,12 +29,16 @@ export interface GroundStationOptions {
    * the clock for a Drone to fall out of contact on its own.
    */
   readonly tickIntervalMs?: number
+  /** How much observed charge is enough to forecast from. See `charge.ts`. */
+  readonly chargeForecast?: ChargeForecastOptions
 }
 
 interface DroneRecord {
   readonly registration: DroneRegistration
   telemetry: Telemetry | null
   lastContact: number | null
+  /** Recent battery readings, kept only to tell charge going in from sensor noise. */
+  charge: readonly ChargeSample[]
 }
 
 /**
@@ -43,6 +54,7 @@ export class GroundStation {
   readonly #clock: Clock
   readonly #thresholds: FleetThresholds
   readonly #tickIntervalMs: number
+  readonly #chargeForecast: ChargeForecastOptions
 
   #listeners = new Set<(state: FleetState) => void>()
   #unsubscribeSource: Unsubscribe | null = null
@@ -54,9 +66,15 @@ export class GroundStation {
     this.#clock = options.clock
     this.#thresholds = options.thresholds ?? DEFAULT_THRESHOLDS
     this.#tickIntervalMs = options.tickIntervalMs ?? 1_000
+    this.#chargeForecast = options.chargeForecast ?? DEFAULT_CHARGE_FORECAST
     this.#records = [...options.registrations]
       .sort((a, b) => a.boardOrder - b.boardOrder)
-      .map((registration) => ({ registration, telemetry: null, lastContact: null }))
+      .map((registration) => ({
+        registration,
+        telemetry: null,
+        lastContact: null,
+        charge: [],
+      }))
   }
 
   start(): void {
@@ -70,8 +88,14 @@ export class GroundStation {
       // conjuring a tile for something the Teacher cannot find in the cupboard.
       if (!record) return
 
+      const at = this.#clock.now()
       record.telemetry = observation.telemetry
-      record.lastContact = this.#clock.now()
+      record.lastContact = at
+      record.charge = recordCharge(
+        record.charge,
+        { at, batteryFraction: observation.telemetry.batteryFraction },
+        this.#chargeForecast,
+      )
       this.#publishIfChanged()
     })
 
@@ -112,13 +136,25 @@ export class GroundStation {
       now,
       thresholds: this.#thresholds,
     }
+    const status = deriveStatus(ageing)
     return {
       id: record.registration.id,
       name: record.registration.name,
-      status: deriveStatus(ageing),
+      status,
       telemetry: record.telemetry,
       lastContact: record.lastContact,
       stale: isStale(ageing),
+      /*
+       * Only Not Ready carries a forecast. It is the one Status the glossary defines as
+       * expected to resolve, so it is the only one where "when" is a question a Teacher
+       * is asking. A Ready Drone has already arrived, a Flying one is in use, a Fault
+       * needs a person rather than time, and an Offline one is not being observed at
+       * all — a countdown on any of them would be answering something nobody asked.
+       */
+      timeToReadyMs:
+        status === 'Not Ready'
+          ? forecastTimeToReady(record.charge, this.#thresholds, this.#chargeForecast)
+          : null,
     }
   }
 
@@ -144,7 +180,10 @@ function sameFleet(before: readonly DroneState[], after: readonly DroneState[]):
       drone.status === other.status &&
       drone.lastContact === other.lastContact &&
       drone.stale === other.stale &&
-      drone.telemetry === other.telemetry
+      drone.telemetry === other.telemetry &&
+      // Quantised to the displayed minute upstream, so this compares what a Teacher
+      // would see rather than republishing the Fleet on every recalculation.
+      drone.timeToReadyMs === other.timeToReadyMs
     )
   })
 }

@@ -94,6 +94,19 @@ describe('coming up', () => {
 
     expect(connection.snapshot.state?.drones[0]?.name).toBe('Drone 1')
   })
+
+  it('ignores a frame of a kind it has never been told about', () => {
+    latestSocket().accept()
+    latestSocket().deliver(aFleetState([aDroneState({ name: 'Drone 1' })]))
+
+    // Well-formed JSON, unknown type. A ground station newer than this board would send
+    // one, and the board has to carry on rather than fall over on a message meant for a
+    // later version of itself.
+    latestSocket().deliverRaw(JSON.stringify({ type: 'something-newer', payload: 1 }))
+
+    expect(connection.snapshot.state?.drones[0]?.name).toBe('Drone 1')
+    expect(connection.snapshot.history).toBeUndefined()
+  })
 })
 
 describe('when the ground station goes away', () => {
@@ -196,6 +209,16 @@ describe('telling the board about it', () => {
     latestSocket().accept()
     latestSocket().drop()
 
-    expect(seen.map((snapshot) => snapshot.connection)).toEqual(['live', 'unreachable'])
+    /*
+     * Compared as transitions rather than as every snapshot published. A history or
+     * events frame publishes a snapshot too without the connection having changed, so
+     * asserting the whole sequence would tie a test about connection state to how many
+     * other kinds of message happened to arrive.
+     */
+    const transitions = seen
+      .map((snapshot) => snapshot.connection)
+      .filter((status, index, all) => status !== all[index - 1])
+
+    expect(transitions).toEqual(['live', 'unreachable'])
   })
 })

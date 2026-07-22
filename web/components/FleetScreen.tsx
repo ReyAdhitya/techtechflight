@@ -2,9 +2,26 @@
 
 import { useFleet } from './FleetProvider'
 import { FleetBoard } from './FleetBoard'
+import { WhatNeedsDoing } from './MaintenanceScreen'
 
-/** The board, reading the connection the group's layout holds. */
+/**
+ * The board, and what needs doing to it.
+ *
+ * Two halves of one question. The tiles say what every Drone is; the list underneath says
+ * what to do about the ones that are not, in the order they can be acted on. Both are
+ * about the Fleet right now, which is why they belong on the same screen — the list used
+ * to sit on Maintenance beside a question about the past, which is a different moment in
+ * a Teacher's day entirely.
+ */
 export function FleetScreen() {
   const { snapshot, now, demo } = useFleet()
-  return <FleetBoard snapshot={snapshot} now={now} demo={demo} />
+
+  return (
+    <>
+      <FleetBoard snapshot={snapshot} now={now} demo={demo} />
+      <div className="mx-auto w-full max-w-6xl px-4 pb-8 min-[26rem]:px-8">
+        <WhatNeedsDoing />
+      </div>
+    </>
+  )
 }

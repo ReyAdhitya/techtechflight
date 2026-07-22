@@ -15,6 +15,7 @@ import {
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
+import { AssignmentColumn } from './AssignmentColumn'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { StatusGlyph } from './StatusBadge'
@@ -148,6 +149,8 @@ function PreFlight({
           {withheld.map((drone) => drone.name).join(', ')}.
         </p>
       )}
+
+      <AssignmentColumn drones={drones} book={book} />
 
       <div className="flex flex-wrap items-end gap-3 border-t border-hairline pt-5">
         <div className="flex flex-1 flex-col gap-1">

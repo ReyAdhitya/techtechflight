@@ -6,6 +6,7 @@ import {
   assignStudent,
   clearStudents,
   studentOf,
+  currentExercise,
   readLogbook,
   readServerLogbook,
   runningLesson,
@@ -120,6 +121,7 @@ export function ControlScreen() {
               now={now}
               command={command}
               tracked={commandFor(entry.droneId)}
+              exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
             />
           ))}
         </ul>
@@ -187,6 +189,7 @@ function FlightStrip({
   now,
   command,
   tracked,
+  exercise,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -197,6 +200,8 @@ function FlightStrip({
   now: number
   command: (droneId: string, kind: CommandKind) => void
   tracked: TrackedCommand | null
+  /** What it is meant to be doing. Shown beside what it is doing; nothing compares them. */
+  exercise: string | null
 }) {
   const phase = PHASE_PRESENTATION[vitals.phase]
   const separation = formatSeparation(vitals)
@@ -241,6 +246,13 @@ function FlightStrip({
             : `Response ${formatAge(vitals.responseAgeMs)}`}
         </span>
       </div>
+
+      {exercise && (
+        // Intent beside behaviour. B7 was dropped, so the Teacher makes the comparison —
+        // an Exercise does not declare which flight phase it expects, and inventing one
+        // would raise alerts on a guess.
+        <p className="m-0 text-value text-ink-subtle">Meant to be: {exercise}</p>
+      )}
 
       {separation && (
         <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>

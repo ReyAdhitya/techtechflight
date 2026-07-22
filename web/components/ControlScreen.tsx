@@ -25,7 +25,8 @@ import { FormationMap } from './FormationMap'
 import { useFleet } from './FleetProvider'
 
 /**
- * The tower: the whole lesson at once, the way a controller reads a sector.
+ * The Flight Control Center: the whole lesson at once, the way a controller reads a
+ * sector.
  *
  * The Fleet board answers "can I hand this out" and is built to be glanced at. This is
  * built to be watched. The difference is that everything here says what to do next
@@ -36,7 +37,7 @@ import { useFleet } from './FleetProvider'
  * detail. A Teacher who looks up for two seconds should get the answer from the first
  * line without reading the rest.
  */
-export function TowerScreen() {
+export function ControlScreen() {
   const { snapshot, vitals } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 

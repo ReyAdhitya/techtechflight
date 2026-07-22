@@ -12,7 +12,8 @@ import {
 import { usePathname } from 'next/navigation'
 import type { Clock, DroneState } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
-import { FleetConnection, browserSocket, type FleetSnapshot } from '@/lib/fleet-connection'
+import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
+import type { FleetLink, FleetSnapshot } from '@/lib/fleet-link'
 import { buildScenario } from '@/lib/scenarios'
 
 /**
@@ -80,7 +81,7 @@ function LiveFleet({ children }: { children: ReactNode }) {
    * Built lazily rather than at module scope: `browserSocket` closes over `WebSocket`,
    * which does not exist while these pages are being prerendered into static HTML.
    */
-  const connection = useMemo(
+  const connection = useMemo<FleetLink>(
     () => new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket }),
     [clock],
   )

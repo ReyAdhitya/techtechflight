@@ -2,8 +2,5 @@
   "installCommand": "npm install",
   "buildCommand": "NEXT_PUBLIC_DEMO_ONLY=1 npm run build --workspace=web",
   "outputDirectory": "web/out",
-  "cleanUrls": true,
-  "redirects": [
-    { "source": "/", "destination": "/demo", "permanent": false }
-  ]
+  "cleanUrls": true
 }

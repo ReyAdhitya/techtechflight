@@ -69,7 +69,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 5 | 5.7 The simulation label | ✅ | `2f05910` |
 | 6 | 6.1 Logbook grows | ✅ | `pending` |
 | 6 | 6.2 Assignment column | ✅ | `pending` |
-| 6 | 6.3 Exercise list | ⬜ | |
+| 6 | 6.3 Exercise list | ✅ | `pending` |
 | 6 | 6.4 Starting with no plan at all | ⬜ | |
 | 6 | 6.5 Exercise on the flight strip | ⬜ | |
 | 6 | 6.6 Students screen | ⬜ | |

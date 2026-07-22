@@ -14,9 +14,11 @@ import { cn } from '@/lib/utils'
  * Drones that have been linked into a group are joined by a line, so a formation reads
  * as one thing rather than as several Drones that happen to be near each other.
  */
-export function FormationMap({
+export function Scope({
   drones,
   vitals,
+  selected,
+  onSelect,
 }: {
   drones: readonly DroneState[]
   /**
@@ -25,6 +27,9 @@ export function FormationMap({
    * plain "where was everything" picture History wants.
    */
   vitals?: readonly DroneVitals[]
+  /** Which Drone the Teacher is looking at, so a mark and its strip point at each other. */
+  selected?: string | null
+  onSelect?: ((droneId: string) => void) | undefined
 }) {
   const placed = drones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
@@ -133,7 +138,24 @@ export function FormationMap({
           const airborne = drone.status === 'Flying'
           const phase = vitals?.find((entry) => entry.droneId === drone.id)?.phase
           return (
-            <g key={drone.id} transform={`translate(${x(position.eastM)} ${y(position.northM)})`}>
+            <g
+              key={drone.id}
+              transform={`translate(${x(position.eastM)} ${y(position.northM)})`}
+              className={cn(onSelect && 'cursor-pointer')}
+              onClick={onSelect ? () => onSelect(drone.id) : undefined}
+            >
+              {/*
+                * A ring rather than a colour change, so "which one is that" is answered
+                * for a Teacher who cannot pick the highlight out on a bright projector.
+                * Sits under the mark so it reads as around it rather than over it.
+                */}
+              {selected === drone.id && (
+                <circle r="5" className="fill-transparent stroke-ink" strokeWidth="0.6" />
+              )}
+              {onSelect && (
+                // A finger is wider than a 2px dot. Invisible, and the whole target.
+                <circle r="6" className="fill-transparent" />
+              )}
               <circle
                 r={airborne ? 2.6 : 2}
                 className={cn(

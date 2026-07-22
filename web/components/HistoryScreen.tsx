@@ -6,7 +6,7 @@ import { formatAge } from '@/lib/age'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { EventTimeline } from './EventTimeline'
-import { FormationMap } from './FormationMap'
+import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
 
 type Lens = 'everything' | 'attention' | 'faults'
@@ -131,7 +131,7 @@ export function HistoryScreen() {
 
       <section className="flex flex-col gap-3 border-t border-hairline pt-6">
         <h2 className="label m-0">Where the Fleet is now</h2>
-        <FormationMap drones={drones} />
+        <Scope drones={drones} />
       </section>
     </main>
   )

@@ -39,6 +39,14 @@ export function deriveStatus(ageing: Ageing): Status {
   const { telemetry, thresholds } = ageing
 
   if (outOfContact(ageing) || telemetry === null) return 'Offline'
+  /*
+   * A latched emergency cut-out outranks even Flying, which is the one place this
+   * departs from the spec's table — and deliberately. An aircraft that has been cut is
+   * on its way down whatever its airborne flag still says, and reading it out as Flying
+   * would put the one Drone nobody should approach in the same bucket as the ones a
+   * class is happily flying. It is a Fault until someone has been to it and reset it.
+   */
+  if (telemetry.emergencyStopTriggered) return 'Fault'
   if (telemetry.airborne) return 'Flying'
   if (telemetry.fault !== null) return 'Fault'
   if (telemetry.batteryFraction < thresholds.usableBatteryFraction) return 'Not Ready'

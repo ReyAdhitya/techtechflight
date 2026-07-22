@@ -1,4 +1,10 @@
-import type { Clock, FleetState, ServerMessage, Unsubscribe } from '@techtechflight/contract'
+import type {
+  Clock,
+  FleetState,
+  FleetStateMessage,
+  ServerMessage,
+  Unsubscribe,
+} from '@techtechflight/contract'
 
 /**
  * Whether the board is in touch with the ground station.
@@ -132,7 +138,12 @@ export class FleetConnection {
   }
 }
 
-function parse(data: string): ServerMessage | null {
+/**
+ * The Vite board only ever wanted a snapshot. The ground station now also sends history
+ * on the same socket, so everything that is not a Fleet State is dropped here rather
+ * than teaching this board a vocabulary it has no screen for.
+ */
+function parse(data: string): FleetStateMessage | null {
   try {
     const message = JSON.parse(data) as ServerMessage
     return message.type === 'fleet-state' ? message : null

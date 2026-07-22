@@ -4,6 +4,7 @@ import { extname, join, normalize, resolve } from 'node:path'
 import { WebSocketServer } from 'ws'
 import type { ServerMessage } from '@techtechflight/contract'
 import type { GroundStation } from './fleet.ts'
+import type { FleetHistoryRecorder } from './history.ts'
 
 export interface FleetServerOptions {
   readonly station: GroundStation
@@ -13,6 +14,14 @@ export interface FleetServerOptions {
    * process on a Teacher's laptop (ADR-0002). Optional — in development Vite serves it.
    */
   readonly dashboardDir?: string
+  /**
+   * The record of the recent past, sent once on connect and then streamed.
+   *
+   * Optional so a ground station can run without one — a board that receives no history
+   * shows no timeline rather than failing, which is the same graceful-absence rule the
+   * rest of the product follows.
+   */
+  readonly history?: FleetHistoryRecorder
 }
 
 export interface FleetServer {
@@ -28,7 +37,7 @@ export interface FleetServer {
  * and holds no Fleet logic of its own.
  */
 export async function startFleetServer(options: FleetServerOptions): Promise<FleetServer> {
-  const { station, dashboardDir } = options
+  const { station, dashboardDir, history } = options
   const requestedPort = options.port ?? 4321
 
   const http = createServer((request, response) => {
@@ -37,11 +46,25 @@ export async function startFleetServer(options: FleetServerOptions): Promise<Fle
   const sockets = new WebSocketServer({ server: http, path: '/fleet' })
 
   sockets.on('connection', (socket) => {
+    /*
+     * Snapshot first, then the past. A board that painted a timeline before it had a
+     * Fleet to hang it on would show a Teacher what happened to Drones it was not yet
+     * displaying — and the snapshot is the thing they opened the board for.
+     */
     send(socket, { type: 'fleet-state', state: station.fleetState() })
+    if (history) send(socket, { type: 'fleet-history', history: history.history() })
 
-    const unsubscribe = station.onFleetState((state) => {
+    const unsubscribeState = station.onFleetState((state) => {
       send(socket, { type: 'fleet-state', state })
     })
+    const unsubscribeEvents = history?.onEvents((events) => {
+      send(socket, { type: 'fleet-events', events })
+    })
+
+    const unsubscribe = () => {
+      unsubscribeState()
+      unsubscribeEvents?.()
+    }
     socket.on('close', unsubscribe)
     socket.on('error', unsubscribe)
   })

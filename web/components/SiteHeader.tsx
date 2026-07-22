@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { DisplayScaleToggle } from './DisplayScaleToggle'
+import { SiteNav } from './SiteNav'
 import { ThemeToggle } from './ThemeToggle'
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -35,6 +36,8 @@ export function SiteHeader() {
         transition={reduced ? { duration: 0 } : { duration: 0.55, ease: EASE }}
       >
         <BrandMark />
+
+        <SiteNav />
 
         <div className="site-header__controls">
           <ThemeToggle />

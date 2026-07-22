@@ -1,4 +1,14 @@
-import type { Clock, FleetState, ServerMessage, Unsubscribe } from '@techtechflight/contract'
+import type {
+  Clock,
+  FleetEvent,
+  FleetHistory,
+  FleetState,
+  ServerMessage,
+  Unsubscribe,
+} from '@techtechflight/contract'
+
+/** How many events a board keeps once the ground station starts streaming them. */
+const MAX_RETAINED_EVENTS = 500
 
 /**
  * Whether the board is in touch with the ground station.
@@ -14,6 +24,14 @@ export interface FleetSnapshot {
   readonly state: FleetState | null
   /** Browser clock reading when `state` arrived — the anchor for computing ages. */
   readonly receivedAt: number | null
+  /**
+   * The recent past, as far back as the ground station kept it.
+   *
+   * Optional rather than required: a ground station running without a recorder, and
+   * every board built before this existed, simply have none — and a missing timeline
+   * has to degrade to no timeline rather than to a broken screen.
+   */
+  readonly history?: FleetHistory | null
 }
 
 /** The bit of a WebSocket this needs, so tests can hand it something simpler. */
@@ -94,11 +112,28 @@ export class FleetConnection {
     socket.onMessage((data) => {
       const message = parse(data)
       if (!message) return
-      this.#update({
-        connection: 'live',
-        state: message.state,
-        receivedAt: this.#options.clock.now(),
-      })
+
+      if (message.type === 'fleet-state') {
+        this.#update({
+          connection: 'live',
+          state: message.state,
+          receivedAt: this.#options.clock.now(),
+        })
+        return
+      }
+
+      if (message.type === 'fleet-history') {
+        this.#update({ connection: 'live', history: message.history })
+        return
+      }
+
+      /*
+       * Events arrive as they happen and are folded into the history already held, so
+       * every screen reads one list rather than stitching a snapshot to a stream. Merged
+       * by id: a reconnect re-sends the whole history, and a Teacher must not see this
+       * morning's fault twice because the socket blinked.
+       */
+      this.#update({ history: mergeEvents(this.#snapshot.history, message.events) })
     })
 
     socket.onClose(() => {
@@ -123,7 +158,8 @@ export class FleetConnection {
     if (
       next.connection === this.#snapshot.connection &&
       next.state === this.#snapshot.state &&
-      next.receivedAt === this.#snapshot.receivedAt
+      next.receivedAt === this.#snapshot.receivedAt &&
+      next.history === this.#snapshot.history
     ) {
       return
     }
@@ -132,10 +168,37 @@ export class FleetConnection {
   }
 }
 
+/**
+ * Fold newly-streamed events into the history already held.
+ *
+ * Deduped by id and re-sorted by time. Event ids are derived from the transition rather
+ * than generated (see the ground station's `history.ts`), which is what makes this safe
+ * to run over a reconnect that replays everything.
+ */
+function mergeEvents(
+  history: FleetHistory | null | undefined,
+  incoming: readonly FleetEvent[],
+): FleetHistory {
+  const base = history ?? { events: [], batteries: [], since: incoming[0]?.at ?? 0 }
+  const byId = new Map(base.events.map((event) => [event.id, event]))
+  for (const event of incoming) byId.set(event.id, event)
+
+  const events = [...byId.values()]
+    .sort((a, b) => a.at - b.at)
+    .slice(-MAX_RETAINED_EVENTS)
+
+  return { ...base, events }
+}
+
 function parse(data: string): ServerMessage | null {
   try {
     const message = JSON.parse(data) as ServerMessage
-    return message.type === 'fleet-state' ? message : null
+    const known: readonly ServerMessage['type'][] = [
+      'fleet-state',
+      'fleet-history',
+      'fleet-events',
+    ]
+    return known.includes(message.type) ? message : null
   } catch {
     // A malformed frame is dropped rather than blanking a board mid-lesson.
     return null

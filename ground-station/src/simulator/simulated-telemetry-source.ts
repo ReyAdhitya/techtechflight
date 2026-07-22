@@ -1,8 +1,12 @@
 import type {
+  AutoLandingState,
   Clock,
   DroneId,
   DroneRegistration,
   FaultReport,
+  MotorReading,
+  ProximityReading,
+  Telemetry,
   TelemetryObservation,
   TelemetrySource,
   Unsubscribe,
@@ -53,6 +57,32 @@ export class SimulatedTelemetrySource implements TelemetrySource {
           fault: null,
           linkUp: true,
           charging: false,
+
+          /*
+           * Capabilities differ across a real classroom set — schools buy in batches and
+           * batches differ. Varying them here is what keeps the board honest about the
+           * difference between "no sensor" and "sensor sees nothing": if every simulated
+           * Drone had every sensor, the one case the display has to get right would never
+           * appear in a demonstration.
+           */
+          hasRangefinder: index % 3 !== 2,
+          hasCamera: index % 2 === 0,
+          canAutoLand: index % 4 !== 3,
+
+          // Parked in a row on the bench, a metre apart, the way a set is laid out.
+          homeEastM: index * 1,
+          homeNorthM: 0,
+          eastM: index * 1,
+          northM: 0,
+          altitudeM: 0,
+          targetAltitudeM: 0,
+          yawDegrees: round(this.#random() * 360, 1),
+          pitchDegrees: 0,
+          rollDegrees: 0,
+          emergencyStopTriggered: false,
+          autoLanding: false,
+          streaming: false,
+          linkGroupId: null,
         },
       ]),
     )
@@ -96,9 +126,57 @@ export class SimulatedTelemetrySource implements TelemetrySource {
 
   takeOff(droneId: DroneId): void {
     const drone = this.#drone(droneId)
+    // A cut Drone stays on the ground until someone has been to it.
+    if (drone.emergencyStopTriggered) return
     // Nothing takes off on a charger.
     drone.charging = false
     drone.airborne = true
+    drone.targetAltitudeM = round(1.5 + this.#random() * 2, 2)
+  }
+
+  /**
+   * Latch the emergency cut-out.
+   *
+   * Deliberately sticky: it stays true until `resetEmergencyStop`, because the physical
+   * thing it models is a button someone has to walk over and release. A cut that cleared
+   * itself after a second would let a Drone quietly rejoin the lesson.
+   */
+  triggerEmergencyStop(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    drone.emergencyStopTriggered = true
+    drone.airborne = false
+    drone.autoLanding = false
+    drone.targetAltitudeM = 0
+  }
+
+  resetEmergencyStop(droneId: DroneId): void {
+    this.#drone(droneId).emergencyStopTriggered = false
+  }
+
+  /** Ask the Drone to bring itself down. Ignored by an airframe that cannot. */
+  beginAutoLanding(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    if (!drone.canAutoLand || !drone.airborne) return
+    drone.autoLanding = true
+    drone.targetAltitudeM = 0
+  }
+
+  startCamera(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    if (drone.hasCamera) drone.streaming = true
+  }
+
+  stopCamera(droneId: DroneId): void {
+    this.#drone(droneId).streaming = false
+  }
+
+  /** Fly these Drones as one linked group, so the board can show the formation. */
+  link(droneIds: readonly DroneId[], groupId = 'group-a'): void {
+    for (const droneId of droneIds) this.#drone(droneId).linkGroupId = groupId
+  }
+
+  unlink(droneId: DroneId): void {
+    this.#drone(droneId).linkGroupId = null
   }
 
   /** Put this Drone on charge, so its battery climbs back rather than only draining. */
@@ -113,7 +191,10 @@ export class SimulatedTelemetrySource implements TelemetrySource {
   }
 
   land(droneId: DroneId): void {
-    this.#drone(droneId).airborne = false
+    const drone = this.#drone(droneId)
+    drone.airborne = false
+    drone.autoLanding = false
+    drone.targetAltitudeM = 0
   }
 
   /** Put a Drone at a chosen charge, to show Not Ready without waiting for a drain. */
@@ -154,9 +235,10 @@ export class SimulatedTelemetrySource implements TelemetrySource {
         )
 
         // A flat battery brings a Drone down.
-        if (drone.airborne && drone.batteryFraction <= 0.05) drone.airborne = false
+        if (drone.airborne && drone.batteryFraction <= 0.05) this.land(drone.registration.id)
       }
 
+      this.#fly(drone)
       this.#emit(drone)
     }
   }
@@ -171,8 +253,14 @@ export class SimulatedTelemetrySource implements TelemetrySource {
     if (roll < 0.002) drone.linkUp = false
     else if (roll < 0.004 && drone.fault === null) drone.fault = DEFAULT_FAULT
     else if (roll < 0.01 && !drone.airborne && drone.batteryFraction > 0.4) {
-      drone.airborne = true
-    } else if (roll < 0.02 && drone.airborne) drone.airborne = false
+      /*
+       * Through `takeOff` rather than by setting `airborne` directly. Setting the flag
+       * alone left `targetAltitudeM` at zero, so a Drone that took off on its own was
+       * reported as Flying while its altitude sat at 0 m forever — the board dutifully
+       * said "Flying" and "On the ground" at the same time.
+       */
+      this.takeOff(drone.registration.id)
+    } else if (roll < 0.02 && drone.airborne) this.land(drone.registration.id)
 
     /*
      * A flat Drone on the bench is the one a Teacher plugs in, so the simulated Fleet
@@ -185,24 +273,164 @@ export class SimulatedTelemetrySource implements TelemetrySource {
     }
   }
 
+  /**
+   * Move the aircraft for one interval.
+   *
+   * Altitude is chased toward a target rather than snapped, so a Drone climbing, hovering
+   * and descending are three distinguishable things on the board rather than one boolean.
+   * A cut Drone comes down several times faster than it went up — the motors have stopped.
+   */
+  #fly(drone: SimulatedDrone): void {
+    const seconds = this.#reportIntervalMs / 1_000
+
+    if (drone.emergencyStopTriggered || drone.autoLanding) drone.targetAltitudeM = 0
+
+    const climbRate = drone.emergencyStopTriggered ? 4 : 0.8
+    const remaining = drone.targetAltitudeM - drone.altitudeM
+    const step = Math.sign(remaining) * Math.min(Math.abs(remaining), climbRate * seconds)
+    drone.altitudeM = round(Math.max(0, drone.altitudeM + step), 2)
+
+    // Down and settled: the auto-landing has finished, whoever asked for it.
+    if (drone.altitudeM === 0 && drone.targetAltitudeM === 0) drone.autoLanding = false
+
+    if (drone.airborne) {
+      const driftEast = (this.#random() - 0.5) * 0.6
+      const driftNorth = (this.#random() - 0.5) * 0.6
+      drone.eastM = round(clampTo(drone.eastM + driftEast, ROOM.westM, ROOM.eastM), 2)
+      drone.northM = round(clampTo(drone.northM + driftNorth, ROOM.southM, ROOM.northM), 2)
+      // A multirotor leans in the direction it is travelling. Small angles — this is a
+      // classroom, not a race.
+      drone.pitchDegrees = round(clampTo(driftNorth * 25, -20, 20), 1)
+      drone.rollDegrees = round(clampTo(driftEast * 25, -20, 20), 1)
+      drone.yawDegrees = round(((drone.yawDegrees + (this.#random() - 0.5) * 12) % 360 + 360) % 360, 1)
+    } else if (drone.altitudeM === 0) {
+      // Back on the bench, level, where the Teacher left it.
+      drone.eastM = drone.homeEastM
+      drone.northM = drone.homeNorthM
+      drone.pitchDegrees = 0
+      drone.rollDegrees = 0
+    } else {
+      // Still coming down. It keeps its place in the room and levels out on the way.
+      drone.pitchDegrees = round(drone.pitchDegrees * 0.6, 1)
+      drone.rollDegrees = round(drone.rollDegrees * 0.6, 1)
+    }
+  }
+
+  /**
+   * Thrust per motor, derived from what the airframe is doing rather than invented.
+   *
+   * A Teacher looking at four bars wants them to mean something: leaning right really
+   * does make the left pair work harder, and a cut Drone really does read zero across
+   * the board. Numbers that merely wiggled would be decoration on a safety panel.
+   */
+  #motors(drone: SimulatedDrone): readonly MotorReading[] {
+    const airborne = drone.altitudeM > 0 || drone.airborne
+    const climbing = drone.targetAltitudeM > drone.altitudeM
+    const base = drone.emergencyStopTriggered || !airborne ? 0 : climbing ? 0.62 : 0.48
+
+    const roll = base === 0 ? 0 : drone.rollDegrees / 90
+    const pitch = base === 0 ? 0 : drone.pitchDegrees / 90
+
+    const corners: readonly (readonly [string, number, number])[] = [
+      ['front-left', -pitch, +roll],
+      ['front-right', -pitch, -roll],
+      ['rear-left', +pitch, +roll],
+      ['rear-right', +pitch, -roll],
+    ]
+
+    return corners.map(([id, pitchTerm, rollTerm]) => ({
+      id,
+      thrustFraction: round(clamp(base + pitchTerm + rollTerm), 3),
+      temperatureC: round(28 + (base > 0 ? 16 : 0) + this.#random() * 4, 1),
+    }))
+  }
+
+  /**
+   * The nearest thing this Drone can see, or null when it can see nothing close.
+   *
+   * Returns `undefined` for an airframe with no rangefinder at all — the board draws
+   * those two cases differently, and it can only do that if the difference survives
+   * the whole way from here.
+   */
+  #proximity(drone: SimulatedDrone): ProximityReading | null | undefined {
+    if (!drone.hasRangefinder) return undefined
+    if (drone.altitudeM <= 0) return null
+
+    const toWall = Math.min(
+      drone.eastM - ROOM.westM,
+      ROOM.eastM - drone.eastM,
+      drone.northM - ROOM.southM,
+      ROOM.northM - drone.northM,
+    )
+
+    let nearest = { metres: toWall, bearingDegrees: null as number | null }
+
+    for (const other of this.#drones.values()) {
+      if (other === drone || other.altitudeM <= 0) continue
+      const east = other.eastM - drone.eastM
+      const north = other.northM - drone.northM
+      const metres = Math.hypot(east, north)
+      if (metres >= nearest.metres) continue
+
+      // Clockwise from the nose, so a Teacher reading it knows which way to look.
+      const absolute = (Math.atan2(east, north) * 180) / Math.PI
+      nearest = {
+        metres,
+        bearingDegrees: round(((absolute - drone.yawDegrees) % 360 + 360) % 360, 0),
+      }
+    }
+
+    return { metres: round(nearest.metres, 2), bearingDegrees: nearest.bearingDegrees }
+  }
+
+  #autoLanding(drone: SimulatedDrone): AutoLandingState {
+    if (!drone.canAutoLand) return 'unsupported'
+    if (drone.autoLanding) return 'in-progress'
+    return drone.altitudeM > 0 ? 'ready' : 'unavailable'
+  }
+
   #emit(drone: SimulatedDrone): void {
-    const observation: TelemetryObservation = {
-      droneId: drone.registration.id,
-      telemetry: {
-        batteryFraction: round(drone.batteryFraction),
-        batteryIsEstimate: drone.batteryIsEstimate,
-        airborne: drone.airborne,
-        fault: drone.fault,
-        extra: {
-          motorTemperatureC: round(28 + (drone.airborne ? 14 : 0) + this.#random() * 4, 1),
-          satellitesVisible: Math.round(6 + this.#random() * 6),
-          firmware: '1.4.2',
-        },
+    const telemetry: Telemetry = {
+      batteryFraction: round(drone.batteryFraction),
+      batteryIsEstimate: drone.batteryIsEstimate,
+      airborne: drone.airborne,
+      fault: drone.fault,
+
+      altitudeM: drone.altitudeM,
+      orientation: {
+        pitchDegrees: drone.pitchDegrees,
+        rollDegrees: drone.rollDegrees,
+        yawDegrees: drone.yawDegrees,
+      },
+      motors: this.#motors(drone),
+      emergencyStopTriggered: drone.emergencyStopTriggered,
+      autoLanding: this.#autoLanding(drone),
+      position: { eastM: drone.eastM, northM: drone.northM },
+      linkGroupId: drone.linkGroupId,
+
+      // Omitted entirely on an airframe without the sensor, rather than sent as a zero.
+      ...(drone.hasCamera ? { camera: { streaming: drone.streaming } } : {}),
+      ...(drone.hasRangefinder ? { proximity: this.#proximity(drone) ?? null } : {}),
+
+      extra: {
+        satellitesVisible: Math.round(6 + this.#random() * 6),
+        firmware: '1.4.2',
       },
     }
-    for (const listener of this.#listeners) listener(observation)
+
+    for (const listener of this.#listeners) listener({ droneId: drone.registration.id, telemetry })
   }
 }
+
+/**
+ * The room the simulated Fleet flies in, in metres from where it was set up. Bounds are
+ * what give the rangefinder something to find, so obstacle warnings on the board are
+ * driven by a Drone genuinely approaching a wall rather than by a timer.
+ */
+const ROOM = { westM: -2, eastM: 8, southM: -3, northM: 3 } as const
+
+const clampTo = (value: number, low: number, high: number) =>
+  Math.min(high, Math.max(low, value))
 
 export interface SimulatorOptions {
   readonly registrations: readonly DroneRegistration[]
@@ -226,6 +454,25 @@ interface SimulatedDrone {
   fault: FaultReport | null
   linkUp: boolean
   charging: boolean
+
+  /** What this airframe is fitted with. Fixed for the life of the Drone. */
+  readonly hasRangefinder: boolean
+  readonly hasCamera: boolean
+  readonly canAutoLand: boolean
+
+  readonly homeEastM: number
+  readonly homeNorthM: number
+  eastM: number
+  northM: number
+  altitudeM: number
+  targetAltitudeM: number
+  yawDegrees: number
+  pitchDegrees: number
+  rollDegrees: number
+  emergencyStopTriggered: boolean
+  autoLanding: boolean
+  streaming: boolean
+  linkGroupId: string | null
 }
 
 const DEFAULT_FAULT: FaultReport = {

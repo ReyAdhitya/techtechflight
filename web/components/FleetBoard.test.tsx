@@ -400,7 +400,9 @@ describe('a standalone demonstration', () => {
     expect(screen.getByRole('status', { name: /demonstration mode/i })).toHaveTextContent(
       /sample classroom data.*not live Drone telemetry/i,
     )
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('2 of 6 ready')
+    // One of the six — the demonstration Fleet is composed to put every case the display
+    // has to get right on screen at once, which leaves one a Teacher could hand out.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('1 of 6 ready')
     expect(screen.getAllByRole('article')).toHaveLength(6)
   })
 })

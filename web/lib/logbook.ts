@@ -461,6 +461,29 @@ export function recordCommand(lessonId: string, command: CommandRecord): void {
   })
 }
 
+/**
+ * Roughly what a browser will hold before it refuses.
+ *
+ * Not a limit anyone specified — browsers vary and none of them promise a number — so
+ * this is a point at which to say something rather than a boundary. The failure it exists
+ * to prevent is silent: a Teacher fills the quota mid-term, a save throws, the board keeps
+ * working perfectly, and the record of the last three weeks is simply not there.
+ */
+export const RECORDS_WARN_BYTES = 2_000_000
+
+export function recordsSize(book: Logbook): number {
+  try {
+    return JSON.stringify(book).length
+  } catch {
+    return 0
+  }
+}
+
+/** True when a Teacher should be told to export before the browser stops accepting more. */
+export function recordsAreHeavy(book: Logbook): boolean {
+  return recordsSize(book) > RECORDS_WARN_BYTES
+}
+
 export function replaceLogbook(next: Logbook): void {
   save(next)
 }

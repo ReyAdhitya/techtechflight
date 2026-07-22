@@ -10,6 +10,7 @@ import {
   subscribeLogbook,
 } from '@/lib/logbook'
 import { useFleet } from './FleetProvider'
+import { ScenarioPanel } from './ScenarioPanel'
 
 /**
  * The things a Teacher can change, and the honest account of where their records live.
@@ -154,6 +155,8 @@ export function SettingsScreen() {
           </p>
         )}
       </Panel>
+
+      <ScenarioPanel />
 
       <Panel title="Keyboard">
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">

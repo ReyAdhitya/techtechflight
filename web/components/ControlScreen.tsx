@@ -22,7 +22,7 @@ import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
-import { FormationMap } from './FormationMap'
+import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
 
 /**
@@ -41,6 +41,10 @@ import { useFleet } from './FleetProvider'
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+
+  // Which Drone the Teacher is looking at. Choosing a mark on the scope lights its strip
+  // and the reverse, because "which one is that" is the question the scope exists for.
+  const [selected, setSelected] = useState<string | null>(null)
 
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
@@ -71,7 +75,12 @@ export function ControlScreen() {
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
-        <FormationMap drones={state.drones} vitals={vitals} />
+        <Scope
+          drones={state.drones}
+          vitals={vitals}
+          selected={selected}
+          onSelect={(droneId) => setSelected((current) => (current === droneId ? null : droneId))}
+        />
       </section>
 
       <section className="flex flex-col gap-3">
@@ -93,6 +102,8 @@ export function ControlScreen() {
               key={entry.droneId}
               vitals={entry}
               pilot={pilotOf(book, entry.droneId)}
+              selected={selected === entry.droneId}
+              onSelect={() => setSelected((current) => (current === entry.droneId ? null : entry.droneId))}
               isAcknowledged={isAcknowledged}
               acknowledgedAt={acknowledgedAt}
               now={now}
@@ -156,12 +167,16 @@ function PilotField({
 function FlightStrip({
   vitals,
   pilot,
+  selected,
+  onSelect,
   isAcknowledged,
   acknowledgedAt,
   now,
 }: {
   vitals: DroneVitals
   pilot: string | null
+  selected: boolean
+  onSelect: () => void
   isAcknowledged: (droneId: string, alert: VitalsAlert) => boolean
   acknowledgedAt: (droneId: string, alert: VitalsAlert) => number | null
   now: number
@@ -171,11 +186,15 @@ function FlightStrip({
 
   return (
     <li
+      onClick={onSelect}
       className={cn(
         'flex flex-col gap-2 rounded-surface border-l-2 bg-surface-1 p-3',
         vitals.alerts[0]
           ? SEVERITY_PRESENTATION[vitals.alerts[0].severity].className
           : 'border-hairline',
+        // An outline rather than a fill: the tile's own severity colour has to keep
+        // meaning what it means, and selection is a different kind of fact.
+        selected && 'outline outline-2 outline-offset-2 outline-ink',
       )}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">

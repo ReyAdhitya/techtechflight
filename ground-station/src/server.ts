@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { readFile, stat } from 'node:fs/promises'
 import { extname, join, normalize, resolve } from 'node:path'
 import { WebSocketServer } from 'ws'
-import type { ServerMessage } from '@techtechflight/contract'
+import type { ClientMessage, ServerMessage } from '@techtechflight/contract'
 import type { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 
 export interface FleetServerOptions {
@@ -52,6 +52,22 @@ export async function startFleetServer(options: FleetServerOptions): Promise<Fle
      */
     send(socket, { type: 'fleet-state', state: station.fleetState() })
     if (history) send(socket, { type: 'fleet-history', history: history.history() })
+
+    /*
+     * The one thing a board ever sends. Whether it can be carried at all is decided by
+     * the Fleet core, which asks the Telemetry Source — a hardware Fleet refuses, and the
+     * refusal comes back in words rather than as silence (ADR-0011).
+     */
+    socket.on('message', (raw: Buffer) => {
+      const message = parseClient(raw.toString())
+      if (!message) return
+      const outcome = station.command(message.command)
+      send(socket, {
+        type: 'command-outcome',
+        commandId: message.command.id,
+        ...outcome,
+      })
+    })
 
     const unsubscribeState = station.onFleetState((state) => {
       send(socket, { type: 'fleet-state', state })
@@ -103,6 +119,18 @@ const MIME_TYPES: Readonly<Record<string, string>> = {
   '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2',
   '.png': 'image/png',
+}
+
+/** A malformed or unrecognised frame is dropped rather than crashing the ground station. */
+function parseClient(data: string): ClientMessage | null {
+  try {
+    const message = JSON.parse(data) as ClientMessage
+    return message.type === 'command' && typeof message.command?.droneId === 'string'
+      ? message
+      : null
+  } catch {
+    return null
+  }
 }
 
 async function serveStatic(

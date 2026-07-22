@@ -1,5 +1,7 @@
 import type {
   Clock,
+  CommandOutcomeMessage,
+  DroneCommand,
   FleetEvent,
   FleetHistory,
   ServerMessage,
@@ -19,6 +21,7 @@ export interface FleetSocket {
   onOpen(listener: () => void): void
   onMessage(listener: (data: string) => void): void
   onClose(listener: () => void): void
+  send(data: string): void
   close(): void
 }
 
@@ -44,6 +47,7 @@ export class FleetConnection implements FleetLink {
   readonly #options: FleetConnectionOptions
   readonly #backoff: readonly number[]
   #listeners = new Set<(snapshot: FleetSnapshot) => void>()
+  #outcomeListeners = new Set<(outcome: CommandOutcomeMessage) => void>()
   #snapshot: FleetSnapshot = { connection: 'connecting', state: null, receivedAt: null }
   #socket: FleetSocket | null = null
   #cancelRetry: Unsubscribe | null = null
@@ -67,6 +71,18 @@ export class FleetConnection implements FleetLink {
   start(): void {
     this.#stopped = false
     this.#open()
+  }
+
+  send(command: DroneCommand): void {
+    // Dropped rather than queued when there is nothing to send it down. A Command held
+    // and delivered on reconnection could act on a Fleet minutes after a Teacher asked,
+    // which is a worse failure than not having been sent.
+    this.#socket?.send(JSON.stringify({ type: 'command', command }))
+  }
+
+  onCommandOutcome(listener: (outcome: CommandOutcomeMessage) => void): Unsubscribe {
+    this.#outcomeListeners.add(listener)
+    return () => this.#outcomeListeners.delete(listener)
   }
 
   stop(): void {
@@ -117,6 +133,11 @@ export class FleetConnection implements FleetLink {
        * than one other member now, and a message meant for something else must not be
        * read as a list of events.
        */
+      if (message.type === 'command-outcome') {
+        for (const listener of this.#outcomeListeners) listener(message)
+        return
+      }
+
       if (message.type === 'fleet-events') {
         this.#update({ history: mergeEvents(this.#snapshot.history, message.events) })
       }
@@ -183,6 +204,7 @@ function parse(data: string): ServerMessage | null {
       'fleet-state',
       'fleet-history',
       'fleet-events',
+      'command-outcome',
     ]
     return known.includes(message.type) ? message : null
   } catch {
@@ -201,6 +223,9 @@ export function browserSocket(url: string): FleetSocket {
     onClose: (listener) => {
       socket.addEventListener('close', () => listener())
       socket.addEventListener('error', () => socket.close())
+    },
+    send: (data) => {
+      if (socket.readyState === WebSocket.OPEN) socket.send(data)
     },
     close: () => socket.close(),
   }

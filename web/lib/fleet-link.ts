@@ -1,4 +1,10 @@
-import type { FleetHistory, FleetState, Unsubscribe } from '@techtechflight/contract'
+import type {
+  CommandOutcomeMessage,
+  DroneCommand,
+  FleetHistory,
+  FleetState,
+  Unsubscribe,
+} from '@techtechflight/contract'
 
 /**
  * Where the board reads its Fleet from.
@@ -45,4 +51,13 @@ export interface FleetLink {
   subscribe(listener: (snapshot: FleetSnapshot) => void): Unsubscribe
   start(): void
   stop(): void
+  /**
+   * Ask a Drone to do something.
+   *
+   * Sending is not doing. What comes back on `onCommandOutcome` says only whether the
+   * Fleet took the request; what the aircraft actually did is known from the Telemetry
+   * that follows and from nothing else.
+   */
+  send(command: DroneCommand): void
+  onCommandOutcome(listener: (outcome: CommandOutcomeMessage) => void): Unsubscribe
 }

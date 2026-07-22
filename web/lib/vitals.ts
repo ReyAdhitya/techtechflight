@@ -346,12 +346,22 @@ export function sortAlerts(alerts: readonly VitalsAlert[]): readonly VitalsAlert
   )
 }
 
-/** The whole Fleet's alerts in one queue, worst first. */
+/**
+ * The whole Fleet's alerts in one queue, worst first, minus whatever the Teacher has
+ * already taken.
+ *
+ * Acknowledgement arrives as a predicate rather than as a store, so everything derived
+ * here stays a pure function of the Fleet. What a Teacher has seen is a fact about the
+ * Teacher, and it has no business inside the reasoning about what a Drone is doing.
+ */
 export function alertQueue(
   vitals: readonly DroneVitals[],
+  acknowledged: (droneId: DroneId, alert: VitalsAlert) => boolean = () => false,
 ): readonly (VitalsAlert & { readonly callsign: string; readonly droneId: DroneId })[] {
   const all = vitals.flatMap((entry) =>
-    entry.alerts.map((alert) => ({ ...alert, callsign: entry.callsign, droneId: entry.droneId })),
+    entry.alerts
+      .filter((alert) => !acknowledged(entry.droneId, alert))
+      .map((alert) => ({ ...alert, callsign: entry.callsign, droneId: entry.droneId })),
   )
   return [...all].sort(
     (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || a.since - b.since,

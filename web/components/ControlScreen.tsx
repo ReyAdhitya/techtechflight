@@ -10,7 +10,7 @@ import {
   readServerLogbook,
   subscribeLogbook,
 } from '@/lib/logbook'
-import { alertQueue, compareStrips, type DroneVitals } from '@/lib/vitals'
+import { alertQueue, compareStrips, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
 import {
   formatEndurance,
   formatSeparation,
@@ -39,11 +39,11 @@ import { useFleet } from './FleetProvider'
  * line without reading the rest.
  */
 export function ControlScreen() {
-  const { snapshot, vitals } = useFleet()
+  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
   const state = snapshot.state
-  const queue = useMemo(() => alertQueue(vitals), [vitals])
+  const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
 
   if (!state) {
     return (
@@ -63,7 +63,11 @@ export function ControlScreen() {
       tabIndex={-1}
       className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 min-[26rem]:p-8"
     >
-      <AttentionBar queue={queue} studentFor={(droneId) => pilotOf(book, droneId)} />
+      <AttentionBar
+        queue={queue}
+        studentFor={(droneId) => pilotOf(book, droneId)}
+        onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+      />
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
@@ -85,7 +89,14 @@ export function ControlScreen() {
         </div>
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {strips.map((entry) => (
-            <FlightStrip key={entry.droneId} vitals={entry} pilot={pilotOf(book, entry.droneId)} />
+            <FlightStrip
+              key={entry.droneId}
+              vitals={entry}
+              pilot={pilotOf(book, entry.droneId)}
+              isAcknowledged={isAcknowledged}
+              acknowledgedAt={acknowledgedAt}
+              now={now}
+            />
           ))}
         </ul>
       </section>
@@ -142,7 +153,19 @@ function PilotField({
   )
 }
 
-function FlightStrip({ vitals, pilot }: { vitals: DroneVitals; pilot: string | null }) {
+function FlightStrip({
+  vitals,
+  pilot,
+  isAcknowledged,
+  acknowledgedAt,
+  now,
+}: {
+  vitals: DroneVitals
+  pilot: string | null
+  isAcknowledged: (droneId: string, alert: VitalsAlert) => boolean
+  acknowledgedAt: (droneId: string, alert: VitalsAlert) => number | null
+  now: number
+}) {
   const phase = PHASE_PRESENTATION[vitals.phase]
   const separation = formatSeparation(vitals)
 
@@ -206,6 +229,15 @@ function FlightStrip({ vitals, pilot }: { vitals: DroneVitals; pilot: string | n
                 {SEVERITY_PRESENTATION[alert.severity].label}
               </span>
               <span className="text-value text-ink">{alert.text}</span>
+              {/*
+                * Still here after it has been taken off the queue, and quieter. A Teacher
+                * having seen a problem is not the same as the problem having stopped.
+                */}
+              {isAcknowledged(vitals.droneId, alert) && (
+                <span className="tnum text-value text-ink-muted">
+                  You have this — {formatAge(Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)))}
+                </span>
+              )}
             </li>
           ))}
         </ul>

@@ -11,12 +11,19 @@ import {
   type ReactNode,
 } from 'react'
 import { usePathname } from 'next/navigation'
-import type { Clock, DroneState } from '@techtechflight/contract'
+import type { Clock, DroneId, DroneState } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
 import type { FleetLink, FleetSnapshot } from '@/lib/fleet-link'
 import { LocalFleetLink } from '@/lib/local-fleet-link'
-import { AlertTracker, AltitudeTracker, fleetVitals, type DroneVitals } from '@/lib/vitals'
+import { AcknowledgementTracker } from '@/lib/acknowledgement'
+import {
+  AlertTracker,
+  AltitudeTracker,
+  fleetVitals,
+  type DroneVitals,
+  type VitalsAlert,
+} from '@/lib/vitals'
 
 /**
  * One connection to the ground station, shared by every screen.
@@ -41,6 +48,11 @@ export interface FleetView {
    * first appeared — and a screen loses both the moment a Teacher navigates away from it.
    */
   readonly vitals: readonly DroneVitals[]
+  /** Take an Alert off the queue. Changes what the Teacher sees and nothing else. */
+  readonly acknowledge: (droneId: DroneId, alert: VitalsAlert) => void
+  readonly isAcknowledged: (droneId: DroneId, alert: VitalsAlert) => boolean
+  /** When it was taken, for saying so quietly on the Drone's own strip. */
+  readonly acknowledgedAt: (droneId: DroneId, alert: VitalsAlert) => number | null
 }
 
 const FleetContext = createContext<FleetView | null>(null)
@@ -113,12 +125,49 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   }, [link])
 
   const vitals = useVitals(snapshot, now)
+  const acknowledgements = useAcknowledgements(vitals, now)
 
   const view = useMemo<FleetView>(
-    () => ({ snapshot, now, demo, vitals }),
-    [snapshot, now, demo, vitals],
+    () => ({ snapshot, now, demo, vitals, ...acknowledgements }),
+    [snapshot, now, demo, vitals, acknowledgements],
   )
   return <FleetContext.Provider value={view}>{children}</FleetContext.Provider>
+}
+
+/**
+ * What the Teacher has already dealt with.
+ *
+ * Held in memory rather than written down. An acknowledgement says "I have seen this and I
+ * am on it" — a statement about this sitting at this screen, not a record of the lesson.
+ * After a reload the Teacher has lost their place, and being shown the queue again is
+ * right rather than irritating; it also keeps ephemera out of a Logbook that already
+ * carries more of a Teacher's work than one browser ought to.
+ */
+function useAcknowledgements(vitals: readonly DroneVitals[], now: number) {
+  const taken = useRef<AcknowledgementTracker | null>(null)
+  taken.current ??= new AcknowledgementTracker()
+  // A tracker is a ref, so nothing re-renders when it changes. This is what makes taking
+  // an Alert visible immediately rather than at the next Telemetry tick.
+  const [, setTaken] = useState(0)
+
+  // Conditions that have stopped happening are forgotten, so their return is new news.
+  useEffect(() => {
+    taken.current?.observe(vitals)
+  }, [vitals])
+
+  return useMemo(
+    () => ({
+      acknowledge: (droneId: DroneId, alert: VitalsAlert) => {
+        taken.current?.acknowledge(droneId, alert, now)
+        setTaken((count) => count + 1)
+      },
+      isAcknowledged: (droneId: DroneId, alert: VitalsAlert) =>
+        taken.current?.isTaken(droneId, alert) ?? false,
+      acknowledgedAt: (droneId: DroneId, alert: VitalsAlert) =>
+        taken.current?.takenAt(droneId, alert) ?? null,
+    }),
+    [now],
+  )
 }
 
 /**

@@ -139,7 +139,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     return () => link.stop()
   }, [link])
 
-  const vitals = useVitals(snapshot, now)
+  const vitals = useVitals(link, snapshot, now)
   const acknowledgements = useAcknowledgements(vitals, now)
   const commands = useCommands(link, vitals, now)
 
@@ -243,7 +243,11 @@ function useCommands(link: FleetLink, vitals: readonly DroneVitals[], now: numbe
  *
  * They live here instead, beside the connection, for the same reason it does.
  */
-function useVitals(snapshot: FleetSnapshot, now: number): readonly DroneVitals[] {
+function useVitals(
+  link: FleetLink,
+  snapshot: FleetSnapshot,
+  now: number,
+): readonly DroneVitals[] {
   const altitudes = useRef<AltitudeTracker | null>(null)
   altitudes.current ??= new AltitudeTracker()
   const alerts = useRef<AlertTracker | null>(null)
@@ -252,13 +256,23 @@ function useVitals(snapshot: FleetSnapshot, now: number): readonly DroneVitals[]
   const state = snapshot.state
 
   /*
-   * Observed during the effect rather than during render, so a re-render cannot record a
-   * reading twice. The tracker rejects repeats of the same contact moment anyway, but two
-   * sources of truth about when a sample was taken is a bug waiting to be written.
+   * Subscribed to the link rather than watching the rendered snapshot.
+   *
+   * Altitude only becomes a rate across several readings, so what matters is how many
+   * readings are seen — and React batches. Sampling in an effect meant the tracker saw one
+   * reading per *render*, not one per Fleet State, and several arriving together were
+   * collapsed into the last of them. In production those usually coincide; under load, or
+   * anywhere React decides to batch, a Drone climbing steadily produced no rate at all.
+   *
+   * The tracker rejects repeats of the same contact moment, so the one snapshot that
+   * arrives both here and through the render is recorded once.
    */
   useEffect(() => {
-    if (state) altitudes.current?.observe(state)
-  }, [state])
+    altitudes.current?.observe(link.snapshot.state ?? { drones: [], generatedAt: 0 })
+    return link.subscribe((published) => {
+      if (published.state) altitudes.current?.observe(published.state)
+    })
+  }, [link])
 
   const vitals = useMemo(() => {
     if (!state || snapshot.receivedAt === null) return []

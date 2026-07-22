@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import {
   assignPilot,
@@ -10,14 +10,7 @@ import {
   readServerLogbook,
   subscribeLogbook,
 } from '@/lib/logbook'
-import {
-  alertQueue,
-  AlertTracker,
-  AltitudeTracker,
-  compareStrips,
-  fleetVitals,
-  type DroneVitals,
-} from '@/lib/vitals'
+import { alertQueue, compareStrips, type DroneVitals } from '@/lib/vitals'
 import {
   formatEndurance,
   formatSeparation,
@@ -44,47 +37,10 @@ import { useFleet } from './FleetProvider'
  * line without reading the rest.
  */
 export function TowerScreen() {
-  const { snapshot, now } = useFleet()
+  const { snapshot, vitals } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
-  const tracker = useRef<AltitudeTracker | null>(null)
-  tracker.current ??= new AltitudeTracker()
-  const alerts = useRef<AlertTracker | null>(null)
-  alerts.current ??= new AlertTracker()
 
   const state = snapshot.state
-
-  /*
-   * Altitude has to be remembered across snapshots to become a rate, and the ground
-   * station does not send a history of it the way it does for charge. Observing during
-   * the effect rather than during render keeps a re-render from recording a reading
-   * twice — the tracker rejects repeats of the same contact moment anyway, but two
-   * sources of truth about when a sample was taken is a bug waiting to be written.
-   */
-  useEffect(() => {
-    if (state) tracker.current?.observe(state)
-  }, [state])
-
-  const vitals = useMemo(() => {
-    if (!state || snapshot.receivedAt === null) return []
-    return fleetVitals({
-      state,
-      receivedAt: snapshot.receivedAt,
-      now,
-      batteries: snapshot.history?.batteries ?? [],
-      rates: tracker.current?.rates() ?? new Map(),
-      firstSeen: alerts.current?.firstSeen ?? new Map(),
-    })
-  }, [state, snapshot.receivedAt, snapshot.history, now])
-
-  /*
-   * Recorded after the vitals are built, not before: a condition nobody has seen yet is
-   * stamped with the moment it first appears, and one that has cleared forgets when it
-   * began so its return reads as new news.
-   */
-  useEffect(() => {
-    if (vitals.length > 0) alerts.current?.observe(vitals, now)
-  }, [vitals, now])
-
   const queue = useMemo(() => alertQueue(vitals), [vitals])
 
   if (!state) {

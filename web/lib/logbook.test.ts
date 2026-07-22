@@ -2,10 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { FleetEvent, FleetEventKind } from '@techtechflight/contract'
 import {
   alreadyTallied,
+  assignStudent,
   clearLogbook,
   endLesson,
   persistedTally,
   readLogbook,
+  recordCommand,
+  rememberStudent,
+  runningLesson,
+  saveRoll,
   startLesson,
   studentsFrom,
   talliedLessonCount,
@@ -186,5 +191,77 @@ describe('a Logbook exported before the rename', () => {
 
   it('restores nothing rather than failing when a file predates the field entirely', () => {
     expect(studentsFrom({})).toEqual({})
+  })
+})
+
+/**
+ * The class, and the plan.
+ *
+ * Everything here is something the Teacher typed rather than something a Drone reported,
+ * which is why it lives in the Logbook at all and why losing it to a field rename would
+ * matter.
+ */
+describe('the class list', () => {
+  it('keeps names between Lessons so a class is typed once', () => {
+    saveRoll(['Priya', 'Ravi'])
+
+    expect(readLogbook().roll).toEqual(['Priya', 'Ravi'])
+  })
+
+  it('holds each name once, however often it is offered', () => {
+    saveRoll(['Priya', 'Priya', ' Priya '])
+
+    expect(readLogbook().roll).toEqual(['Priya'])
+  })
+
+  it('drops the empty ones rather than keeping a blank in the class', () => {
+    saveRoll(['Priya', '', '   '])
+
+    expect(readLogbook().roll).toEqual(['Priya'])
+  })
+
+  it('remembers a name the Teacher has just used', () => {
+    rememberStudent('Ravi')
+    rememberStudent('Ravi')
+
+    expect(readLogbook().roll).toEqual(['Ravi'])
+  })
+})
+
+describe('a Lesson that was planned', () => {
+  it('keeps the Exercises it was started with', () => {
+    const id = startLesson('Year 8', 5, 6, 1_000, [{ id: 'e1', name: 'Hover', minutes: 5 }])
+
+    expect(runningLesson(readLogbook())?.exercises).toEqual([
+      { id: 'e1', name: 'Hover', minutes: 5 },
+    ])
+    expect(id).toBeTruthy()
+  })
+
+  it('captures who was flying what as it began, not as it ended', () => {
+    assignStudent('ttf-0001', 'Priya')
+    startLesson('Year 8', 5, 6, 1_000)
+
+    // Reassigned mid-lesson. The record of what was true at the start must not move.
+    assignStudent('ttf-0001', 'Ravi')
+
+    expect(runningLesson(readLogbook())?.assignments).toEqual({ 'ttf-0001': 'Priya' })
+  })
+
+  it('starts with no plan at all, which is a supported way to start', () => {
+    const id = startLesson('', 0, 6, 1_000)
+
+    const lesson = runningLesson(readLogbook())
+    expect(lesson?.id).toBe(id)
+    expect(lesson?.exercises).toEqual([])
+    expect(lesson?.label).toBe('Untitled lesson')
+  })
+
+  it('notes the Commands sent during it', () => {
+    const id = startLesson('Year 8', 5, 6, 1_000)
+
+    recordCommand(id, { at: 2_000, droneId: 'ttf-0001', droneName: 'Drone 1', kind: 'land' })
+
+    expect(runningLesson(readLogbook())?.commands).toHaveLength(1)
   })
 })

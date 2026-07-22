@@ -94,6 +94,28 @@ export interface LessonRecord {
    * under way, and on records saved before the board kept them.
    */
   readonly tally?: Readonly<Record<DroneId, DroneTally>>
+  /** The sequence this Lesson runs through. Absent on a Lesson started without a plan. */
+  readonly exercises?: readonly Exercise[]
+  /** Who was flying what when it began, captured rather than looked up later. */
+  readonly assignments?: Readonly<Record<DroneId, string>>
+  /** Every Command sent during it. */
+  readonly commands?: readonly CommandRecord[]
+}
+
+/** One task within a Lesson. What a Student is meant to be doing right now. */
+export interface Exercise {
+  readonly id: string
+  readonly name: string
+  /** Optional. An Exercise with no intended duration is normal, not incomplete. */
+  readonly minutes?: number
+}
+
+/** A Command the Teacher sent during a Lesson, kept for the report afterwards (C7). */
+export interface CommandRecord {
+  readonly at: number
+  readonly droneId: DroneId
+  readonly droneName: string
+  readonly kind: string
 }
 
 export interface Logbook {
@@ -108,6 +130,13 @@ export interface Logbook {
    * the Teacher still has to work out who to call across a noisy room.
    */
   readonly students: Readonly<Record<DroneId, string>>
+  /**
+   * The names in the class, kept between Lessons.
+   *
+   * So a Teacher types a class once rather than every period. It is the only thing this
+   * product stores about a Student, deliberately — see DESIGN.md §7.1.
+   */
+  readonly roll: readonly string[]
 }
 
 /**
@@ -126,7 +155,7 @@ export function studentsFrom(stored: StoredLogbook): Readonly<Record<DroneId, st
   return stored.students ?? stored.pilots ?? {}
 }
 
-const EMPTY: Logbook = { notes: {}, service: {}, lessons: [], students: {} }
+const EMPTY: Logbook = { notes: {}, service: {}, lessons: [], students: {}, roll: [] }
 
 export const LOGBOOK_KEY = 'techtechflight:logbook'
 
@@ -186,6 +215,7 @@ function load(): Logbook {
       // Absent on records written before the board tracked who was flying what, and
       // under the old name on records written before the glossary was applied.
       students: studentsFrom(parsed),
+      roll: parsed.roll ?? [],
     }
   } catch {
     // A locked-down school browser can refuse storage, and a half-written record is
@@ -251,7 +281,13 @@ export function clearStudents(): void {
   save({ ...readLogbook(), students: {} })
 }
 
-export function startLesson(label: string, readyAtStart: number, fleetSize: number, at: number): string {
+export function startLesson(
+  label: string,
+  readyAtStart: number,
+  fleetSize: number,
+  at: number,
+  exercises: readonly Exercise[] = [],
+): string {
   const book = readLogbook()
   const id = `lesson-${at}`
   const lesson: LessonRecord = {
@@ -262,6 +298,11 @@ export function startLesson(label: string, readyAtStart: number, fleetSize: numb
     readyAtStart,
     fleetSize,
     incidents: [],
+    exercises,
+    // Captured as it begins. A Drone reassigned mid-lesson must not rewrite who was
+    // flying it at the start, which is what the report is a record of.
+    assignments: { ...book.students },
+    commands: [],
   }
   save({ ...book, lessons: [lesson, ...book.lessons].slice(0, 100) })
   return id
@@ -358,6 +399,36 @@ export function addIncident(id: string, incident: LessonIncident): void {
 /** The lesson currently under way, if there is one. */
 export function runningLesson(book: Logbook): LessonRecord | null {
   return book.lessons.find((lesson) => lesson.endedAt === null) ?? null
+}
+
+/** The class, kept so it is typed once rather than every period. */
+export function saveRoll(names: readonly string[]): void {
+  const roll = [...new Set(names.map((name) => name.trim()).filter(Boolean))].sort((a, b) =>
+    a.localeCompare(b),
+  )
+  save({ ...readLogbook(), roll })
+}
+
+/** Remember a name the Teacher has just used, so they never type it twice. */
+export function rememberStudent(name: string): void {
+  const trimmed = name.trim()
+  if (trimmed === '') return
+  const book = readLogbook()
+  if (book.roll.includes(trimmed)) return
+  saveRoll([...book.roll, trimmed])
+}
+
+/** Note a Command against the running Lesson, for the report afterwards (C7). */
+export function recordCommand(lessonId: string, command: CommandRecord): void {
+  const book = readLogbook()
+  save({
+    ...book,
+    lessons: book.lessons.map((lesson) =>
+      lesson.id === lessonId
+        ? { ...lesson, commands: [...(lesson.commands ?? []), command].slice(-200) }
+        : lesson,
+    ),
+  })
 }
 
 export function replaceLogbook(next: Logbook): void {

@@ -31,7 +31,7 @@ export function AttentionBar({
   const worst = queue[0]
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="attention-bar flex flex-col gap-2">
       <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
         <span className="tnum tracking-[-0.02em]">{queue.length}</span>
         <span className="text-heading text-ink-subtle">

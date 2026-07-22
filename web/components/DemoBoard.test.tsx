@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { DemoBoard } from './DemoBoard'
 
 describe('the Vercel demonstration board', () => {
-  it('renders the Readyboard with clearly labelled sample Drones', () => {
+  it('renders the Flight Deck with clearly labelled sample Drones', () => {
     render(<DemoBoard />)
 
     expect(screen.getByRole('status', { name: /demonstration mode/i })).toHaveTextContent(

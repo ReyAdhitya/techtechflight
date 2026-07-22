@@ -13,11 +13,15 @@ import '@fontsource/hanken-grotesk/600.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Readyboard · TechTech',
+  title: 'Flight Deck · TechTech',
   description: 'The state of every Drone in the classroom set.',
 }
 
 export const viewport: Viewport = {
+  // Keep mobile Safari and Chrome on the physical device width. A responsive board must
+  // never rely on either browser's shrink-to-fit fallback to make wide chrome appear to fit.
+  width: 'device-width',
+  initialScale: 1,
   // The board is glanced at rather than read; pinch-zoom stays available, but the
   // colours have to be right whichever theme the machine is in.
   themeColor: [

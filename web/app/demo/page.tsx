@@ -3,8 +3,8 @@ import { DemoBoard } from '@/components/DemoBoard'
 import { SiteHeader } from '@/components/SiteHeader'
 
 export const metadata: Metadata = {
-  title: 'Readyboard demo · TechTech',
-  description: 'The TechTech Readyboard shown with clearly labelled sample Drone data.',
+  title: 'Flight Deck demo · TechTech',
+  description: 'The TechTech Flight Deck shown with clearly labelled sample Drone data.',
 }
 
 export default function DemoPage() {

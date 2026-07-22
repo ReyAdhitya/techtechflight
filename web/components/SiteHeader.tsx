@@ -61,14 +61,14 @@ function BrandMark() {
 
   if (assetMissing) {
     return (
-      <span className="brand-wordmark" role="img" aria-label="TechTech Readyboard">
-        TechTech <strong>Readyboard</strong>
+      <span className="brand-wordmark" role="img" aria-label="TechTech Flight Deck">
+        TechTech <strong>Flight Deck</strong>
       </span>
     )
   }
 
   return (
-    <span className="brand-lockup" role="img" aria-label="TechTech Readyboard">
+    <span className="brand-lockup" role="img" aria-label="TechTech Flight Deck">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={imageRef}
@@ -78,7 +78,7 @@ function BrandMark() {
         onError={() => setAssetMissing(true)}
       />
       <span className="brand-product" aria-hidden="true">
-        Readyboard
+        Flight Deck
       </span>
     </span>
   )

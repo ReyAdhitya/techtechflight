@@ -11,7 +11,10 @@ import {
   runningLesson,
   subscribeLogbook,
 } from '@/lib/logbook'
+import type { CommandKind } from '@techtechflight/contract'
 import { alertQueue, compareStrips, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
+import type { TrackedCommand } from '@/lib/command-tracker'
+import { GuardedButton } from './ui/GuardedButton'
 import {
   formatEndurance,
   formatSeparation,
@@ -41,7 +44,8 @@ import { useFleet } from './FleetProvider'
  * line without reading the rest.
  */
 export function ControlScreen() {
-  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now } = useFleet()
+  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor } =
+    useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
   // Which Drone the Teacher is looking at. Choosing a mark on the scope lights its strip
@@ -114,6 +118,8 @@ export function ControlScreen() {
               isAcknowledged={isAcknowledged}
               acknowledgedAt={acknowledgedAt}
               now={now}
+              command={command}
+              tracked={commandFor(entry.droneId)}
             />
           ))}
         </ul>
@@ -179,6 +185,8 @@ function FlightStrip({
   isAcknowledged,
   acknowledgedAt,
   now,
+  command,
+  tracked,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -187,6 +195,8 @@ function FlightStrip({
   isAcknowledged: (droneId: string, alert: VitalsAlert) => boolean
   acknowledgedAt: (droneId: string, alert: VitalsAlert) => number | null
   now: number
+  command: (droneId: string, kind: CommandKind) => void
+  tracked: TrackedCommand | null
 }) {
   const phase = PHASE_PRESENTATION[vitals.phase]
   const separation = formatSeparation(vitals)
@@ -242,6 +252,8 @@ function FlightStrip({
         <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
       )}
 
+      <CommandRow vitals={vitals} command={command} tracked={tracked} />
+
       {vitals.alerts.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {vitals.alerts.map((alert) => (
@@ -270,4 +282,80 @@ function FlightStrip({
       )}
     </li>
   )
+}
+
+/**
+ * What a Teacher can ask of this aircraft.
+ *
+ * Land and Hold are always here because they are what gets reached for. Every Command in
+ * this row takes energy out of the Drone; there is nothing here that makes one do more
+ * than it is already doing, which is what makes a mistaken press survivable.
+ *
+ * Nothing said here is optimistic. "Sent" means sent, "waiting" means the Fleet took it
+ * and the aircraft has not visibly done it yet, and a Command that produced no change
+ * reads exactly like a Command that produced no change.
+ */
+function CommandRow({
+  vitals,
+  command,
+  tracked,
+}: {
+  vitals: DroneVitals
+  command: (droneId: string, kind: CommandKind) => void
+  tracked: TrackedCommand | null
+}) {
+  const grounded = !vitals.airborne
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        disabled={grounded}
+        onClick={() => command(vitals.droneId, 'land')}
+        className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
+      >
+        Land
+      </button>
+      <button
+        type="button"
+        disabled={grounded}
+        onClick={() => command(vitals.droneId, 'hold')}
+        className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
+      >
+        Hold
+      </button>
+      <GuardedButton
+        label="Stop — hold"
+        confirmLabel="Press again to stop"
+        onConfirm={() => command(vitals.droneId, 'emergency-stop')}
+        className="ml-auto"
+      />
+      {tracked && <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>}
+    </div>
+  )
+}
+
+function describeCommand(tracked: TrackedCommand): string {
+  const asked = COMMAND_WORDS[tracked.command.kind]
+  switch (tracked.stage) {
+    case 'sent':
+      return `${asked} — sent`
+    case 'waiting':
+      return `${asked} — waiting for a response`
+    case 'done':
+      return `${asked} — done`
+    case 'refused':
+      return tracked.reason ?? `${asked} — refused`
+    case 'no-response':
+      // Not "failed". A Drone that ignored a request and one that stopped talking are
+      // not distinguishable from here.
+      return `${asked} — sent, no response since`
+  }
+}
+
+const COMMAND_WORDS: Readonly<Record<CommandKind, string>> = {
+  land: 'Land',
+  hold: 'Hold',
+  'auto-land': 'Auto-land',
+  'emergency-stop': 'Stop',
 }

@@ -147,9 +147,15 @@ function FlightStrip({ vitals }: { vitals: DroneVitals }) {
       )}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        {/*
+          * Real height rather than the tap-row overlay used in Maintenance. A strip wraps
+          * its alerts onto following lines, and those lines paint over an expanded hit
+          * area, leaving the bottom half of the target unclickable. Here the row is tall
+          * enough to carry a full-height link without moving anything.
+          */}
         <Link
           href={`/drone?id=${encodeURIComponent(vitals.droneId)}`}
-          className="tap-row font-display text-body font-medium text-ink no-underline hover:underline"
+          className="inline-flex min-h-11 items-center font-display text-body font-medium text-ink no-underline hover:underline"
         >
           {vitals.callsign}
         </Link>

@@ -63,6 +63,9 @@ function builtForDemoOnly(): boolean {
   return process.env.NEXT_PUBLIC_DEMO_ONLY === '1'
 }
 
+/** How often the stand-in Fleet is rebuilt, standing in for a ground station's cadence. */
+const DEMO_REFRESH_MS = 2_000
+
 export function FleetProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const demo = builtForDemoOnly() || pathname.startsWith('/demo')
@@ -105,9 +108,19 @@ function DemoFleet({ children }: { children: ReactNode }) {
   /*
    * Anchored on mount rather than during render: reading the clock while rendering would
    * make the prerendered HTML and the first client paint disagree.
+   *
+   * Re-anchored on a timer because a single anchor ages forever. A real ground station
+   * sends a fresh Fleet State every second or so and every age resets with it; a demo
+   * frozen at one moment has ages that climb without bound, and within ten seconds the
+   * whole Fleet reads as having stopped responding. That is a property of the stand-in,
+   * not of the Fleet, and showing it would be a lie about the product.
    */
   const [anchor, setAnchor] = useState(0)
-  useEffect(() => setAnchor(clock.now()), [clock])
+  useEffect(() => {
+    setAnchor(clock.now())
+    const timer = setInterval(() => setAnchor(clock.now()), DEMO_REFRESH_MS)
+    return () => clearInterval(timer)
+  }, [clock])
 
   const view = useMemo<FleetView>(
     () => ({

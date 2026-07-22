@@ -65,7 +65,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 5 | 5.3 Fleet core routes or refuses | ✅ | `f82a618` |
 | 5 | 5.4 Both links can send | ✅ | `9587b28` |
 | 5 | 5.5 Commands on the strip | ✅ | `1ab1353` |
-| 5 | 5.6 Scenario panel, separated | ⬜ | |
+| 5 | 5.6 Scenario panel, separated | ✅ | `pending` |
 | 5 | 5.7 The simulation label | ✅ | `2f05910` |
 | 6 | 6.1 Logbook grows | ⬜ | |
 | 6 | 6.2 Assignment column | ⬜ | |

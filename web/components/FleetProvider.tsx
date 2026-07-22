@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation'
 import type { Clock, CommandKind, DroneId, DroneState } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
-import type { FleetLink, FleetSnapshot } from '@/lib/fleet-link'
+import type { FleetLink, FleetSnapshot, ScenarioControls } from '@/lib/fleet-link'
 import { LocalFleetLink } from '@/lib/local-fleet-link'
 import { AcknowledgementTracker } from '@/lib/acknowledgement'
 import { CommandTracker, type TrackedCommand } from '@/lib/command-tracker'
@@ -62,6 +62,12 @@ export interface FleetView {
    */
   readonly command: (droneId: DroneId, kind: CommandKind) => void
   readonly commandFor: (droneId: DroneId) => TrackedCommand | null
+  /**
+   * Ways to make the world misbehave, for a demonstration. Null on a real Fleet.
+   *
+   * Never a Command, and never on the same screen as one (requirement C9).
+   */
+  readonly scenarios: ScenarioControls | null
 }
 
 const FleetContext = createContext<FleetView | null>(null)
@@ -138,8 +144,8 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const commands = useCommands(link, vitals, now)
 
   const view = useMemo<FleetView>(
-    () => ({ snapshot, now, demo, vitals, ...acknowledgements, ...commands }),
-    [snapshot, now, demo, vitals, acknowledgements, commands],
+    () => ({ snapshot, now, demo, vitals, scenarios: link.scenarios, ...acknowledgements, ...commands }),
+    [snapshot, now, demo, vitals, link, acknowledgements, commands],
   )
   return <FleetContext.Provider value={view}>{children}</FleetContext.Provider>
 }

@@ -46,6 +46,28 @@ export interface FleetSnapshot {
   readonly history?: FleetHistory | null
 }
 
+/**
+ * Making the world misbehave, for a demonstration.
+ *
+ * Named here rather than imported from the simulator, so a screen offering these never has
+ * to reach past the seam for a type. That matters more than it looks: it keeps the rule
+ * that no screen imports the simulator enforceable by a check rather than by agreement.
+ *
+ * These are emphatically **not** Commands (requirement C9). Asking a Drone to land is a
+ * request to an aircraft and can one day be real; inventing a fault is the world
+ * pretending, and never can be. They must never share a surface, or a Teacher would learn
+ * an interaction that cannot exist on hardware.
+ */
+export interface ScenarioControls {
+  injectFault(droneId: string): void
+  clearFault(droneId: string): void
+  loseLink(droneId: string): void
+  restoreLink(droneId: string): void
+  takeOff(droneId: string): void
+  setBattery(droneId: string, fraction: number): void
+  plugIn(droneId: string): void
+}
+
 export interface FleetLink {
   readonly snapshot: FleetSnapshot
   subscribe(listener: (snapshot: FleetSnapshot) => void): Unsubscribe
@@ -60,4 +82,6 @@ export interface FleetLink {
    */
   send(command: DroneCommand): void
   onCommandOutcome(listener: (outcome: CommandOutcomeMessage) => void): Unsubscribe
+  /** Present only on a simulated Fleet. Null is the honest answer for a real one. */
+  readonly scenarios: ScenarioControls | null
 }

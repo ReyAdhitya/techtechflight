@@ -100,9 +100,17 @@ export interface Logbook {
   readonly notes: Readonly<Record<DroneId, DroneNote>>
   readonly service: Readonly<Record<DroneId, ServiceRecord>>
   readonly lessons: readonly LessonRecord[]
+  /**
+   * Which Student is flying which Drone, for this lesson.
+   *
+   * A Drone reports what it is doing; it has no idea whose hands are on the controller.
+   * Without this the tower can say "Drone 3 is too close to Drone 1" and the Teacher
+   * still has to work out who to call across a noisy room.
+   */
+  readonly pilots: Readonly<Record<DroneId, string>>
 }
 
-const EMPTY: Logbook = { notes: {}, service: {}, lessons: [] }
+const EMPTY: Logbook = { notes: {}, service: {}, lessons: [], pilots: {} }
 
 export const LOGBOOK_KEY = 'techtechflight:logbook'
 
@@ -159,6 +167,8 @@ function load(): Logbook {
       notes: parsed.notes ?? {},
       service: parsed.service ?? {},
       lessons: parsed.lessons ?? [],
+      // Absent on records written before the board tracked who was flying what.
+      pilots: parsed.pilots ?? {},
     }
   } catch {
     // A locked-down school browser can refuse storage, and a half-written record is
@@ -204,6 +214,24 @@ export function setServiceState(
 
 export function serviceStateOf(book: Logbook, droneId: DroneId): ServiceState {
   return book.service[droneId]?.state ?? 'in-service'
+}
+
+/** Hand a Drone to a Student, or take it back with an empty name. */
+export function assignPilot(droneId: DroneId, name: string): void {
+  const book = readLogbook()
+  const pilots = { ...book.pilots }
+  if (name.trim() === '') delete pilots[droneId]
+  else pilots[droneId] = name.trim()
+  save({ ...book, pilots })
+}
+
+export function pilotOf(book: Logbook, droneId: DroneId): string | null {
+  return book.pilots[droneId] ?? null
+}
+
+/** Everyone put down at the end of a lesson, so the next one starts clean. */
+export function clearPilots(): void {
+  save({ ...readLogbook(), pilots: {} })
 }
 
 export function startLesson(label: string, readyAtStart: number, fleetSize: number, at: number): string {

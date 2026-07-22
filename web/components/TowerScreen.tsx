@@ -1,8 +1,23 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { alertQueue, AltitudeTracker, fleetVitals, type DroneVitals } from '@/lib/vitals'
+import {
+  assignPilot,
+  clearPilots,
+  pilotOf,
+  readLogbook,
+  readServerLogbook,
+  subscribeLogbook,
+} from '@/lib/logbook'
+import {
+  alertQueue,
+  AlertTracker,
+  AltitudeTracker,
+  compareStrips,
+  fleetVitals,
+  type DroneVitals,
+} from '@/lib/vitals'
 import {
   formatEndurance,
   formatSeparation,
@@ -30,8 +45,11 @@ import { useFleet } from './FleetProvider'
  */
 export function TowerScreen() {
   const { snapshot, now } = useFleet()
+  const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const tracker = useRef<AltitudeTracker | null>(null)
   tracker.current ??= new AltitudeTracker()
+  const alerts = useRef<AlertTracker | null>(null)
+  alerts.current ??= new AlertTracker()
 
   const state = snapshot.state
 
@@ -54,8 +72,18 @@ export function TowerScreen() {
       now,
       batteries: snapshot.history?.batteries ?? [],
       rates: tracker.current?.rates() ?? new Map(),
+      firstSeen: alerts.current?.firstSeen ?? new Map(),
     })
   }, [state, snapshot.receivedAt, snapshot.history, now])
+
+  /*
+   * Recorded after the vitals are built, not before: a condition nobody has seen yet is
+   * stamped with the moment it first appears, and one that has cleared forgets when it
+   * began so its return reads as new news.
+   */
+  useEffect(() => {
+    if (vitals.length > 0) alerts.current?.observe(vitals, now)
+  }, [vitals, now])
 
   const queue = useMemo(() => alertQueue(vitals), [vitals])
 
@@ -67,16 +95,9 @@ export function TowerScreen() {
     )
   }
 
-  // Worst first, then by callsign, so a Drone in trouble rises without the list
-  // reshuffling every second for Drones that are all equally fine.
-  const strips = [...vitals].sort((a, b) => {
-    const rank = (entry: DroneVitals) =>
-      entry.alerts[0] === undefined
-        ? 3
-        : { critical: 0, warning: 1, info: 2 }[entry.alerts[0].severity]
-    return rank(a) - rank(b) || a.callsign.localeCompare(b.callsign)
-  })
-
+  // Worst first, and among equals the one with more of them. Callsign breaks the final
+  // tie so a Fleet where nothing is wrong holds a stable order rather than reshuffling.
+  const strips = [...vitals].sort(compareStrips)
   const worst = queue[0]
 
   return (
@@ -115,10 +136,21 @@ export function TowerScreen() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="label m-0">Every Drone</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <h2 className="label m-0">Every Drone</h2>
+          {Object.keys(book.pilots).length > 0 && (
+            <button
+              type="button"
+              onClick={clearPilots}
+              className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+            >
+              Everyone has put theirs down
+            </button>
+          )}
+        </div>
         <ul className="m-0 flex list-none flex-col gap-2 p-0">
           {strips.map((entry) => (
-            <FlightStrip key={entry.droneId} vitals={entry} />
+            <FlightStrip key={entry.droneId} vitals={entry} pilot={pilotOf(book, entry.droneId)} />
           ))}
         </ul>
       </section>
@@ -133,7 +165,49 @@ export function TowerScreen() {
  * doing and how long have I got", which is why height carries its direction and charge
  * carries a time rather than only a percentage.
  */
-function FlightStrip({ vitals }: { vitals: DroneVitals }) {
+/**
+ * Who is flying this one.
+ *
+ * Edited in place rather than behind a dialog: a Teacher assigns six of these in the
+ * thirty seconds before a lesson starts, and six dialogs is not thirty seconds. Held in
+ * local state while being typed so the Logbook is not rewritten on every keystroke.
+ */
+function PilotField({
+  droneId,
+  callsign,
+  pilot,
+}: {
+  droneId: string
+  callsign: string
+  pilot: string | null
+}) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const value = draft ?? pilot ?? ''
+
+  return (
+    <label className="flex items-center">
+      <span className="visually-hidden">Who is flying {callsign}</span>
+      <input
+        value={value}
+        placeholder="Add a name"
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={() => {
+          if (draft !== null) assignPilot(droneId, draft)
+          setDraft(null)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') event.currentTarget.blur()
+        }}
+        className={cn(
+          'min-h-11 w-28 rounded-pill border bg-canvas px-3 py-1 text-value',
+          pilot ? 'border-hairline text-ink' : 'border-dashed border-hairline text-ink-muted',
+        )}
+      />
+    </label>
+  )
+}
+
+function FlightStrip({ vitals, pilot }: { vitals: DroneVitals; pilot: string | null }) {
   const phase = PHASE_PRESENTATION[vitals.phase]
   const separation = formatSeparation(vitals)
 
@@ -159,6 +233,7 @@ function FlightStrip({ vitals }: { vitals: DroneVitals }) {
         >
           {vitals.callsign}
         </Link>
+        <PilotField droneId={vitals.droneId} callsign={vitals.callsign} pilot={pilot} />
         <span className="text-value text-ink">{phase.label}</span>
         <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
         <span className="tnum text-value text-ink-subtle">
@@ -175,6 +250,12 @@ function FlightStrip({ vitals }: { vitals: DroneVitals }) {
 
       {separation && (
         <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
+      )}
+
+      {vitals.alerts.length > 0 && pilot && (
+        // Repeated under the alerts on purpose. The alert is the thing being read, and
+        // "go and speak to Priya" is more use than "go and look at Drone 3".
+        <p className="m-0 text-value text-ink-subtle">Flown by {pilot}.</p>
       )}
 
       {vitals.alerts.length > 0 && (

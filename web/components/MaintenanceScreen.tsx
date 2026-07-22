@@ -6,12 +6,19 @@ import type { DroneState, FleetEvent } from '@techtechflight/contract'
 import { needsAttention } from '@techtechflight/contract'
 import { formatBattery } from '@/lib/battery'
 import {
+  alreadyTallied,
+  EMPTY_TALLY,
+  persistedTally,
   readLogbook,
   readServerLogbook,
   serviceStateOf,
   setServiceState,
   subscribeLogbook,
+  talliedLessonCount,
+  talliedWindows,
+  tallyEvents,
   SERVICE_PRESENTATION,
+  type Logbook,
   type ServiceState,
 } from '@/lib/logbook'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
@@ -34,8 +41,9 @@ export function MaintenanceScreen() {
   const drones = snapshot.state?.drones ?? []
   const events = snapshot.history?.events ?? []
 
-  const reliability = useMemo(() => rank(drones, events), [drones, events])
+  const reliability = useMemo(() => rank(drones, events, book), [drones, events, book])
   const todo = drones.filter((drone) => needsAttention(drone.status))
+  const lessonsCounted = talliedLessonCount(book)
 
   if (!snapshot.state) {
     return (
@@ -116,9 +124,14 @@ export function MaintenanceScreen() {
             Which Drones keep giving trouble
           </h2>
           <p className="m-0 max-w-[60ch] text-value text-ink-subtle">
-            Counted across everything the ground station still remembers. A Drone with one
-            fault had a bad morning; a Drone at the top of this list every week is one to
-            take up with the supplier.
+            {lessonsCounted === 0
+              ? `Counted across everything the ground station still remembers. A Drone with
+                 one fault had a bad morning; a Drone at the top of this list every week is
+                 one to take up with the supplier.`
+              : `Counted across everything the ground station still remembers, plus
+                 ${lessonsCounted} finished ${lessonsCounted === 1 ? 'lesson' : 'lessons'}
+                 kept on this laptop. A Drone with one fault had a bad morning; a Drone at
+                 the top of this list every week is one to take up with the supplier.`}
           </p>
         </div>
 
@@ -191,19 +204,33 @@ interface Reliability {
   readonly flights: number
 }
 
-/** Worst first, so the Drone worth arguing about is at the top. */
+/**
+ * Worst first, so the Drone worth arguing about is at the top.
+ *
+ * Two sources, because neither alone answers the question. The ground station's history
+ * is complete but short — restart it and every Drone looks blameless. The Teacher's saved
+ * lessons go back a term but stop at the last one that was closed. A live event that falls
+ * inside a lesson already tallied is dropped rather than added, or the overlap between the
+ * two would be counted twice.
+ */
 function rank(
   drones: readonly DroneState[],
   events: readonly FleetEvent[],
+  book: Logbook,
 ): readonly Reliability[] {
+  const saved = persistedTally(book)
+  const windows = talliedWindows(book)
+  const live = tallyEvents(events.filter((event) => !alreadyTallied(windows, event.at)))
+
   return drones
     .map((drone) => {
-      const mine = events.filter((event) => event.droneId === drone.id)
+      const before = saved[drone.id] ?? EMPTY_TALLY
+      const now = live[drone.id] ?? EMPTY_TALLY
       return {
         drone,
-        faults: mine.filter((event) => event.kind === 'fault-raised').length,
-        dropouts: mine.filter((event) => event.kind === 'contact-lost').length,
-        flights: mine.filter((event) => event.kind === 'took-off').length,
+        faults: before.faults + now.faults,
+        dropouts: before.dropouts + now.dropouts,
+        flights: before.flights + now.flights,
       }
     })
     .sort((a, b) => b.faults - a.faults || b.dropouts - a.dropouts)

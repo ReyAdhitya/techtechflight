@@ -1,4 +1,4 @@
-import type { DroneId } from '@techtechflight/contract'
+import type { DroneId, FleetEvent } from '@techtechflight/contract'
 
 /**
  * What the Teacher knows that no Drone can report.
@@ -49,7 +49,30 @@ export interface LessonIncident {
   readonly at: number
   readonly text: string
   readonly severity: 'attention' | 'fault'
+  /*
+   * Which Drone it was, denormalised for the same reason a Fleet Event carries a name:
+   * a record read next term has to stay readable after that Drone has been sent back.
+   * Optional because records written before the board kept them are still worth showing.
+   */
+  readonly droneId?: DroneId
+  readonly droneName?: string
 }
+
+/**
+ * How often one Drone has misbehaved, counted rather than listed.
+ *
+ * The ground station remembers a bounded window and forgets the rest, so a Teacher asking
+ * "which of these keeps failing" gets an answer that resets every time the process
+ * restarts. Counts are cheap to keep and survive that; the events that produced them are
+ * not and do not.
+ */
+export interface DroneTally {
+  readonly faults: number
+  readonly dropouts: number
+  readonly flights: number
+}
+
+export const EMPTY_TALLY: DroneTally = { faults: 0, dropouts: 0, flights: 0 }
 
 /**
  * One lesson, from pre-flight check to the summary afterwards.
@@ -66,6 +89,11 @@ export interface LessonRecord {
   readonly readyAtStart: number
   readonly fleetSize: number
   readonly incidents: readonly LessonIncident[]
+  /**
+   * Per-Drone counts for this lesson, written once as it closes. Absent on a lesson still
+   * under way, and on records saved before the board kept them.
+   */
+  readonly tally?: Readonly<Record<DroneId, DroneTally>>
 }
 
 export interface Logbook {
@@ -194,14 +222,80 @@ export function startLesson(label: string, readyAtStart: number, fleetSize: numb
   return id
 }
 
-export function endLesson(id: string, at: number): void {
+export function endLesson(
+  id: string,
+  at: number,
+  tally: Readonly<Record<DroneId, DroneTally>>,
+): void {
   const book = readLogbook()
   save({
     ...book,
     lessons: book.lessons.map((lesson) =>
-      lesson.id === id && lesson.endedAt === null ? { ...lesson, endedAt: at } : lesson,
+      lesson.id === id && lesson.endedAt === null ? { ...lesson, endedAt: at, tally } : lesson,
     ),
   })
+}
+
+/** Reduce a run of Fleet Events to the counts worth keeping after the events age out. */
+export function tallyEvents(events: readonly FleetEvent[]): Record<DroneId, DroneTally> {
+  const tally: Record<DroneId, DroneTally> = {}
+  for (const event of events) {
+    const running = tally[event.droneId] ?? EMPTY_TALLY
+    tally[event.droneId] = {
+      faults: running.faults + (event.kind === 'fault-raised' ? 1 : 0),
+      dropouts: running.dropouts + (event.kind === 'contact-lost' ? 1 : 0),
+      flights: running.flights + (event.kind === 'took-off' ? 1 : 0),
+    }
+  }
+  return tally
+}
+
+export interface TalliedWindow {
+  readonly from: number
+  readonly to: number
+}
+
+/**
+ * The stretches of time already counted into a closed lesson's tally.
+ *
+ * The ground station's live history and the saved lessons overlap for as long as an event
+ * stays in the retained window. A fault counted from both would make an airframe look
+ * twice as bad as it is, which is exactly the number a Teacher would take to the supplier.
+ */
+export function talliedWindows(book: Logbook): readonly TalliedWindow[] {
+  const windows: TalliedWindow[] = []
+  for (const lesson of book.lessons) {
+    if (lesson.endedAt === null || lesson.tally === undefined) continue
+    windows.push({ from: lesson.startedAt, to: lesson.endedAt })
+  }
+  return windows
+}
+
+export function alreadyTallied(windows: readonly TalliedWindow[], at: number): boolean {
+  return windows.some((window) => at >= window.from && at <= window.to)
+}
+
+/** Every closed lesson's tally, summed per Drone. */
+export function persistedTally(book: Logbook): Readonly<Record<DroneId, DroneTally>> {
+  const total: Record<DroneId, DroneTally> = {}
+  for (const lesson of book.lessons) {
+    if (lesson.tally === undefined) continue
+    for (const droneId of Object.keys(lesson.tally)) {
+      const lessonTally = lesson.tally[droneId] ?? EMPTY_TALLY
+      const running = total[droneId] ?? EMPTY_TALLY
+      total[droneId] = {
+        faults: running.faults + lessonTally.faults,
+        dropouts: running.dropouts + lessonTally.dropouts,
+        flights: running.flights + lessonTally.flights,
+      }
+    }
+  }
+  return total
+}
+
+/** How many closed lessons the persisted counts are drawn from, for saying so on screen. */
+export function talliedLessonCount(book: Logbook): number {
+  return talliedWindows(book).length
 }
 
 export function addIncident(id: string, incident: LessonIncident): void {

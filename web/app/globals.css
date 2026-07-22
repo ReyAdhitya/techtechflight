@@ -518,6 +518,77 @@
   }
 
   /*
+   * Sections.
+   *
+   * Quiet by default and marked by weight and a rule rather than by a filled pill: the
+   * bar sits above an instrument, and chrome that competed with a Fault colour on a tile
+   * would be spending the one signal this board has on navigation.
+   */
+  .site-nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-nav__list {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-nav__link {
+    display: inline-block;
+    padding: 0.5rem 0.7rem;
+    border-radius: var(--radius-md);
+    color: var(--muted-foreground);
+    font-size: var(--text-value);
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 160ms var(--chrome-ease), background-color 160ms var(--chrome-ease);
+  }
+
+  .site-nav__link:hover {
+    color: var(--foreground);
+    background: var(--muted);
+  }
+
+  .site-nav__link--active {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  /* The current section, marked without colour so it survives a projector. */
+  .site-nav__link--active::after {
+    content: '';
+    display: block;
+    height: 2px;
+    margin-top: 0.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--foreground);
+  }
+
+  /* Below this the bar cannot hold identity, five sections and two controls at once. */
+  @media (max-width: 60rem) {
+    .site-nav {
+      order: 3;
+      flex-basis: 100%;
+    }
+
+    .site-header {
+      flex-wrap: wrap;
+    }
+  }
+
+  /*
    * Mobile browsers shrink a page to fit any unbreakable row wider than the device.
    * Keep both controls as full touch targets, but let their icons carry the compact
    * phone treatment so the header never changes the layout viewport width.

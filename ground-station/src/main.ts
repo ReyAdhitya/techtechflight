@@ -5,6 +5,7 @@ import type { FleetThresholds } from '@techtechflight/contract'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
 import { GroundStation } from './fleet.ts'
+import { FleetHistoryRecorder } from './history.ts'
 import { startFleetServer } from './server.ts'
 import { CLASSROOM_FLEET } from './simulator/classroom-fleet.ts'
 import { SimulatedTelemetrySource } from './simulator/simulated-telemetry-source.ts'
@@ -66,8 +67,21 @@ function numberFrom(variable: string, fallback: number): number {
 
 station.start()
 
+/*
+ * The record of the recent past.
+ *
+ * Seeded from the Fleet as it stands rather than from nothing, so the first real change
+ * is a change rather than six Drones apparently springing into existence. It observes
+ * every published Fleet State from here on; the ground station is the only thing that
+ * sees every reading, so it is the only honest place for this to live.
+ */
+const history = new FleetHistoryRecorder()
+history.observe(station.fleetState())
+station.onFleetState((state) => history.observe(state))
+
 const server = await startFleetServer({
   station,
+  history,
   port: Number(process.env['PORT'] ?? 4321),
   ...(existsSync(dashboardDist) ? { dashboardDir: dashboardDist } : {}),
 })
@@ -101,6 +115,14 @@ function installScenarioKeys(): void {
     b: { label: `Flatten battery on ${target}`, run: () => simulator.setBattery(target, 0.08) },
     p: { label: `Plug in ${target}`, run: () => simulator.plugIn(target) },
     u: { label: `Unplug ${target}`, run: () => simulator.unplug(target) },
+    e: { label: `EMERGENCY STOP ${target}`, run: () => simulator.triggerEmergencyStop(target) },
+    x: { label: `Reset emergency stop on ${target}`, run: () => simulator.resetEmergencyStop(target) },
+    a: { label: `Auto-land ${target}`, run: () => simulator.beginAutoLanding(target) },
+    v: { label: `Camera on ${target}`, run: () => simulator.startCamera(target) },
+    n: {
+      label: 'Link the whole Fleet as one group',
+      run: () => simulator.link(CLASSROOM_FLEET.map((drone) => drone.id)),
+    },
   }
 
   console.log(

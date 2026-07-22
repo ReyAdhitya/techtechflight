@@ -354,3 +354,65 @@ describe('Drones the Fleet does not know about', () => {
     expect(station.fleetState().drones).toHaveLength(3)
   })
 })
+
+/**
+ * Whether a Command can be carried at all.
+ *
+ * ADR-0011 rests on this being decided by the Telemetry Source rather than by a setting.
+ * The FakeTelemetrySource these tests use only reports — like a hardware adapter, and
+ * unlike the simulator — so it is exactly the right thing to check a refusal against.
+ */
+describe('being asked to command a Drone', () => {
+  const asked = (droneId: string) => ({
+    id: 'c-1',
+    droneId,
+    kind: 'land' as const,
+    issuedAt: 1_000,
+  })
+
+  it('refuses when the Telemetry Source will not carry Commands', () => {
+    const outcome = station.command(asked('ttf-0001'))
+
+    expect(outcome.outcome).toBe('refused')
+    // Never silence. A control that quietly did nothing is worse than one that is absent,
+    // because a Teacher would go on pressing it.
+    expect(outcome.reason).toMatch(/does not accept Commands/i)
+  })
+
+  it('refuses a Drone the School does not own', () => {
+    const outcome = station.command(asked('ttf-9999'))
+
+    expect(outcome.outcome).toBe('refused')
+    expect(outcome.reason).toMatch(/not part of this Fleet/i)
+  })
+
+  it('passes it on when the Telemetry Source will carry it', () => {
+    const carried: string[] = []
+    const commandable = new GroundStation({
+      registrations: [{ id: 'ttf-0001', name: 'Drone 1', boardOrder: 1 }],
+      source: Object.assign(new FakeTelemetrySource(), {
+        command: (command: { droneId: string }) => carried.push(command.droneId),
+      }),
+      clock,
+    })
+
+    const outcome = commandable.command(asked('ttf-0001'))
+
+    expect(outcome).toEqual({ outcome: 'accepted', reason: null })
+    expect(carried).toEqual(['ttf-0001'])
+  })
+
+  it('accepting says only that the Fleet took it, never that the Drone acted', () => {
+    const commandable = new GroundStation({
+      registrations: [{ id: 'ttf-0001', name: 'Drone 1', boardOrder: 1 }],
+      source: Object.assign(new FakeTelemetrySource(), { command: () => {} }),
+      clock,
+    })
+
+    commandable.command(asked('ttf-0001'))
+
+    // Nothing about the Fleet changed by asking. What a Drone did is only ever known
+    // from the Telemetry that follows.
+    expect(commandable.fleetState().drones[0]?.telemetry).toBeNull()
+  })
+})

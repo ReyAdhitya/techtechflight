@@ -8,6 +8,7 @@ import {
   studentOf,
   currentExercise,
   readLogbook,
+  recordCommand,
   readServerLogbook,
   runningLesson,
   subscribeLogbook,
@@ -119,7 +120,23 @@ export function ControlScreen() {
               isAcknowledged={isAcknowledged}
               acknowledgedAt={acknowledgedAt}
               now={now}
-              command={command}
+              command={(droneId, kind) => {
+                command(droneId, kind)
+                /*
+                 * Noted against the Lesson as it is sent (C7), not when it resolves.
+                 * What the report is a record of is what the Teacher asked for — a
+                 * Command that produced nothing is still a thing that happened, and
+                 * arguably the more interesting one.
+                 */
+                if (lesson) {
+                  recordCommand(lesson.id, {
+                    at: now,
+                    droneId,
+                    droneName: entry.callsign,
+                    kind,
+                  })
+                }
+              }}
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
             />

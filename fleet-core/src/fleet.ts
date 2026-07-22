@@ -1,5 +1,6 @@
 import type {
   Clock,
+  DroneCommand,
   DroneRegistration,
   DroneState,
   FleetState,
@@ -8,7 +9,7 @@ import type {
   TelemetrySource,
   Unsubscribe,
 } from '@techtechflight/contract'
-import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
+import { DEFAULT_THRESHOLDS, isCommandable } from '@techtechflight/contract'
 import {
   DEFAULT_CHARGE_FORECAST,
   forecastTimeToReady,
@@ -31,6 +32,16 @@ export interface GroundStationOptions {
   readonly tickIntervalMs?: number
   /** How much observed charge is enough to forecast from. See `charge.ts`. */
   readonly chargeForecast?: ChargeForecastOptions
+}
+
+/**
+ * Whether a Command reached the Fleet. Not whether the Drone did anything about it —
+ * that is only ever known from the Telemetry that follows.
+ */
+export interface CommandOutcome {
+  readonly outcome: 'accepted' | 'refused'
+  /** Why not, in words a Teacher can read. Null when it was accepted. */
+  readonly reason: string | null
 }
 
 interface DroneRecord {
@@ -122,6 +133,38 @@ export class GroundStation {
       generatedAt: now,
       drones: this.#records.map((record) => this.#droneState(record, now)),
     }
+  }
+
+  /**
+   * Pass a Command to the Telemetry Source, if it is the kind that will carry one.
+   *
+   * The guard is the whole of ADR-0011. A Telemetry Source backed by real hardware does
+   * not implement CommandableSource, so it refuses here — structurally, rather than
+   * because someone remembered to check a setting. There is no configuration that
+   * changes this answer.
+   *
+   * A refusal always carries a reason. A control that silently did nothing would be
+   * worse than one that is not there, because a Teacher would keep pressing it.
+   */
+  command(command: DroneCommand): CommandOutcome {
+    const known = this.#records.some(
+      (record) => record.registration.id === command.droneId,
+    )
+    // Dropped the same way Telemetry from an unregistered Drone is dropped, rather than
+    // conjuring an aircraft the Teacher cannot find in the cupboard.
+    if (!known) {
+      return { outcome: 'refused', reason: 'That Drone is not part of this Fleet.' }
+    }
+
+    if (!isCommandable(this.#source)) {
+      return {
+        outcome: 'refused',
+        reason: 'This Fleet does not accept Commands from the board.',
+      }
+    }
+
+    this.#source.command(command)
+    return { outcome: 'accepted', reason: null }
   }
 
   onFleetState(listener: (state: FleetState) => void): Unsubscribe {

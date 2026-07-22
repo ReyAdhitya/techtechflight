@@ -18,5 +18,5 @@
  * directory.
  */
 
-export { GroundStation, type GroundStationOptions } from './fleet.ts'
+export { GroundStation, type CommandOutcome, type GroundStationOptions } from './fleet.ts'
 export { FleetHistoryRecorder } from './history.ts'

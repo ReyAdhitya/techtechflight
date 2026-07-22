@@ -11,12 +11,13 @@ import {
   type ReactNode,
 } from 'react'
 import { usePathname } from 'next/navigation'
-import type { Clock, DroneId, DroneState } from '@techtechflight/contract'
+import type { Clock, CommandKind, DroneId, DroneState } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
 import type { FleetLink, FleetSnapshot } from '@/lib/fleet-link'
 import { LocalFleetLink } from '@/lib/local-fleet-link'
 import { AcknowledgementTracker } from '@/lib/acknowledgement'
+import { CommandTracker, type TrackedCommand } from '@/lib/command-tracker'
 import {
   AlertTracker,
   AltitudeTracker,
@@ -53,6 +54,14 @@ export interface FleetView {
   readonly isAcknowledged: (droneId: DroneId, alert: VitalsAlert) => boolean
   /** When it was taken, for saying so quietly on the Drone's own strip. */
   readonly acknowledgedAt: (droneId: DroneId, alert: VitalsAlert) => number | null
+  /**
+   * Ask a Drone to do something. Every Command takes energy out of the aircraft.
+   *
+   * Nothing on screen changes because of this call. What the Drone did is read from the
+   * Telemetry that follows, which is what `commandFor` reports on.
+   */
+  readonly command: (droneId: DroneId, kind: CommandKind) => void
+  readonly commandFor: (droneId: DroneId) => TrackedCommand | null
 }
 
 const FleetContext = createContext<FleetView | null>(null)
@@ -126,10 +135,11 @@ export function FleetProvider({ children }: { children: ReactNode }) {
 
   const vitals = useVitals(snapshot, now)
   const acknowledgements = useAcknowledgements(vitals, now)
+  const commands = useCommands(link, vitals, now)
 
   const view = useMemo<FleetView>(
-    () => ({ snapshot, now, demo, vitals, ...acknowledgements }),
-    [snapshot, now, demo, vitals, acknowledgements],
+    () => ({ snapshot, now, demo, vitals, ...acknowledgements, ...commands }),
+    [snapshot, now, demo, vitals, acknowledgements, commands],
   )
   return <FleetContext.Provider value={view}>{children}</FleetContext.Provider>
 }
@@ -167,6 +177,52 @@ function useAcknowledgements(vitals: readonly DroneVitals[], now: number) {
         taken.current?.takenAt(droneId, alert) ?? null,
     }),
     [now],
+  )
+}
+
+/**
+ * What has been asked for, and what has come of it.
+ *
+ * Deliberately not folded into the snapshot. An outcome is news about a request; a
+ * snapshot is what the Fleet is doing. Keeping them apart is what stops a button press
+ * from ever reading as an aircraft having moved.
+ */
+function useCommands(link: FleetLink, vitals: readonly DroneVitals[], now: number) {
+  const tracker = useRef<CommandTracker | null>(null)
+  tracker.current ??= new CommandTracker()
+  const [, setIssued] = useState(0)
+  const bump = () => setIssued((count) => count + 1)
+
+  useEffect(() => {
+    return link.onCommandOutcome((outcome) => {
+      tracker.current?.record(outcome)
+      bump()
+    })
+  }, [link])
+
+  // Evidence, read from the Fleet rather than assumed from having asked.
+  useEffect(() => {
+    if (vitals.length > 0) tracker.current?.observe(vitals, now)
+  }, [vitals, now])
+
+  return useMemo(
+    () => ({
+      command: (droneId: DroneId, kind: CommandKind) => {
+        const command = {
+          // Unique enough to match an outcome to its request, and derived rather than
+          // random so nothing here depends on a source of entropy during a render.
+          id: `${droneId}:${kind}:${now}`,
+          droneId,
+          kind,
+          issuedAt: now,
+        }
+        tracker.current?.issue(command)
+        link.send(command)
+        bump()
+      },
+      commandFor: (droneId: DroneId) => tracker.current?.latestFor(droneId) ?? null,
+    }),
+    [link, now],
   )
 }
 

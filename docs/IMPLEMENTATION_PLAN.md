@@ -77,7 +77,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 7 | 7.2 "What needs doing" moves to Fleet | ✅ | `pending` |
 | 7 | 7.3 Navigation reduces to five | ✅ | `pending` |
 | 7 | 7.4 The Lesson report | ✅ | `pending` |
-| 7 | 7.5 Printing | ⬜ | |
+| 7 | 7.5 Printing | ✅ | `pending` |
 | 8 | 8.1 Motion | ⬜ | |
 | 8 | 8.2 States sweep | ⬜ | |
 | 8 | 8.3 Device and desktop audits | ⬜ | |

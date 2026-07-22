@@ -8,6 +8,7 @@
   },
   "include": [
     "contract/src/**/*.ts",
+    "fleet-core/src/**/*.ts",
     "ground-station/src/**/*.ts",
     "dashboard/src/**/*.ts",
     "dashboard/src/**/*.tsx",

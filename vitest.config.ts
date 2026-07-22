@@ -26,6 +26,13 @@ export default defineConfig({
         },
       },
       {
+        test: {
+          name: 'fleet-core',
+          environment: 'node',
+          include: ['fleet-core/**/*.test.ts'],
+        },
+      },
+      {
         plugins: [react()],
         test: {
           name: 'dashboard',

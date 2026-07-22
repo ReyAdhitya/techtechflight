@@ -79,7 +79,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 7 | 7.4 The Lesson report | ✅ | `pending` |
 | 7 | 7.5 Printing | ✅ | `pending` |
 | 8 | 8.1 Motion | ✅ | `pending` |
-| 8 | 8.2 States sweep | ⬜ | |
+| 8 | 8.2 States sweep | ✅ | `pending` |
 | 8 | 8.3 Device and desktop audits | ⬜ | |
 | 8 | 8.4 Records weight | ⬜ | |
 | 8 | 8.5 Boundary and dead-prefetch check | ⬜ | |

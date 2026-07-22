@@ -52,11 +52,15 @@ projector, in front of a class.
 install and build. Untouched by the redesign. A decision, not a defect.
 
 ### O6 — Teacher records still live in one browser
-**Severity: medium · Requirement H6 · Task 8.4**
+**Severity: medium · Requirement H6 · Partly mitigated**
 
-`localStorage` only, and the redesign adds Exercises, plans and Command records to it. The
-agreed mitigation is an export prompt at lesson close and a stored-size warning before a
-quota failure rather than after. A ground-station-backed record needs its own ADR.
+`localStorage` only, and the redesign added Exercises, plans and Command records to it.
+Settings now warns before the quota is reached rather than after, which prevents the
+silent failure — a save throwing while the board carries on working perfectly. It does
+not solve the underlying limitation: records still do not follow a Teacher to another
+laptop, and clearing site data still clears them. A ground-station-backed record is the
+eventual answer and needs its own ADR, because it opens a second write path with its own
+authority and conflict questions.
 
 ### O7 — One transient test failure, not reproduced
 **Severity: watch**

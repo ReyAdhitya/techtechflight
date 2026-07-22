@@ -877,3 +877,31 @@
 .print-only {
   display: none;
 }
+
+/*
+ * Motion, and the conditions under which there is none.
+ *
+ * The rule this enforces is that nothing moves on the arrival of bad news. An Alert
+ * appearing must not displace the line a Teacher is reading, so the attention bar holds
+ * its space before it has anything to say — a queue that grows by pushing the scope down
+ * the page is one that makes a Teacher lose their place at exactly the wrong moment.
+ */
+.attention-bar {
+  min-height: 4.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /*
+   * Everything, rather than a list of the animations somebody remembered. Nothing in this
+   * product carries meaning in movement — the counts read the same still, the marks are at
+   * the positions the Fleet reported either way — so removing all of it loses nothing.
+   */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // No ambient runtime at all. `types: []` drops @types/node, so `node:fs`, `process`
+    // and `require` stop resolving; the base `lib` of ES2022 alone drops `document`,
+    // `window` and `console` with them.
+    //
+    // Both halves matter. This package runs in a Node process and in a Teacher's browser
+    // from the same source (ADR-0013), so it may assume neither. Time and randomness
+    // arrive injected, which is what makes that possible — and this is the check that
+    // keeps it true rather than merely currently-true.
+    "types": [],
+    // The package's own modules import each other by filename, e.g. `./charge.ts`.
+    "allowImportingTsExtensions": true
+  },
+  // Production sources only. The test files import `vitest`, whose own declarations depend
+  // on @types/node — which would re-declare `node:fs` for the whole program and quietly
+  // undo everything above. The tests are typechecked by the root project instead, where
+  // Node types are expected and harmless.
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
+}

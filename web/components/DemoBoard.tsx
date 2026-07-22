@@ -11,7 +11,7 @@ import { FleetBoard } from './FleetBoard'
  */
 const PRERENDER_ANCHOR = 1_000_000
 
-/** The Readyboard driven by explicit sample data, with no WebSocket attempt. */
+/** The Flight Deck driven by explicit sample data, with no WebSocket attempt. */
 export function DemoBoard() {
   const [anchor, setAnchor] = useState(PRERENDER_ANCHOR)
   const [now, setNow] = useState(PRERENDER_ANCHOR)

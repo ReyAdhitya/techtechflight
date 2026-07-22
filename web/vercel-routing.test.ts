@@ -17,7 +17,7 @@ const config = JSON.parse(
 ) as VercelConfig
 
 describe('the standalone Vercel deployment', () => {
-  it('routes the root to the Readyboard demo instead of the maximalist experiment', () => {
+  it('routes the root to the Flight Deck demo instead of the maximalist experiment', () => {
     expect(config.redirects ?? []).toContainEqual({
       source: '/',
       destination: '/demo',

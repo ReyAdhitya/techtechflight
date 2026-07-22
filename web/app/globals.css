@@ -813,3 +813,67 @@
 .site-header__settings:hover {
   color: var(--color-ink);
 }
+
+/*
+ * Printing a Lesson report.
+ *
+ * A school printer, black and white, A4. Nothing here can lean on colour, which the board
+ * already guarantees — severity is a word and a shape everywhere (ADR-0004), so this
+ * checks that rule rather than adding to it.
+ *
+ * A printed page has no navigation and no context, so the header carries the School and
+ * the date and everything else that only makes sense on a screen is removed.
+ */
+@media print {
+  .site-header-shell,
+  .site-header,
+  .simulation-label,
+  .skip-link,
+  .print-hide {
+    display: none !important;
+  }
+
+  :root,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* A document rather than a viewport: nothing scrolls, nothing is clipped. */
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Severity survives without hue, because it was never only hue. */
+  .text-status-fault,
+  .text-status-not-ready {
+    color: #000 !important;
+    font-weight: 600;
+  }
+
+  /* A report is read as a whole; a Lesson split across a page break is not. */
+  li,
+  section {
+    break-inside: avoid;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+}
+
+/* Shown only on paper, where there is no navigation to say where you are. */
+.print-only {
+  display: none;
+}

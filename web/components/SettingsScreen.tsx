@@ -124,6 +124,7 @@ export function SettingsScreen() {
                   lessons: parsed.lessons ?? [],
                   // Reads the older name too, so a file exported last term still restores.
                   students: studentsFrom(parsed),
+                  roll: parsed.roll ?? [],
                 })
                 setMessage('Imported.')
               } catch {

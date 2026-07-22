@@ -7,6 +7,7 @@ import {
   persistedTally,
   readLogbook,
   startLesson,
+  studentsFrom,
   talliedLessonCount,
   talliedWindows,
   tallyEvents,
@@ -161,5 +162,29 @@ describe('a record written before the board kept counts', () => {
 
     expect(talliedWindows(closedWithoutTally)).toEqual([])
     expect(persistedTally(closedWithoutTally)).toEqual({})
+  })
+})
+
+/**
+ * Records a Teacher already has.
+ *
+ * The person flying was called a pilot until the glossary was applied — CONTEXT.md lists
+ * that word among the ones to avoid, and they are a Student. Renaming a field is free;
+ * losing a term of a Teacher's own records to a rename is not, and it is the kind of thing
+ * that goes unnoticed because the board still works perfectly for everyone who had none.
+ */
+describe('a Logbook exported before the rename', () => {
+  it('still restores who was flying what', () => {
+    expect(studentsFrom({ pilots: { 'ttf-0001': 'Priya' } })).toEqual({ 'ttf-0001': 'Priya' })
+  })
+
+  it('prefers the current name when a file carries both', () => {
+    expect(
+      studentsFrom({ students: { 'ttf-0001': 'Ravi' }, pilots: { 'ttf-0001': 'Priya' } }),
+    ).toEqual({ 'ttf-0001': 'Ravi' })
+  })
+
+  it('restores nothing rather than failing when a file predates the field entirely', () => {
+    expect(studentsFrom({})).toEqual({})
   })
 })

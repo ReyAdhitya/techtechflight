@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { DisplayScaleToggle } from './DisplayScaleToggle'
+import { SimulationLabel } from './SimulationLabel'
 import { SiteNav } from './SiteNav'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -44,6 +45,8 @@ export function SiteHeader() {
           <DisplayScaleToggle />
         </div>
       </motion.header>
+
+      <SimulationLabel />
     </div>
   )
 }

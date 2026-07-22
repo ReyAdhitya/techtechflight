@@ -12,7 +12,7 @@ import {
 import { startFleetServer } from './server.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const dashboardDist = resolve(here, '../../dashboard/dist')
+const boardDir = resolve(here, '../../web/out')
 
 const clock = new SystemClock()
 
@@ -84,13 +84,13 @@ const server = await startFleetServer({
   station,
   history,
   port: Number(process.env['PORT'] ?? 4321),
-  ...(existsSync(dashboardDist) ? { dashboardDir: dashboardDist } : {}),
+  ...(existsSync(boardDir) ? { boardDir } : {}),
 })
 
 console.log(`Ground station listening on http://localhost:${server.port}`)
 console.log(`Fleet State stream at ws://localhost:${server.port}/fleet`)
-if (!existsSync(dashboardDist)) {
-  console.log('Dashboard not built — run `npm run dev:dashboard` for the board.')
+if (!existsSync(boardDir)) {
+  console.log('Board not built — run `npm run build --workspace=web`, or `npm run dev:web`.')
 }
 
 installScenarioKeys()

@@ -67,7 +67,16 @@ install and build. Untouched by the redesign. A decision, not a defect.
 agreed mitigation is an export prompt at lesson close and a stored-size warning before a
 quota failure rather than after. A ground-station-backed record needs its own ADR.
 
-### O7 — An empty `dashboard/` directory persists on disk
+### O7 — One transient test failure, not reproduced
+**Severity: watch**
+
+`FleetProvider > brings the Fleet into contact` failed once during task 7.1 and passed on
+three subsequent full runs and three isolated ones. It ran concurrently with a `tsc`
+invocation at the time, so the likeliest explanation is timer starvation under load rather
+than a real race. Recorded rather than dismissed: if it returns, the fake-timer advance in
+that test is the first place to look.
+
+### O8 — An empty `dashboard/` directory persists on disk
 **Severity: cosmetic**
 
 A file handle blocked `rmdir` after the contents were removed. Git is clean and does not

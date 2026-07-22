@@ -1,11 +1,17 @@
 import type { Metadata } from 'next'
-import { MaintenanceScreen } from '@/components/MaintenanceScreen'
+import { MovedTo } from '@/components/MovedTo'
 
 export const metadata: Metadata = {
-  title: 'Maintenance · TechTech Readyboard',
-  description: 'What needs doing now, and which Drones keep giving trouble.',
+  title: 'Moved · TechTech Readyboard',
+  description: 'Maintenance is now split between the Fleet screen and Reports.',
 }
 
 export default function MaintenancePage() {
-  return <MaintenanceScreen />
+  return (
+    <MovedTo
+      href="/reports"
+      what="What needs doing is now on the Fleet screen, and which Drones keep giving trouble is in Reports."
+      label="Go to Reports"
+    />
+  )
 }

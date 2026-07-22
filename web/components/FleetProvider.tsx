@@ -14,7 +14,7 @@ import type { Clock, DroneState } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
 import type { FleetLink, FleetSnapshot } from '@/lib/fleet-link'
-import { buildScenario } from '@/lib/scenarios'
+import { LocalFleetLink } from '@/lib/local-fleet-link'
 
 /**
  * One connection to the ground station, shared by every screen.
@@ -64,74 +64,45 @@ function builtForDemoOnly(): boolean {
   return process.env.NEXT_PUBLIC_DEMO_ONLY === '1'
 }
 
-/** How often the stand-in Fleet is rebuilt, standing in for a ground station's cadence. */
-const DEMO_REFRESH_MS = 2_000
-
+/**
+ * The one place in the product that knows whether a Fleet is simulated.
+ *
+ * Everything downstream reads a FleetSnapshot and cannot tell, which is the point of the
+ * seam. `demo` travels on the view for one reason only: so the header can say so in
+ * words. No screen may branch on it to behave differently.
+ */
 export function FleetProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const demo = builtForDemoOnly() || pathname.startsWith('/demo')
-
-  return demo ? <DemoFleet>{children}</DemoFleet> : <LiveFleet>{children}</LiveFleet>
-}
-
-function LiveFleet({ children }: { children: ReactNode }) {
   const clock = useMemo(() => new SystemClock(), [])
 
   /*
-   * Built lazily rather than at module scope: `browserSocket` closes over `WebSocket`,
-   * which does not exist while these pages are being prerendered into static HTML.
+   * Built lazily rather than at module scope. `browserSocket` closes over `WebSocket`,
+   * which does not exist while these pages are being prerendered into static HTML — and
+   * a local Fleet must not start ticking during a build either. Neither does anything
+   * until `start`, below, which only ever runs on a client.
    */
-  const connection = useMemo<FleetLink>(
-    () => new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket }),
-    [clock],
+  const link = useMemo<FleetLink>(
+    () =>
+      demo
+        ? new LocalFleetLink({ clock })
+        : new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket }),
+    [clock, demo],
   )
 
   const snapshot = useSyncExternalStore(
-    (onChange) => connection.subscribe(onChange),
-    () => connection.snapshot,
+    (onChange) => link.subscribe(onChange),
+    () => link.snapshot,
     () => NOT_YET_CONNECTED,
   )
   const now = useNow(clock)
 
   useEffect(() => {
-    connection.start()
-    return () => connection.stop()
-  }, [connection])
+    link.start()
+    return () => link.stop()
+  }, [link])
 
-  const view = useMemo<FleetView>(() => ({ snapshot, now, demo: false }), [snapshot, now])
-  return <FleetContext.Provider value={view}>{children}</FleetContext.Provider>
-}
-
-function DemoFleet({ children }: { children: ReactNode }) {
-  const clock = useMemo(() => new SystemClock(), [])
-  const now = useNow(clock)
-
-  /*
-   * Anchored on mount rather than during render: reading the clock while rendering would
-   * make the prerendered HTML and the first client paint disagree.
-   *
-   * Re-anchored on a timer because a single anchor ages forever. A real ground station
-   * sends a fresh Fleet State every second or so and every age resets with it; a demo
-   * frozen at one moment has ages that climb without bound, and within ten seconds the
-   * whole Fleet reads as having stopped responding. That is a property of the stand-in,
-   * not of the Fleet, and showing it would be a lie about the product.
-   */
-  const [anchor, setAnchor] = useState(0)
-  useEffect(() => {
-    setAnchor(clock.now())
-    const timer = setInterval(() => setAnchor(clock.now()), DEMO_REFRESH_MS)
-    return () => clearInterval(timer)
-  }, [clock])
-
-  const view = useMemo<FleetView>(
-    () => ({
-      snapshot: anchor === 0 ? NOT_YET_CONNECTED : buildScenario('demo', anchor)!,
-      now,
-      demo: anchor !== 0,
-    }),
-    [anchor, now],
-  )
-
+  const view = useMemo<FleetView>(() => ({ snapshot, now, demo }), [snapshot, now, demo])
   return <FleetContext.Provider value={view}>{children}</FleetContext.Provider>
 }
 

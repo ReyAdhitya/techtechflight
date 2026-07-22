@@ -4,6 +4,7 @@ import {
   alreadyTallied,
   assignStudent,
   clearLogbook,
+  currentExercise,
   endLesson,
   persistedTally,
   readLogbook,
@@ -263,5 +264,58 @@ describe('a Lesson that was planned', () => {
     recordCommand(id, { at: 2_000, droneId: 'ttf-0001', droneName: 'Drone 1', kind: 'land' })
 
     expect(runningLesson(readLogbook())?.commands).toHaveLength(1)
+  })
+})
+
+/**
+ * Which Exercise a Lesson is on.
+ *
+ * Advances on the durations the Teacher gave, and nowhere invents one. A plan written
+ * without times still reads as a plan rather than as a countdown running out.
+ */
+describe('the Exercise a Lesson is on', () => {
+  const planned = (exercises: readonly { id: string; name: string; minutes?: number }[]) => {
+    startLesson('Year 8', 5, 6, 0, exercises)
+    return runningLesson(readLogbook())!
+  }
+
+  it('is nothing at all when there is no plan', () => {
+    expect(currentExercise(planned([]), 60_000)).toBeNull()
+  })
+
+  it('is the first one at the start', () => {
+    const lesson = planned([
+      { id: 'e1', name: 'Hover', minutes: 5 },
+      { id: 'e2', name: 'Square', minutes: 10 },
+    ])
+
+    expect(currentExercise(lesson, 60_000)?.exercise.name).toBe('Hover')
+    expect(currentExercise(lesson, 60_000)?.position).toBe(1)
+  })
+
+  it('moves on once the time given for one has passed', () => {
+    const lesson = planned([
+      { id: 'e1', name: 'Hover', minutes: 5 },
+      { id: 'e2', name: 'Square', minutes: 10 },
+    ])
+
+    expect(currentExercise(lesson, 6 * 60_000)?.exercise.name).toBe('Square')
+    expect(currentExercise(lesson, 6 * 60_000)?.of).toBe(2)
+  })
+
+  it('stays on one that was given no time, rather than guessing a length', () => {
+    const lesson = planned([
+      { id: 'e1', name: 'Hover' },
+      { id: 'e2', name: 'Square', minutes: 10 },
+    ])
+
+    expect(currentExercise(lesson, 90 * 60_000)?.exercise.name).toBe('Hover')
+  })
+
+  it('is nothing once the plan has run out, rather than naming a finished Exercise', () => {
+    const lesson = planned([{ id: 'e1', name: 'Hover', minutes: 5 }])
+
+    // The Lesson carries on. There is simply nothing it is supposed to be doing.
+    expect(currentExercise(lesson, 90 * 60_000)).toBeNull()
   })
 })

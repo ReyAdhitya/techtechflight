@@ -14,6 +14,8 @@ export interface FleetBoardProps {
   readonly snapshot: FleetSnapshot
   /** The browser's clock, ticking, so ages stay honest between snapshots. */
   readonly now: number
+  /** True when `snapshot` is a stand-in Fleet rather than one the ground station sent. */
+  readonly demo?: boolean
 }
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -26,7 +28,7 @@ const EASE = [0.16, 1, 0.3, 1] as const
  * look — colour, shape, and word — rather than by moving, because a tile that jumps
  * when a battery dips destroys the muscle memory the ordering exists to build.
  */
-export function FleetBoard({ snapshot, now }: FleetBoardProps) {
+export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
   const [openDroneId, setOpenDroneId] = useState<DroneId | null>(null)
   const reduced = useReducedMotion()
   const { state, receivedAt } = snapshot
@@ -38,7 +40,7 @@ export function FleetBoard({ snapshot, now }: FleetBoardProps) {
         tabIndex={-1}
         className="flex min-h-full flex-col justify-center gap-6 p-8"
       >
-        <ConnectionBanner connection={snapshot.connection} />
+        <ConnectionBanner connection={snapshot.connection} demo={demo} />
       </main>
     )
   }
@@ -62,7 +64,7 @@ export function FleetBoard({ snapshot, now }: FleetBoardProps) {
         tabIndex={-1}
         className="flex min-h-full flex-col justify-center gap-6 p-8"
       >
-        <ConnectionBanner connection={snapshot.connection} />
+        <ConnectionBanner connection={snapshot.connection} demo={demo} />
         <div className="flex flex-col gap-2">
           <h1 className="m-0 font-display text-heading font-medium">
             No Drones in this Fleet
@@ -85,7 +87,7 @@ export function FleetBoard({ snapshot, now }: FleetBoardProps) {
       tabIndex={-1}
       className="flex min-h-full flex-col gap-4 p-4 min-[26rem]:gap-6 min-[26rem]:p-8"
     >
-      <ConnectionBanner connection={snapshot.connection} />
+      <ConnectionBanner connection={snapshot.connection} demo={demo} />
 
       <motion.div
         className="fleet-summary-shell"

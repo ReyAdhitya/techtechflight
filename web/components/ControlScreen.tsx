@@ -8,6 +8,7 @@ import {
   studentOf,
   readLogbook,
   readServerLogbook,
+  runningLesson,
   subscribeLogbook,
 } from '@/lib/logbook'
 import { alertQueue, compareStrips, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
@@ -22,6 +23,7 @@ import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
+import { LessonStrip } from './LessonStrip'
 import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
 
@@ -46,6 +48,7 @@ export function ControlScreen() {
   // and the reverse, because "which one is that" is the question the scope exists for.
   const [selected, setSelected] = useState<string | null>(null)
 
+  const lesson = runningLesson(book)
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
 
@@ -67,6 +70,10 @@ export function ControlScreen() {
       tabIndex={-1}
       className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 min-[26rem]:p-8"
     >
+      {lesson && (
+        <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
+      )}
+
       <AttentionBar
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}

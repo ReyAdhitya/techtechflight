@@ -3,8 +3,7 @@ import { readFile, stat } from 'node:fs/promises'
 import { extname, join, normalize, resolve } from 'node:path'
 import { WebSocketServer } from 'ws'
 import type { ServerMessage } from '@techtechflight/contract'
-import type { GroundStation } from './fleet.ts'
-import type { FleetHistoryRecorder } from './history.ts'
+import type { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 
 export interface FleetServerOptions {
   readonly station: GroundStation

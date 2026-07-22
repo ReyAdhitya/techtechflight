@@ -2,7 +2,7 @@
  * Everything that owns the Fleet.
  *
  * Status derivation, the ageing of Telemetry into Stale and then Offline, the forecast of a
- * return to Ready, the record of what happened, and the simulated Telemetry Source.
+ * return to Ready, and the record of what happened.
  *
  * It sits apart from the ground station because none of it is Node. Time arrives as an
  * injected Clock and randomness is injected beside it — both because the tests demanded it,
@@ -10,7 +10,13 @@
  * behind it (ADR-0013). One implementation of Status, wherever it runs: two boards on one
  * Fleet must never disagree about what they are looking at.
  *
- * Empty for now. The modules arrive next, moved rather than rewritten.
+ * `deriveStatus`, `isStale` and the charge forecast are deliberately not exported. Nothing
+ * outside this package uses them, and Status is derived here or nowhere.
+ *
+ * The simulated Telemetry Source has its own entry point rather than sitting here, so that
+ * "no screen may import the simulator" is a rule about one specifier rather than about a
+ * directory.
  */
 
-export {}
+export { GroundStation, type GroundStationOptions } from './fleet.ts'
+export { FleetHistoryRecorder } from './history.ts'

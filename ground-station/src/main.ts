@@ -4,11 +4,12 @@ import { dirname, resolve } from 'node:path'
 import type { FleetThresholds } from '@techtechflight/contract'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
-import { GroundStation } from './fleet.ts'
-import { FleetHistoryRecorder } from './history.ts'
+import { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
+import {
+  CLASSROOM_FLEET,
+  SimulatedTelemetrySource,
+} from '@techtechflight/fleet-core/simulator'
 import { startFleetServer } from './server.ts'
-import { CLASSROOM_FLEET } from './simulator/classroom-fleet.ts'
-import { SimulatedTelemetrySource } from './simulator/simulated-telemetry-source.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const dashboardDist = resolve(here, '../../dashboard/dist')

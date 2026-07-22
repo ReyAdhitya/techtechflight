@@ -1,10 +1,14 @@
 'use client'
 
 import type { FleetEvent } from '@techtechflight/contract'
+import { useState } from 'react'
 import {
   addIncident,
   currentExercise,
   endLesson,
+  exportLogbook,
+  recordsAreHeavy,
+  readLogbook,
   tallyEvents,
   type LessonRecord,
 } from '@/lib/logbook'
@@ -28,6 +32,7 @@ export function LessonStrip({
   readonly events: readonly FleetEvent[]
   readonly now: number
 }) {
+  const [justEnded, setJustEnded] = useState(false)
   const elapsed = Math.max(0, now - lesson.startedAt)
   const onNow = currentExercise(lesson, now)
   const sinceStart = events.filter((event) => event.at >= lesson.startedAt)
@@ -77,10 +82,30 @@ export function LessonStrip({
            * Drone keeps giving trouble" survives the ground station being restarted.
            */
           endLesson(lesson.id, at, tallyEvents(sinceStart))
+          // Offered rather than done. Whether a record leaves this browser is the
+          // Teacher's decision, and a download nobody asked for is a download nobody
+          // trusts.
+          setJustEnded(recordsAreHeavy(readLogbook()))
         }}
       >
         End the lesson
       </button>
+
+      {justEnded && (
+        <p className="m-0 flex flex-wrap items-center gap-3 text-value text-ink-subtle" role="status">
+          Your records are getting large for a browser to hold.
+          <button
+            type="button"
+            onClick={() => {
+              exportLogbook()
+              setJustEnded(false)
+            }}
+            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          >
+            Export them now
+          </button>
+        </p>
+      )}
     </section>
   )
 }

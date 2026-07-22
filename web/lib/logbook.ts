@@ -484,6 +484,23 @@ export function recordsAreHeavy(book: Logbook): boolean {
   return recordsSize(book) > RECORDS_WARN_BYTES
 }
 
+/**
+ * A Teacher's records, as a file they can keep.
+ *
+ * The only way anything written here leaves this browser. Kept beside the storage warning
+ * rather than only in Settings, because the moment a Teacher has just finished a lesson is
+ * the moment the record is worth most and the moment they are most likely to be reminded.
+ */
+export function exportLogbook(book: Logbook = readLogbook()): void {
+  const blob = new Blob([JSON.stringify(book, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'techtechflight-logbook.json'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export function replaceLogbook(next: Logbook): void {
   save(next)
 }

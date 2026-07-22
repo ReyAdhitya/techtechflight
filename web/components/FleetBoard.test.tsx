@@ -11,6 +11,7 @@ import {
 import type { DroneState } from '@techtechflight/contract'
 import { FleetBoard } from './FleetBoard'
 import type { FleetSnapshot } from '@/lib/fleet-connection'
+import { buildScenario } from '@/lib/scenarios'
 
 /**
  * Seam 2. Driven by Fleet State fixtures, observed through rendered output as a Teacher
@@ -386,6 +387,21 @@ describe('the board losing the ground station', () => {
     ])
 
     expect(screen.queryByRole('status', { name: /ground station connection/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('a standalone demonstration', () => {
+  it('labels sample Drones visibly so they cannot pass for live Telemetry', () => {
+    const snapshot = buildScenario('demo', GENERATED_AT)
+    if (!snapshot) throw new Error('The demonstration scenario must produce a Fleet')
+
+    render(<FleetBoard snapshot={snapshot} now={GENERATED_AT} demo />)
+
+    expect(screen.getByRole('status', { name: /demonstration mode/i })).toHaveTextContent(
+      /sample classroom data.*not live Drone telemetry/i,
+    )
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('2 of 6 ready')
+    expect(screen.getAllByRole('article')).toHaveLength(6)
   })
 })
 

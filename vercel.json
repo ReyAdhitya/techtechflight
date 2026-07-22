@@ -4,6 +4,6 @@
   "outputDirectory": "web/out",
   "cleanUrls": true,
   "redirects": [
-    { "source": "/", "destination": "/showcase", "permanent": false }
+    { "source": "/", "destination": "/demo", "permanent": false }
   ]
 }

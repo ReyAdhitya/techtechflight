@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket, type FleetSnapshot } from '@/lib/fleet-connection'
 import { useDarkTheme, useNow } from './hooks'
-import { buildScenario, type ScenarioId } from './scenarios'
+import { buildScenario, type ScenarioId } from '@/lib/scenarios'
 import { ShowcaseChrome } from './ShowcaseChrome'
 import { ShowcaseFleet } from './ShowcaseFleet'
 

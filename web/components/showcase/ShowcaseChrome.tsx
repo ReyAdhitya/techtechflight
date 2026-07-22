@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { readServerTheme, readTheme, subscribeTheme, writeTheme } from '@/lib/theme'
-import { SCENARIOS, type ScenarioId } from './scenarios'
+import { SCENARIOS, type ScenarioId } from '@/lib/scenarios'
 import { Button } from './ui/button'
 
 export interface ShowcaseChromeProps {

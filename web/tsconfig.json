@@ -6,6 +6,10 @@
     "types": ["node"],
     "allowJs": true,
     "incremental": true,
+    // The workspaces this app compiles alongside it (see `transpilePackages`) are
+    // TypeScript source, and they import each other by filename the way the rest of the
+    // repository does. Legal here because nothing is emitted from this config.
+    "allowImportingTsExtensions": true,
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./*"]

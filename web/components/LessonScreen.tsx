@@ -10,12 +10,14 @@ import {
   serviceStateOf,
   startLesson,
   subscribeLogbook,
+  type Exercise,
   type LessonRecord,
 } from '@/lib/logbook'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { AssignmentColumn } from './AssignmentColumn'
+import { ExerciseList } from './ExerciseList'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { StatusGlyph } from './StatusBadge'
@@ -76,6 +78,7 @@ function PreFlight({
   now: number
 }) {
   const [label, setLabel] = useState('')
+  const [exercises, setExercises] = useState<readonly Exercise[]>([])
 
   const withheld = drones.filter((drone) => serviceStateOf(book, drone.id) === 'out-of-service')
   const withheldIds = new Set(withheld.map((drone) => drone.id))
@@ -152,6 +155,8 @@ function PreFlight({
 
       <AssignmentColumn drones={drones} book={book} />
 
+      <ExerciseList exercises={exercises} onChange={setExercises} />
+
       <div className="flex flex-wrap items-end gap-3 border-t border-hairline pt-5">
         <div className="flex flex-1 flex-col gap-1">
           <label className="label" htmlFor="lesson-label">
@@ -168,7 +173,9 @@ function PreFlight({
         <button
           type="button"
           className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
-          onClick={() => startLesson(label, usable.length, drones.length, now || Date.now())}
+          onClick={() =>
+            startLesson(label, usable.length, drones.length, now || Date.now(), exercises)
+          }
         >
           Start the lesson
         </button>

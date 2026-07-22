@@ -21,15 +21,6 @@ builds. Progress against the plan is in
 
 Ordered by what would hurt most.
 
-### O1 — No device or desktop audit has been run
-**Severity: high · Task 8.3**
-
-Nothing in this redesign has been hit-tested on a phone or tablet. Two things are most
-exposed: the **guarded press-and-hold** emergency stop, which depends on pointer events
-that behave differently under touch, and the **command row**, which adds three controls to
-a strip that already wraps. The plan calls for 8 device profiles and 3 desktop widths with
-tap targets hit-tested rather than read off the CSS.
-
 ### O2 — `mergeEvents` publishes on every batch
 **Severity: low · Found in task 2.3**
 
@@ -81,6 +72,33 @@ that test is the first place to look.
 
 A file handle blocked `rmdir` after the contents were removed. Git is clean and does not
 track empty directories, so it affects nothing but a directory listing.
+
+## The device audit
+
+`npm run audit:devices`, against a built board. **Clean: 8 device profiles, 3 desktop
+widths, 6 routes each — 66 page audits.**
+
+| | |
+|---|---|
+| Devices | iPhone SE · iPhone 12 · iPhone 14 Pro Max · Pixel 7 · Galaxy S9+ · Galaxy Tab S4 · iPad Mini · iPad Pro 11 |
+| Widths | laptop 1280 · desktop 1680 · projector 1920 |
+| Routes | `/demo` `/control` `/lesson` `/students` `/reports` `/settings` |
+| Checks | tap targets probed at 44px · horizontal overflow · uncaught page errors |
+
+**Tap targets are probed, not measured**, and the first two versions of this audit were
+wrong in opposite directions because of it. Measuring boxes reported 407 problems, nearly
+all of them controls whose hit area is deliberately expanded by an absolutely positioned
+`::after` — the whole Drone tile is its Details button, and a pseudo-element appears in no
+rectangle the DOM will hand you. Hit-testing the centre point alone would have missed the
+opposite failure: a control of exactly the right size with something painted over it.
+
+So the question asked is the one that matters: **if a finger lands anywhere within 44px
+centred on this control, does it reach it?** Four probe points per control, per route, per
+device.
+
+That found one real defect and nothing else. Every navigation link was 40px tall — close
+enough to look right, four pixels short of what a finger reliably lands on, on every
+screen and every device. Fixed.
 
 ## Findings already closed
 

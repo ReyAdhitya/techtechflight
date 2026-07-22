@@ -572,7 +572,15 @@
   }
 
   .site-nav__link {
-    display: inline-block;
+    /*
+     * 44px tall, hit-tested rather than assumed. At 0.5rem of padding these came to 40px
+     * — close enough to look right and four pixels short of what a finger reliably lands
+     * on, on every screen and every device. The navigation is the one thing a Teacher
+     * uses on all of them.
+     */
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
     padding: 0.5rem 0.7rem;
     border-radius: var(--radius-md);
     color: var(--muted-foreground);

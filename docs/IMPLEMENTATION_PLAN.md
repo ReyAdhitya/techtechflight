@@ -72,7 +72,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 6 | 6.3 Exercise list | ✅ | `pending` |
 | 6 | 6.4 Starting with no plan at all | ✅ | `pending` |
 | 6 | 6.5 Exercise on the flight strip | ✅ | `pending` |
-| 6 | 6.6 Students screen | ⬜ | |
+| 6 | 6.6 Students screen | ✅ | `pending` |
 | 7 | 7.1 The Reports shell | ⬜ | |
 | 7 | 7.2 "What needs doing" moves to Fleet | ⬜ | |
 | 7 | 7.3 Navigation reduces to five | ⬜ | |

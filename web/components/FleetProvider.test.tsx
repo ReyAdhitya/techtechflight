@@ -138,16 +138,13 @@ describe('what the board remembers between screens', () => {
     const { rerender } = render(<Screen showing />)
 
     /*
-     * A tick at a time, because altitude is sampled in an effect and React batches. Three
-     * seconds advanced in one go is one re-render and therefore one reading, which is a
-     * property of the test rather than of the board — but it is also a fair warning that
-     * what the tracker sees is the render cadence, not the Telemetry cadence.
+     * All at once, on purpose. Several Fleet States arriving inside one batch used to
+     * collapse into a single reading and no rate was ever derived; the tracker subscribes
+     * to the link now, so it sees every one of them however React groups the renders.
      */
-    for (let tick = 0; tick < 4; tick++) {
-      act(() => {
-        vi.advanceTimersByTime(1_000)
-      })
-    }
+    act(() => {
+      vi.advanceTimersByTime(4_000)
+    })
     // Enough readings have accumulated for a rate to exist at all.
     expect(read('rate')).not.toBe('null')
     const before = read('rate')

@@ -196,11 +196,33 @@ function mergeEvents(
 ): FleetHistory {
   const base = history ?? { events: [], batteries: [], since: incoming[0]?.at ?? 0 }
   const byId = new Map(base.events.map((event) => [event.id, event]))
-  for (const event of incoming) byId.set(event.id, event)
+  /*
+   * The one already held wins. An id is derived from the transition rather than
+   * generated, so the same id is the same event and there is nothing to update — and
+   * keeping the object the board already has is what lets the comparison below recognise
+   * a replay for what it is, rather than as a list of identical strangers.
+   */
+  for (const event of incoming) if (!byId.has(event.id)) byId.set(event.id, event)
 
   const events = [...byId.values()]
     .sort((a, b) => a.at - b.at)
     .slice(-MAX_RETAINED_EVENTS)
+
+  /*
+   * The record it already had, when nothing in it changed.
+   *
+   * A reconnect replays everything the ground station still remembers, so most batches
+   * after one carry nothing new. Building a fresh object anyway defeated the identity
+   * check in `#update` and notified every screen on every batch — a re-render of the whole
+   * board to say nothing at all.
+   */
+  if (
+    history &&
+    events.length === history.events.length &&
+    events.every((event, index) => event === history.events[index])
+  ) {
+    return history
+  }
 
   return { ...base, events }
 }

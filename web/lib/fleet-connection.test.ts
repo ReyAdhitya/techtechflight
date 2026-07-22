@@ -311,18 +311,26 @@ describe('the record of what has happened', () => {
 
   it('leaves the record as it was when a batch carries nothing', () => {
     latestSocket().deliverHistory(aHistory([anEvent(4_100_000)]))
+    const published = seen.length
 
     latestSocket().deliverEvents([])
 
     expect(connection.snapshot.history?.events).toHaveLength(1)
     expect(connection.snapshot.history?.since).toBe(4_000_000)
-    /*
-     * The record survives, but a fresh object is published for it either way: mergeEvents
-     * always builds a new history, so the identity check in #update never matches and
-     * every batch notifies every screen whether or not anything changed. Harmless today —
-     * the ground station only sends a batch when it has something to say — and worth
-     * knowing before anything starts sending them more often.
-     */
+    // And nothing is published for it. A batch that says nothing must not re-render the
+    // board to say nothing.
+    expect(seen.length).toBe(published)
+  })
+
+  it('does not disturb the board when a reconnect replays what it already has', () => {
+    const morning = anEvent(4_100_000)
+    latestSocket().deliverHistory(aHistory([morning]))
+    const published = seen.length
+
+    // Exactly what a ground station sends again after the socket blinks.
+    latestSocket().deliverEvents([morning])
+
+    expect(seen.length).toBe(published)
   })
 })
 

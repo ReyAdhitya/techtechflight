@@ -535,10 +535,19 @@
     display: none;
   }
 
+  /*
+   * Wraps rather than scrolls. The bar is a scroller with its scrollbar hidden, which on
+   * a 380px phone cut Settings off at the edge with nothing on screen to say it could be
+   * swiped — indistinguishable from a section that had simply failed to render. Five
+   * sections do not fit legibly in one row on a phone and pretending otherwise hid one
+   * of them; two rows is honest and needs nothing discovered.
+   */
   .site-nav__list {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem;
+    row-gap: 0.125rem;
     margin: 0;
     padding: 0;
     list-style: none;

@@ -84,7 +84,16 @@ export function DroneScreen() {
       className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 min-[26rem]:p-8"
     >
       <div className="flex flex-col gap-2">
-        <Link href="/" className="label w-fit text-ink-muted hover:text-ink">
+        {/*
+          * A full-height target rather than a 14px strip of text. This is the one way
+          * back from a Drone, and it was the smallest tappable thing in the product —
+          * on a phone held in one hand at the front of a classroom, a 14px target is a
+          * link you miss twice before you hit it.
+          */}
+        <Link
+          href="/"
+          className="label inline-flex min-h-11 w-fit items-center text-ink-muted hover:text-ink"
+        >
           ← Back to the Fleet
         </Link>
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">

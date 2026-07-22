@@ -78,6 +78,7 @@ export function WhatNeedsDoing() {
             >
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <Link
+                  prefetch={false}
                   href={`/drone?id=${encodeURIComponent(drone.id)}`}
                   className="tap-row font-display text-body font-medium text-ink no-underline hover:underline"
                 >
@@ -156,6 +157,7 @@ export function FleetReliability() {
                 className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-surface border border-hairline bg-surface-1 p-3"
               >
                 <Link
+                  prefetch={false}
                   href={`/drone?id=${encodeURIComponent(entry.drone.id)}`}
                   className="tap-row font-display text-body font-medium text-ink no-underline hover:underline"
                 >

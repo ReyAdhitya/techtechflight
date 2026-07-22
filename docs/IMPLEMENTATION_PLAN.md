@@ -82,7 +82,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 8 | 8.2 States sweep | ✅ | `pending` |
 | 8 | 8.3 Device and desktop audits | ✅ | `pending` |
 | 8 | 8.4 Records weight | ✅ | `pending` |
-| 8 | 8.5 Boundary and dead-prefetch check | ⬜ | |
+| 8 | 8.5 Boundary and dead-prefetch check | ✅ | `pending` |
 | 8 | 8.6 Final verification | ⬜ | |
 
 Findings from tasks already done are logged in [`TEST_REPORT.md`](./TEST_REPORT.md).

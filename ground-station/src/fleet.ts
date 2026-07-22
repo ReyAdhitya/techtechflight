@@ -19,7 +19,7 @@ import {
 import { deriveStatus, isStale } from './status.ts'
 
 export interface GroundStationOptions {
-  /** Every Drone the School owns, heard from or not. */
+  /** Every Drone the School owns, responded or not. */
   readonly registrations: readonly DroneRegistration[]
   readonly source: TelemetrySource
   readonly clock: Clock

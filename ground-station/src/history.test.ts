@@ -25,11 +25,11 @@ describe('what a Teacher is told happened', () => {
     expect(deriveEvents(before, fleet([drone('Ready')]))).toEqual([])
   })
 
-  it('reports a Drone being heard from for the first time', () => {
+  it('reports a Drone being responded for the first time', () => {
     const before = fleet([drone('Offline', { lastContact: null, telemetry: null })])
     const [event] = deriveEvents(before, fleet([drone('Ready')]))
 
-    // Not a Status change: a Drone never heard from is already Offline, so this moment
+    // Not a Status change: a Drone never responded is already Offline, so this moment
     // would otherwise be silent unless it happened to arrive charged.
     expect(event?.kind).toBe('first-contact')
   })
@@ -120,7 +120,7 @@ describe('the record the ground station keeps', () => {
     expect(history?.samples[0]?.at).toBe(AT)
   })
 
-  it('does not record a second reading when nothing new has been heard', () => {
+  it('does not record a second reading when nothing new has responded', () => {
     const recorder = new FleetHistoryRecorder()
     const standing = drone('Ready', { lastContact: AT })
     recorder.observe(fleet([standing], AT))
@@ -168,12 +168,12 @@ describe('the record the ground station keeps', () => {
 
   it('tells subscribers as things happen', () => {
     const recorder = new FleetHistoryRecorder()
-    const heard: string[] = []
-    recorder.onEvents((events) => heard.push(...events.map((event) => event.kind)))
+    const responded: string[] = []
+    recorder.onEvents((events) => responded.push(...events.map((event) => event.kind)))
 
     recorder.observe(fleet([drone('Ready')], AT))
     recorder.observe(fleet([drone('Fault', { lastContact: AT + 1 })], AT + 1))
 
-    expect(heard).toEqual(['fault-raised'])
+    expect(responded).toEqual(['fault-raised'])
   })
 })

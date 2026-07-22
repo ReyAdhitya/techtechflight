@@ -110,7 +110,7 @@ describe('deriving Status', () => {
   })
 })
 
-describe('never heard from, versus not heard from recently', () => {
+describe('never responded, versus not responding recently', () => {
   it('shows a Drone that has never reported as Offline with no Last Contact', () => {
     const drone = droneNamed(station.fleetState(), 'Drone 2')
 
@@ -119,23 +119,23 @@ describe('never heard from, versus not heard from recently', () => {
     expect(drone.telemetry).toBeNull()
   })
 
-  it('does not mark a never-heard-from Drone as Stale, because there is nothing to age', () => {
+  it('does not mark a never-responded Drone as Stale, because there is nothing to age', () => {
     clock.advance(500_000)
 
     expect(droneNamed(station.fleetState(), 'Drone 2').stale).toBe(false)
   })
 
-  it('keeps a Drone that has fallen silent distinguishable from one never heard from', () => {
+  it('keeps a Drone that has fallen silent distinguishable from one never responded', () => {
     source.report('ttf-0001', { batteryFraction: 0.8 })
     clock.advance(THRESHOLDS.offlineAfterMs + 1_000)
 
     const silent = droneNamed(station.fleetState(), 'Drone 1')
-    const neverHeard = droneNamed(station.fleetState(), 'Drone 2')
+    const noResponse = droneNamed(station.fleetState(), 'Drone 2')
 
     expect(silent.status).toBe('Offline')
-    expect(neverHeard.status).toBe('Offline')
+    expect(noResponse.status).toBe('Offline')
     expect(silent.lastContact).not.toBeNull()
-    expect(neverHeard.lastContact).toBeNull()
+    expect(noResponse.lastContact).toBeNull()
   })
 })
 
@@ -169,16 +169,16 @@ describe('Telemetry ageing into Stale, and then the Drone into Offline', () => {
   })
 
   it('retains last known Telemetry and Last Contact while Offline', () => {
-    const heardAt = clock.now()
+    const respondedAt = clock.now()
     clock.advance(THRESHOLDS.offlineAfterMs + 30_000)
 
     const drone = droneNamed(station.fleetState(), 'Drone 1')
     expect(drone.status).toBe('Offline')
     expect(drone.telemetry?.batteryFraction).toBe(0.8)
-    expect(drone.lastContact).toBe(heardAt)
+    expect(drone.lastContact).toBe(respondedAt)
   })
 
-  it('returns the Drone to its correct Status as soon as it is heard from again', () => {
+  it('returns the Drone to its correct Status as soon as it is responded again', () => {
     clock.advance(THRESHOLDS.offlineAfterMs + 30_000)
     expect(droneNamed(station.fleetState(), 'Drone 1').status).toBe('Offline')
 
@@ -201,7 +201,7 @@ describe('Telemetry ageing into Stale, and then the Drone into Offline', () => {
 })
 
 describe('telling the dashboard about it', () => {
-  it('emits Fleet State when a Drone is first heard from', () => {
+  it('emits Fleet State when a Drone is first responded', () => {
     const emitted: FleetState[] = []
     station.onFleetState((state) => emitted.push(state))
 

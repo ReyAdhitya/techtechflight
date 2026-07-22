@@ -5,7 +5,7 @@ import {
   aDroneState,
   aFleetInEveryStatus,
   aFleetState,
-  aNeverHeardFromDrone,
+  aNoResponseDrone,
   aTelemetry,
 } from '@techtechflight/contract/fixtures'
 import type { DroneState } from '@techtechflight/contract'
@@ -37,7 +37,7 @@ describe('seeing the Fleet', () => {
     board([
       aDroneState({ id: 'a', name: 'Drone 1' }),
       aDroneState({ id: 'b', name: 'Drone 2' }),
-      aNeverHeardFromDrone({ id: 'c', name: 'Drone 3' }),
+      aNoResponseDrone({ id: 'c', name: 'Drone 3' }),
     ])
 
     expect(screen.getAllByRole('article')).toHaveLength(3)
@@ -158,7 +158,7 @@ describe('Status without relying on colour', () => {
       aDroneState({ id: 'b', name: 'Drone 2', status: 'Not Ready' }),
       aDroneState({ id: 'c', name: 'Drone 3', status: 'Fault' }),
       aDroneState({ id: 'd', name: 'Drone 4', status: 'Flying' }),
-      aNeverHeardFromDrone({ id: 'e', name: 'Drone 5' }),
+      aNoResponseDrone({ id: 'e', name: 'Drone 5' }),
     ])
 
     expect(within(tile('Drone 1')).getByText('Ready')).toBeInTheDocument()
@@ -202,7 +202,7 @@ describe('trusting what is on screen', () => {
       aDroneState({ id: 'a', name: 'Drone 1', lastContact: GENERATED_AT - 2_000 }),
     ])
 
-    expect(within(tile('Drone 1')).getByText(/heard from just now/i)).toBeInTheDocument()
+    expect(within(tile('Drone 1')).getByText(/response just now/i)).toBeInTheDocument()
   })
 
   it('counts the age up as the snapshot sits on screen', () => {
@@ -217,7 +217,7 @@ describe('trusting what is on screen', () => {
 
     render(<FleetBoard snapshot={snapshot} now={GENERATED_AT + 90_000} />)
 
-    expect(screen.getByText(/heard from 1m ago/i)).toBeInTheDocument()
+    expect(screen.getByText(/response 1m ago/i)).toBeInTheDocument()
   })
 
   it('marks Stale Telemetry as distinct from current Telemetry', () => {
@@ -226,8 +226,8 @@ describe('trusting what is on screen', () => {
       aDroneState({ id: 'b', name: 'Drone 2', stale: true, lastContact: GENERATED_AT - 30_000 }),
     ])
 
-    const current = within(tile('Drone 1')).getByText(/heard from/i)
-    const stale = within(tile('Drone 2')).getByText(/heard from/i)
+    const current = within(tile('Drone 1')).getByText(/response/i)
+    const stale = within(tile('Drone 2')).getByText(/response/i)
 
     expect(current).not.toHaveAttribute('data-stale')
     expect(stale).toHaveAttribute('data-stale')
@@ -247,12 +247,12 @@ describe('trusting what is on screen', () => {
 
     const droneTile = within(tile('Drone 1'))
     expect(droneTile.getByRole('progressbar', { name: /last known battery/i })).toBeInTheDocument()
-    expect(droneTile.getByText(/heard from 3h ago/i)).toBeInTheDocument()
+    expect(droneTile.getByText(/response 3h ago/i)).toBeInTheDocument()
   })
 
-  it('tells a Drone never heard from apart from one that has fallen silent', () => {
+  it('tells a Drone that has never responded apart from one that has fallen silent', () => {
     board([
-      aNeverHeardFromDrone({ id: 'a', name: 'Drone 1' }),
+      aNoResponseDrone({ id: 'a', name: 'Drone 1' }),
       aDroneState({
         id: 'b',
         name: 'Drone 2',
@@ -262,9 +262,9 @@ describe('trusting what is on screen', () => {
       }),
     ])
 
-    expect(within(tile('Drone 1')).getByText('Never heard from')).toBeInTheDocument()
+    expect(within(tile('Drone 1')).getByText('No response yet')).toBeInTheDocument()
     expect(within(tile('Drone 1')).getByText('No Telemetry yet')).toBeInTheDocument()
-    expect(within(tile('Drone 2')).getByText(/heard from 10m ago/i)).toBeInTheDocument()
+    expect(within(tile('Drone 2')).getByText(/response 10m ago/i)).toBeInTheDocument()
   })
 })
 

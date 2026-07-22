@@ -13,7 +13,7 @@ import { Progress } from './ui/progress'
 
 export interface DroneCardProps {
   readonly drone: DroneState
-  /** Null when this Drone has never been heard from. */
+  /** Null when this Drone has never responded. */
   readonly ageMs: number | null
   readonly selected: boolean
   /** True for about a second after this Drone's Status actually changed. */
@@ -43,7 +43,7 @@ export function DroneCard({
 }: DroneCardProps) {
   const reduced = useReducedMotion()
   const offline = drone.status === 'Offline'
-  const neverHeardFrom = drone.lastContact === null
+  const noResponseYet = drone.lastContact === null
   const { telemetry } = drone
 
   return (
@@ -124,7 +124,7 @@ export function DroneCard({
             <div className="flex flex-col gap-1">
               <span className="sc-label">Last Contact</span>
               <span className="sc-tnum">
-                {neverHeardFrom ? 'Never heard from' : formatExactTime(drone.lastContact ?? 0)}
+                {noResponseYet ? 'No response yet' : formatExactTime(drone.lastContact ?? 0)}
               </span>
               <span className="text-[var(--sc-ink-muted)]">
                 {drone.stale
@@ -138,7 +138,7 @@ export function DroneCard({
             className={cn('sc-tnum sc-contact m-0 cursor-help text-sm', drone.stale && 'italic')}
             data-muted={offline || drone.stale || undefined}
           >
-            {neverHeardFrom ? 'Never heard from' : `Heard from ${formatAge(ageMs ?? 0)}`}
+            {noResponseYet ? 'No response yet' : `Response ${formatAge(ageMs ?? 0)}`}
           </p>
         </HoverCard>
 

@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
  */
 export const DESTINATIONS = [
   { href: '/', label: 'Fleet', hint: 'Every Drone, right now' },
+  { href: '/tower', label: 'Tower', hint: 'The whole lesson at once, worst first' },
   { href: '/lesson', label: 'Lesson', hint: 'Pre-flight check, then run the lesson' },
   { href: '/history', label: 'History', hint: 'What has happened today' },
   { href: '/maintenance', label: 'Maintenance', hint: 'What needs doing, and to which Drone' },

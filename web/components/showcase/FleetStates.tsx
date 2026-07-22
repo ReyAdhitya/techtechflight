@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { Skeleton } from './ui/skeleton'
 
 /**
- * Before anything has been heard from the ground station.
+ * Before the ground station has sent anything.
  *
  * Skeletons in the shape of the cards that are coming, not a spinner: the layout is
  * known in advance, so the board can hold its own shape and the Fleet arrives into a

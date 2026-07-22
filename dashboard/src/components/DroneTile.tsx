@@ -6,7 +6,7 @@ import { StatusBadge } from './StatusBadge.tsx'
 
 export interface DroneTileProps {
   readonly drone: DroneState
-  /** Null when this Drone has never been heard from. */
+  /** Null when this Drone has never responded. */
   readonly ageMs: number | null
   readonly onOpenDetail: () => void
 }
@@ -14,12 +14,12 @@ export interface DroneTileProps {
 /**
  * One Drone, at a size that reads from a few steps away.
  *
- * Every value carries its age. A Drone that has never been heard from says so plainly
+ * Every value carries its age. A Drone that has never responded says so plainly
  * rather than showing an empty battery, because a newly added Drone and a failed one
  * must not look identical.
  */
 export function DroneTile({ drone, ageMs, onOpenDetail }: DroneTileProps) {
-  const neverHeardFrom = drone.lastContact === null
+  const noResponseYet = drone.lastContact === null
   const headingId = `drone-${drone.id}-name`
 
   return (
@@ -53,9 +53,9 @@ export function DroneTile({ drone, ageMs, onOpenDetail }: DroneTileProps) {
       </div>
 
       <p className="tile__contact" data-stale={drone.stale || undefined}>
-        {neverHeardFrom
-          ? 'Never heard from'
-          : `Heard from ${formatAge(ageMs ?? 0)}`}
+        {noResponseYet
+          ? 'No response yet'
+          : `Response ${formatAge(ageMs ?? 0)}`}
       </p>
 
       <button type="button" className="tile__details" onClick={onOpenDetail}>

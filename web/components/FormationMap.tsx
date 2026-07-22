@@ -1,4 +1,6 @@
 import type { DroneState } from '@techtechflight/contract'
+import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
+import { PHASE_PRESENTATION } from '@/lib/vitals-presentation'
 import { cn } from '@/lib/utils'
 
 /**
@@ -12,7 +14,18 @@ import { cn } from '@/lib/utils'
  * Drones that have been linked into a group are joined by a line, so a formation reads
  * as one thing rather than as several Drones that happen to be near each other.
  */
-export function FormationMap({ drones }: { drones: readonly DroneState[] }) {
+export function FormationMap({
+  drones,
+  vitals,
+}: {
+  drones: readonly DroneState[]
+  /**
+   * Supplied on the tower, absent on History. With it the scope labels each Drone with
+   * what it is doing and marks pairs that are too close; without it the map stays the
+   * plain "where was everything" picture History wants.
+   */
+  vitals?: readonly DroneVitals[]
+}) {
   const placed = drones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
   )
@@ -98,9 +111,27 @@ export function FormationMap({ drones }: { drones: readonly DroneState[] }) {
           }),
         )}
 
+        {/*
+          * Pairs that are too close, drawn solid and heavy so they read differently from
+          * the dashed tie between Drones that are linked on purpose. Two aircraft joined
+          * by a line here is the one thing on this map that means act now.
+          */}
+        {conflictPairs(placed, vitals).map((pair) => (
+          <line
+            key={pair.key}
+            x1={x(pair.from.eastM)}
+            y1={y(pair.from.northM)}
+            x2={x(pair.to.eastM)}
+            y2={y(pair.to.northM)}
+            className="stroke-status-fault"
+            strokeWidth="1.4"
+          />
+        ))}
+
         {placed.map((drone) => {
           const position = drone.telemetry!.position!
           const airborne = drone.status === 'Flying'
+          const phase = vitals?.find((entry) => entry.droneId === drone.id)?.phase
           return (
             <g key={drone.id} transform={`translate(${x(position.eastM)} ${y(position.northM)})`}>
               <circle
@@ -115,13 +146,23 @@ export function FormationMap({ drones }: { drones: readonly DroneState[] }) {
                 strokeWidth="0.7"
               />
               <text
-                y="-4"
+                y={phase ? -8 : -4}
                 textAnchor="middle"
                 className="fill-ink-muted"
                 style={{ fontSize: '3.4px' }}
               >
                 {drone.name}
               </text>
+              {phase && (
+                <text
+                  y="-4"
+                  textAnchor="middle"
+                  className="fill-ink-subtle"
+                  style={{ fontSize: '2.8px' }}
+                >
+                  {PHASE_PRESENTATION[phase].label}
+                </text>
+              )}
             </g>
           )
         })}
@@ -131,9 +172,45 @@ export function FormationMap({ drones }: { drones: readonly DroneState[] }) {
         <span>{width.toFixed(0)} m × {height.toFixed(0)} m</span>
         <span>Filled = flying</span>
         {groups.size > 0 && <span>Dashed = linked as one group</span>}
+        {conflictPairs(placed, vitals).length > 0 && <span>Solid = too close</span>}
       </figcaption>
     </figure>
   )
+}
+
+/**
+ * Every pair closer than the warning distance, each pair drawn once.
+ *
+ * Vitals record the conflict from both ends — A is near B and B is near A — so the pair
+ * is keyed on the two ids sorted, and the second sighting is dropped rather than drawn
+ * on top of the first.
+ */
+function conflictPairs(
+  placed: readonly DroneState[],
+  vitals: readonly DroneVitals[] | undefined,
+): readonly {
+  key: string
+  from: { eastM: number; northM: number }
+  to: { eastM: number; northM: number }
+}[] {
+  if (vitals === undefined) return []
+  const byName = new Map(placed.map((drone) => [drone.name, drone]))
+  const seen = new Set<string>()
+  const pairs: { key: string; from: { eastM: number; northM: number }; to: { eastM: number; northM: number } }[] = []
+
+  for (const entry of vitals) {
+    if (entry.separationM === null || entry.separationM >= SEPARATION_WARNING_M) continue
+    if (entry.conflictWith === null) continue
+    const other = byName.get(entry.conflictWith)
+    const mine = placed.find((drone) => drone.id === entry.droneId)
+    if (!other?.telemetry?.position || !mine?.telemetry?.position) continue
+
+    const key = [mine.id, other.id].sort().join('~')
+    if (seen.has(key)) continue
+    seen.add(key)
+    pairs.push({ key, from: mine.telemetry.position, to: other.telemetry.position })
+  }
+  return pairs
 }
 
 /** Whole-metre lines inside the range, capped so a large room does not become a mesh. */

@@ -9,7 +9,7 @@ import { ShowcaseChrome } from './ShowcaseChrome'
 import { ShowcaseFleet } from './ShowcaseFleet'
 
 /**
- * Before anything has been heard from the ground station. Rendered on the server and as
+ * Before the ground station has sent anything. Rendered on the server and as
  * the first client paint, so the board says it is connecting rather than flashing an
  * empty Fleet — a blank board and a School with no Drones must not look the same for
  * even one frame.

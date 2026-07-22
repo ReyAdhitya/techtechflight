@@ -46,7 +46,7 @@ export function FleetSummary({ drones }: { drones: readonly DroneState[] }) {
          * longer be true. Every tile already hedges about its own Telemetry — this is the
          * count doing the same, because the number above is the one thing a Teacher reads
          * from across the room, and it was the only element on the board still speaking
-         * with total confidence about Telemetry nobody has heard in minutes.
+         * with total confidence about Telemetry nothing has confirmed in minutes.
          *
          * Deliberately not a live region. The board already has two, and the comment on
          * the Needs Attention count explains what a third unnamed one would cost. This is
@@ -58,7 +58,7 @@ export function FleetSummary({ drones }: { drones: readonly DroneState[] }) {
          */}
         {staleUsable > 0 && (
           <p className="tnum m-0 text-value italic text-stale" data-stale="true">
-            {staleUsable} of those not heard from recently
+            {staleUsable} of those without a recent response
           </p>
         )}
       </div>

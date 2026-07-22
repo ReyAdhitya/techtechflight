@@ -23,7 +23,7 @@ const TILE_STATUS: Record<Status, string> = {
 
 export interface DroneTileProps {
   readonly drone: DroneState
-  /** Null when this Drone has never been heard from. */
+  /** Null when this Drone has never responded. */
   readonly ageMs: number | null
   readonly onOpenDetail: () => void
 }
@@ -31,12 +31,12 @@ export interface DroneTileProps {
 /**
  * One Drone, at a size that reads from a few steps away.
  *
- * Every value carries its age. A Drone that has never been heard from says so plainly
+ * Every value carries its age. A Drone that has never responded says so plainly
  * rather than showing an empty battery, because a newly added Drone and a failed one
  * must not look identical.
  */
 export function DroneTile({ drone, ageMs, onOpenDetail }: DroneTileProps) {
-  const neverHeardFrom = drone.lastContact === null
+  const noResponseYet = drone.lastContact === null
   const offline = drone.status === 'Offline'
   const headingId = `drone-${drone.id}-name`
   const statusChanged = useStatusChanged(drone.status)
@@ -111,7 +111,7 @@ export function DroneTile({ drone, ageMs, onOpenDetail }: DroneTileProps) {
          * value would both say something different and break the tests that read this
          * line the way a Teacher does.
          */}
-        {neverHeardFrom ? 'Never heard from' : `Heard from ${formatAge(ageMs ?? 0)}`}
+        {noResponseYet ? 'No response yet' : `Response ${formatAge(ageMs ?? 0)}`}
       </p>
 
       {/*

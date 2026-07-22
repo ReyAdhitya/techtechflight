@@ -33,8 +33,8 @@ export function aDroneState(overrides: Partial<DroneState> = {}): DroneState {
   }
 }
 
-/** A Drone the School owns but has never heard from — not a failed one. */
-export function aNeverHeardFromDrone(overrides: Partial<DroneState> = {}): DroneState {
+/** A Drone the School owns but has never responded — not a failed one. */
+export function aNoResponseDrone(overrides: Partial<DroneState> = {}): DroneState {
   return aDroneState({
     status: 'Offline',
     telemetry: null,

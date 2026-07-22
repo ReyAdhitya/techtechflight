@@ -67,7 +67,7 @@ Updated as part of each task's own commit, so it cannot drift from what happened
 | 5 | 5.5 Commands on the strip | ✅ | `1ab1353` |
 | 5 | 5.6 Scenario panel, separated | ✅ | `pending` |
 | 5 | 5.7 The simulation label | ✅ | `2f05910` |
-| 6 | 6.1 Logbook grows | ⬜ | |
+| 6 | 6.1 Logbook grows | ✅ | `pending` |
 | 6 | 6.2 Assignment column | ⬜ | |
 | 6 | 6.3 Exercise list | ⬜ | |
 | 6 | 6.4 Starting with no plan at all | ⬜ | |

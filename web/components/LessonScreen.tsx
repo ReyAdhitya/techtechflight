@@ -112,7 +112,9 @@ function PreFlight({
                 <Link
                   href={`/drone?id=${encodeURIComponent(drone.id)}`}
                   className={cn(
-                    'flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-2 bg-surface-1 py-2 pl-3 pr-4 no-underline',
+                    // py-3 rather than py-2: at py-2 the row came to 41px, just under the
+                    // 44px a finger needs, and this is the list a Teacher works through.
+                    'flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-2 bg-surface-1 py-3 pl-3 pr-4 no-underline',
                     drone.status === 'Fault' ? 'border-status-fault' : 'border-status-not-ready',
                   )}
                 >

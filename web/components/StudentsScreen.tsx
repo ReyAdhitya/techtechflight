@@ -73,6 +73,7 @@ export function StudentsScreen() {
                   {studentOf(book, drone.id)}
                 </span>
                 <Link
+                  prefetch={false}
                   href={`/drone?id=${encodeURIComponent(drone.id)}`}
                   className="text-value text-ink no-underline hover:underline"
                 >

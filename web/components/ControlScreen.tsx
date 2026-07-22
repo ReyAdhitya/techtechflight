@@ -244,7 +244,8 @@ function FlightStrip({
           * enough to carry a full-height link without moving anything.
           */}
         <Link
-          href={`/drone?id=${encodeURIComponent(vitals.droneId)}`}
+          prefetch={false}
+                  href={`/drone?id=${encodeURIComponent(vitals.droneId)}`}
           className="inline-flex min-h-11 items-center font-display text-body font-medium text-ink no-underline hover:underline"
         >
           {vitals.callsign}

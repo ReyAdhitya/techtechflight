@@ -4,8 +4,8 @@ Phase 7, opened early and kept running. Findings are written down when they are 
 rather than reconstructed at the end, because the ones worth having are the ones nobody
 would remember to look for afterwards.
 
-**Current state:** 272 tests passing across 17 files, three typechecks clean, the board
-builds. Progress against the plan is in
+**Current state:** 337 tests passing, three typechecks clean, the board builds, and the
+device audit is clean across 8 devices, 3 widths and 6 routes. Progress against the plan is in
 [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md#progress).
 
 ## Coverage by project
@@ -36,13 +36,6 @@ when it has something to say. Recorded in the test that found it.
 one per Fleet State. In production those coincide; under batching they do not, which is
 why the provider test advances a tick at a time. It means a vertical rate is derived from
 however many renders happened, not however many readings arrived.
-
-### O4 — `next/link` prefetch 404s under static export
-**Severity: medium · Audit F7 · Task 8.5**
-
-Every navigation link requests an RSC payload that does not exist in a static export. No
-correctness impact, but each click pays full latency and the console is noisy — on a
-projector, in front of a class.
 
 ### O5 — `/showcase` ships `three.js`
 **Severity: low · Audit F8**
@@ -121,6 +114,8 @@ Each was caught by a check rather than by luck, which is the part worth keeping.
 | `DemoBoard` was **dead code** kept alive only by its own test, driving a second fixture-based board | Task 3.4 | Grepping for usages |
 | Adding a `ServerMessage` member exposed a **narrowing bug**: anything not a state or history was read as a list of events | Task 5.1 | The type system |
 | A test asserted behaviour the code **does not have** (O2). Replaced rather than the production code quietly changed | Task 2.3 | Running it |
+| Every navigation link **aborted a prefetch** — a static export has no RSC payload behind a route, so six wasted requests per screen and a console full of them | Audit F7, task 8.5 | Driving a real browser through every link |
+| Every navigation link was **40px tall**, four pixels short of a reliable tap, on every screen and every device | Task 8.3 | Probing 44px around each control on 8 devices |
 
 ## Verification method
 

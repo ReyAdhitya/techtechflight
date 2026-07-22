@@ -30,6 +30,7 @@ const board = (drones: readonly DroneState[], overrides: Partial<FleetSnapshot> 
 }
 
 const tile = (name: string) => screen.getByRole('article', { name })
+const attentionCount = () => screen.getByRole('status', { name: /needing attention/i })
 
 describe('seeing the Fleet', () => {
   it('shows every Drone the School owns on one screen', () => {
@@ -91,6 +92,45 @@ describe('the summary that answers the question', () => {
     expect(screen.getByText(/of 2 ready/)).toBeInTheDocument()
     expect(screen.getByText(/0 need attention/)).toBeInTheDocument()
     expect(screen.getByText('1 flying')).toBeInTheDocument()
+  })
+
+  it('makes the count a Teacher came to read the heading of the board', () => {
+    board([
+      aDroneState({ id: 'a', name: 'Drone 1', status: 'Ready' }),
+      aDroneState({ id: 'b', name: 'Drone 2', status: 'Fault' }),
+    ])
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('1 of 2 ready')
+  })
+
+  it('announces the Needs Attention count to a Teacher who is watching the room', () => {
+    board([aDroneState({ id: 'a', name: 'Drone 1', status: 'Fault' })])
+
+    expect(attentionCount()).toHaveTextContent('1 needs attention')
+  })
+
+  it('speaks more quietly when everything needing attention can be fixed before the lesson', () => {
+    board([
+      aDroneState({ id: 'a', name: 'Drone 1', status: 'Not Ready' }),
+      aDroneState({ id: 'b', name: 'Drone 2', status: 'Ready' }),
+    ])
+
+    expect(attentionCount()).toHaveAttribute('data-severity', 'fixable')
+  })
+
+  it('speaks at full volume once a Drone has to come out of the set', () => {
+    board([
+      aDroneState({ id: 'a', name: 'Drone 1', status: 'Not Ready' }),
+      aDroneState({ id: 'b', name: 'Drone 2', status: 'Fault' }),
+    ])
+
+    expect(attentionCount()).toHaveAttribute('data-severity', 'fault')
+  })
+
+  it('carries no severity at all when nothing needs a Teacher', () => {
+    board([aDroneState({ id: 'a', name: 'Drone 1', status: 'Ready' })])
+
+    expect(attentionCount()).not.toHaveAttribute('data-severity')
   })
 })
 
@@ -228,11 +268,50 @@ describe('trusting what is on screen', () => {
   })
 })
 
+describe('when a charging Drone will be usable again', () => {
+  it('says so when the ground station has watched the charge go in', () => {
+    board([
+      aDroneState({
+        id: 'a',
+        name: 'Drone 1',
+        status: 'Not Ready',
+        timeToReadyMs: 12 * 60_000,
+      }),
+    ])
+
+    expect(within(tile('Drone 1')).getByText('Ready in ~12 min')).toBeInTheDocument()
+  })
+
+  it('says nothing at all when there is no honest forecast to give', () => {
+    // The resting case, and the permanent one for a School that swaps packs rather than
+    // charging them in place. Absent rather than empty: a Teacher must not read a blank
+    // where a number goes and wonder whether it is still loading.
+    board([
+      aDroneState({ id: 'a', name: 'Drone 1', status: 'Not Ready', timeToReadyMs: null }),
+    ])
+
+    expect(within(tile('Drone 1')).queryByText(/ready in/i)).not.toBeInTheDocument()
+  })
+
+  it('marks the forecast as an estimate, the way an estimated battery is marked', () => {
+    board([
+      aDroneState({
+        id: 'a',
+        name: 'Drone 1',
+        status: 'Not Ready',
+        timeToReadyMs: 60_000,
+      }),
+    ])
+
+    expect(within(tile('Drone 1')).getByText(/~1 min/)).toBeInTheDocument()
+  })
+})
+
 describe('the board losing the ground station', () => {
   it('says so in words about the board, not about the Drones', () => {
     board([aDroneState({ id: 'a', name: 'Drone 1' })], { connection: 'unreachable' })
 
-    const banner = screen.getByRole('status')
+    const banner = screen.getByRole('status', { name: /ground station connection/i })
     expect(banner).toHaveTextContent(/this board cannot reach the ground station/i)
     expect(banner).not.toHaveTextContent(/offline/i)
   })
@@ -248,7 +327,7 @@ describe('the board losing the ground station', () => {
   it('says nothing at all while the ground station is reachable', () => {
     board([aDroneState({ id: 'a', name: 'Drone 1' })])
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: /ground station connection/i })).not.toBeInTheDocument()
   })
 
   it('does not treat a Fleet of Offline Drones as the board being unreachable', () => {
@@ -257,7 +336,7 @@ describe('the board losing the ground station', () => {
       aDroneState({ id: 'b', name: 'Drone 2', status: 'Offline', stale: true }),
     ])
 
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: /ground station connection/i })).not.toBeInTheDocument()
   })
 })
 
@@ -387,7 +466,9 @@ describe('before the first Fleet State arrives', () => {
       />,
     )
 
-    expect(screen.getByRole('status')).toHaveTextContent(/connecting to the ground station/i)
+    expect(
+      screen.getByRole('status', { name: /ground station connection/i }),
+    ).toHaveTextContent(/connecting to the ground station/i)
     expect(screen.queryAllByRole('article')).toHaveLength(0)
   })
 })

@@ -25,6 +25,7 @@ export class SimulatedTelemetrySource implements TelemetrySource {
   readonly #random: () => number
   readonly #idleDrainPerMinute: number
   readonly #flyingDrainPerMinute: number
+  readonly #chargePerMinute: number
   readonly #spontaneous: boolean
 
   #listeners = new Set<(observation: TelemetryObservation) => void>()
@@ -36,6 +37,7 @@ export class SimulatedTelemetrySource implements TelemetrySource {
     this.#random = options.random ?? Math.random
     this.#idleDrainPerMinute = options.idleDrainPerMinute ?? 0.004
     this.#flyingDrainPerMinute = options.flyingDrainPerMinute ?? 0.06
+    this.#chargePerMinute = options.chargePerMinute ?? 0.03
     this.#spontaneous = options.spontaneous ?? true
 
     this.#drones = new Map(
@@ -50,6 +52,7 @@ export class SimulatedTelemetrySource implements TelemetrySource {
           airborne: false,
           fault: null,
           linkUp: true,
+          charging: false,
         },
       ]),
     )
@@ -92,7 +95,21 @@ export class SimulatedTelemetrySource implements TelemetrySource {
   }
 
   takeOff(droneId: DroneId): void {
-    this.#drone(droneId).airborne = true
+    const drone = this.#drone(droneId)
+    // Nothing takes off on a charger.
+    drone.charging = false
+    drone.airborne = true
+  }
+
+  /** Put this Drone on charge, so its battery climbs back rather than only draining. */
+  plugIn(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    if (drone.airborne) return
+    drone.charging = true
+  }
+
+  unplug(droneId: DroneId): void {
+    this.#drone(droneId).charging = false
   }
 
   land(droneId: DroneId): void {
@@ -118,15 +135,27 @@ export class SimulatedTelemetrySource implements TelemetrySource {
       // observations, never an observation saying "I am silent".
       if (!drone.linkUp) continue
 
-      const drainPerMinute = drone.airborne
-        ? this.#flyingDrainPerMinute
-        : this.#idleDrainPerMinute
-      drone.batteryFraction = clamp(
-        drone.batteryFraction - (drainPerMinute * this.#reportIntervalMs) / 60_000,
-      )
+      /*
+       * Charge going in is a gradual climb, at a rate a real pack would manage rather
+       * than one that makes a demonstration quick. The forecast downstream is only
+       * worth anything if what it is extrapolating from behaves like the real thing.
+       */
+      if (drone.charging && !drone.airborne) {
+        drone.batteryFraction = clamp(
+          drone.batteryFraction + (this.#chargePerMinute * this.#reportIntervalMs) / 60_000,
+        )
+        if (drone.batteryFraction >= FULLY_CHARGED) drone.charging = false
+      } else {
+        const drainPerMinute = drone.airborne
+          ? this.#flyingDrainPerMinute
+          : this.#idleDrainPerMinute
+        drone.batteryFraction = clamp(
+          drone.batteryFraction - (drainPerMinute * this.#reportIntervalMs) / 60_000,
+        )
 
-      // A flat battery brings a Drone down.
-      if (drone.airborne && drone.batteryFraction <= 0.05) drone.airborne = false
+        // A flat battery brings a Drone down.
+        if (drone.airborne && drone.batteryFraction <= 0.05) drone.airborne = false
+      }
 
       this.#emit(drone)
     }
@@ -144,6 +173,16 @@ export class SimulatedTelemetrySource implements TelemetrySource {
     else if (roll < 0.01 && !drone.airborne && drone.batteryFraction > 0.4) {
       drone.airborne = true
     } else if (roll < 0.02 && drone.airborne) drone.airborne = false
+
+    /*
+     * A flat Drone on the bench is the one a Teacher plugs in, so the simulated Fleet
+     * recovers the way a real classroom does. Without this the only direction a battery
+     * could ever move was down, and a long demonstration ended with six dead Drones and
+     * no way back — which is neither realistic nor much of a demonstration.
+     */
+    if (!drone.airborne && !drone.charging && drone.batteryFraction < 0.25 && roll < 0.05) {
+      drone.charging = true
+    }
   }
 
   #emit(drone: SimulatedDrone): void {
@@ -173,6 +212,8 @@ export interface SimulatorOptions {
   readonly random?: () => number
   readonly idleDrainPerMinute?: number
   readonly flyingDrainPerMinute?: number
+  /** How fast a Drone on charge climbs. Realistic by default, not demo-fast. */
+  readonly chargePerMinute?: number
   /** Unprompted take-offs, faults, and quiet spells. Off makes a run deterministic. */
   readonly spontaneous?: boolean
 }
@@ -184,12 +225,16 @@ interface SimulatedDrone {
   airborne: boolean
   fault: FaultReport | null
   linkUp: boolean
+  charging: boolean
 }
 
 const DEFAULT_FAULT: FaultReport = {
   code: 'IMU_CALIBRATION',
   description: 'Motion sensor needs recalibrating',
 }
+
+/** Charging stops here rather than at 1, the way a real charger tapers off. */
+const FULLY_CHARGED = 0.98
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 const round = (value: number, places = 3) => Number(value.toFixed(places))

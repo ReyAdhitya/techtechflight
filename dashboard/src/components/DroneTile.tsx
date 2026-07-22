@@ -1,5 +1,6 @@
 import type { DroneState } from '@techtechflight/contract'
 import { formatAge } from '../age.ts'
+import { formatTimeToReady } from '../battery.ts'
 import { BatteryLevel } from './BatteryLevel.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
 
@@ -38,6 +39,16 @@ export function DroneTile({ drone, ageMs, onOpenDetail }: DroneTileProps) {
           />
         ) : (
           <p className="tile__never">No Telemetry yet</p>
+        )}
+
+        {/*
+         * Only when the ground station has actually watched the charge go in. Most of
+         * the time there is nothing to say and nothing is said — the line is absent
+         * rather than empty, so a Teacher never reads a blank where a number goes and
+         * wonders whether it is loading.
+         */}
+        {drone.timeToReadyMs !== null && (
+          <p className="tile__ready-in">{formatTimeToReady(drone.timeToReadyMs)}</p>
         )}
       </div>
 

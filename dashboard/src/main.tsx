@@ -3,17 +3,26 @@ import { createRoot } from 'react-dom/client'
 
 // Fonts are bundled rather than fetched. The board has to work in a school with no
 // usable internet (ADR-0002), and a webfont CDN would strand it there.
-import '@fontsource/plus-jakarta-sans/400.css'
-import '@fontsource/plus-jakarta-sans/500.css'
-import '@fontsource/inter/400.css'
-import '@fontsource/inter/500.css'
+import '@fontsource/schibsted-grotesk/400.css'
+import '@fontsource/schibsted-grotesk/500.css'
+import '@fontsource/schibsted-grotesk/600.css'
+import '@fontsource/hanken-grotesk/400.css'
+import '@fontsource/hanken-grotesk/500.css'
+import '@fontsource/hanken-grotesk/600.css'
 
 import './styles/tokens.css'
 import './styles/board.css'
 
 import { SystemClock } from '@techtechflight/contract/testing'
 import { App } from './App.tsx'
+import { applyDisplayScale, readDisplayScale } from './display-scale.ts'
 import { FleetConnection, browserSocket } from './fleet-connection.ts'
+import { resolveInitialTheme, writeTheme } from './theme.ts'
+
+// Before the first render rather than in an effect, so a board set to large format or to
+// the lit-room theme does not flash the wrong one on every reload in front of a class.
+writeTheme(resolveInitialTheme())
+applyDisplayScale(readDisplayScale())
 
 const clock = new SystemClock()
 

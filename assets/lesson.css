@@ -1,0 +1,365 @@
+/*
+ * Shared stylesheet for every lesson and reference card in this workspace.
+ *
+ * Tufte-ish: one wide column of serif prose, generous margins, notes set beside the text
+ * rather than beneath it. Designed to be read on screen and to survive being printed.
+ *
+ * The accent is TechTech Flight's own coral (#f75a36), so the course and the subject
+ * look like one thing.
+ */
+
+:root {
+  --paper: #fffdf9;
+  --ink: #16130f;
+  --ink-soft: #57514a;
+  --ink-faint: #8b8379;
+  --rule: #e0d9cd;
+  --accent: #f75a36;
+  --accent-deep: #b83c1f;
+  --amber: #b57500;
+  --good: #2f7a3f;
+  --wash: #f6f1e7;
+
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  --mono: 'Cascadia Code', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+  --measure: 34rem;
+  --gutter: 15rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 4rem 2rem 8rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.0625rem;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- Column ---------------------------------------------------------------- */
+
+.sheet {
+  max-width: calc(var(--measure) + var(--gutter));
+  margin: 0 auto;
+}
+
+.sheet > * {
+  max-width: var(--measure);
+}
+
+/* Things that may use the full width, gutter included. */
+.sheet > .wide,
+.sheet > .masthead {
+  max-width: none;
+}
+
+/* --- Masthead -------------------------------------------------------------- */
+
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.eyebrow {
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.eyebrow .dim {
+  color: var(--ink-faint);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  font-size: 2.35rem;
+  line-height: 1.12;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.6rem;
+  max-width: 24ch;
+}
+
+.standfirst {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 0;
+  max-width: 46ch;
+}
+
+/* --- Structure ------------------------------------------------------------- */
+
+h2 {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 3.5rem 0 0.4rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 2rem 0 0.5rem;
+}
+
+p {
+  margin: 0 0 1.1rem;
+}
+
+a {
+  color: var(--accent-deep);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--accent);
+}
+
+strong {
+  font-weight: 700;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--wash);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.08em 0.32em;
+}
+
+pre {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  background: var(--wash);
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent);
+  border-radius: 3px;
+  padding: 0.9rem 1.1rem;
+  overflow-x: auto;
+}
+
+pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+blockquote {
+  margin: 1.6rem 0;
+  padding-left: 1.2rem;
+  border-left: 2px solid var(--accent);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+blockquote cite {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+ul, ol {
+  margin: 0 0 1.1rem;
+  padding-left: 1.3rem;
+}
+
+li {
+  margin-bottom: 0.4rem;
+}
+
+/* --- Sidenotes ------------------------------------------------------------- */
+
+.sidenote {
+  float: right;
+  clear: right;
+  width: 12rem;
+  margin-right: -13.6rem;
+  margin-top: 0.35rem;
+  margin-bottom: 1rem;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  border-top: 1px solid var(--rule);
+  padding-top: 0.4rem;
+}
+
+.sidenote a {
+  color: var(--ink-soft);
+}
+
+@media (max-width: 66rem) {
+  :root { --gutter: 0rem; }
+  .sidenote {
+    float: none;
+    width: auto;
+    margin: 1rem 0;
+    padding-left: 0.9rem;
+    padding-top: 0;
+    border-top: 0;
+    border-left: 2px solid var(--rule);
+  }
+}
+
+/* --- Callouts -------------------------------------------------------------- */
+
+.callout {
+  background: var(--wash);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--ink-faint);
+  border-radius: 3px;
+  padding: 1rem 1.2rem;
+  margin: 1.6rem 0;
+  font-size: 0.98rem;
+}
+
+.callout > :last-child { margin-bottom: 0; }
+
+.callout__label {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 0.4rem;
+}
+
+.callout--finding { border-left-color: var(--accent); }
+.callout--finding .callout__label { color: var(--accent-deep); }
+
+.callout--source { border-left-color: var(--good); }
+.callout--source .callout__label { color: var(--good); }
+
+/* --- Task list (do this, in the real world) -------------------------------- */
+
+.task {
+  counter-reset: step;
+  list-style: none;
+  padding: 0;
+}
+
+.task li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 2.4rem;
+  margin-bottom: 1rem;
+}
+
+.task li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--paper);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+}
+
+/* --- Footer ---------------------------------------------------------------- */
+
+.footer {
+  margin-top: 5rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 1.5rem;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.footer h2 {
+  margin-top: 0;
+}
+
+.onward {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.5rem;
+}
+
+.ask {
+  background: var(--wash);
+  border: 1px dashed var(--rule);
+  border-radius: 3px;
+  padding: 0.9rem 1.1rem;
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 2rem 0 0;
+}
+
+.ask strong { color: var(--ink); }
+
+/* --- Print ----------------------------------------------------------------- */
+
+@media print {
+  :root { --gutter: 0rem; }
+  body {
+    padding: 0;
+    font-size: 10.5pt;
+    background: #fff;
+  }
+  h2 { margin-top: 1.6rem; }
+  .sidenote {
+    float: none;
+    width: auto;
+    margin: 0.6rem 0;
+    border-left: 2px solid #bbb;
+    border-top: 0;
+    padding: 0 0 0 0.7rem;
+  }
+  pre, .callout, .quiz, .audit { break-inside: avoid; }
+  .ask, .onward { display: none; }
+  a::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.75em;
+    color: #666;
+    word-break: break-all;
+  }
+  a[href^='#']::after { content: ''; }
+}

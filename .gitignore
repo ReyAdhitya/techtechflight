@@ -11,3 +11,8 @@ coverage/
 __pycache__/
 .venv/
 .scratch/
+.next/
+out/
+*.tsbuildinfo
+.vercel/
+.claude/settings.local.json

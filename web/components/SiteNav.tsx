@@ -9,19 +9,24 @@ import { cn } from '@/lib/utils'
  *
  * ADR-0004 argued against navigation when the Fleet was the whole product and lived on
  * one screen — tabs for a single destination promise sub-screens nobody will find. That
- * reasoning holds and this is what changed: there are now genuinely four other places to
- * be, each answering a question the board cannot. The board stays first and stays the
- * default, so a Teacher who only ever wants "which Drones can I hand out" never has to
- * learn the rest.
+ * reasoning holds and this is what changed: there are genuinely four other places to be,
+ * each answering a question the board cannot.
+ *
+ * Five, ordered by a Teacher's day rather than alphabetically: Control while a lesson
+ * runs, Fleet and Lesson and Students before one, Reports after. Settings is not here —
+ * it is a room-and-records screen rather than a place in the workflow, so it sits in the
+ * header.
+ *
+ * The Fleet remains the default landing screen. A Teacher who only ever wants "which
+ * Drones can I hand out" never has to learn the rest, which is the part of ADR-0004's
+ * reasoning that never stopped applying.
  */
 export const DESTINATIONS = [
-  { href: '/', label: 'Fleet', hint: 'Every Drone, right now' },
   { href: '/control', label: 'Control', hint: 'The Flight Control Center — the lesson as it runs' },
-  { href: '/lesson', label: 'Lesson', hint: 'Pre-flight check, then run the lesson' },
+  { href: '/', label: 'Fleet', hint: 'Every Drone, and what needs doing to it' },
+  { href: '/lesson', label: 'Lesson', hint: 'Plan it, then start it' },
   { href: '/students', label: 'Students', hint: 'The class, and who is flying what' },
-  { href: '/history', label: 'History', hint: 'What has happened today' },
-  { href: '/maintenance', label: 'Maintenance', hint: 'What needs doing, and to which Drone' },
-  { href: '/settings', label: 'Settings', hint: 'Connection, appearance, and your records' },
+  { href: '/reports', label: 'Reports', hint: 'What happened, and which Drone keeps doing it' },
 ] as const
 
 export function SiteNav() {

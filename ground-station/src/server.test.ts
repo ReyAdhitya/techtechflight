@@ -1,3 +1,6 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import WebSocket from 'ws'
 import type { FleetStateMessage } from '@techtechflight/contract'
@@ -123,5 +126,73 @@ describe('a dashboard connecting', () => {
     expect(onProjector.state.drones).toEqual(onLaptop.state.drones)
     projector.close()
     laptop.close()
+  })
+})
+
+/**
+ * The board, served beside the socket so a School runs one process (ADR-0002).
+ *
+ * The layout under test is the one a Next static export actually produces, which is not
+ * the one a bundled single-page app produces: a page is a file called `tower.html`, and a
+ * directory called `tower` sits beside it holding payload files and no index of its own.
+ * A server that only knows how to look inside directories finds that directory, finds no
+ * index in it, and returns 404 for every screen except the home page.
+ */
+describe('serving the board', () => {
+  let boardDir: string
+  let board: FleetServer
+
+  const get = (path: string) => fetch(`http://localhost:${board.port}${path}`)
+
+  beforeEach(async () => {
+    boardDir = await mkdtemp(join(tmpdir(), 'ttf-board-'))
+    await writeFile(join(boardDir, 'index.html'), '<html>the Fleet</html>')
+    await writeFile(join(boardDir, 'tower.html'), '<html>the tower</html>')
+    await mkdir(join(boardDir, 'tower'))
+    await writeFile(join(boardDir, 'tower', 'payload.txt'), 'not a page')
+    board = await startFleetServer({ station, port: 0, boardDir })
+  })
+
+  afterEach(async () => {
+    await board.close()
+    await rm(boardDir, { recursive: true, force: true })
+  })
+
+  it('serves the Fleet at the root', async () => {
+    const response = await get('/')
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('the Fleet')
+  })
+
+  it('serves a screen from its page file, past the directory of the same name', async () => {
+    const response = await get('/tower')
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('the tower')
+  })
+
+  it('still serves a directory that carries its own index', async () => {
+    await mkdir(join(boardDir, 'legacy'))
+    await writeFile(join(boardDir, 'legacy', 'index.html'), '<html>an older board</html>')
+
+    const response = await get('/legacy')
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('an older board')
+  })
+
+  it('falls back to the Fleet for a path it does not recognise', async () => {
+    const response = await get('/nothing-here')
+
+    expect(response.status).toBe(200)
+    expect(await response.text()).toContain('the Fleet')
+  })
+
+  it('does not serve anything outside the board directory', async () => {
+    const response = await get('/../../../etc/passwd')
+
+    // Confined rather than found: whatever comes back is the board, never the filesystem.
+    expect(await response.text()).toContain('the Fleet')
   })
 })

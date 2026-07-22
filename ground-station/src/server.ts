@@ -9,10 +9,10 @@ export interface FleetServerOptions {
   readonly station: GroundStation
   readonly port?: number
   /**
-   * Built dashboard to serve alongside the socket, so the whole ground station is one
-   * process on a Teacher's laptop (ADR-0002). Optional — in development Vite serves it.
+   * Built board to serve alongside the socket, so the whole ground station is one
+   * process on a Teacher's laptop (ADR-0002). Optional — in development Next serves it.
    */
-  readonly dashboardDir?: string
+  readonly boardDir?: string
   /**
    * The record of the recent past, sent once on connect and then streamed.
    *
@@ -36,11 +36,11 @@ export interface FleetServer {
  * and holds no Fleet logic of its own.
  */
 export async function startFleetServer(options: FleetServerOptions): Promise<FleetServer> {
-  const { station, dashboardDir, history } = options
+  const { station, boardDir, history } = options
   const requestedPort = options.port ?? 4321
 
   const http = createServer((request, response) => {
-    void serveStatic(request, response, dashboardDir)
+    void serveStatic(request, response, boardDir)
   })
   const sockets = new WebSocketServer({ server: http, path: '/fleet' })
 
@@ -108,16 +108,16 @@ const MIME_TYPES: Readonly<Record<string, string>> = {
 async function serveStatic(
   request: IncomingMessage,
   response: ServerResponse,
-  dashboardDir: string | undefined,
+  boardDir: string | undefined,
 ): Promise<void> {
-  if (!dashboardDir) {
-    response.writeHead(404).end('The dashboard is served separately in development.')
+  if (!boardDir) {
+    response.writeHead(404).end('The board is served separately in development.')
     return
   }
 
-  const root = resolve(dashboardDir)
+  const root = resolve(boardDir)
   const requestPath = new URL(request.url ?? '/', 'http://localhost').pathname
-  // Resolve inside the dashboard directory only — a traversal must not escape it.
+  // Resolve inside the board directory only — a traversal must not escape it.
   const candidate = resolve(join(root, normalize(requestPath)))
   const target = candidate.startsWith(root) ? candidate : root
 
@@ -133,10 +133,30 @@ async function serveStatic(
     .end(body)
 }
 
-/** Falls back to index.html so the dashboard owns its own routing. */
+/**
+ * The file behind a request path: the file itself, then its page, then a directory's own
+ * index, and finally the board's index so the board owns its own routing.
+ *
+ * The page step is what a static export needs. It names a screen `tower.html` and puts a
+ * `tower` directory beside it holding payloads and no index of its own, so a server that
+ * only knows how to look inside directories finds that directory, finds nothing in it,
+ * and returns 404 for every screen except the home page. The hosted deploy gets this rule
+ * from `cleanUrls`; served from a Teacher's laptop it has to be here.
+ */
 async function resolveFile(target: string, root: string): Promise<string | null> {
   const asFile = await stat(target).catch(() => null)
   if (asFile?.isFile()) return target
+
+  /*
+   * Never for the root itself. `target` is already confined to the board directory, and
+   * appending to anything below it stays below it — but the root plus `.html` names a
+   * sibling of the board rather than something inside it, which is exactly the kind of
+   * reach outside that the confinement above exists to prevent.
+   */
+  if (target !== root) {
+    const asPage = await stat(`${target}.html`).catch(() => null)
+    if (asPage?.isFile()) return `${target}.html`
+  }
 
   const index = join(asFile?.isDirectory() ? target : root, 'index.html')
   const asIndex = await stat(index).catch(() => null)

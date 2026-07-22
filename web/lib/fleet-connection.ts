@@ -112,8 +112,14 @@ export class FleetConnection implements FleetLink {
        * every screen reads one list rather than stitching a snapshot to a stream. Merged
        * by id: a reconnect re-sends the whole history, and a Teacher must not see this
        * morning's fault twice because the socket blinked.
+       *
+       * Named rather than reached by falling through everything else. The union has more
+       * than one other member now, and a message meant for something else must not be
+       * read as a list of events.
        */
-      this.#update({ history: mergeEvents(this.#snapshot.history, message.events) })
+      if (message.type === 'fleet-events') {
+        this.#update({ history: mergeEvents(this.#snapshot.history, message.events) })
+      }
     })
 
     socket.onClose(() => {

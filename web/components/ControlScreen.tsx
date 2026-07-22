@@ -3,9 +3,9 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import {
-  assignPilot,
-  clearPilots,
-  pilotOf,
+  assignStudent,
+  clearStudents,
+  studentOf,
   readLogbook,
   readServerLogbook,
   subscribeLogbook,
@@ -69,7 +69,7 @@ export function ControlScreen() {
     >
       <AttentionBar
         queue={queue}
-        studentFor={(droneId) => pilotOf(book, droneId)}
+        studentFor={(droneId) => studentOf(book, droneId)}
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
 
@@ -86,10 +86,10 @@ export function ControlScreen() {
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
-          {Object.keys(book.pilots).length > 0 && (
+          {Object.keys(book.students).length > 0 && (
             <button
               type="button"
-              onClick={clearPilots}
+              onClick={clearStudents}
               className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
             >
               Everyone has put theirs down
@@ -101,7 +101,7 @@ export function ControlScreen() {
             <FlightStrip
               key={entry.droneId}
               vitals={entry}
-              pilot={pilotOf(book, entry.droneId)}
+              student={studentOf(book, entry.droneId)}
               selected={selected === entry.droneId}
               onSelect={() => setSelected((current) => (current === entry.droneId ? null : entry.droneId))}
               isAcknowledged={isAcknowledged}
@@ -129,27 +129,27 @@ export function ControlScreen() {
  * thirty seconds before a lesson starts, and six dialogs is not thirty seconds. Held in
  * local state while being typed so the Logbook is not rewritten on every keystroke.
  */
-function PilotField({
+function StudentField({
   droneId,
-  callsign,
-  pilot,
+  droneName,
+  student,
 }: {
   droneId: string
-  callsign: string
-  pilot: string | null
+  droneName: string
+  student: string | null
 }) {
   const [draft, setDraft] = useState<string | null>(null)
-  const value = draft ?? pilot ?? ''
+  const value = draft ?? student ?? ''
 
   return (
     <label className="flex items-center">
-      <span className="visually-hidden">Who is flying {callsign}</span>
+      <span className="visually-hidden">Who is flying {droneName}</span>
       <input
         value={value}
         placeholder="Add a name"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
-          if (draft !== null) assignPilot(droneId, draft)
+          if (draft !== null) assignStudent(droneId, draft)
           setDraft(null)
         }}
         onKeyDown={(event) => {
@@ -157,7 +157,7 @@ function PilotField({
         }}
         className={cn(
           'min-h-11 w-28 rounded-pill border bg-canvas px-3 py-1 text-value',
-          pilot ? 'border-hairline text-ink' : 'border-dashed border-hairline text-ink-muted',
+          student ? 'border-hairline text-ink' : 'border-dashed border-hairline text-ink-muted',
         )}
       />
     </label>
@@ -166,7 +166,7 @@ function PilotField({
 
 function FlightStrip({
   vitals,
-  pilot,
+  student,
   selected,
   onSelect,
   isAcknowledged,
@@ -174,7 +174,7 @@ function FlightStrip({
   now,
 }: {
   vitals: DroneVitals
-  pilot: string | null
+  student: string | null
   selected: boolean
   onSelect: () => void
   isAcknowledged: (droneId: string, alert: VitalsAlert) => boolean
@@ -210,7 +210,7 @@ function FlightStrip({
         >
           {vitals.callsign}
         </Link>
-        <PilotField droneId={vitals.droneId} callsign={vitals.callsign} pilot={pilot} />
+        <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
         <span className="text-value text-ink">{phase.label}</span>
         <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
         <span className="tnum text-value text-ink-subtle">
@@ -229,10 +229,10 @@ function FlightStrip({
         <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
       )}
 
-      {vitals.alerts.length > 0 && pilot && (
+      {vitals.alerts.length > 0 && student && (
         // Repeated under the alerts on purpose. The alert is the thing being read, and
         // "go and speak to Priya" is more use than "go and look at Drone 3".
-        <p className="m-0 text-value text-ink-subtle">Flown by {pilot}.</p>
+        <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
       )}
 
       {vitals.alerts.length > 0 && (

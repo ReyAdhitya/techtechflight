@@ -104,13 +104,29 @@ export interface Logbook {
    * Which Student is flying which Drone, for this lesson.
    *
    * A Drone reports what it is doing; it has no idea whose hands are on the controller.
-   * Without this the tower can say "Drone 3 is too close to Drone 1" and the Teacher
-   * still has to work out who to call across a noisy room.
+   * Without this the Flight Control Center can say "Drone 3 is too close to Drone 1" and
+   * the Teacher still has to work out who to call across a noisy room.
    */
-  readonly pilots: Readonly<Record<DroneId, string>>
+  readonly students: Readonly<Record<DroneId, string>>
 }
 
-const EMPTY: Logbook = { notes: {}, service: {}, lessons: [], pilots: {} }
+/**
+ * A Logbook as an older build wrote it.
+ *
+ * These were called pilots until the glossary was applied — CONTEXT.md lists the word
+ * among those to avoid, and the person flying is a Student. A Teacher who exported their
+ * records last term must get them back, so the old name is still read and never written.
+ */
+interface StoredLogbook extends Partial<Logbook> {
+  readonly pilots?: Readonly<Record<DroneId, string>>
+}
+
+/** Whatever an older or newer build called it. */
+export function studentsFrom(stored: StoredLogbook): Readonly<Record<DroneId, string>> {
+  return stored.students ?? stored.pilots ?? {}
+}
+
+const EMPTY: Logbook = { notes: {}, service: {}, lessons: [], students: {} }
 
 export const LOGBOOK_KEY = 'techtechflight:logbook'
 
@@ -162,13 +178,14 @@ function load(): Logbook {
   try {
     const raw = window.localStorage.getItem(LOGBOOK_KEY)
     if (!raw) return EMPTY
-    const parsed = JSON.parse(raw) as Partial<Logbook>
+    const parsed = JSON.parse(raw) as StoredLogbook
     return {
       notes: parsed.notes ?? {},
       service: parsed.service ?? {},
       lessons: parsed.lessons ?? [],
-      // Absent on records written before the board tracked who was flying what.
-      pilots: parsed.pilots ?? {},
+      // Absent on records written before the board tracked who was flying what, and
+      // under the old name on records written before the glossary was applied.
+      students: studentsFrom(parsed),
     }
   } catch {
     // A locked-down school browser can refuse storage, and a half-written record is
@@ -217,21 +234,21 @@ export function serviceStateOf(book: Logbook, droneId: DroneId): ServiceState {
 }
 
 /** Hand a Drone to a Student, or take it back with an empty name. */
-export function assignPilot(droneId: DroneId, name: string): void {
+export function assignStudent(droneId: DroneId, name: string): void {
   const book = readLogbook()
-  const pilots = { ...book.pilots }
-  if (name.trim() === '') delete pilots[droneId]
-  else pilots[droneId] = name.trim()
-  save({ ...book, pilots })
+  const students = { ...book.students }
+  if (name.trim() === '') delete students[droneId]
+  else students[droneId] = name.trim()
+  save({ ...book, students })
 }
 
-export function pilotOf(book: Logbook, droneId: DroneId): string | null {
-  return book.pilots[droneId] ?? null
+export function studentOf(book: Logbook, droneId: DroneId): string | null {
+  return book.students[droneId] ?? null
 }
 
 /** Everyone put down at the end of a lesson, so the next one starts clean. */
-export function clearPilots(): void {
-  save({ ...readLogbook(), pilots: {} })
+export function clearStudents(): void {
+  save({ ...readLogbook(), students: {} })
 }
 
 export function startLesson(label: string, readyAtStart: number, fleetSize: number, at: number): string {

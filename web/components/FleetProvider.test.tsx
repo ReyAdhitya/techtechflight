@@ -15,7 +15,7 @@ const pathname = vi.hoisted(() => ({ current: '/demo' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 function Probe() {
-  const { snapshot, demo } = useFleet()
+  const { snapshot, demo, vitals } = useFleet()
   return (
     <div>
       <span data-testid="demo">{String(demo)}</span>
@@ -24,7 +24,17 @@ function Probe() {
       <span data-testid="contacted">
         {snapshot.state?.drones.filter((drone) => drone.status !== 'Offline').length ?? 0}
       </span>
+      <span data-testid="rate">{String(vitals[0]?.verticalRateMps)}</span>
     </div>
+  )
+}
+
+/** A screen a Teacher can navigate away from and back to, with the layout staying put. */
+function Screen({ showing }: { showing: boolean }) {
+  return (
+    <FleetProvider>
+      {showing ? <Probe /> : <span data-testid="elsewhere">another screen</span>}
+    </FleetProvider>
   )
 }
 
@@ -84,5 +94,42 @@ describe('the demonstration path', () => {
     })
 
     expect(read('contacted')).toBe('6')
+  })
+})
+
+/**
+ * What the board has watched happen, across a Teacher changing screen.
+ *
+ * A vertical rate does not exist in any single Fleet State — it only appears once several
+ * altitude readings have been remembered, and the same is true of how long an Alert has
+ * been waiting. Both were kept on the tower screen, so glancing at another screen and
+ * coming back threw them away and started counting again, in the middle of a lesson.
+ */
+describe('what the board remembers between screens', () => {
+  it('still knows how a Drone is moving after a Teacher goes elsewhere and returns', () => {
+    const { rerender } = render(<Screen showing />)
+
+    /*
+     * A tick at a time, because altitude is sampled in an effect and React batches. Three
+     * seconds advanced in one go is one re-render and therefore one reading, which is a
+     * property of the test rather than of the board — but it is also a fair warning that
+     * what the tracker sees is the render cadence, not the Telemetry cadence.
+     */
+    for (let tick = 0; tick < 4; tick++) {
+      act(() => {
+        vi.advanceTimersByTime(1_000)
+      })
+    }
+    // Enough readings have accumulated for a rate to exist at all.
+    expect(read('rate')).not.toBe('null')
+    const before = read('rate')
+
+    // Away to another screen, and back. The layout holding the connection never unmounts.
+    rerender(<Screen showing={false} />)
+    expect(screen.getByTestId('elsewhere')).toBeInTheDocument()
+    rerender(<Screen showing />)
+
+    // Available immediately, rather than absent until several more readings arrive.
+    expect(read('rate')).toBe(before)
   })
 })

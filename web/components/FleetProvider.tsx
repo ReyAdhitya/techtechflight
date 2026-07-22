@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
@@ -15,6 +16,7 @@ import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
 import type { FleetLink, FleetSnapshot } from '@/lib/fleet-link'
 import { LocalFleetLink } from '@/lib/local-fleet-link'
+import { AlertTracker, AltitudeTracker, fleetVitals, type DroneVitals } from '@/lib/vitals'
 
 /**
  * One connection to the ground station, shared by every screen.
@@ -31,6 +33,14 @@ export interface FleetView {
   readonly now: number
   /** True when the Fleet on screen is a stand-in rather than one a ground station sent. */
   readonly demo: boolean
+  /**
+   * Everything derived about every Drone.
+   *
+   * Held here rather than on the screen that reads it because two of the inputs are
+   * accumulated across snapshots — how fast a Drone is climbing, and when each condition
+   * first appeared — and a screen loses both the moment a Teacher navigates away from it.
+   */
+  readonly vitals: readonly DroneVitals[]
 }
 
 const FleetContext = createContext<FleetView | null>(null)
@@ -102,8 +112,65 @@ export function FleetProvider({ children }: { children: ReactNode }) {
     return () => link.stop()
   }, [link])
 
-  const view = useMemo<FleetView>(() => ({ snapshot, now, demo }), [snapshot, now, demo])
+  const vitals = useVitals(snapshot, now)
+
+  const view = useMemo<FleetView>(
+    () => ({ snapshot, now, demo, vitals }),
+    [snapshot, now, demo, vitals],
+  )
   return <FleetContext.Provider value={view}>{children}</FleetContext.Provider>
+}
+
+/**
+ * What the Fleet is doing, derived once for every screen.
+ *
+ * Two of the inputs cannot come from a single snapshot. Altitude only becomes a rate when
+ * it is remembered across several, and an Alert only knows how long it has been waiting if
+ * something recorded when it first appeared. Both were kept on the tower screen, which
+ * meant a Teacher who glanced at another screen and came back had thrown away every
+ * vertical rate and reset every Alert to "just now" in the middle of a lesson.
+ *
+ * They live here instead, beside the connection, for the same reason it does.
+ */
+function useVitals(snapshot: FleetSnapshot, now: number): readonly DroneVitals[] {
+  const altitudes = useRef<AltitudeTracker | null>(null)
+  altitudes.current ??= new AltitudeTracker()
+  const alerts = useRef<AlertTracker | null>(null)
+  alerts.current ??= new AlertTracker()
+
+  const state = snapshot.state
+
+  /*
+   * Observed during the effect rather than during render, so a re-render cannot record a
+   * reading twice. The tracker rejects repeats of the same contact moment anyway, but two
+   * sources of truth about when a sample was taken is a bug waiting to be written.
+   */
+  useEffect(() => {
+    if (state) altitudes.current?.observe(state)
+  }, [state])
+
+  const vitals = useMemo(() => {
+    if (!state || snapshot.receivedAt === null) return []
+    return fleetVitals({
+      state,
+      receivedAt: snapshot.receivedAt,
+      now,
+      batteries: snapshot.history?.batteries ?? [],
+      rates: altitudes.current?.rates() ?? new Map(),
+      firstSeen: alerts.current?.firstSeen ?? new Map(),
+    })
+  }, [state, snapshot.receivedAt, snapshot.history, now])
+
+  /*
+   * Recorded after the vitals are built, not before: a condition nobody has seen yet is
+   * stamped with the moment it first appears, and one that has cleared forgets when it
+   * began so its return reads as new news.
+   */
+  useEffect(() => {
+    if (vitals.length > 0) alerts.current?.observe(vitals, now)
+  }, [vitals, now])
+
+  return vitals
 }
 
 /**

@@ -21,6 +21,7 @@ import {
 import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
 import { cn } from '@/lib/utils'
+import { AttentionBar } from './AttentionBar'
 import { FormationMap } from './FormationMap'
 import { useFleet } from './FleetProvider'
 
@@ -52,10 +53,9 @@ export function ControlScreen() {
     )
   }
 
-  // Worst first, and among equals the one with more of them. Callsign breaks the final
+  // Worst first, and among equals the one with more of them. Drone Name breaks the final
   // tie so a Fleet where nothing is wrong holds a stable order rather than reshuffling.
   const strips = [...vitals].sort(compareStrips)
-  const worst = queue[0]
 
   return (
     <main
@@ -63,29 +63,7 @@ export function ControlScreen() {
       tabIndex={-1}
       className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 min-[26rem]:p-8"
     >
-      <section className="flex flex-col gap-2">
-        <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
-          <span className="tnum tracking-[-0.02em]">{queue.length}</span>
-          <span className="text-heading text-ink-subtle">
-            {queue.length === 1 ? 'thing needs you' : 'things need you'}
-          </span>
-        </h1>
-
-        {worst === undefined ? (
-          <p className="m-0 text-body text-ink-muted">
-            Nothing needs you. Every Drone in contact is behaving.
-          </p>
-        ) : (
-          <p
-            className={cn(
-              'm-0 border-l-2 pl-3 text-body text-ink',
-              SEVERITY_PRESENTATION[worst.severity].className,
-            )}
-          >
-            <strong className="font-medium">{worst.callsign}</strong> — {worst.text}
-          </p>
-        )}
-      </section>
+      <AttentionBar queue={queue} studentFor={(droneId) => pilotOf(book, droneId)} />
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>

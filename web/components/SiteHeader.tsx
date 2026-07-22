@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { motion, useReducedMotion } from 'motion/react'
 import { DisplayScaleToggle } from './DisplayScaleToggle'
 import { SimulationLabel } from './SimulationLabel'
@@ -43,6 +44,10 @@ export function SiteHeader() {
         <div className="site-header__controls">
           <ThemeToggle />
           <DisplayScaleToggle />
+          {/* Not in the navigation: the room and the records, rather than a place to go. */}
+          <Link href="/settings" className="site-header__settings">
+            Settings
+          </Link>
         </div>
       </motion.header>
 

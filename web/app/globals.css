@@ -798,3 +798,18 @@
   background: var(--color-surface-1);
   border-bottom: 1px solid var(--color-hairline);
 }
+
+/* Settings, reachable from every screen without occupying a place in the workflow. */
+.site-header__settings {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  border-radius: var(--radius-pill, 999px);
+  font-size: var(--text-value, 0.875rem);
+  color: var(--color-ink-muted);
+  text-decoration: none;
+}
+.site-header__settings:hover {
+  color: var(--color-ink);
+}

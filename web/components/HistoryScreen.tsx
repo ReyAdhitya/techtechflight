@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { EventSeverity } from '@techtechflight/contract'
-import { formatAge } from '@/lib/age'
+import { formatDuration } from '@/lib/age'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { EventTimeline } from './EventTimeline'
@@ -73,7 +73,7 @@ export function HistorySections() {
          * would let a Teacher read "no faults" as "no faults ever".
          */}
         <p className="tnum m-0 text-value text-ink-subtle">
-          Covering the last {formatAge(window).replace(' ago', '')} — since{' '}
+          Covering the last {formatDuration(window)} — since{' '}
           {formatClock(history.since)}. Anything older has been let go.
         </p>
       </div>

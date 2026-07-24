@@ -47,3 +47,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   piece of chrome.
 - **Alternatives considered:** Matching the bar's width when floating, which reads as one
   object but adds a second animated maximum for no gain in legibility.
+
+## 2026-07-24 npm audit's three highs are left as they are
+
+- **Decision:** Bump `next` 16.2.10 → 16.2.11 and remove three unused dependencies, but do
+  **not** run `npm audit fix --force`. The three high advisories it reports are left in place.
+- **Reason:** All three are transitive build-time dependencies of Next — `postcss` (CSS
+  stringify XSS, sourceMappingURL file read) and `sharp`/libvips (image optimization). This
+  build is `output: 'export'` with `images: { unoptimized: true }`: postcss runs only during
+  the build and emits static CSS, and sharp is never invoked at all. Neither ships in the
+  artifact a School runs. They were present on `main` before this change; the bump did not
+  introduce them.
+- **Alternatives considered:** `npm audit fix --force`, which resolves to **`next@9.3.3`** —
+  a six-major-version downgrade and a rewrite of the whole framework, to patch code that does
+  not run. That is precisely the "breaking change / new architecture" the workflow says to
+  stop and flag rather than take.
+- **Revisit when:** Next ships a release that moves off the flagged postcss/sharp ranges, or
+  the board ever stops being a static export. Until then this is noise, not exposure.

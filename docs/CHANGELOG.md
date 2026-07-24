@@ -62,3 +62,23 @@ would notice.
   Instrument screens (Fleet, Control) now share one width and reading screens (Lesson,
   Reports, Students, Settings) another, both from `lib/frame.ts` and enforced by
   `web/page-frame.test.ts` so they cannot drift apart again. See `docs/DECISIONS.md`.
+
+### Removed
+
+- Three unused dependencies: `framer-motion` (every import is `motion/react` — the same
+  library under its old name), `@fontsource/inter`, `@fontsource/plus-jakarta-sans` (only
+  Schibsted Grotesk and Hanken Grotesk are loaded). And `web/components/Board.tsx`, dead
+  since the Vite dashboard was retired (ADR-0010).
+
+### Security
+
+- `next` 16.2.10 → 16.2.11 (July 2026 security release). Hygiene rather than exposure: every
+  CVE in that release is server-side, and this build is a static export with no server. `npm
+  audit`'s three remaining highs are build-time-only (postcss, sharp) and its autofix
+  downgrades to `next@9`; left as-is and recorded in `docs/DECISIONS.md`.
+
+### Also
+
+- `/showcase` no longer opens a WebSocket on the standalone deploy, where there is no ground
+  station to reach. It fell back to the demonstration Fleet already, but logged an
+  `ERR_CONNECTION_REFUSED` on every load getting there.

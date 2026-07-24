@@ -33,12 +33,14 @@ export const SEVERITY_PRESENTATION: Readonly<
 }
 
 /** Height with its direction attached, because a number alone does not say what next. */
-export function formatVerticalMovement(vitals: DroneVitals): string {
-  // "0.0 m" for a Drone sitting on a desk is a measurement where a plain fact belongs,
-  // and the rest of the product already says this in words. Read from the airframe
-  // rather than from phase: a latched emergency stop resolves to `emergency` whether the
-  // Drone is on a desk or falling, so phase cannot answer this.
-  if (!vitals.airborne) return 'On the ground'
+export function formatVerticalMovement(vitals: DroneVitals): string | null {
+  // Nothing, when the Drone is not airborne — the phase word beside this already says
+  // "On the ground", and this slot echoing it printed the fact twice in the same row.
+  // "0.0 m" would be worse still: a measurement where a plain fact belongs. Read from
+  // the airframe rather than from phase, because a latched emergency stop resolves to
+  // `emergency` whether the Drone is on a desk or falling, so phase cannot answer this.
+  // The caller renders the empty cell, so the strip's columns hold their positions.
+  if (!vitals.airborne) return null
   if (vitals.altitudeM === null) return 'Height not reported'
   const height = `${vitals.altitudeM.toFixed(1)} m`
   if (vitals.verticalRateMps === null) return height

@@ -3,6 +3,8 @@
 import { useFleet } from './FleetProvider'
 import { FleetBoard } from './FleetBoard'
 import { WhatNeedsDoing } from './MaintenanceScreen'
+import { cn } from '@/lib/utils'
+import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 /**
  * The board, and what needs doing to it.
@@ -19,7 +21,7 @@ export function FleetScreen() {
   return (
     <>
       <FleetBoard snapshot={snapshot} now={now} demo={demo} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-8 min-[26rem]:px-8">
+      <div className={cn(INSTRUMENT_FRAME, 'px-4 pb-8 min-[26rem]:px-8')}>
         <WhatNeedsDoing />
       </div>
     </>

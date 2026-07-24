@@ -3,6 +3,8 @@
 import { FleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
+import { cn } from '@/lib/utils'
+import { READING_FRAME } from '@/lib/frame'
 
 /**
  * The screen a Teacher reads afterwards.
@@ -20,7 +22,7 @@ export function ReportsScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className="mx-auto flex w-full max-w-5xl flex-col gap-10 p-4 min-[26rem]:p-8"
+      className={cn(READING_FRAME, 'flex flex-col gap-10 p-4 min-[26rem]:p-8')}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <h1 className="m-0 font-display text-summary font-medium">Reports</h1>

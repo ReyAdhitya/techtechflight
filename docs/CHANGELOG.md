@@ -28,3 +28,12 @@ would notice.
 - `docs/DESIGN-TOKENS.md` — the design system as actually built, including the two-layer
   token structure that was not written down anywhere.
 - First tests for `lib/age.ts` and `SiteHeader`.
+
+### Changed
+
+- **One page frame, in two named widths.** Five screens carried five different maxima —
+  `6xl`, `5xl`, `4xl`, `3xl`, and `FleetBoard` with none at all — so the content edge moved
+  every time a Teacher changed screen, and the Fleet screen rendered two frames at once.
+  Instrument screens (Fleet, Control) now share one width and reading screens (Lesson,
+  Reports, Students, Settings) another, both from `lib/frame.ts` and enforced by
+  `web/page-frame.test.ts` so they cannot drift apart again. See `docs/DECISIONS.md`.

@@ -20,3 +20,61 @@ The five canonical roles, each label string equal to its role name: `needs-triag
 
 Single-context — one `CONTEXT.md` and one `docs/adr/` at the repo root. See
 `docs/agents/domain.md`.
+
+## Read before doing anything
+
+`docs/PLAYBOOK.md` (stack, versions, pitfalls) · `docs/DESIGN-TOKENS.md` (the design
+system as built) · `docs/DECISIONS.md` · `docs/CHANGELOG.md` · `design.md` (the system) ·
+`docs/DESIGN.md` (the product spec — a different document, confusingly) · `CONTEXT.md`
+(the words) · `docs/adr/`.
+
+## Gotchas — the things that aren't obvious from the code
+
+**Three files have "design" in the name and they are different kinds of thing.**
+`design.md` is the design *system* (tokens, colour, type). `docs/DESIGN.md` is the product
+*spec* (what a Teacher sees on each screen). `UI-DESIGN.md`, if present, is a *workflow*
+document and not a project document at all.
+
+**Colour is defined twice, and both layers matter.** `globals.css` has shadcn-shaped base
+tokens (`--background`, `--card`) and a semantic layer over them (`--color-canvas`,
+`--color-surface-1`, `--color-ink-subtle`). **Markup uses the semantic layer** — `bg-canvas`,
+`text-ink-subtle`, `border-hairline`. Writing `bg-background` works but is foreign.
+
+**jsdom cannot catch a layout bug.** The whole test suite is jsdom, so a broken flex axis
+or a wrong aspect ratio passes green. Two defences: assert on the stylesheet directly when
+the invariant is a layout one (see `SiteHeader.test.tsx`, and `vercel-routing.test.ts` for
+the same idea applied to config), and **look at a screenshot** before believing a visual
+fix. `scripts/shot.mjs` builds and photographs a route.
+
+**`--text-value` is deliberately the same size as `--text-body`.** Data is not small print
+here. And every size is `rem` — a `px` font-size on this surface is a defect (ADR-0008).
+
+**`NOTES.md` lists six deliberate positions that look like bugs.** Tiles never reorder,
+counts render at zero, elevation is lightness only, the amber/coral hue split. Argue with
+them in an ADR or leave them alone.
+
+**Windows:** `next build` fails with `EBUSY: rmdir 'web/out'` if any shell has that
+directory as its working directory. Git Bash rewrites a bare `/route` argument into a
+Windows path — pass routes to `scripts/shot.mjs` from PowerShell.
+
+## Standing rule: save after every task
+
+The session can end without warning. After EVERY completed task, before starting the next:
+update `docs/CHANGELOG.md` and `docs/DECISIONS.md`, add anything non-obvious to the
+Gotchas above, then commit and push. Never leave completed work uncommitted.
+
+## Rules
+
+- Understand before changing. Minimal diff. Follow existing patterns.
+- Branch, PR, review, merge. Conventional commits (`feat:`/`fix:`/`docs:`/`chore:`) as of
+  2026-07-24 — see `docs/DECISIONS.md`. Earlier history uses prose subjects.
+- Verify against existing behaviour — old tests must still pass.
+
+## Commands
+
+- Install: `npm install`
+- Run dev: `npm run dev:ground-station` (`:4321`) and `npm run dev:web` (`:3000`)
+- Test: `npm test` · Typecheck: `npm run typecheck`
+- Build: `npm run build --workspace=web` (add `NEXT_PUBLIC_DEMO_ONLY=1` for the standalone
+  deploy, which runs the Fleet in the browser)
+- There is **no lint and no CI**. `npm test` and `npm run typecheck` are the whole gate.

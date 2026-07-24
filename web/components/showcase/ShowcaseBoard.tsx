@@ -33,6 +33,14 @@ export function ShowcaseBoard() {
   const dark = useDarkTheme()
 
   /*
+   * The standalone deploy has no ground station to reach (see vercel.json). Opening the
+   * socket there only ever produced an ERR_CONNECTION_REFUSED in the console on every
+   * load — the showcase already falls back to the demonstration Fleet when Live has
+   * nothing, so there was never anything to wait for.
+   */
+  const demoOnly = process.env.NEXT_PUBLIC_DEMO_ONLY === '1'
+
+  /*
    * Built lazily rather than at module scope: `browserSocket` closes over `WebSocket`,
    * which does not exist while this page is being prerendered into static HTML.
    */
@@ -49,11 +57,15 @@ export function ShowcaseBoard() {
   const now = useNow(clock)
 
   useEffect(() => {
+    // Never on the standalone deploy: there is nothing to connect to, and Live falls
+    // back to the demonstration Fleet on its own.
+    if (demoOnly) return
     connection.start()
     return () => connection.stop()
-  }, [connection])
+  }, [connection, demoOnly])
 
-  const [scenario, setScenario] = useState<ScenarioId>('live')
+  // Start on the demonstration Fleet where there is no live one to offer.
+  const [scenario, setScenario] = useState<ScenarioId>(demoOnly ? 'demo' : 'live')
 
   /*
    * Fixture scenarios are anchored to a single timestamp taken when the page mounts, so

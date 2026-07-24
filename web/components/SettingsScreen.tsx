@@ -14,6 +14,8 @@ import {
 } from '@/lib/logbook'
 import { useFleet } from './FleetProvider'
 import { ScenarioPanel } from './ScenarioPanel'
+import { cn } from '@/lib/utils'
+import { READING_FRAME } from '@/lib/frame'
 
 /**
  * The things a Teacher can change, and the honest account of where their records live.
@@ -36,7 +38,7 @@ export function SettingsScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-4 min-[26rem]:p-8"
+      className={cn(READING_FRAME, 'flex flex-col gap-8 p-4 min-[26rem]:p-8')}
     >
       <h1 className="m-0 font-display text-summary font-medium">Settings</h1>
 

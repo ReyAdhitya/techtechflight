@@ -11,6 +11,7 @@ import { ConnectionBanner } from './ConnectionBanner'
 import { DroneDetailDialog } from './DroneDetailDialog'
 import { DroneTile } from './DroneTile'
 import { FleetSummary } from './FleetSummary'
+import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 export interface FleetBoardProps {
   readonly snapshot: FleetSnapshot
@@ -50,7 +51,7 @@ export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
       <main
         id="content"
         tabIndex={-1}
-        className="flex min-h-full flex-col justify-center gap-6 p-8"
+        className={cn(INSTRUMENT_FRAME, 'flex min-h-full flex-col justify-center gap-6 p-8')}
       >
         <ConnectionBanner connection={snapshot.connection} demo={demo} />
       </main>
@@ -74,7 +75,7 @@ export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
       <main
         id="content"
         tabIndex={-1}
-        className="flex min-h-full flex-col justify-center gap-6 p-8"
+        className={cn(INSTRUMENT_FRAME, 'flex min-h-full flex-col justify-center gap-6 p-8')}
       >
         <ConnectionBanner connection={snapshot.connection} demo={demo} />
         <div className="flex flex-col gap-2">
@@ -101,7 +102,7 @@ export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
     <main
       id="content"
       tabIndex={-1}
-      className="flex min-h-full flex-col gap-4 p-4 min-[26rem]:gap-6 min-[26rem]:p-8"
+      className={cn(INSTRUMENT_FRAME, 'flex min-h-full flex-col gap-4 p-4 min-[26rem]:gap-6 min-[26rem]:p-8')}
     >
       <ConnectionBanner connection={snapshot.connection} demo={demo} />
 

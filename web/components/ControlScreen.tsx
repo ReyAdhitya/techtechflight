@@ -31,6 +31,7 @@ import { AttentionBar } from './AttentionBar'
 import { LessonStrip } from './LessonStrip'
 import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
+import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 /**
  * The Flight Control Center: the whole lesson at once, the way a controller reads a
@@ -74,7 +75,7 @@ export function ControlScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 min-[26rem]:p-8"
+      className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />

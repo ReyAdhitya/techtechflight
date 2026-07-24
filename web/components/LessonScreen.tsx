@@ -21,6 +21,7 @@ import { ExerciseList } from './ExerciseList'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { StatusGlyph } from './StatusBadge'
+import { READING_FRAME } from '@/lib/frame'
 
 /**
  * The lesson, from the check before it to the summary after it.
@@ -48,7 +49,7 @@ export function LessonScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 min-[26rem]:p-8"
+      className={cn(READING_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
       {lesson ? (
         <LessonUnderWay lesson={lesson} now={now} />

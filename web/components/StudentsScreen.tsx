@@ -14,6 +14,7 @@ import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 import { useFleet } from './FleetProvider'
 import { StatusGlyph } from './StatusBadge'
+import { READING_FRAME } from '@/lib/frame'
 
 /**
  * The class, and who is flying what.
@@ -40,7 +41,7 @@ export function StudentsScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-4 min-[26rem]:p-8"
+      className={cn(READING_FRAME, 'flex flex-col gap-8 p-4 min-[26rem]:p-8')}
     >
       <h1 className="m-0 font-display text-summary font-medium">Students</h1>
 

@@ -44,6 +44,17 @@ would notice.
 - **A mark on the scope is reachable from a keyboard.** It was a `<g>` with an `onClick`: no
   focus, no role, no name, so the linked selection the scope exists for was mouse-only,
   against §11.3 of `docs/DESIGN.md`.
+- **The flight strip has fixed anatomy at last.** `docs/DESIGN.md` §1.1 justifies the
+  strip on being "scannable by position rather than by reading", but the row was a
+  `flex flex-wrap`: every cell sized by its own content, so a variable-width phase word
+  shifted every column to its right. It looked aligned only because every Drone was in the
+  same phase. The columns now live on the list and each strip takes them by subgrid, so a
+  wide value in one strip cannot move another's. Below the breakpoint the strip wraps, as a
+  phone wants.
+- **A grounded strip says "On the ground" once.** The phase column and the height column
+  beside it both printed it. `formatVerticalMovement` now returns nothing when a Drone is
+  not airborne — the phase word already carries the fact — and the empty cell still holds
+  its column.
 
 - **One page frame, in two named widths.** Five screens carried five different maxima —
   `6xl`, `5xl`, `4xl`, `3xl`, and `FleetBoard` with none at all — so the content edge moved

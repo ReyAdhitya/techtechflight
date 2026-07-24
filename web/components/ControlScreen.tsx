@@ -110,7 +110,27 @@ export function ControlScreen() {
             </button>
           )}
         </div>
-        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+        {/*
+         * Fixed anatomy, and it has to be fixed across strips rather than within one.
+         *
+         * §1.1 of docs/DESIGN.md justifies this whole format on being "scannable by
+         * position rather than by reading — the eye learns where charge is and stops
+         * re-finding it". The row was a `flex flex-wrap`, so every cell was sized by its
+         * own content and each strip found its own column positions. It looked aligned
+         * only because every Drone was in the same phase: the moment one took off,
+         * "On the ground" became "Level", ~70px narrower, and that row's charge and
+         * response slid left — on exactly the strip something was happening to.
+         *
+         * The columns therefore live here, on the list, and each strip takes them by
+         * subgrid. Below the breakpoint there is not room for six columns and the strip
+         * falls back to wrapping, where alignment is not what a phone is doing anyway.
+         */}
+        <ul
+          className={cn(
+            'm-0 flex list-none flex-col gap-2 p-0',
+            'min-[60rem]:grid min-[60rem]:grid-cols-[auto_auto_auto_auto_1fr_auto]',
+          )}
+        >
           {strips.map((entry) => (
             <FlightStrip
               key={entry.droneId}
@@ -229,6 +249,9 @@ function FlightStrip({
       onClick={onSelect}
       className={cn(
         'flex flex-col gap-2 rounded-surface border-l-2 bg-surface-1 p-3',
+        // The strip keeps its own box — rail, ground, selection outline — and takes the
+        // list's columns rather than inventing its own.
+        'min-[60rem]:col-span-full min-[60rem]:grid min-[60rem]:grid-cols-subgrid min-[60rem]:items-center min-[60rem]:gap-x-6 min-[60rem]:gap-y-2',
         vitals.alerts[0]
           ? SEVERITY_PRESENTATION[vitals.alerts[0].severity].className
           : 'border-hairline',
@@ -237,7 +260,12 @@ function FlightStrip({
         selected && 'outline outline-2 outline-offset-2 outline-ink',
       )}
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      {/*
+       * `contents` above the breakpoint: the six cells become items of the strip's
+       * subgrid directly, so they land in the list's columns instead of in a box of
+       * their own. Below it, the row wraps as before.
+       */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 min-[60rem]:contents">
         {/*
           * Real height rather than the tap-row overlay used in Maintenance. A strip wraps
           * its alerts onto following lines, and those lines paint over an expanded hit
@@ -253,6 +281,12 @@ function FlightStrip({
         </Link>
         <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
         <span className="text-value text-ink">{phase.label}</span>
+        {/*
+         * Height, and empty when the Drone is on the ground — the phase word to the left
+         * already carries that fact, and this slot echoing it said "On the ground" twice
+         * in the same row. The cell still renders, so it holds its column and the strips
+         * stay aligned (docs/DESIGN.md §1.1).
+         */}
         <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
         <span className="tnum text-value text-ink-subtle">
           {vitals.batteryFraction === null
@@ -266,27 +300,34 @@ function FlightStrip({
         </span>
       </div>
 
-      {exercise && (
-        // Intent beside behaviour. B7 was dropped, so the Teacher makes the comparison —
-        // an Exercise does not declare which flight phase it expects, and inventing one
-        // would raise alerts on a guess.
-        <p className="m-0 text-value text-ink-subtle">Meant to be: {exercise}</p>
-      )}
+      {/*
+       * Everything below the fixed top row spans the whole strip rather than a column.
+       * The row above lays its six cells into the shared columns by subgrid; these lines —
+       * Exercise, separation, Commands, Alerts — are full-width prose and controls, so
+       * they take the whole width beneath it and keep their own vertical rhythm.
+       */}
+      <div className="flex flex-col gap-2 min-[60rem]:col-span-full">
+        {exercise && (
+          // Intent beside behaviour. B7 was dropped, so the Teacher makes the comparison —
+          // an Exercise does not declare which flight phase it expects, and inventing one
+          // would raise alerts on a guess.
+          <p className="m-0 text-value text-ink-subtle">Meant to be: {exercise}</p>
+        )}
 
-      {separation && (
-        <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
-      )}
+        {separation && (
+          <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
+        )}
 
-      {vitals.alerts.length > 0 && student && (
-        // Repeated under the alerts on purpose. The alert is the thing being read, and
-        // "go and speak to Priya" is more use than "go and look at Drone 3".
-        <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
-      )}
+        {vitals.alerts.length > 0 && student && (
+          // Repeated under the alerts on purpose. The alert is the thing being read, and
+          // "go and speak to Priya" is more use than "go and look at Drone 3".
+          <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
+        )}
 
-      <CommandRow vitals={vitals} command={command} tracked={tracked} />
+        <CommandRow vitals={vitals} command={command} tracked={tracked} />
 
-      {vitals.alerts.length > 0 && (
-        <ul className="m-0 flex list-none flex-col gap-1 p-0">
+        {vitals.alerts.length > 0 && (
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {vitals.alerts.map((alert) => (
             <li key={alert.kind} className="flex flex-wrap items-baseline gap-2">
               <span
@@ -309,8 +350,9 @@ function FlightStrip({
               )}
             </li>
           ))}
-        </ul>
-      )}
+          </ul>
+        )}
+      </div>
     </li>
   )
 }

@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { DroneScreen } from '@/components/DroneScreen'
 
 export const metadata: Metadata = {
-  title: 'Drone · TechTech Readyboard',
+  title: 'Drone · Flight Deck · TechTech',
   description: 'Everything one Drone is reporting, and everything it has done today.',
 }
 

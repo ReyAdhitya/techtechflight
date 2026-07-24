@@ -453,13 +453,21 @@
    * Docked: full-bleed, transparent, reads as part of the page.
    * Floating: contracts, hairline, elevation — opaque console surface so tiles never
    * read through the bar (same rule the board had before).
+   *
+   * A column, not a row. The shell holds two things — the bar, and the line under it
+   * that says which Fleet this is. With no axis declared they became columns of a row:
+   * the label lost its width, stretched to the bar's height, and rendered as a white
+   * block wedged beside the navigation on every screen, growing to a quarter of the
+   * viewport on a phone. The label's own rule was always written as a full-width strip;
+   * only this was wrong.
    */
   .site-header-shell {
     position: sticky;
     top: 0;
     z-index: 30;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     padding-block: max(0.75rem, env(safe-area-inset-top)) 0;
     padding-inline-start: max(0.5rem, env(safe-area-inset-left));
     padding-inline-end: max(0.5rem, env(safe-area-inset-right));
@@ -797,6 +805,12 @@
  */
 .simulation-label {
   margin: 0;
+  /*
+   * The full width of the sticky layer. A strip that spanned only its own text would be
+   * a badge, and design.md §9 rejects a badge for this specifically: the way a persistent
+   * indicator fails is that the eye stops seeing it.
+   */
+  width: 100%;
   padding: 0.375rem 1rem;
   text-align: center;
   font-size: var(--text-label, 0.75rem);

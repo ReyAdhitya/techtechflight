@@ -34,6 +34,15 @@ would notice.
 
 ### Added
 
+- **The rule a hardware adapter has to keep is written down as a test.** `CODEBASE_AUDIT.md`
+  §8 noticed that `sameFleet` compares Telemetry by reference and judged it worth a test
+  rather than a fix. Probing it first found something sharper than the note recorded: the
+  ground station keeps the Telemetry object it is handed rather than copying it, so a source
+  that fills one buffer and re-emits it — what a serial or MQTT adapter is most likely to do
+  — would silently rewrite Fleet States it had already published, and a second reading
+  inside the same millisecond would go unpublished. `telemetry-ownership.test.ts` asserts the
+  requirement rather than the hazard, so it does not lock the defect in place. The fix, if it
+  ever bites, is a copy on ingest. See ADR-0001 for why this is the seam that has to hold.
 - **CI, for the first time.** `.github/workflows/ci.yml` runs `npm run typecheck`, `npm test`
   and the static export on every push to `main` and every pull request, on Linux **and**
   Windows — the repository is developed on one and deployed on the other, and every

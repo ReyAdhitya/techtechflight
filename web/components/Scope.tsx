@@ -273,8 +273,22 @@ function Mark({
       )}
     >
       <span className="text-label text-ink-muted">{drone.name}</span>
+      {/*
+       * The phase goes on a narrow screen; the Drone Name never does.
+       *
+       * Six labels in a short strip overlap into one unreadable line, and the phase is what
+       * makes them do it — "On the ground" is three times the width of "Drone 4", so it is
+       * the first thing to collide. Nothing is lost by dropping it: the same phase is on
+       * that Drone's flight strip a little further down the same screen.
+       *
+       * The name stays whatever the width, because "which one is that" is the question the
+       * scope exists to answer. A scope of anonymous dots is not a smaller scope, it is a
+       * useless one.
+       */}
       {phase && (
-        <span className="text-label text-ink-subtle">{PHASE_PRESENTATION[phase].label}</span>
+        <span className="hidden text-label text-ink-subtle sm:block">
+          {PHASE_PRESENTATION[phase].label}
+        </span>
       )}
     </span>
   )

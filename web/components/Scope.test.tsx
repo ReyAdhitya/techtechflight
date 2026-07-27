@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
+import type { DroneVitals } from '@/lib/vitals'
 import { Scope, gridStepM, roomExtent } from './Scope'
 
 /**
@@ -23,6 +24,24 @@ const at = (name: string, eastM: number, northM: number, airborne = true) =>
     status: airborne ? 'Flying' : 'Ready',
     telemetry: aTelemetry({ airborne, position: { eastM, northM } }),
   })
+
+const aVitals = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
+  droneId: 'drone-1',
+  callsign: 'Drone 1',
+  status: 'Flying',
+  phase: 'on-ground',
+  airborne: false,
+  altitudeM: null,
+  verticalRateMps: null,
+  batteryFraction: 0.6,
+  enduranceMs: null,
+  responseAgeMs: 1_000,
+  position: { eastM: 0, northM: 0 },
+  separationM: null,
+  conflictWith: null,
+  alerts: [],
+  ...overrides,
+})
 
 /** The x of every vertical grid rule, in the order they are drawn. */
 const verticalRules = (container: HTMLElement) =>
@@ -327,6 +346,29 @@ describe('what the scope shows', () => {
         { selector: 'span' },
       ),
     ).toBeInTheDocument()
+  })
+
+  /*
+   * The label overlap, and the reason this is the piece that goes.
+   *
+   * Six labels in a short strip run into one unreadable line, and the phase is what makes
+   * them do it — "On the ground" is three times the width of "Drone 4". Dropping it loses
+   * nothing, because the same phase is on that Drone's flight strip further down the same
+   * screen. The name has to survive at every width: a scope of anonymous dots does not
+   * answer "which one is that", which is the only reason the scope is there.
+   *
+   * jsdom has no layout engine and applies no media query, so this is checked on the
+   * utilities the markup carries rather than by measuring anything (CLAUDE.md).
+   */
+  it('drops the phase from a mark on a narrow screen, and never the Drone Name', () => {
+    render(<Scope drones={[at('Drone 1', 0, 0)]} vitals={[aVitals()]} />)
+
+    const phase = screen.getByText('On the ground')
+    expect(phase.className).toContain('hidden')
+    expect(phase.className).toContain('sm:block')
+
+    const name = screen.getByText('Drone 1')
+    expect(name.className).not.toContain('hidden')
   })
 
   /*

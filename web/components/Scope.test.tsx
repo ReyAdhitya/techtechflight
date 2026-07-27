@@ -64,15 +64,51 @@ describe('the room the scope draws', () => {
     expect(wide.aspectRatio).toBe(1)
   })
 
-  it('takes the smallest window on the ladder that holds every Drone, centred on the setup point', () => {
-    // 3 m out needs 6 m of window, so the smallest rung holds it.
-    const near = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 3, 1)])
-    expect(near.widthM).toBe(8)
-    expect(near.westM).toBe(-4)
-    expect(near.eastM).toBe(4)
+  it('takes the smallest rung that holds the Fleet, sized by its spread and not its distance away', () => {
+    // 3 m of spread fits the smallest rung, wherever in the room it happens to be.
+    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 3, 1)]).widthM).toBe(8)
+    expect(roomExtent([at('Drone 1', 40, 40), at('Drone 2', 43, 41)]).widthM).toBe(8)
 
-    // 7 m out needs 14 m, so 12 m is too small and 16 m is the rung.
-    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 7, 2)]).widthM).toBe(16)
+    // 14 m of spread does not: 8 and 12 are both too small, so 16 is the rung.
+    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 14, 0)]).widthM).toBe(16)
+  })
+
+  /*
+   * The lopsided picture. Centring on the setup point drew a Fleet that had been set up in a
+   * corner into a corner of the frame, with half the picture empty.
+   */
+  it('centres on the middle of the Fleet, not on the setup point', () => {
+    const room = roomExtent([at('Drone 1', 10, 4), at('Drone 2', 14, 8)])
+
+    expect(room.window.centreEastM).toBe(12)
+    expect(room.window.centreNorthM).toBe(6)
+    expect(room.westM).toBe(8)
+    expect(room.eastM).toBe(16)
+  })
+
+  /*
+   * The centre is snapped to a whole cell, so the rules go on falling on the same metres
+   * they always did. A window that has to move moves by whole cells, never by part of one.
+   */
+  it('snaps the centre to a whole cell', () => {
+    // Midpoint of 0 and 3.4 is 1.7, which is not a multiple of the 0.5 m cell. 1.5 is.
+    const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 3.4, 0)])
+
+    expect(room.window.centreEastM).toBe(1.5)
+    // And so the frame's own edge lands on a cell boundary too.
+    expect(Number.isInteger(room.westM / gridStepM(room.widthM))).toBe(true)
+  })
+
+  /*
+   * The discipline the whole fix rests on. A centre that follows the Fleet is the original
+   * bug wearing a different hat — the frame slides under the Drones and they read as still.
+   */
+  it('keeps the window exactly where it is while the Drones move inside it', () => {
+    const held = { sideM: 8, centreEastM: 2, centreNorthM: 0 }
+
+    expect(roomExtent([at('Drone 1', 1, 1), at('Drone 2', 3, -1)], held).window).toEqual(held)
+    // Same Drones, moved: still the same window, not re-centred on where they went.
+    expect(roomExtent([at('Drone 1', 4, 2), at('Drone 2', 5, 3)], held).window).toEqual(held)
   })
 
   /*
@@ -80,11 +116,13 @@ describe('the room the scope draws', () => {
    * on every Fleet State, which is the moving grid again in a subtler form.
    */
   it('grows the window and never shrinks it', () => {
-    const held = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 1, 1)], 16)
-    expect(held.widthM).toBe(16)
+    const held = { sideM: 16, centreEastM: 0, centreNorthM: 0 }
 
-    const grown = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 11, 0)], 16)
-    expect(grown.widthM).toBe(24)
+    // Everything would fit in 8 m now. The window stays where the Teacher last saw it.
+    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 1, 1)], held).widthM).toBe(16)
+
+    // A Drone leaves it, so it is reconsidered — and still may not come back down a rung.
+    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 20, 0)], held).widthM).toBe(24)
   })
 
   it('never collapses to a zero-width room when everything is in a line', () => {
@@ -98,19 +136,24 @@ describe('the room the scope draws', () => {
    * on the edge is drawing it off the frame — where it reads as a Drone that is not flying.
    */
   it('holds a Drone beyond the largest window on its edge rather than losing it', () => {
-    const stray = at('Drone 2', 40, 0)
-    const room = roomExtent([at('Drone 1', 0, 0), stray])
+    // 40 m apart is wider than the last rung, so the window centres between them and both
+    // land on an edge — opposite edges, which is the honest picture of "further apart than
+    // this can draw".
+    const west = at('Drone 1', 0, 0)
+    const east = at('Drone 2', 40, 0)
+    const room = roomExtent([west, east])
 
     expect(room.widthM).toBe(32)
-    expect(room.percentOf(stray).xPercent).toBe(100)
-    expect(room.percentOf(stray).yPercent).toBe(50)
-    expect(room.beyond.map((drone) => drone.name)).toEqual(['Drone 2'])
+    expect(room.percentOf(west).xPercent).toBe(0)
+    expect(room.percentOf(east).xPercent).toBe(100)
+    expect(room.percentOf(east).yPercent).toBe(50)
+    expect(room.beyond.map((drone) => drone.name)).toEqual(['Drone 1', 'Drone 2'])
   })
 
   it('holds nothing on the edge while the window can still grow to reach it', () => {
     const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 11, 0)])
 
-    expect(room.widthM).toBe(24)
+    expect(room.widthM).toBe(12)
     expect(room.beyond).toEqual([])
   })
 
@@ -126,13 +169,15 @@ describe('the room the scope draws', () => {
   })
 
   it('changes rung exactly at the boundary, and not before it', () => {
-    // 4 m out is the far edge of the 8 m window; a millimetre further is not.
-    expect(roomExtent([at('Drone 1', 4, 0)]).widthM).toBe(8)
-    expect(roomExtent([at('Drone 1', 4.001, 0)]).widthM).toBe(12)
+    // 8 m of spread is the exact width of the smallest window; a millimetre more is not.
+    expect(roomExtent([at('Drone 1', -4, 0), at('Drone 2', 4, 0)]).widthM).toBe(8)
+    expect(roomExtent([at('Drone 1', -4.001, 0), at('Drone 2', 4.001, 0)]).widthM).toBe(12)
 
     // The same at the last rung, where there is nothing above to grow into.
-    expect(roomExtent([at('Drone 1', 16, 0)]).beyond).toEqual([])
-    expect(roomExtent([at('Drone 1', 16.001, 0)]).beyond).toHaveLength(1)
+    expect(roomExtent([at('Drone 1', -16, 0), at('Drone 2', 16, 0)]).beyond).toEqual([])
+    expect(
+      roomExtent([at('Drone 1', -16.001, 0), at('Drone 2', 16.001, 0)]).beyond,
+    ).toHaveLength(2)
   })
 })
 
@@ -173,13 +218,32 @@ describe('the grid across two Fleet States', () => {
     const closed = [at('Drone 1', 0, 0), at('Drone 2', 1, 0)]
 
     const { container, rerender } = render(<Scope drones={spread} onSelect={() => {}} />)
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24')
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 12 12')
     const rules = verticalRules(container)
 
     rerender(<Scope drones={closed} onSelect={() => {}} />)
 
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24')
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 12 12')
     expect(verticalRules(container)).toEqual(rules)
+  })
+
+  /*
+   * The end-to-end statement of the original bug. A Drone that moves 1 m east in an 8 m
+   * window must move exactly an eighth of the way across the picture. Before the fix the
+   * frame moved east with it and the Drone barely shifted at all — the whole complaint.
+   */
+  it('moves a Drone across the picture by exactly as far as it moved in the room', () => {
+    const before = [at('Drone 1', 0, 0), at('Drone 2', 2, 0)]
+    const after = [at('Drone 1', 1, 0), at('Drone 2', 2, 0)]
+
+    const { rerender } = render(<Scope drones={before} onSelect={() => {}} />)
+    expect(screen.getByRole('button', { name: /Drone 1/ }).style.left).toBe('37.5%')
+
+    rerender(<Scope drones={after} onSelect={() => {}} />)
+
+    // 1 m of an 8 m window is 12.5% of it, and not a fraction less.
+    expect(screen.getByRole('button', { name: /Drone 1/ }).style.left).toBe('50%')
+    expect(screen.getByRole('button', { name: /Drone 2/ }).style.left).toBe('62.5%')
   })
 })
 
@@ -247,20 +311,21 @@ describe('what the scope shows', () => {
    * reference that lies is worse than none.
    */
   it('says the cell size the grid is actually drawn on, not the default one', () => {
-    // 7 m out takes the 16 m window, where half-metre cells would be 32 across.
-    render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 7, 2)]} />)
+    // 14 m of spread takes the 16 m window, where half-metre cells would be 32 across.
+    render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 14, 0)]} />)
 
     expect(screen.getByText('Grid: 1 m')).toBeInTheDocument()
   })
 
-  it('names a Drone it had to hold on the edge, rather than dropping it silently', () => {
+  it('names the Drones it had to hold on the edge, rather than dropping them silently', () => {
     render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 40, 0)]} />)
 
     expect(screen.getByText('Drone 2')).toBeInTheDocument()
     expect(
-      screen.getByText('Drone 2 is further out than the scope draws, held on the edge', {
-        selector: 'span',
-      }),
+      screen.getByText(
+        'Drone 1 and Drone 2 are further out than the scope draws, held on the edge',
+        { selector: 'span' },
+      ),
     ).toBeInTheDocument()
   })
 

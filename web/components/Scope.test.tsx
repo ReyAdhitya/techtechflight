@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
-import { Scope, roomExtent } from './Scope'
+import { Scope, gridStepM, roomExtent } from './Scope'
 
 /**
  * Where the Drones are, looking down on the room.
@@ -89,6 +89,25 @@ describe('the room the scope draws', () => {
   })
 })
 
+describe('the grid the scope draws', () => {
+  it('draws half-metre cells at the default window', () => {
+    expect(gridStepM(8)).toBe(0.5)
+  })
+
+  /*
+   * The step cannot stay at half a metre for every window — at 32 m that is 64 rules an axis
+   * and the grid becomes a mesh — so it is tied to the window instead. The band is what keeps
+   * it countable at both ends of the ladder.
+   */
+  it('keeps cells across the window between 16 and 24, at every rung', () => {
+    for (const side of [8, 12, 16, 24, 32]) {
+      const cells = side / gridStepM(side)
+      expect(cells, `${side} m window`).toBeGreaterThanOrEqual(16)
+      expect(cells, `${side} m window`).toBeLessThanOrEqual(24)
+    }
+  })
+})
+
 describe('what the scope shows', () => {
   it('places every Drone that is in contact and reporting where it is', () => {
     render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 3, 1)]} />)
@@ -121,10 +140,23 @@ describe('what the scope shows', () => {
     ).toBeInTheDocument()
   })
 
-  it('states the room size, so the picture can be read as a distance', () => {
+  it('states the size of a cell, so the picture can be read as a distance', () => {
+    // Nothing further than 3 m out, so the smallest window and its half-metre cells.
+    render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 3, 1)]} />)
+
+    expect(screen.getByText('Grid: 0.5 m')).toBeInTheDocument()
+  })
+
+  /*
+   * The caption has to read the step off the window. Hard-coded, it would go on saying
+   * "0.5 m" over metre cells the first time a Drone pushed the window up a rung — a scale
+   * reference that lies is worse than none.
+   */
+  it('says the cell size the grid is actually drawn on, not the default one', () => {
+    // 7 m out takes the 16 m window, where half-metre cells would be 32 across.
     render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 7, 2)]} />)
 
-    expect(screen.getByText(/16 m × 16 m/)).toBeInTheDocument()
+    expect(screen.getByText('Grid: 1 m')).toBeInTheDocument()
   })
 
   /*

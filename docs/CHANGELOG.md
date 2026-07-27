@@ -18,10 +18,22 @@ would notice.
   when the window grows. A Drone beyond the largest window is held on the edge and named,
   never dropped. See [ADR-0014](./adr/0014-a-fixed-scope-window.md) for why a fixed window is
   not the flight area ADR-0012 deferred; without that distinction written down, the next
-  reader deletes this. **Two costs, both photographed and neither addressed:** the square
-  scope is about 3.5× taller at 1440 px, pushing every flight strip below the fold, and the
-  Fleet now occupies a smaller share of the frame, which makes the Drone labels overlap on a
-  390 px viewport.
+  reader deletes this.
+- **The scope is an aid again, not the whole screen.** Making it square made it 1216 px tall
+  at 1440 px, which put every flight strip below the fold — the strips are where a Teacher
+  works, so that had the priority backwards. It is capped at 600 px and centred, in rem so
+  LARGE FORMAT still grows it. All six strips are visible again without scrolling.
+- **The scope frames the Drones instead of the setup point.** The window used to centre on
+  the origin, so a Fleet set up in a corner drew in a corner with half the picture empty —
+  and the wasted half pushed the marks together. It now centres on the middle of the Fleet,
+  with the centre snapped to a whole cell so the grid still cannot drift, and it is only
+  reconsidered when a Drone actually leaves it. The demonstration Fleet went from a 12 m
+  window to an 8 m one for the same six Drones.
+- **The scope's labels stop colliding on a phone.** Six labels in a short strip ran into one
+  unreadable line at 390 px — the bug recorded in `Scope.tsx` found once before. Below 640 px
+  a mark now shows only its Drone Name; the phase goes, because it is three times the width
+  and is already on that Drone's flight strip further down the same screen. The name stays at
+  every width, since answering *"which one is that"* is the whole reason the scope exists.
 - **`npm test` is deterministic again.** Every component test that rendered a demonstration
   Fleet ran the real simulator with `Math.random` and spontaneous events switched on, so a
   Drone could take off unasked or drop its link on a 0.2%-per-tick roll in the middle of an

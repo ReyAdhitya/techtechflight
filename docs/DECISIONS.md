@@ -9,6 +9,26 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-27 The scope's window is reconsidered only when a Drone leaves it
+
+- **Decision:** Keep the held window — size *and* centre — untouched for as long as it
+  contains every placed Drone. Recompute only when one has left. When recomputing, centre on
+  the midpoint of the Fleet's extent and snap that centre to a multiple of the grid cell.
+- **Reason:** "Centred on the Fleet" and "the grid does not move" pull against each other,
+  because the Fleet's midpoint moves continuously. Snapping alone would still pan the picture
+  by a cell every time the midpoint crossed a half-cell boundary — occasional rather than
+  constant, but a whole-Fleet jump is more startling than a slow drift, not less. Gating on
+  containment removes it entirely: the window changes when a Drone leaves the frame, which is
+  a reason the Teacher can see.
+- **Alternatives considered:** Snapping without the containment gate (the pan above);
+  centring on the mean position rather than the extent's midpoint (an outlier drags the
+  centre less, but the picture then no longer frames the outermost Drones, which is what the
+  window is for); re-centring on a timer or with an animation (motion on a board whose
+  complaint was motion).
+- **Note:** Each rung is tested *after* its own snap rather than picked from the raw reach,
+  because snapping can shift the centre by half a cell and push a Drone out of a rung that
+  fitted before the snap.
+
 ## 2026-07-27 The scope's window is held in a ref, and clamping lives in `project`
 
 - **Decision:** Hold the chosen window side in a `useRef` inside `Scope`, written during

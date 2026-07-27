@@ -34,6 +34,13 @@ would notice.
 
 ### Added
 
+- **`scripts/shot.mjs` is in the repository.** `CLAUDE.md` has named it as one of the two
+  defences against a layout bug the jsdom suite cannot see, while it sat untracked — one
+  `git clean` from gone, along with the Chromium-resolution knowledge it carries. It now
+  photographs the whole page rather than a fixed 320px crop of the header, says plainly
+  when the board is not built or Chromium is missing instead of failing inside Playwright,
+  and finds Chromium on macOS and Linux as well as Windows. Shots land in `scripts/shots/`,
+  gitignored — evidence for one fix, stale by the next.
 - `docs/PLAYBOOK.md` — detected stack, how far behind current, conventions, pitfalls.
 - `docs/DESIGN-TOKENS.md` — the design system as actually built, including the two-layer
   token structure that was not written down anywhere.

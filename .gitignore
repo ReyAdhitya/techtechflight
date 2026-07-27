@@ -16,5 +16,7 @@ out/
 *.tsbuildinfo
 .vercel/
 .claude/settings.local.json
+# Screenshots from scripts/shot.mjs — evidence for one fix, stale by the next.
+scripts/shots/
 
 .vercel

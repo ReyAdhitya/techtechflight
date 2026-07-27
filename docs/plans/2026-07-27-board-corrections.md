@@ -134,10 +134,12 @@ whatever shape the Fleet happens to be standing in.
    `0 0 side side`. Square frame plus a constant metre step gives square cells with no
    further work.
 
-5. **Fixed grid step.** Delete the `Math.ceil((high - low) / 12)` adaptation in
-   `gridLines()`. Lines fall on whole metres at `GRID_STEP_M`. At the 32 m window this is 32
-   lines per axis, which is dense but bounded and only reachable by a Fleet spread across a
-   sports hall.
+5. **Grid step comes from the window, never from the Drones.** Delete the
+   `Math.ceil((high - low) / 12)` adaptation in `gridLines()`, which reads the Drone
+   positions. Lines fall on multiples of `gridStepM(windowSideM)` per the table in step 2 —
+   half a metre at the default window, never a single constant. The count stays between 16
+   and 24 cells across at every rung, so the grid is bounded without ever consulting where
+   the Fleet happens to be standing.
 
 6. **Say the scale in the caption.** `Scope.tsx:167-174` currently prints
    `{widthM} m × {heightM} m`. Replace with the current cell size — `"Grid: 0.5 m"` at the
@@ -775,10 +777,13 @@ terminals do not reopen them.
 Neither of these changes the design enough to be worth blocking on. Both are cheap to
 reverse if wrong.
 
-- **Grid cell = 1 metre** (W1). `LocalPosition` is metres, `DEFAULT_PROXIMITY_WARNING_M` is
-  1 m, and the room the simulator flies in is 10 m × 6 m
-  (`simulated-telemetry-source.ts:479`). A centimetre grid would be roughly 1,000 cells
-  across that room, so "one, one, one" is read as one metre per cell.
+- ~~**Grid cell = 1 metre**~~ — **superseded the same day.** Put to the product owner as a
+  rendered comparison, who chose the finer of the two: **half a metre at the default
+  window**, 16 cells across, about a centimetre each on a laptop. That is what "one
+  centimetre" in the original request turns out to have meant, once it was clear the room is
+  scaled to fit the screen rather than drawn at size. The step table in §W1 step 2 is the
+  authority; a centimetre grid in the *room* was never on the table, since it would be
+  roughly 1,000 cells across a 10 m × 6 m classroom.
 - **"Under observation"** as the replacement service label (W3), over *Serviceable with
   limitations* and *Monitor*, for the reasons given in that item.
 

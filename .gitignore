@@ -22,9 +22,11 @@ scripts/shots/
 .vercel
 
 # Personal coaching notes. Local only — never in a public history.
-NOTES.md
-MISSION.md
-RESOURCES.md
-lessons/
-learning-records/
-reference/
+# Anchored to the root: `reference/` unanchored would also swallow a
+# `web/reference/` someone adds later, which is not what this is for.
+/NOTES.md
+/MISSION.md
+/RESOURCES.md
+/lessons/
+/learning-records/
+/reference/

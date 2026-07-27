@@ -43,12 +43,13 @@ export function Scope({
   onSelect?: ((droneId: string) => void) | undefined
 }) {
   /*
-   * The window already on screen. It is held across renders because it may only grow: a
-   * Drone sitting on a rung boundary would otherwise flip it between two sizes on every
-   * Fleet State, which puts the moving grid back. Writing it during render is safe because
-   * the write is idempotent — the same props give the same side, twice or once.
+   * The window already on screen — its size and where its middle sits. Held across renders
+   * because it is only allowed to change when a Drone has actually left it: recomputing
+   * either freely puts the sliding grid back, the size by flipping between rungs and the
+   * centre by following the Fleet. Writing it during render is safe because the write is
+   * idempotent — the same props give the same window, twice or once.
    */
-  const heldSideM = useRef(0)
+  const held = useRef<ScopeWindow | undefined>(undefined)
 
   const placed = drones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
@@ -62,8 +63,8 @@ export function Scope({
     )
   }
 
-  const room = roomExtent(placed, heldSideM.current)
-  heldSideM.current = room.widthM
+  const room = roomExtent(placed, held.current)
+  held.current = room.window
   const stepM = gridStepM(room.widthM)
   const conflicts = conflictPairs(placed, vitals)
 
@@ -320,6 +321,18 @@ function Mark({
   )
 }
 
+/**
+ * The square of room the scope is drawing: how big, and where its middle is.
+ *
+ * Both are chosen once and then held. `Scope` keeps the last one in a ref and hands it back
+ * on the next Fleet State, which is what stops the picture drifting under the Drones.
+ */
+export interface ScopeWindow {
+  readonly sideM: number
+  readonly centreEastM: number
+  readonly centreNorthM: number
+}
+
 export interface RoomExtent {
   readonly westM: number
   readonly eastM: number
@@ -328,6 +341,8 @@ export interface RoomExtent {
   readonly widthM: number
   readonly heightM: number
   readonly aspectRatio: number
+  /** What was chosen, to be handed back on the next render so it can be kept. */
+  readonly window: ScopeWindow
   /**
    * The Drones the largest window could not reach, drawn on its edge rather than dropped.
    * Empty at every rung below the last, because the window grows to hold them instead.
@@ -353,61 +368,124 @@ export interface RoomExtent {
  */
 const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
 
+/** True when every Drone is inside the window, edges included. */
+function holds(placed: readonly DroneState[], within: ScopeWindow): boolean {
+  const halfM = within.sideM / 2
+  return placed.every((drone) => {
+    const position = drone.telemetry!.position!
+    return (
+      Math.abs(position.eastM - within.centreEastM) <= halfM &&
+      Math.abs(position.northM - within.centreNorthM) <= halfM
+    )
+  })
+}
+
+/** Halfway between the outermost two, or the setup point when there is nothing to average. */
+function midpointOf(values: readonly number[]): number {
+  if (values.length === 0) return 0
+  let low = values[0]!
+  let high = values[0]!
+  for (const value of values) {
+    if (value < low) low = value
+    if (value > high) high = value
+  }
+  return (low + high) / 2
+}
+
 /**
- * The window the scope draws in: a fixed square, centred on where the Fleet was set up.
+ * Where to draw, and how much: the picture's own decision, made as rarely as it can be.
  *
- * Exported for its own test. Two properties matter, and both were once absent.
+ * **A held window is kept while it still holds every Drone.** This is the whole discipline.
+ * Recomputing a centre that follows the Fleet is the original bug wearing a different hat —
+ * the frame slides under the Drones and they read as standing still. So the window is only
+ * ever reconsidered when a Drone has actually left it, which is rare and visible.
+ *
+ * **When it is reconsidered, it centres on the Drones and snaps to a whole cell.** Centring
+ * on the setup point drew a Fleet that had been set up in a corner into a corner, with half
+ * the picture empty. Centring on the Fleet fixes that; snapping the centre to a multiple of
+ * the cell is what keeps the rules falling on the same metres they always did, so a window
+ * that has to move moves by whole cells and never by a fraction of one.
+ *
+ * **The side never shrinks**, for the reason it never did: a Drone hovering on a rung
+ * boundary would otherwise flip it between two sizes.
+ */
+function chooseWindow(placed: readonly DroneState[], held: ScopeWindow | undefined): ScopeWindow {
+  if (held && holds(placed, held)) return held
+
+  const positions = placed.map((drone) => drone.telemetry!.position!)
+  const towardsEastM = midpointOf(positions.map((position) => position.eastM))
+  const towardsNorthM = midpointOf(positions.map((position) => position.northM))
+
+  /*
+   * Snapping can push the centre by up to half a cell, which can push a Drone out of a rung
+   * that fitted before the snap — so each rung is tested after its own snap, rather than
+   * picked from the raw reach and hoped for.
+   */
+  const snapped = (sideM: number): ScopeWindow => {
+    const stepM = gridStepM(sideM)
+    return {
+      sideM,
+      centreEastM: Math.round(towardsEastM / stepM) * stepM,
+      centreNorthM: Math.round(towardsNorthM / stepM) * stepM,
+    }
+  }
+
+  for (const sideM of WINDOW_SIDES_M) {
+    if (sideM < (held?.sideM ?? 0)) continue
+    const candidate = snapped(sideM)
+    if (holds(placed, candidate)) return candidate
+  }
+
+  // Past the last rung. The Drones that do not fit are held on the edge and named.
+  return snapped(WINDOW_SIDES_M[WINDOW_SIDES_M.length - 1]!)
+}
+
+/**
+ * The window the scope draws in: a fixed square of room, centred on the Drones inside it.
+ *
+ * Exported for its own test. Three properties matter, and all three were once absent.
  *
  * **It does not follow the Drones.** The bounds used to be the Fleet's own extent plus a
  * metre, recomputed on every Fleet State — so `percentOf` renormalised each Drone into a box
  * that had just moved with it. A Drone flying east while the east edge went east with it
  * landed on nearly the same percentage, and the picture read as a sliding grid around
- * stationary Drones, which is the opposite of what was happening. The window is now the
- * smallest rung of `WINDOW_SIDES_M` that holds every placed Drone.
+ * stationary Drones, which is the opposite of what was happening. `held` is the window
+ * already on screen, and it is kept for as long as it holds every Drone.
  *
- * **It only ever grows.** `heldSideM` is the side already on screen. Without it a Drone
- * hovering on a rung boundary would flip the window between two sizes every tick, which is
- * the same moving grid in a subtler form. Growth is rare, visible, and correct; shrinkage is
- * a jitter source with nothing to show for it.
+ * **A metre is the same length whichever way it is measured.** East and north were once
+ * normalised to 0–100 *independently* and the result forced into a 4:3 box, so the one thing
+ * this picture exists to show — whether two Drones are about to meet — could not be read off
+ * it. The viewBox is in metres, so the scale is 1 and cannot drift, and a square window makes
+ * the cells square with no further work.
  *
- * The remaining property is the one the previous fix bought and this must not lose: the
- * projection is **isotropic**. East and north were once normalised to 0–100 *independently*
- * and the result forced into a 4:3 box, so a metre north and a metre east were different
- * lengths on screen and the one thing this picture exists to show — whether two Drones are
- * about to meet — could not be read off it. The viewBox is in metres, so the scale is 1 and
- * cannot drift, and a square window makes the cells square with no further work.
+ * **Nothing is silently dropped.** A Drone past the largest rung is held on the frame's edge
+ * and named in the caption.
  *
  * The window is a property of the display and never a claim about the room — see
  * `docs/adr/0014-a-fixed-scope-window.md`, which exists because without it this reads as the
  * flight area ADR-0012 deferred.
  */
-export function roomExtent(placed: readonly DroneState[], heldSideM = 0): RoomExtent {
-  // How far out the furthest Drone stands, on either axis, from the setup point.
-  const reachM = placed.reduce((furthest, drone) => {
-    const position = drone.telemetry!.position!
-    return Math.max(furthest, Math.abs(position.eastM), Math.abs(position.northM))
-  }, 0)
+export function roomExtent(placed: readonly DroneState[], held?: ScopeWindow): RoomExtent {
+  const chosen = chooseWindow(placed, held)
+  const halfM = chosen.sideM / 2
 
-  const fits = WINDOW_SIDES_M.find((side) => side / 2 >= reachM)
-  const sideM = Math.max(heldSideM, fits ?? WINDOW_SIDES_M[WINDOW_SIDES_M.length - 1]!)
-  const halfM = sideM / 2
-
-  const westM = -halfM
-  const eastM = halfM
-  const southM = -halfM
-  const northM = halfM
+  const westM = chosen.centreEastM - halfM
+  const eastM = chosen.centreEastM + halfM
+  const southM = chosen.centreNorthM - halfM
+  const northM = chosen.centreNorthM + halfM
 
   /*
    * Held on the edge rather than drawn off the frame. This only bites past the last rung —
    * below it the window grows instead — and it is the honest answer there, because a Drone
    * absent from the scope reads as a Drone that is not flying. The caption names it.
    */
-  const hold = (metres: number) => Math.min(halfM, Math.max(-halfM, metres))
+  const hold = (metres: number, low: number, high: number) =>
+    Math.min(high, Math.max(low, metres))
 
   const project = (east: number, north: number) => ({
-    x: hold(east) - westM,
+    x: hold(east, westM, eastM) - westM,
     // North is up, so the axis is flipped: an image's y grows downward.
-    y: northM - hold(north),
+    y: northM - hold(north, southM, northM),
   })
 
   const projectOf = (drone: DroneState) => {
@@ -415,25 +493,23 @@ export function roomExtent(placed: readonly DroneState[], heldSideM = 0): RoomEx
     return project(position.eastM, position.northM)
   }
 
-  const beyond = placed.filter((drone) => {
-    const position = drone.telemetry!.position!
-    return Math.abs(position.eastM) > halfM || Math.abs(position.northM) > halfM
-  })
+  const beyond = placed.filter((drone) => !holds([drone], chosen))
 
   return {
     westM,
     eastM,
     southM,
     northM,
-    widthM: sideM,
-    heightM: sideM,
+    widthM: chosen.sideM,
+    heightM: chosen.sideM,
     aspectRatio: 1,
+    window: chosen,
     beyond,
     project,
     projectOf,
     percentOf: (drone) => {
       const { x, y } = projectOf(drone)
-      return { xPercent: (x / sideM) * 100, yPercent: (y / sideM) * 100 }
+      return { xPercent: (x / chosen.sideM) * 100, yPercent: (y / chosen.sideM) * 100 }
     },
   }
 }

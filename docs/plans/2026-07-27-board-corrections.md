@@ -708,9 +708,22 @@ corrected later.
 ### Rules that keep three terminals from colliding
 
 - **One issue, one branch, one terminal.** An assignee on the issue is the lock.
-- **A spec disagreement goes in the issue as a comment, not into the code.** If the engineer
-  believes a spec is wrong, they comment and relabel `needs-info` rather than improvising.
-  This is the failure mode that costs the most with parallel terminals.
+- **Know when to stop and when to carry on.** The first version of this rule said to stop
+  and comment on *any* spec disagreement. It was too strict: W1 came back with three
+  findings, and only two of them were decisions. The third — a scope grown too tall because
+  the spec capped no width — had exactly one sensible answer, and stopping for it cost a
+  round trip and bought nothing.
+
+  | Carry on, and say what you did | Stop and ask |
+  |---|---|
+  | The defect is plain and there is **one** sensible fix | **Several** fixes are defensible and they look different on screen |
+  | The spec is silent and any reasonable reader would fill the gap the same way | Filling the gap is choosing, and the choice is the product owner's |
+  | It is a bug in the work you just wrote | It changes a decision recorded in an ADR, `CONTEXT.md` or `docs/DESIGN.md` |
+
+  Carrying on is not licence to redesign. Anything taken under the left column goes in the
+  issue comment, so it is visible rather than buried in the diff. Anything under the right
+  column stops, comments, and relabels `needs-info` — a design choice made quietly inside a
+  200-line diff is the failure that costs the most with parallel terminals.
 - **The review terminal never commits.** Findings only. One writer per branch.
 - **`npm test` and `npm run typecheck` are the whole gate** — there is no lint. CI runs both
   on every push and PR (`.github/workflows/ci.yml`).

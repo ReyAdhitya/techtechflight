@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { clearLogbook, readLogbook, runningLesson } from '@/lib/logbook'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { LessonScreen } from './LessonScreen'
 
@@ -23,7 +24,7 @@ const settle = () =>
 
 const screenUnderTest = () =>
   render(
-    <FleetProvider>
+    <FleetProvider demonstration={PINNED_DEMONSTRATION}>
       <LessonScreen />
     </FleetProvider>,
   )

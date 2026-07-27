@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider, useFleet } from './FleetProvider'
 import { SimulationLabel } from './SimulationLabel'
 
@@ -33,7 +34,7 @@ function Probe() {
 /** A screen a Teacher can navigate away from and back to, with the layout staying put. */
 function Screen({ showing }: { showing: boolean }) {
   return (
-    <FleetProvider>
+    <FleetProvider demonstration={PINNED_DEMONSTRATION}>
       {showing ? <Probe /> : <span data-testid="elsewhere">another screen</span>}
     </FleetProvider>
   )
@@ -53,7 +54,7 @@ afterEach(() => {
 describe('the demonstration path', () => {
   it('says it is a demonstration', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <Probe />
       </FleetProvider>,
     )
@@ -63,7 +64,7 @@ describe('the demonstration path', () => {
 
   it('gives screens a Fleet with no ground station to reach', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <Probe />
       </FleetProvider>,
     )
@@ -78,7 +79,7 @@ describe('the demonstration path', () => {
 
   it('brings the Fleet into contact as Telemetry arrives, rather than starting complete', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <Probe />
       </FleetProvider>,
     )
@@ -101,7 +102,7 @@ describe('the demonstration path', () => {
 describe('saying which Fleet this is', () => {
   it('says so in words wherever a simulated Fleet is on screen', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SimulationLabel />
       </FleetProvider>,
     )
@@ -114,7 +115,7 @@ describe('saying which Fleet this is', () => {
   it('says nothing at all when the Fleet is real', () => {
     pathname.current = '/'
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SimulationLabel />
       </FleetProvider>,
     )

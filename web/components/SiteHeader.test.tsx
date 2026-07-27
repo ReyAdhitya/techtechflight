@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { SiteHeader } from './SiteHeader'
 
@@ -30,7 +31,7 @@ describe('the bar every screen carries', () => {
   it('carries identity, the places to go, and the room controls', () => {
     pathname.current = '/'
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SiteHeader />
       </FleetProvider>,
     )
@@ -44,7 +45,7 @@ describe('the bar every screen carries', () => {
   it('says which Fleet this is, underneath, when the Fleet is simulated', () => {
     pathname.current = '/demo'
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SiteHeader />
       </FleetProvider>,
     )
@@ -62,7 +63,7 @@ describe('the bar every screen carries', () => {
   it('says nothing at all when the Fleet is real', () => {
     pathname.current = '/'
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SiteHeader />
       </FleetProvider>,
     )

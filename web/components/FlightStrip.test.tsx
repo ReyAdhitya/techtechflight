@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 
@@ -50,7 +51,7 @@ const occurrences = (text: string, phrase: string) =>
 describe('a grounded flight strip', () => {
   it('says "On the ground" once, not once for the phase and again for the height', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
@@ -68,7 +69,7 @@ describe('a grounded flight strip', () => {
 
   it('still carries the phase, the charge and the response age', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
@@ -91,7 +92,7 @@ describe('the strip anatomy is fixed across strips, not per row', () => {
    */
   it('lays the strips out on a shared grid the strips inherit', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )

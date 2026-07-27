@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { clearLogbook } from '@/lib/logbook'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 import { LessonReports } from './LessonReports'
@@ -28,7 +29,9 @@ const SCREENS = [
 ] as const
 
 const show = (node: React.ReactNode, advanceMs: number) => {
-  const rendered = render(<FleetProvider>{node}</FleetProvider>)
+  const rendered = render(
+    <FleetProvider demonstration={PINNED_DEMONSTRATION}>{node}</FleetProvider>,
+  )
   act(() => {
     vi.advanceTimersByTime(advanceMs)
   })

@@ -9,6 +9,29 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-27 The tests are pinned, and the demonstration stays unpredictable
+
+- **Decision:** Make the demonstration Fleet deterministic **in tests only**, by giving
+  `FleetProvider` a `demonstration` prop that forwards `random` and `spontaneous` to
+  `LocalFleetLink`. The product passes nothing and keeps `Math.random` with spontaneous
+  events on.
+- **Reason:** The flakiness came from tests asserting against weather, not from the weather
+  being wrong. Spontaneity is a feature of the demonstration — it is the same reason the
+  ground station binds scenario keys to its own stdin, so a demonstration never has to wait
+  for something to happen. Removing it to make tests pass would have fixed the suite by
+  damaging the product.
+- **Alternatives considered:** Defaulting `spontaneous` to false and opting the demo *in*
+  (quiet by default is the wrong default for the one build anyone looks at); sniffing
+  `NODE_ENV` inside `FleetProvider` (production code that behaves differently under test is
+  how a suite stops describing the product); mocking the simulator per test (six files each
+  inventing their own Fleet, and no longer testing the real derivation path that
+  `LocalFleetLink` exists to provide).
+- **Note:** The pinned values live in one place, `web/test-support/fleet.ts`, and match
+  what `local-fleet-link.test.ts` already used — so the suite has one answer to "what does
+  a Drone do when nothing asks it to". It must stay module-level: `FleetProvider` rebuilds
+  its link when those options change, so a fresh object per render would restart the Fleet
+  on every render.
+
 ## 2026-07-24 The commit and branch convention moves to conventional commits
 
 - **Decision:** New work uses `feat:` / `fix:` / `docs:` / `chore:` prefixes, on a branch,

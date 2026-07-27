@@ -20,3 +20,7 @@ out/
 scripts/shots/
 
 .vercel
+
+# Personal coaching notes. Local only — never in a public history.
+NOTES.md
+MISSION.md

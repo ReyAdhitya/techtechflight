@@ -15,7 +15,7 @@ import type { Clock, CommandKind, DroneId, DroneState } from '@techtechflight/co
 import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
 import type { FleetLink, FleetSnapshot, ScenarioControls } from '@/lib/fleet-link'
-import { LocalFleetLink } from '@/lib/local-fleet-link'
+import { LocalFleetLink, type LocalFleetOptions } from '@/lib/local-fleet-link'
 import { AcknowledgementTracker } from '@/lib/acknowledgement'
 import { CommandTracker, type TrackedCommand } from '@/lib/command-tracker'
 import {
@@ -102,16 +102,41 @@ function builtForDemoOnly(): boolean {
 }
 
 /**
+ * How the demonstration Fleet behaves, for the one caller allowed to care: a test.
+ *
+ * `LocalFleetOptions` has carried this seam since it was written — *"injected so a test
+ * can make a run deterministic"* — but nothing could reach it from here, so every
+ * component test that rendered a demonstration Fleet ran against `Math.random` with
+ * spontaneous take-offs and link drops switched on. That is weather, and it failed the
+ * suite about one run in three, a different test each time. `npm test` is the whole gate
+ * in a repository with no CI, and a gate that is red one run in three has stopped being one.
+ *
+ * Undefined in the product, deliberately. A demonstration that never surprises anyone is
+ * exactly the wrong thing — the ground station's own scenario keys exist for the opposite
+ * reason, so a demonstration never has to wait for something to happen.
+ */
+export type DemonstrationOptions = Pick<LocalFleetOptions, 'random' | 'spontaneous'>
+
+/**
  * The one place in the product that knows whether a Fleet is simulated.
  *
  * Everything downstream reads a FleetSnapshot and cannot tell, which is the point of the
  * seam. `demo` travels on the view for one reason only: so the header can say so in
  * words. No screen may branch on it to behave differently.
  */
-export function FleetProvider({ children }: { children: ReactNode }) {
+export function FleetProvider({
+  children,
+  demonstration,
+}: {
+  readonly children: ReactNode
+  readonly demonstration?: DemonstrationOptions
+}) {
   const pathname = usePathname()
   const demo = builtForDemoOnly() || pathname.startsWith('/demo')
   const clock = useMemo(() => new SystemClock(), [])
+  // Pulled apart rather than held whole, so the link below is rebuilt when the Fleet is
+  // actually meant to behave differently and not every time a caller writes a fresh object.
+  const { random, spontaneous } = demonstration ?? {}
 
   /*
    * Built lazily rather than at module scope. `browserSocket` closes over `WebSocket`,
@@ -122,9 +147,15 @@ export function FleetProvider({ children }: { children: ReactNode }) {
   const link = useMemo<FleetLink>(
     () =>
       demo
-        ? new LocalFleetLink({ clock })
+        ? new LocalFleetLink({
+            clock,
+            // Spread conditionally rather than passed as undefined: `exactOptionalPropertyTypes`
+            // is on, so an absent option and one explicitly set to nothing are different things.
+            ...(random === undefined ? {} : { random }),
+            ...(spontaneous === undefined ? {} : { spontaneous }),
+          })
         : new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket }),
-    [clock, demo],
+    [clock, demo, random, spontaneous],
   )
 
   const snapshot = useSyncExternalStore(

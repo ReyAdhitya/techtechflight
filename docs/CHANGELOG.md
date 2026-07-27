@@ -7,6 +7,16 @@ would notice.
 
 ### Fixed
 
+- **`npm test` is deterministic again.** Every component test that rendered a demonstration
+  Fleet ran the real simulator with `Math.random` and spontaneous events switched on, so a
+  Drone could take off unasked or drop its link on a 0.2%-per-tick roll in the middle of an
+  assertion that it was standing still. The suite failed about one run in three and named a
+  different test each time — recorded as O7 in `docs/TEST_REPORT.md` as a transient that did
+  not reproduce. It reproduces. `LocalFleetOptions` had carried the seam for pinning this
+  since it was written; `FleetProvider` simply could not reach it. Five consecutive full runs
+  now pass 374 of 374. This matters more than a flaky test usually would: there is no CI, so
+  `npm test` run by hand is the whole gate, and a gate that is red one run in three has
+  stopped being one.
 - **The simulation label is a strip under the bar again, not a white block beside it.**
   `.site-header-shell` was `display: flex` with no axis, so the bar and the label became
   columns of a row. On a phone the label swelled to a quarter of the viewport. The label's

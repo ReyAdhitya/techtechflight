@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { assignStudent, clearLogbook, readLogbook, saveRoll } from '@/lib/logbook'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { StudentsScreen } from './StudentsScreen'
 
@@ -9,7 +10,7 @@ vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 const show = () => {
   const rendered = render(
-    <FleetProvider>
+    <FleetProvider demonstration={PINNED_DEMONSTRATION}>
       <StudentsScreen />
     </FleetProvider>,
   )

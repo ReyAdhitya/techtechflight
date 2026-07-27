@@ -34,6 +34,13 @@ would notice.
 
 ### Added
 
+- **CI, for the first time.** `.github/workflows/ci.yml` runs `npm run typecheck`, `npm test`
+  and the static export on every push to `main` and every pull request, on Linux **and**
+  Windows — the repository is developed on one and deployed on the other, and every
+  path-handling bug it has had lived in that gap. The two gates were always the whole gate;
+  what was missing was anything that ran them without being asked. `npm run audit:devices`
+  stays out: it needs a real browser and a built board, and belongs in a job somebody
+  watches rather than one that blocks a merge.
 - **`scripts/shot.mjs` is in the repository.** `CLAUDE.md` has named it as one of the two
   defences against a layout bug the jsdom suite cannot see, while it sat untracked — one
   `git clean` from gone, along with the Chromium-resolution knowledge it carries. It now

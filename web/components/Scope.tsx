@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { DroneState } from '@techtechflight/contract'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { PHASE_PRESENTATION } from '@/lib/vitals-presentation'
@@ -41,6 +42,14 @@ export function Scope({
   selected?: string | null
   onSelect?: ((droneId: string) => void) | undefined
 }) {
+  /*
+   * The window already on screen. It is held across renders because it may only grow: a
+   * Drone sitting on a rung boundary would otherwise flip it between two sizes on every
+   * Fleet State, which puts the moving grid back. Writing it during render is safe because
+   * the write is idempotent — the same props give the same side, twice or once.
+   */
+  const heldSideM = useRef(0)
+
   const placed = drones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
   )
@@ -53,7 +62,8 @@ export function Scope({
     )
   }
 
-  const room = roomExtent(placed)
+  const room = roomExtent(placed, heldSideM.current)
+  heldSideM.current = room.widthM
   const conflicts = conflictPairs(placed, vitals)
 
   const groups = new Map<string, DroneState[]>()
@@ -66,12 +76,17 @@ export function Scope({
   return (
     <figure className="m-0 flex flex-col gap-3">
       {/*
-       * The box is shaped like the room, so `meet` has nothing to letterbox and the
-       * percentage positions of the Drones above line up exactly with the metres below.
+       * Square, always. `meet` then has nothing to letterbox, the percentage positions of
+       * the Drones above line up exactly with the metres below, and a metre across is the
+       * same length as a metre down — which is what makes the cells square.
+       *
+       * Inline rather than `aspect-square` so the invariant is assertable: the suite is
+       * jsdom, which has no layout engine and cannot see a wrong aspect ratio, but it can
+       * read an inline style (CLAUDE.md).
        */}
       <div
         className="relative w-full rounded-surface border border-hairline bg-canvas"
-        style={{ aspectRatio: `${room.widthM} / ${room.heightM}` }}
+        style={{ aspectRatio: '1' }}
       >
         <svg
           viewBox={`0 0 ${room.widthM} ${room.heightM}`}
@@ -300,25 +315,56 @@ export interface RoomExtent {
 }
 
 /**
- * The piece of room the Fleet is standing in, padded by a metre.
+ * The square windows the scope may draw in, in metres, smallest first.
  *
- * Exported for its own test. The whole scope rests on this staying isotropic: east and
- * north used to be normalised to 0–100 *independently* and the result forced into a 4:3
- * box, so a metre north and a metre east were different lengths on screen, and the one
- * thing this picture exists to show — whether two Drones are about to meet — could not be
- * read off it. Keeping the viewBox in metres means the scale is 1 and cannot drift.
+ * A ladder rather than a fitted size, because a window that fits is a window that moves.
+ * Five rungs cover a corner of a classroom up to a sports hall.
  */
-export function roomExtent(placed: readonly DroneState[]): RoomExtent {
-  const easts = placed.map((drone) => drone.telemetry!.position!.eastM)
-  const norths = placed.map((drone) => drone.telemetry!.position!.northM)
+const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
 
-  // A metre of padding, and never a zero-width room when everything is in a line.
-  const westM = Math.min(...easts) - 1
-  const eastM = Math.max(...easts) + 1
-  const southM = Math.min(...norths) - 1
-  const northM = Math.max(...norths) + 1
-  const widthM = Math.max(1, eastM - westM)
-  const heightM = Math.max(1, northM - southM)
+/**
+ * The window the scope draws in: a fixed square, centred on where the Fleet was set up.
+ *
+ * Exported for its own test. Two properties matter, and both were once absent.
+ *
+ * **It does not follow the Drones.** The bounds used to be the Fleet's own extent plus a
+ * metre, recomputed on every Fleet State — so `percentOf` renormalised each Drone into a box
+ * that had just moved with it. A Drone flying east while the east edge went east with it
+ * landed on nearly the same percentage, and the picture read as a sliding grid around
+ * stationary Drones, which is the opposite of what was happening. The window is now the
+ * smallest rung of `WINDOW_SIDES_M` that holds every placed Drone.
+ *
+ * **It only ever grows.** `heldSideM` is the side already on screen. Without it a Drone
+ * hovering on a rung boundary would flip the window between two sizes every tick, which is
+ * the same moving grid in a subtler form. Growth is rare, visible, and correct; shrinkage is
+ * a jitter source with nothing to show for it.
+ *
+ * The remaining property is the one the previous fix bought and this must not lose: the
+ * projection is **isotropic**. East and north were once normalised to 0–100 *independently*
+ * and the result forced into a 4:3 box, so a metre north and a metre east were different
+ * lengths on screen and the one thing this picture exists to show — whether two Drones are
+ * about to meet — could not be read off it. The viewBox is in metres, so the scale is 1 and
+ * cannot drift, and a square window makes the cells square with no further work.
+ *
+ * The window is a property of the display and never a claim about the room — see
+ * `docs/adr/0014-a-fixed-scope-window.md`, which exists because without it this reads as the
+ * flight area ADR-0012 deferred.
+ */
+export function roomExtent(placed: readonly DroneState[], heldSideM = 0): RoomExtent {
+  // How far out the furthest Drone stands, on either axis, from the setup point.
+  const reachM = placed.reduce((furthest, drone) => {
+    const position = drone.telemetry!.position!
+    return Math.max(furthest, Math.abs(position.eastM), Math.abs(position.northM))
+  }, 0)
+
+  const fits = WINDOW_SIDES_M.find((side) => side / 2 >= reachM)
+  const sideM = Math.max(heldSideM, fits ?? WINDOW_SIDES_M[WINDOW_SIDES_M.length - 1]!)
+  const halfM = sideM / 2
+
+  const westM = -halfM
+  const eastM = halfM
+  const southM = -halfM
+  const northM = halfM
 
   const project = (east: number, north: number) => ({
     x: east - westM,
@@ -336,14 +382,14 @@ export function roomExtent(placed: readonly DroneState[]): RoomExtent {
     eastM,
     southM,
     northM,
-    widthM,
-    heightM,
-    aspectRatio: widthM / heightM,
+    widthM: sideM,
+    heightM: sideM,
+    aspectRatio: 1,
     project,
     projectOf,
     percentOf: (drone) => {
       const { x, y } = projectOf(drone)
-      return { xPercent: (x / widthM) * 100, yPercent: (y / heightM) * 100 }
+      return { xPercent: (x / sideM) * 100, yPercent: (y / sideM) * 100 }
     },
   }
 }

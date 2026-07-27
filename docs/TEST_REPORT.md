@@ -4,10 +4,15 @@ Phase 7, opened early and kept running. Findings are written down when they are 
 rather than reconstructed at the end, because the ones worth having are the ones nobody
 would remember to look for afterwards.
 
-**Current state:** 338 tests passing, three typechecks clean, the board builds, and the
+**Current state:** 377 tests passing, three typechecks clean, the board builds, and the
 device audit is clean across 8 devices, 3 widths and 6 routes. Every finding raised during
 implementation is closed, measured, or recorded as a decision with its reasoning. Progress against the plan is in
 [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md#progress).
+
+**The suite now runs on a machine as well as by hand** — `.github/workflows/ci.yml`, on Linux
+and Windows, on every push to `main` and every pull request. Everything below was found by
+running things by hand, which worked until it did not: O7 was written off as a transient after
+ten clean runs, and was a one-in-three flake the whole time.
 
 ## Coverage by project
 
@@ -104,6 +109,7 @@ Each was caught by a check rather than by luck, which is the part worth keeping.
 | `mergeEvents` **republished a record that had not changed**, re-rendering every screen on every replayed batch | O2 | A test that had only described it in a comment |
 | Altitude was sampled at **React's render cadence, not Telemetry's** — several Fleet States in one batch collapsed to one reading, so a steadily climbing Drone produced no rate at all | O3 | Writing the test the batched way and watching it fail |
 | A **transient test failure** that did not reproduce across ten subsequent full runs; ran alongside a `tsc` invocation, and has not returned since | O7 | Repeating the run rather than dismissing it |
+| ~~O7 was not transient.~~ **It reproduces at about one run in three**, naming a different test each time. Every component test rendering a demonstration Fleet ran the real simulator against `Math.random` with spontaneous events on, so a Drone could take off unasked mid-assertion. Ten clean runs was luck, not evidence | O7, reopened and closed | Running one file in a loop rather than the whole suite once |
 | An empty `dashboard/` directory | O8 | Contents removed; the directory itself is held by a file handle and is untracked, so it survives only until the handle is released |
 
 ## Final verification

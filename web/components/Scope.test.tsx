@@ -42,12 +42,39 @@ describe('the room the scope draws', () => {
     expect(wide.project(0, 1).y - wide.project(0, 0).y).toBeCloseTo(-1)
   })
 
-  it('shapes the box like the room rather than like a 4:3 photograph', () => {
+  /*
+   * The second bug, and the reason the cells were not square. The box used to take the
+   * room's aspect ratio — which is to say, whatever shape the Fleet happened to be standing
+   * in. A wide shallow strip of Drones drew a wide shallow box over a grid of metres.
+   */
+  it('draws a square window whatever shape the Fleet is standing in', () => {
     const wide = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 7, 2)])
-    // 7 m plus a metre of padding each side, by 2 m plus the same: 9 × 4.
-    expect(wide.widthM).toBeCloseTo(9)
-    expect(wide.heightM).toBeCloseTo(4)
-    expect(wide.aspectRatio).toBeCloseTo(9 / 4)
+
+    expect(wide.widthM).toBe(wide.heightM)
+    expect(wide.aspectRatio).toBe(1)
+  })
+
+  it('takes the smallest window on the ladder that holds every Drone, centred on the setup point', () => {
+    // 3 m out needs 6 m of window, so the smallest rung holds it.
+    const near = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 3, 1)])
+    expect(near.widthM).toBe(8)
+    expect(near.westM).toBe(-4)
+    expect(near.eastM).toBe(4)
+
+    // 7 m out needs 14 m, so 12 m is too small and 16 m is the rung.
+    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 7, 2)]).widthM).toBe(16)
+  })
+
+  /*
+   * A Drone hovering on a rung boundary would otherwise flip the window between two sizes
+   * on every Fleet State, which is the moving grid again in a subtler form.
+   */
+  it('grows the window and never shrinks it', () => {
+    const held = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 1, 1)], 16)
+    expect(held.widthM).toBe(16)
+
+    const grown = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 11, 0)], 16)
+    expect(grown.widthM).toBe(24)
   })
 
   it('never collapses to a zero-width room when everything is in a line', () => {
@@ -97,7 +124,7 @@ describe('what the scope shows', () => {
   it('states the room size, so the picture can be read as a distance', () => {
     render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 7, 2)]} />)
 
-    expect(screen.getByText(/9 m × 4 m/)).toBeInTheDocument()
+    expect(screen.getByText(/16 m × 16 m/)).toBeInTheDocument()
   })
 
   /*

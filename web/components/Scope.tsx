@@ -64,6 +64,7 @@ export function Scope({
 
   const room = roomExtent(placed, heldSideM.current)
   heldSideM.current = room.widthM
+  const stepM = gridStepM(room.widthM)
   const conflicts = conflictPairs(placed, vitals)
 
   const groups = new Map<string, DroneState[]>()
@@ -95,8 +96,8 @@ export function Scope({
           role="img"
           aria-label={`Positions of ${placed.length} Drones in the room`}
         >
-          {/* A metre grid, so a distance on screen can be read as a distance in the room. */}
-          {gridLines(room.westM, room.eastM).map((metre) => (
+          {/* A fixed grid, so a distance on screen can be read as a distance in the room. */}
+          {gridLines(room.westM, room.eastM, stepM).map((metre) => (
             <line
               key={`v${metre}`}
               x1={room.project(metre, 0).x}
@@ -107,7 +108,7 @@ export function Scope({
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          {gridLines(room.southM, room.northM).map((metre) => (
+          {gridLines(room.southM, room.northM, stepM).map((metre) => (
             <line
               key={`h${metre}`}
               x1="0"
@@ -180,9 +181,12 @@ export function Scope({
       </div>
 
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-label">
-        <span>
-          {room.widthM.toFixed(0)} m × {room.heightM.toFixed(0)} m
-        </span>
+        {/*
+         * The cell, not the window. With a window fixed by the display its own size says
+         * nothing about the room, whereas one cell is the thing a Teacher can hold two
+         * Drones up against. This is the scale reference docs/DESIGN.md §4.3 asks for.
+         */}
+        <span>Grid: {formatStep(stepM)} m</span>
         <span>Filled = flying</span>
         {groups.size > 0 && <span>Dashed = linked as one group</span>}
         {conflicts.length > 0 && <span>Solid = too close</span>}
@@ -429,10 +433,61 @@ function conflictPairs(
   return pairs
 }
 
-/** Whole-metre lines inside the range, capped so a large room does not become a mesh. */
-function gridLines(low: number, high: number): number[] {
-  const step = Math.ceil((high - low) / 12) || 1
+/** Cell sizes the grid may use, in metres, smallest first. */
+const GRID_STEPS_M = [0.5, 1, 2] as const
+
+/** The most cells a Teacher should have to count across the window. */
+const MAX_CELLS_ACROSS = 24
+
+/**
+ * Metres per grid cell, chosen from the window. Never from the Drones.
+ *
+ * | Window | Step | Cells across |
+ * |---|---|---|
+ * | 8 m | 0.5 m | 16 |
+ * | 12 m | 0.5 m | 24 |
+ * | 16 m | 1 m | 16 |
+ * | 24 m | 1 m | 24 |
+ * | 32 m | 2 m | 16 |
+ *
+ * Half a metre at the default window was chosen from a rendered comparison: on a laptop it
+ * draws at roughly a centimetre a cell, which is the density a Teacher can judge a distance
+ * against. It is a property of the display, not a claim about the room.
+ *
+ * It cannot stay at half a metre for every window — at 32 m that is 64 rules an axis and the
+ * grid becomes a mesh — so the step is the smallest one that keeps the count at or under
+ * `MAX_CELLS_ACROSS`. Because the window is a rung of `WINDOW_SIDES_M` and nothing else, the
+ * step is exactly as stable as the window is, which is to say it changes rarely and visibly.
+ *
+ * Exported so the caption can state it. Hard-coding `0.5` there would lie the first time the
+ * window grew.
+ */
+export function gridStepM(windowSideM: number): number {
+  return (
+    GRID_STEPS_M.find((step) => windowSideM / step <= MAX_CELLS_ACROSS) ??
+    GRID_STEPS_M[GRID_STEPS_M.length - 1]!
+  )
+}
+
+/**
+ * Where the rules fall, in metres, at a fixed step across the window.
+ *
+ * The step used to be `Math.ceil((high - low) / 12)` — derived from the extent, so the
+ * number of cells changed as the Fleet spread out or closed up. It is now a function of the
+ * window alone, which is why the grid holds still.
+ *
+ * Both edges are left out: the frame already draws them, and a non-scaling stroke sitting on
+ * the viewBox boundary is clipped to half its width, so an edge rule reads lighter than
+ * every other one.
+ */
+function gridLines(lowM: number, highM: number, stepM: number): number[] {
+  const cells = Math.round((highM - lowM) / stepM)
   const lines: number[] = []
-  for (let metre = Math.ceil(low); metre <= Math.floor(high); metre += step) lines.push(metre)
+  for (let index = 1; index < cells; index += 1) lines.push(lowM + index * stepM)
   return lines
+}
+
+/** `0.5`, `1`, `2` — never `1.0`, which claims a precision the grid has not got. */
+function formatStep(stepM: number): string {
+  return Number.isInteger(stepM) ? `${stepM}` : stepM.toFixed(1)
 }

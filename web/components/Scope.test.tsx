@@ -83,6 +83,27 @@ describe('the room the scope draws', () => {
     expect(Number.isFinite(line.aspectRatio)).toBe(true)
   })
 
+  /*
+   * Past the last rung the window stops growing, and the only alternative to holding a Drone
+   * on the edge is drawing it off the frame — where it reads as a Drone that is not flying.
+   */
+  it('holds a Drone beyond the largest window on its edge rather than losing it', () => {
+    const stray = at('Drone 2', 40, 0)
+    const room = roomExtent([at('Drone 1', 0, 0), stray])
+
+    expect(room.widthM).toBe(32)
+    expect(room.percentOf(stray).xPercent).toBe(100)
+    expect(room.percentOf(stray).yPercent).toBe(50)
+    expect(room.beyond.map((drone) => drone.name)).toEqual(['Drone 2'])
+  })
+
+  it('holds nothing on the edge while the window can still grow to reach it', () => {
+    const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 11, 0)])
+
+    expect(room.widthM).toBe(24)
+    expect(room.beyond).toEqual([])
+  })
+
   it('puts north at the top, because the y axis of an image grows the other way', () => {
     const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 2, 4)])
     expect(room.project(0, 4).y).toBeLessThan(room.project(0, 0).y)
@@ -157,6 +178,17 @@ describe('what the scope shows', () => {
     render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 7, 2)]} />)
 
     expect(screen.getByText('Grid: 1 m')).toBeInTheDocument()
+  })
+
+  it('names a Drone it had to hold on the edge, rather than dropping it silently', () => {
+    render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 40, 0)]} />)
+
+    expect(screen.getByText('Drone 2')).toBeInTheDocument()
+    expect(
+      screen.getByText('Drone 2 is further out than the scope draws, held on the edge', {
+        selector: 'span',
+      }),
+    ).toBeInTheDocument()
   })
 
   /*

@@ -190,6 +190,12 @@ export function Scope({
         <span>Filled = flying</span>
         {groups.size > 0 && <span>Dashed = linked as one group</span>}
         {conflicts.length > 0 && <span>Solid = too close</span>}
+        {room.beyond.length > 0 && (
+          <span>
+            {namesOf(room.beyond)} {room.beyond.length === 1 ? 'is' : 'are'} further out than
+            the scope draws, held on the edge
+          </span>
+        )}
       </figcaption>
     </figure>
   )
@@ -311,7 +317,17 @@ export interface RoomExtent {
   readonly widthM: number
   readonly heightM: number
   readonly aspectRatio: number
-  /** Metres to viewBox units — which is to say, no scaling at all. North is up. */
+  /**
+   * The Drones the largest window could not reach, drawn on its edge rather than dropped.
+   * Empty at every rung below the last, because the window grows to hold them instead.
+   */
+  readonly beyond: readonly DroneState[]
+  /**
+   * Metres to viewBox units — which is to say, no scaling at all. North is up.
+   *
+   * A point outside the window is held on its edge. Nothing may be drawn off the frame: a
+   * Drone missing from the scope reads as a Drone that is not flying.
+   */
   readonly project: (eastM: number, northM: number) => { x: number; y: number }
   readonly projectOf: (drone: DroneState) => { x: number; y: number }
   /** The same point as a percentage of the box, for the HTML layer over the drawing. */
@@ -370,16 +386,28 @@ export function roomExtent(placed: readonly DroneState[], heldSideM = 0): RoomEx
   const southM = -halfM
   const northM = halfM
 
+  /*
+   * Held on the edge rather than drawn off the frame. This only bites past the last rung —
+   * below it the window grows instead — and it is the honest answer there, because a Drone
+   * absent from the scope reads as a Drone that is not flying. The caption names it.
+   */
+  const hold = (metres: number) => Math.min(halfM, Math.max(-halfM, metres))
+
   const project = (east: number, north: number) => ({
-    x: east - westM,
+    x: hold(east) - westM,
     // North is up, so the axis is flipped: an image's y grows downward.
-    y: northM - north,
+    y: northM - hold(north),
   })
 
   const projectOf = (drone: DroneState) => {
     const position = drone.telemetry!.position!
     return project(position.eastM, position.northM)
   }
+
+  const beyond = placed.filter((drone) => {
+    const position = drone.telemetry!.position!
+    return Math.abs(position.eastM) > halfM || Math.abs(position.northM) > halfM
+  })
 
   return {
     westM,
@@ -389,6 +417,7 @@ export function roomExtent(placed: readonly DroneState[], heldSideM = 0): RoomEx
     widthM: sideM,
     heightM: sideM,
     aspectRatio: 1,
+    beyond,
     project,
     projectOf,
     percentOf: (drone) => {
@@ -431,6 +460,13 @@ function conflictPairs(
     pairs.push({ key, from: mine.telemetry.position, to: other.telemetry.position })
   }
   return pairs
+}
+
+/** "Drone 4" · "Drone 4 and Drone 5" · "Drone 4, Drone 5 and Drone 6". */
+function namesOf(drones: readonly DroneState[]): string {
+  const names = drones.map((drone) => drone.name)
+  const last = names[names.length - 1] ?? ''
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${last}` : last
 }
 
 /** Cell sizes the grid may use, in metres, smallest first. */

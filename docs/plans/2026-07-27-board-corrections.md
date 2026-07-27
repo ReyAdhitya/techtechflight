@@ -658,6 +658,53 @@ establishes as this repo's spec surface. The labels are the five in
 6. **Planner updates** `docs/CHANGELOG.md` and `docs/DECISIONS.md` per the standing rule in
    `CLAUDE.md`.
 
+### Commit convention — all three terminals write the same way
+
+Set by the product owner on 2026-07-27: commits are **friendly, specific, and small — one
+per change.**
+
+This does not replace the conventional-commit decision recorded in `docs/DECISIONS.md` on
+2026-07-24. The two combine: the prefix stays, and the subject after it carries the friendly,
+specific part.
+
+```
+<type>: <what changed, in a sentence a person would say>
+```
+
+Types in use: `feat` · `fix` · `docs` · `chore` · `test` · `ci`
+
+**Rules**
+
+1. **One logical change per commit.** Not one file, and not one PR. The test is whether the
+   subject needs the word "and" — if it does, it is two commits.
+2. **The subject says what changed for a person**, not what changed in the code.
+   `fix: stop the grid drifting while Drones move` beats `fix: refactor roomExtent`.
+3. **Present tense, lower case after the colon, no full stop.**
+4. **The body carries the why**, when the why is not obvious. The what is already in the diff.
+
+**W1 as a worked example.** One work item, four honest commits:
+
+```
+fix: hold the scope's grid still while the Drones move
+feat: draw the scope on square half-metre cells
+test: pin the grid to one viewBox across two Fleet States
+docs: record why the scope window is not the flight area (ADR-0014)
+```
+
+Not this:
+
+```
+fix: scope
+```
+
+**Expected volume.** W1–W7 at this granularity is roughly forty commits, spread across the
+work as it is actually done. That is a real record of real changes — which is the only kind
+worth having on a public profile, and it is what this convention produces on its own.
+
+Two things stay out of it: **no empty commits, and no backdating.** A commit records when
+work happened; a date that says otherwise is the one part of a git history that cannot be
+corrected later.
+
 ### Rules that keep three terminals from colliding
 
 - **One issue, one branch, one terminal.** An assignee on the issue is the lock.

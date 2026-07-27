@@ -97,8 +97,32 @@ whatever shape the Fleet happens to be standing in.
 
    ```ts
    const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
-   /** Metres per grid cell. One, so a cell is a metre and the grid can be counted. */
-   const GRID_STEP_M = 1
+   ```
+
+   **Cell size is half a metre at the default window**, chosen by the product owner from a
+   rendered comparison on 2026-07-27. On an 8 m window that is 16 cells across — roughly a
+   centimetre per cell on a laptop, which is what "one centimetre" in the original request
+   turns out to have meant. It is a display density, not a claim about the room.
+
+   The step cannot stay at 0.5 m for every window: at 32 m it would draw 64 lines per axis
+   and the grid becomes a mesh. Tie the step to the window so the count stays legible:
+
+   | Window | Step | Cells across |
+   |---|---|---|
+   | 8 m | 0.5 m | 16 |
+   | 12 m | 0.5 m | 24 |
+   | 16 m | 1 m | 16 |
+   | 24 m | 1 m | 24 |
+   | 32 m | 2 m | 16 |
+
+   The rule is: **keep cells across between 16 and 24.** The step is a pure function of the
+   window, so it is as stable as the window is — and the window only ever grows, rarely, and
+   visibly. The caption always states the current step, so a Teacher is never counting cells
+   of an unknown size.
+
+   ```ts
+   /** Metres per grid cell, chosen from the window. Never from the Drones. */
+   function gridStepM(windowSideM: number): number
    ```
 
 3. **The window may grow and must never shrink while the component is mounted.** Hold the
@@ -116,10 +140,11 @@ whatever shape the Fleet happens to be standing in.
    sports hall.
 
 6. **Say the scale in the caption.** `Scope.tsx:167-174` currently prints
-   `{widthM} m × {heightM} m`. Replace with the cell size — `"Grid: 1 m"` — because with a
-   fixed window the frame's size is a property of the display and the cell is the thing a
-   Teacher can actually use to judge a distance. This is the "scale reference" that
-   `docs/DESIGN.md` §4.3 already calls for.
+   `{widthM} m × {heightM} m`. Replace with the current cell size — `"Grid: 0.5 m"` at the
+   default window — because with a fixed window the frame's size is a property of the display
+   and the cell is the thing a Teacher can actually use to judge a distance. It must be read
+   from `gridStepM()`, never hard-coded, or it will lie the first time the window grows. This
+   is the "scale reference" that `docs/DESIGN.md` §4.3 already calls for.
 
 7. **A Drone outside the largest window is clamped to the edge and said in words.** It must
    not be dropped silently and must not stretch the window. Render it on the boundary and
@@ -134,6 +159,12 @@ whatever shape the Fleet happens to be standing in.
   `Scope.tsx:34-39`). Confirm it still renders; the window logic must not assume `vitals`.
 - The `-1` metre padding disappears. A Drone at exactly the origin used to sit in a 2 m box
   and will now sit in an 8 m one. That is the intended change, not a regression.
+- **Label legibility against a denser grid.** `Scope.tsx:183-186` records a bug already found
+  once: six Drone labels in a 7 m strip overlapped into one unreadable line. Doubling the
+  number of grid lines behind those labels is the change most likely to bring the complaint
+  back in a new form — not overlap this time, but names competing with the rules behind them.
+  If it reads badly in the screenshot, the fix is to lighten the grid stroke, **not** to
+  reduce the cell count, which was chosen deliberately.
 
 ### Relationship to ADR-0012
 
@@ -365,6 +396,18 @@ The whole board moves to a professional aviation and risk-management register.
 `CONTEXT.md`'s education-first rule is superseded. This is the largest and highest-risk item
 in the plan — it touches nearly every user-facing string in `web/` — and it is the one most
 likely to be done inconsistently if started without a written target.
+
+### The product is English. All of it.
+
+Stated by the product owner on 2026-07-27, and recorded because a register rewrite is
+exactly the task where it could drift.
+
+**Every string a Teacher sees is written in English.** There is no localisation, no
+translation layer, and no second language anywhere in `web/`. Indonesian is the language the
+team talks in; it never reaches the product.
+
+The board is already fully English today. This item must keep it that way — the change is to
+the *register*, never to the language.
 
 ### The target register, stated concretely
 

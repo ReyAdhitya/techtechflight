@@ -1,0 +1,51 @@
+# The gate, run by a machine instead of by hand.
+#
+# `npm test` and `npm run typecheck` have always been the whole gate here — there is no
+# lint and there was no CI, so both depended on somebody remembering. That held while the
+# suite was reliable and stopped holding when it was not: a flaky test went unnoticed long
+# enough to be written down as a transient that "did not reproduce".
+#
+# The build is here too because a static export is the artifact a School is served, and it
+# can break while every test passes. `npm run audit:devices` is deliberately absent: it
+# needs a real browser and a built board, and it belongs in a job somebody watches rather
+# than one that blocks a merge.
+#
+# Two platforms because this repository is developed on Windows and deployed on Linux, and
+# every path-handling bug it has had lived in exactly that gap.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # One red platform should not hide the other's result.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # The version this is developed on. No `engines` field to read it from, so it is
+          # stated here and here only.
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      # `output: 'export'` — no server, no image pipeline. What comes out of this is what
+      # ships, so a build that fails is a School with no board.
+      - run: npm run build --workspace=web
+        env:
+          NEXT_PUBLIC_DEMO_ONLY: '1'

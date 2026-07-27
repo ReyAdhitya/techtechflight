@@ -75,7 +75,18 @@ export function Scope({
   }
 
   return (
-    <figure className="m-0 flex flex-col gap-3">
+    /*
+     * Capped and centred rather than filling the column.
+     *
+     * A square scope on a full-width board is taller than a laptop viewport on its own, and
+     * it pushed every flight strip below the fold. The strips are where the Teacher works;
+     * the scope answers "which one is that". A picture that costs a whole screen has the two
+     * the wrong way round.
+     *
+     * In rem, so the cap follows the display scale like everything else does — LARGE FORMAT
+     * grows the scope with the type rather than stranding it at a fixed size (ADR-0008).
+     */
+    <figure className="mx-auto my-0 flex w-full max-w-[37.5rem] flex-col gap-3">
       {/*
        * Square, always. `meet` then has nothing to letterbox, the percentage positions of
        * the Drones above line up exactly with the metres below, and a metre across is the

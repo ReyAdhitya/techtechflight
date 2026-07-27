@@ -7,6 +7,21 @@ would notice.
 
 ### Fixed
 
+- **The scope's grid holds still, and its cells are square.** The window was the Fleet's own
+  extent plus a metre, recomputed on every Fleet State, so the grid shifted, the frame
+  reshaped and the number of cells changed on every telemetry tick — while `percentOf`
+  renormalised each Drone into that same moving box, which left the Drones looking like the
+  stationary thing. Reported as *"the squares move, the dots should move"*, which was exactly
+  right. The window is now a square from a fixed ladder of five sizes, centred on the setup
+  point, growing when a Drone leaves it and never shrinking. Cells are half a metre at the
+  default window and the caption states which — read from `gridStepM()`, so it cannot lie
+  when the window grows. A Drone beyond the largest window is held on the edge and named,
+  never dropped. See [ADR-0014](./adr/0014-a-fixed-scope-window.md) for why a fixed window is
+  not the flight area ADR-0012 deferred; without that distinction written down, the next
+  reader deletes this. **Two costs, both photographed and neither addressed:** the square
+  scope is about 3.5× taller at 1440 px, pushing every flight strip below the fold, and the
+  Fleet now occupies a smaller share of the frame, which makes the Drone labels overlap on a
+  390 px viewport.
 - **`npm test` is deterministic again.** Every component test that rendered a demonstration
   Fleet ran the real simulator with `Math.random` and spontaneous events switched on, so a
   Drone could take off unasked or drop its link on a 0.2%-per-tick roll in the middle of an

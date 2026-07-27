@@ -9,6 +9,27 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-27 The scope's window is held in a ref, and clamping lives in `project`
+
+- **Decision:** Hold the chosen window side in a `useRef` inside `Scope`, written during
+  render, rather than in `useState` adjusted during render or in an effect. And do the
+  edge-clamping inside `roomExtent`'s `project()` rather than at each call site.
+- **Reason:** The ref write is idempotent — the same props give the same side whether render
+  runs once or twice — so the usual objection to writing a ref during render does not apply
+  here, and `useState` would have cost a second render pass for a value no one re-renders on.
+  Clamping in `project()` means `projectOf`, `percentOf` and the conflict lines all inherit
+  it for free; clamping at the call sites would have been four places to forget, and the
+  conflict line is the one that would have been forgotten, because it is the only one that
+  does not go through a Drone.
+- **Alternatives considered:** Recomputing the window freely each render (this is the
+  original bug in miniature — a Drone on a rung boundary flips it every tick); lifting the
+  held side to `ControlScreen` as state (it is display bookkeeping, not screen state, and
+  `HistoryScreen` would have had to carry it too for no reason); clamping in `percentOf`
+  only, which leaves an unclamped conflict line drawn off the frame.
+- **Note:** The ref means the window resets when the scope unmounts. That is deliberate — a
+  Teacher who navigates away and back gets the smallest window that fits, and "never shrinks"
+  is a statement about a continuous look at the board, not about the session.
+
 ## 2026-07-27 The tests are pinned, and the demonstration stays unpredictable
 
 - **Decision:** Make the demonstration Fleet deterministic **in tests only**, by giving

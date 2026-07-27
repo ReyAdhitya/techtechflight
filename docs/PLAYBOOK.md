@@ -79,7 +79,7 @@ test.
 
 **Decisions live in `docs/adr/`**, numbered, prose, one decision each. Thirteen of them. The
 architecture is not to be re-litigated casually; ADR-0004 and `CONTEXT.md` are named in
-`NOTES.md` as the authority.
+`docs/DELIBERATE-POSITIONS.md` as the authority.
 
 **Design tokens** are a two-layer system in `web/app/globals.css`: shadcn-shaped base tokens
 (`--background`, `--card`, `--border`, `--primary`) and a semantic alias layer on top
@@ -129,7 +129,7 @@ to this repo's habit rather than a continuation of it. Worth an explicit decisio
 
 **Repo pitfalls**
 
-- `NOTES.md` lists six "obvious improvements" that are deliberate positions: tiles never
+- `docs/DELIBERATE-POSITIONS.md` lists six "obvious improvements" that are not: tiles never
   reorder, colour is never the sole carrier of meaning, Needs Attention renders at zero,
   the amber/coral hue split, elevation by lightness only, reduced-motion already handled.
   Argue with them explicitly via an ADR or leave them alone.

@@ -24,6 +24,16 @@ const at = (name: string, eastM: number, northM: number, airborne = true) =>
     telemetry: aTelemetry({ airborne, position: { eastM, northM } }),
   })
 
+/** The x of every vertical grid rule, in the order they are drawn. */
+const verticalRules = (container: HTMLElement) =>
+  [...container.querySelectorAll('line.stroke-hairline')]
+    .filter((rule) => rule.getAttribute('x1') === rule.getAttribute('x2'))
+    .map((rule) => rule.getAttribute('x1'))
+
+/** Where each mark sits, as the inline percentages the HTML layer is positioned by. */
+const markPositions = () =>
+  screen.getAllByRole('button').map((mark) => `${mark.style.left} ${mark.style.top}`)
+
 describe('the room the scope draws', () => {
   /*
    * The bug, stated as arithmetic.
@@ -107,6 +117,69 @@ describe('the room the scope draws', () => {
   it('puts north at the top, because the y axis of an image grows the other way', () => {
     const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 2, 4)])
     expect(room.project(0, 4).y).toBeLessThan(room.project(0, 0).y)
+  })
+
+  it('takes the smallest window for one Drone, and for none', () => {
+    expect(roomExtent([]).widthM).toBe(8)
+    expect(roomExtent([]).beyond).toEqual([])
+    expect(roomExtent([at('Drone 1', 0, 0)]).widthM).toBe(8)
+  })
+
+  it('changes rung exactly at the boundary, and not before it', () => {
+    // 4 m out is the far edge of the 8 m window; a millimetre further is not.
+    expect(roomExtent([at('Drone 1', 4, 0)]).widthM).toBe(8)
+    expect(roomExtent([at('Drone 1', 4.001, 0)]).widthM).toBe(12)
+
+    // The same at the last rung, where there is nothing above to grow into.
+    expect(roomExtent([at('Drone 1', 16, 0)]).beyond).toEqual([])
+    expect(roomExtent([at('Drone 1', 16.001, 0)]).beyond).toHaveLength(1)
+  })
+})
+
+describe('the grid across two Fleet States', () => {
+  /*
+   * The bug this file exists to keep fixed, in the words it was reported in: "the squares
+   * move, the dots should move". One assertion in three parts — the frame is identical, every
+   * rule is identical, and the Drones are not. Two of the three would have passed before the
+   * fix; holding all three at once is what says the grid has stopped drifting.
+   *
+   * jsdom reads SVG attributes and inline styles fine, so this one is genuinely testable
+   * here — unlike the aspect ratio it sits beside.
+   */
+  it('holds the frame and every rule still while the Drones move', () => {
+    const settled = [at('Drone 1', 0, 0), at('Drone 2', 2, 1)]
+    const moved = [at('Drone 1', 1.5, -1), at('Drone 2', 3, 2.5)]
+
+    const { container, rerender } = render(<Scope drones={settled} onSelect={() => {}} />)
+    const viewBox = container.querySelector('svg')!.getAttribute('viewBox')
+    const rules = verticalRules(container)
+    const marks = markPositions()
+
+    rerender(<Scope drones={moved} onSelect={() => {}} />)
+
+    expect(rules.length).toBeGreaterThan(0)
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe(viewBox)
+    expect(verticalRules(container)).toEqual(rules)
+    expect(markPositions()).not.toEqual(marks)
+  })
+
+  /*
+   * The window may grow, so the grid may legitimately change — once, visibly, and because a
+   * Drone left the frame. What it may not do is change back, which is what a Drone hovering
+   * on a rung boundary would otherwise make it do on every tick.
+   */
+  it('does not give the window back when the Drones close up again', () => {
+    const spread = [at('Drone 1', 0, 0), at('Drone 2', 11, 0)]
+    const closed = [at('Drone 1', 0, 0), at('Drone 2', 1, 0)]
+
+    const { container, rerender } = render(<Scope drones={spread} onSelect={() => {}} />)
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24')
+    const rules = verticalRules(container)
+
+    rerender(<Scope drones={closed} onSelect={() => {}} />)
+
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24')
+    expect(verticalRules(container)).toEqual(rules)
   })
 })
 

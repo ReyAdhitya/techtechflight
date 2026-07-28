@@ -11,7 +11,7 @@ describe('planning what a Lesson runs through', () => {
   it('says an empty plan is a normal plan', () => {
     render(<ExerciseList exercises={[]} onChange={() => {}} />)
 
-    expect(screen.getByText(/can run perfectly well without any/i)).toBeInTheDocument()
+    expect(screen.getByText(/A Lesson runs without them/i)).toBeInTheDocument()
   })
 
   it('adds one, with a duration when given', async () => {

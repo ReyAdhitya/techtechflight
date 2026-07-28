@@ -106,7 +106,7 @@ export function ControlScreen() {
               onClick={clearStudents}
               className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
             >
-              Everyone has put theirs down
+              Clear all assignments
             </button>
           )}
         </div>
@@ -291,7 +291,7 @@ function FlightStrip({
         <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
         <span className="tnum text-value text-ink-subtle">
           {vitals.batteryFraction === null
-            ? 'Charge unknown'
+            ? 'Charge not reported'
             : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
         </span>
         <span className="tnum ml-auto text-value text-ink-muted">

@@ -70,13 +70,13 @@ describe('with a Fleet but nothing of the Teacher’s own', () => {
   it('Students says nobody has a Drone yet', () => {
     show(<StudentsScreen />, 2_000)
 
-    expect(screen.getByText(/Nobody has a Drone yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/No Drone is assigned/i)).toBeInTheDocument()
   })
 
   it('Reports says no Lesson has finished', () => {
     render(<LessonReports />)
 
-    expect(screen.getByText(/None finished yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/No Lesson has been completed/i)).toBeInTheDocument()
   })
 
   it('Lesson offers to start one', () => {

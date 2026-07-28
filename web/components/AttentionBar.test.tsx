@@ -40,7 +40,7 @@ describe('when nothing needs the Teacher', () => {
     bar([aVitals()])
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('0')
-    expect(screen.getByText(/Nothing needs you/i)).toBeInTheDocument()
+    expect(screen.getByText(/No items require action/i)).toBeInTheDocument()
   })
 
   it('still shows the count, so its return is a number changing', () => {
@@ -88,7 +88,7 @@ describe('when several things need the Teacher', () => {
   it('says how soon in a word, so the ordering does not rest on colour', () => {
     bar(busy)
 
-    expect(screen.getByRole('status', { name: /what needs you next/i })).toHaveTextContent('Now')
+    expect(screen.getByRole('status', { name: /items requiring action/i })).toHaveTextContent('Now')
   })
 
   it('names the Student flying it, because that is who the Teacher speaks to', () => {

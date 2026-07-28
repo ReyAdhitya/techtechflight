@@ -57,7 +57,7 @@ export function WhatNeedsDoing() {
           <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
             <span className="tnum tracking-[-0.02em]">{todo.length}</span>
             <span className="text-heading text-ink-subtle">
-              {todo.length === 1 ? 'thing needs doing' : 'things need doing'}
+              {todo.length === 1 ? 'item requires action' : 'items require action'}
             </span>
           </h1>
           {todo.length === 0 && (
@@ -134,7 +134,7 @@ export function FleetReliability() {
       <section className="flex flex-col gap-4 ">
         <div className="flex flex-col gap-1">
           <h2 className="m-0 font-display text-heading font-medium">
-            Which Drones keep giving trouble
+            Recurring defects by Drone
           </h2>
           <p className="m-0 max-w-[60ch] text-value text-ink-subtle">
             {lessonsCounted === 0

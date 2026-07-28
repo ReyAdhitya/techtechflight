@@ -461,50 +461,6 @@ export function recordCommand(lessonId: string, command: CommandRecord): void {
   })
 }
 
-/**
- * Roughly what a browser will hold before it refuses.
- *
- * Not a limit anyone specified — browsers vary and none of them promise a number — so
- * this is a point at which to say something rather than a boundary. The failure it exists
- * to prevent is silent: a Teacher fills the quota mid-term, a save throws, the board keeps
- * working perfectly, and the record of the last three weeks is simply not there.
- */
-export const RECORDS_WARN_BYTES = 2_000_000
-
-export function recordsSize(book: Logbook): number {
-  try {
-    return JSON.stringify(book).length
-  } catch {
-    return 0
-  }
-}
-
-/** True when a Teacher should be told to export before the browser stops accepting more. */
-export function recordsAreHeavy(book: Logbook): boolean {
-  return recordsSize(book) > RECORDS_WARN_BYTES
-}
-
-/**
- * A Teacher's records, as a file they can keep.
- *
- * The only way anything written here leaves this browser. Kept beside the storage warning
- * rather than only in Settings, because the moment a Teacher has just finished a lesson is
- * the moment the record is worth most and the moment they are most likely to be reminded.
- */
-export function exportLogbook(book: Logbook = readLogbook()): void {
-  const blob = new Blob([JSON.stringify(book, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'techtechflight-logbook.json'
-  link.click()
-  URL.revokeObjectURL(url)
-}
-
-export function replaceLogbook(next: Logbook): void {
-  save(next)
-}
-
 export function clearLogbook(): void {
   save(EMPTY)
 }

@@ -642,8 +642,8 @@ Stated so it is not mistaken for an oversight:
 1. **History and Maintenance leaving the primary navigation** (§3.1) is the one change here
    that overrides a deliberate existing decision rather than extending it. Both surfaces
    survive with their content intact, but the call is yours.
-2. **Press-and-hold for emergency stop** (§4.5) is an unusual pattern and worth an explicit
-   yes. The alternative is a confirmation dialog, which is slower in the moment it matters.
+2. ~~**Press-and-hold for emergency stop**~~ **Resolved 2026-07-28.** §4.5 is a **single
+   press** (owner). C8's confirm-before-send reading is superseded; see Decisions.
 3. **Browser-based simulation needs its own ADR in Phase 4** — it puts a Telemetry Source in
    the browser, which touches the seam ADR-0001 drew and the split ADR-0003 made. The design
    above assumes it; the architecture has to justify it.

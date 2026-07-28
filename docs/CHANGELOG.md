@@ -5,6 +5,19 @@ would notice.
 
 ## Unreleased
 
+### Changed
+
+- **The scope writes each Drone's height under its name, in place of the phase word.**
+  *"Level"* said the Drone was holding its height without saying what height; the number is
+  the thing a Teacher can act on, and the phase is still on the flight strip in words. An
+  airframe that cannot measure height draws no number at all — not a dash, not `0.0 m`, which
+  is what a Drone on the floor correctly says. The height comes off `DroneState` rather than
+  Vitals, so Reports gets labelled marks too.
+- **The scope no longer captions its grid with a cell size.** *"Grid: 0.5 m"* read as a claim
+  about what a cell measures on the glass, and every monitor is a different size, so on screen
+  it could never be true. The grid itself is unchanged. The symbol keys stay — *Filled =
+  flying* says what a mark means, not how big it is.
+
 ### Fixed
 
 - **A Teacher on a screen reader is no longer told the scope is a room.** The `<svg>` was

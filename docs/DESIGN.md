@@ -272,18 +272,18 @@ Fixed anatomy. The eye learns the positions.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ Drone 3    Priya      1.7 m ↓0.4 m/s     63% · ~8 min            │
-│                                            Response 2s ago       │
+│ Drone 3    Priya      1.7 m ↓0.4 m/s   63% · ~8 min    Response 2s ago │
 │ X 2.4 m E · Y 1.1 m N · Z 1.7 m                                  │
 │ Exercise 2: Hover                                                │
 │ Nearest aircraft: 0.9 m from Drone 1                             │
 │ ▌Now  Separate it from Drone 1 — 0.9m apart.    [ Acknowledge ]  │
-│ [ Land ]  [ Hold ]  [ More ▾ ]              [ Stop ]             │
+│ [ Land ]  [ Hold ]                          [ Stop ]             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
 Left to right: **Drone Name · Student · height with direction · charge with time remaining ·
-response age.** Then the coordinate group, Exercise, separation, Alerts, Commands.
+response age** (response sits in the freespace column, flush right — charge stays snug after
+height). Then the coordinate group, Exercise, separation, Alerts, Commands.
 
 **No phase word, as of 2026-07-28.** The strip read `Level · 2.6 m`, which is the same fact
 twice — a Drone holding 2.6 m is what *Level* means — and the height carries the number the

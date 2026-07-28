@@ -7,6 +7,9 @@ would notice.
 
 ### Fixed
 
+- **Every Drone strip freespace is the response column (#41).** Head grid is
+  `auto_auto_auto_auto_1fr` so charge stays snug after height; Response flush right. Quiet
+  strip vertical gap tightened; Land/Hold left, Stop/Release still `ml-auto` (not merged).
 - **Scope Front spreads the classroom row (#38).** Elevation floor axes swapped — Front
   horizontal = **east**, Side = **north** — so parked craft at `eastM: 0,1,2…` / `northM: 0`
   separate on Front. ADR-0016/0017 and training T7/T7b follow. (Fullscreen icon-only and

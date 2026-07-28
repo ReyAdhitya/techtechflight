@@ -33,17 +33,26 @@ export const SEVERITY_PRESENTATION: Readonly<
   info: { label: 'Later', className: 'text-ink-muted border-hairline' },
 }
 
-/** Height with its direction attached, because a number alone does not say what next. */
+/**
+ * Height with its direction attached, because a number alone does not say what next.
+ *
+ * This used to give nothing at all for a Drone on the ground, on the reasoning that the phase
+ * word beside it already said "On the ground" and a second cell would print the fact twice.
+ * **The phase word is gone**, so that reasoning went with it: the cell now speaks for a
+ * grounded Drone rather than leaving the strip silent about where it is.
+ *
+ * A grounded Drone gets its height and nothing else — no arrow, and no "steady" either, which
+ * would be a measurement of stillness where a plain fact belongs. `airborne` is read from the
+ * airframe rather than from phase, because a latched emergency stop resolves to `emergency`
+ * whether the Drone is on a desk or falling out of the air.
+ *
+ * `null` survives for one case only: an airframe that cannot measure height at all is a
+ * different fact from one measuring zero (`docs/DESIGN.md` §11.1), and it is said in words.
+ */
 export function formatVerticalMovement(vitals: DroneVitals): string | null {
-  // Nothing, when the Drone is not airborne — the phase word beside this already says
-  // "On the ground", and this slot echoing it printed the fact twice in the same row.
-  // "0.0 m" would be worse still: a measurement where a plain fact belongs. Read from
-  // the airframe rather than from phase, because a latched emergency stop resolves to
-  // `emergency` whether the Drone is on a desk or falling, so phase cannot answer this.
-  // The caller renders the empty cell, so the strip's columns hold their positions.
-  if (!vitals.airborne) return null
   if (vitals.altitudeM === null) return 'Height not reported'
   const height = `${vitals.altitudeM.toFixed(1)} m`
+  if (!vitals.airborne) return height
   if (vitals.verticalRateMps === null) return height
   if (Math.abs(vitals.verticalRateMps) < 0.05) return `${height} · steady`
   const arrow = vitals.verticalRateMps > 0 ? '↑' : '↓'

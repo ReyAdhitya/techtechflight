@@ -7,6 +7,9 @@ would notice.
 
 ### Fixed
 
+- **Control Every Drone strips stay in board order.** Stopped worst-first `compareStrips`
+  reshuffling when alerts appear or clear; urgency remains on the Attention bar only.
+  DESIGN.md and deliberate position #1 updated so the next reader does not put it back.
 - **MAVLink adapter stays live when SITL omits battery.** Match frames by registry class
   (not `instanceof`), and when HEARTBEAT is present but charge is unknown emit
   `batteryFraction: 1` with `batteryIsEstimate: true` so the strip shows contact instead of

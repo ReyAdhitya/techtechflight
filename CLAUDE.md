@@ -46,7 +46,10 @@ the invariant is a layout one (see `SiteHeader.test.tsx`, and `vercel-routing.te
 the same idea applied to config), and **look at a screenshot** before believing a visual
 fix. `scripts/shot.mjs <label> <route> <width> [height]` photographs a route — it serves
 `web/out`, so **build first**; it does not build for you. Omit `height` for the whole page.
-Shots land in `scripts/shots/`, which is gitignored.
+Shots land in `scripts/shots/`, which is gitignored. **Print is the same class of bug:**
+dark-theme semantic tokens stay light-on-white unless `@media print` resets them (see
+`ReportsScreen.test.tsx`). Browser Headers and footers (URL, clock) are not CSS — Teachers
+turn them off in the print dialog.
 
 **`--text-value` is deliberately the same size as `--text-body`.** Data is not small print
 here. And every size is `rem` — a `px` font-size on this surface is a defect (ADR-0008).

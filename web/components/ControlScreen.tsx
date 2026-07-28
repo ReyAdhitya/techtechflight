@@ -16,7 +16,6 @@ import {
 import type { CommandKind } from '@techtechflight/contract'
 import { alertQueue, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
 import type { TrackedCommand } from '@/lib/command-tracker'
-import { GuardedButton } from './ui/GuardedButton'
 import {
   formatCoordinates,
   formatEndurance,
@@ -71,6 +70,25 @@ export function ControlScreen() {
   // Attention bar (`alertQueue`); reshuffling strips when alerts appear or clear is what
   // made this list dizzying. `FleetState.drones` (and thus `vitals`) are already that order.
   const strips = vitals
+  const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
+
+  const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
+    command(droneId, kind)
+    /*
+     * Noted against the Lesson as it is sent (C7), not when it resolves.
+     * What the report is a record of is what the Teacher asked for — a
+     * Command that produced nothing is still a thing that happened, and
+     * arguably the more interesting one.
+     */
+    if (lesson) {
+      recordCommand(lesson.id, {
+        at: now,
+        droneId,
+        droneName: callsign,
+        kind,
+      })
+    }
+  }
 
   return (
     <main
@@ -95,6 +113,24 @@ export function ControlScreen() {
           vitals={vitals}
           selected={selected}
           onSelect={(droneId) => setSelected((current) => (current === droneId ? null : droneId))}
+          selectedPanel={
+            selectedVitals ? (
+              <ScopeSelectedDock
+                vitals={selectedVitals}
+                student={studentOf(book, selectedVitals.droneId)}
+                command={(droneId, kind) =>
+                  issueCommand(droneId, kind, selectedVitals.callsign)
+                }
+                onReleaseStop={
+                  scenarios
+                    ? () => scenarios.resetEmergencyStop(selectedVitals.droneId)
+                    : null
+                }
+                tracked={commandFor(selectedVitals.droneId)}
+                onClear={() => setSelected(null)}
+              />
+            ) : null
+          }
         />
       </section>
 
@@ -144,23 +180,7 @@ export function ControlScreen() {
               isAcknowledged={isAcknowledged}
               acknowledgedAt={acknowledgedAt}
               now={now}
-              command={(droneId, kind) => {
-                command(droneId, kind)
-                /*
-                 * Noted against the Lesson as it is sent (C7), not when it resolves.
-                 * What the report is a record of is what the Teacher asked for — a
-                 * Command that produced nothing is still a thing that happened, and
-                 * arguably the more interesting one.
-                 */
-                if (lesson) {
-                  recordCommand(lesson.id, {
-                    at: now,
-                    droneId,
-                    droneName: entry.callsign,
-                    kind,
-                  })
-                }
-              }}
+              command={(droneId, kind) => issueCommand(droneId, kind, entry.callsign)}
               onReleaseStop={
                 scenarios
                   ? () => scenarios.resetEmergencyStop(entry.droneId)
@@ -177,12 +197,61 @@ export function ControlScreen() {
 }
 
 /**
- * One aircraft, one row.
+ * Commands for the selected mark while the scope covers the strip list.
  *
- * A strip is not a tile. A tile answers "what is this"; a strip answers "what is this
- * doing and how long have I got", which is why height carries its direction and charge
- * carries a time rather than only a percentage.
+ * Same Land / Hold / Stop as the strip — not a second command language. A Teacher who
+ * picked a mark in full screen still has to act without exiting.
  */
+function ScopeSelectedDock({
+  vitals,
+  student,
+  command,
+  onReleaseStop,
+  tracked,
+  onClear,
+}: {
+  vitals: DroneVitals
+  student: string | null
+  command: (droneId: string, kind: CommandKind) => void
+  onReleaseStop: (() => void) | null
+  tracked: TrackedCommand | null
+  onClear: () => void
+}) {
+  return (
+    <div
+      role="region"
+      aria-label={`Controls for ${vitals.callsign}`}
+      className="flex flex-col gap-3 rounded-surface border border-hairline bg-surface-1 p-4"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 className="m-0 font-display text-body font-medium text-ink">{vitals.callsign}</h3>
+          {student && <span className="text-value text-ink-subtle">{student}</span>}
+          <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
+          <span className="tnum text-value text-ink-subtle">
+            {vitals.batteryFraction === null
+              ? 'Charge not reported'
+              : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+        >
+          Clear
+        </button>
+      </div>
+      <CommandRow
+        vitals={vitals}
+        command={command}
+        onReleaseStop={onReleaseStop}
+        tracked={tracked}
+      />
+    </div>
+  )
+}
+
 /**
  * Who is flying this one.
  *
@@ -225,6 +294,13 @@ function StudentField({
   )
 }
 
+/**
+ * One aircraft, one row.
+ *
+ * A strip is not a tile. A tile answers "what is this"; a strip answers "what is this
+ * doing and how long have I got", which is why height carries its direction and charge
+ * carries a time rather than only a percentage.
+ */
 function FlightStrip({
   vitals,
   student,
@@ -408,6 +484,7 @@ function CommandRow({
 }) {
   const grounded = !vitals.airborne
   const stopHeld = vitals.phase === 'emergency'
+  const showTracked = showCommandReceipt(tracked, stopHeld)
 
   return (
     <div className="flex flex-wrap items-center gap-2 min-[60rem]:flex-nowrap">
@@ -451,16 +528,34 @@ function CommandRow({
           </span>
         )
       ) : (
-        <GuardedButton
-          label="Stop"
-          confirmLabel="Press again to stop"
-          onConfirm={() => command(vitals.droneId, 'emergency-stop')}
-          className="ml-auto"
-        />
+        <button
+          type="button"
+          onClick={() => command(vitals.droneId, 'emergency-stop')}
+          className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+        >
+          Stop
+        </button>
       )}
-      {tracked && <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>}
+      {showTracked && (
+        <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>
+      )}
     </div>
   )
+}
+
+/**
+ * Emergency stop already has lasting signals: Release stop (or the held reason) and the
+ * critical alert. "Stop — done" next to those reads as a stuck second control — the owner
+ * asked it gone. Land/Hold still get the C4 receipt line.
+ */
+function showCommandReceipt(
+  tracked: TrackedCommand | null,
+  stopHeld: boolean,
+): tracked is TrackedCommand {
+  if (tracked == null) return false
+  if (tracked.command.kind !== 'emergency-stop') return true
+  if (stopHeld || tracked.stage === 'done') return false
+  return true
 }
 
 function describeCommand(tracked: TrackedCommand): string {

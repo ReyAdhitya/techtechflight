@@ -8,7 +8,8 @@ import { FleetProvider } from './FleetProvider'
  * Stop, then Release stop once the latch is on Telemetry.
  *
  * After the motors are cut the same CTA must not stay — a Teacher would think Stop had
- * failed to take. The primary label is just Stop (not "Stop immediately").
+ * failed to take. The primary label is just Stop (not "Stop immediately"). Owner wants a
+ * single click — no press-and-hold, no second confirm.
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
@@ -40,9 +41,10 @@ describe('the emergency stop on a flight strip', () => {
     expect(screen.getAllByRole('button', { name: /^Stop$/ }).length).toBe(6)
     expect(screen.queryByRole('button', { name: /Stop immediately/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Stop — hold/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Press again to stop/ })).not.toBeInTheDocument()
   })
 
-  it('becomes Release stop after the latch, and clears it', async () => {
+  it('becomes Release stop after one click, and clears it', async () => {
     vi.useRealTimers()
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
@@ -55,20 +57,18 @@ describe('the emergency stop on a flight strip', () => {
 
     const stop = screen.getAllByRole('button', { name: /^Stop$/ })[0]!
     const strip = stop.closest('li')!
-    fireEvent.pointerDown(stop)
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1_000))
-    })
-    fireEvent.pointerUp(stop)
+    fireEvent.click(stop)
 
     await waitFor(() => {
       expect(within(strip).getByRole('button', { name: 'Release stop' })).toBeInTheDocument()
     })
     expect(within(strip).queryByRole('button', { name: /^Stop$/ })).not.toBeInTheDocument()
+    expect(within(strip).queryByText(/Stop — done/)).not.toBeInTheDocument()
 
     fireEvent.click(within(strip).getByRole('button', { name: 'Release stop' }))
     await waitFor(() => {
       expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
     })
+    expect(within(strip).queryByText(/Stop — done/)).not.toBeInTheDocument()
   })
 })

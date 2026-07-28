@@ -100,7 +100,7 @@ function PreFlight({
         </h1>
         <p className="m-0 text-body text-ink-muted">
           {usable.length === 0
-            ? 'Nothing is ready yet. The list below is what stands in the way.'
+            ? 'None serviceable yet. The list below is what stands in the way.'
             : `Sufficient for ${usable.length} ${usable.length === 1 ? 'Student' : 'Students'} airborne at once.`}
         </p>
       </div>
@@ -137,8 +137,8 @@ function PreFlight({
                   </span>
                   <span className="text-value text-ink-subtle">
                     {drone.status === 'Not Ready'
-                      ? 'Put it on charge — it should come back before the lesson.'
-                      : 'Set this one aside. It will not be right in time.'}
+                      ? 'Place on charge. Projected serviceable before the lesson.'
+                      : 'Withdraw from service. Not projected serviceable before the lesson.'}
                   </span>
                 </Link>
               </li>

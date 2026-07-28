@@ -7,6 +7,17 @@ would notice.
 
 ### Added
 
+- **The scope has a side view, toggled with the top-down.** The plan view answers *which one
+  is that* and *are two about to meet*; it cannot answer **are those two at the same height**,
+  and two marks a hand's width apart in plan may be three metres apart vertically and in no
+  danger at all. One box, one view, a labelled control to swap — stacking a second picture
+  would have undone the 600 px cap the week it landed. A metre up is the same length as a
+  metre across, because a stretched vertical axis makes two Drones look separated when they
+  are not. Top-down on every load; the choice is not remembered. A Drone that cannot measure
+  its height is left out and named rather than drawn on the ground line, which would say it
+  had landed when the truth is that it cannot say. See
+  [ADR-0016](./adr/0016-a-side-view-on-the-scope.md), including why the ground line is not the
+  flight area ADR-0012 defers.
 - **Every flight strip carries X, Y and Z.** `X 2.4 m E · Y 1.1 m N · Z 1.7 m`, on its own
   line beneath the head row — never inside it, because §4.4 justifies the whole strip format
   on the eye learning fixed positions and three more numbers in the head row would push charge

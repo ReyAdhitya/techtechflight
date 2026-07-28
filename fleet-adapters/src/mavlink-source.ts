@@ -141,7 +141,21 @@ export class MavlinkTelemetrySource implements TelemetrySource {
     const clazz = REGISTRY[packet.header.msgid]
     if (!clazz) return
 
-    const data = packet.protocol.data(packet.payload, clazz)
+    // Match on the registry class, not `instanceof`. SITL traffic and recorded fixtures both
+    // decode through the same REGISTRY entries; `instanceof` can fail across package copies.
+    const data = packet.protocol.data(packet.payload, clazz) as {
+      baseMode?: number
+      systemStatus?: number
+      batteryRemaining?: number
+      voltageBattery?: number
+      x?: number
+      y?: number
+      z?: number
+      relativeAlt?: number
+      roll?: number
+      pitch?: number
+      yaw?: number
+    }
     const systemId = packet.header.sysid
     // Our own GCS heartbeats bounce back on some links; ignore them.
     if (systemId === 255) return
@@ -149,42 +163,45 @@ export class MavlinkTelemetrySource implements TelemetrySource {
     const draft = this.#craft.get(systemId) ?? emptyDraft()
     let changed = false
 
-    if (data instanceof minimal.Heartbeat) {
-      draft.armed = (data.baseMode & minimal.MavModeFlag.SAFETY_ARMED) !== 0
-      draft.systemStatus = data.systemStatus
+    if (clazz === minimal.Heartbeat) {
+      draft.armed = ((data.baseMode ?? 0) & minimal.MavModeFlag.SAFETY_ARMED) !== 0
+      draft.systemStatus = data.systemStatus ?? minimal.MavState.UNINIT
       changed = true
-    } else if (data instanceof common.SysStatus) {
-      if (data.batteryRemaining >= 0) {
-        draft.batteryFraction = clamp01(data.batteryRemaining / 100)
+    } else if (clazz === common.SysStatus) {
+      const remaining = data.batteryRemaining ?? -1
+      const voltage = data.voltageBattery ?? 0
+      if (remaining >= 0) {
+        draft.batteryFraction = clamp01(remaining / 100)
         draft.batteryIsEstimate = false
         changed = true
-      } else if (data.voltageBattery > 0 && data.voltageBattery < 65_535) {
+      } else if (voltage > 0 && voltage < 65_535) {
         // Millivolts; a 3S pack at rest is roughly 12.6 V. Estimate only when remaining is
         // unavailable — the board marks estimates so a Teacher does not over-trust them.
-        draft.batteryFraction = clamp01(data.voltageBattery / 1_000 / 12.6)
+        draft.batteryFraction = clamp01(voltage / 1_000 / 12.6)
         draft.batteryIsEstimate = true
         changed = true
       }
-    } else if (data instanceof common.BatteryStatus) {
-      if (data.batteryRemaining >= 0) {
-        draft.batteryFraction = clamp01(data.batteryRemaining / 100)
+    } else if (clazz === common.BatteryStatus) {
+      const remaining = data.batteryRemaining ?? -1
+      if (remaining >= 0) {
+        draft.batteryFraction = clamp01(remaining / 100)
         draft.batteryIsEstimate = false
         changed = true
       }
-    } else if (data instanceof common.LocalPositionNed) {
+    } else if (clazz === common.LocalPositionNed) {
       // NED: x north, y east, z down. Height above the takeoff point is −z.
-      draft.northM = round1(data.x)
-      draft.eastM = round1(data.y)
-      draft.altitudeM = round1(-data.z)
+      draft.northM = round1(data.x ?? 0)
+      draft.eastM = round1(data.y ?? 0)
+      draft.altitudeM = round1(-(data.z ?? 0))
       changed = true
-    } else if (data instanceof common.GlobalPositionInt) {
-      draft.altitudeM = round1(data.relativeAlt / 1_000)
+    } else if (clazz === common.GlobalPositionInt) {
+      draft.altitudeM = round1((data.relativeAlt ?? 0) / 1_000)
       changed = true
-    } else if (data instanceof common.Attitude) {
+    } else if (clazz === common.Attitude) {
       draft.orientation = {
-        rollDegrees: round1(radToDeg(data.roll)),
-        pitchDegrees: round1(radToDeg(data.pitch)),
-        yawDegrees: round1(wrapDegrees(radToDeg(data.yaw))),
+        rollDegrees: round1(radToDeg(data.roll ?? 0)),
+        pitchDegrees: round1(radToDeg(data.pitch ?? 0)),
+        yawDegrees: round1(wrapDegrees(radToDeg(data.yaw ?? 0))),
       }
       changed = true
     }
@@ -235,18 +252,27 @@ function emptyDraft(): CraftDraft {
 /**
  * Build a fresh Telemetry object from the accumulated craft draft.
  *
- * Returns null until battery is known — every other field is optional on `Telemetry`, but
- * charge is not, and inventing 0% would show a flat pack the aircraft never reported.
+ * Charge is required on `Telemetry`, but some links (notably older ArduPilot SITL) emit
+ * HEARTBEAT / position with `batteryRemaining = -1` and no voltage. Staying silent then
+ * makes a heartbeating craft read as Offline. Emit with an estimated full pack marked
+ * `batteryIsEstimate` until a real remaining or voltage arrives.
  */
 function toTelemetry(draft: CraftDraft): Telemetry | null {
-  if (draft.batteryFraction === null) return null
+  const contacted =
+    draft.systemStatus !== minimal.MavState.UNINIT ||
+    draft.altitudeM !== undefined ||
+    draft.batteryFraction !== null
+  if (!contacted) return null
+
+  const batteryFraction = draft.batteryFraction ?? 1
+  const batteryIsEstimate = draft.batteryFraction === null ? true : draft.batteryIsEstimate
 
   const airborne =
     draft.altitudeM !== undefined ? draft.altitudeM > 0.1 : draft.armed
 
   const telemetry: Telemetry = {
-    batteryFraction: draft.batteryFraction,
-    batteryIsEstimate: draft.batteryIsEstimate,
+    batteryFraction,
+    batteryIsEstimate,
     airborne,
     fault: faultFrom(draft.systemStatus),
   }

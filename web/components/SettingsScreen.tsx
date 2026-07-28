@@ -1,38 +1,25 @@
 'use client'
 
-import { useRef, useState, useSyncExternalStore } from 'react'
-import {
-  clearLogbook,
-  readLogbook,
-  readServerLogbook,
-  replaceLogbook,
-  exportLogbook,
-  recordsAreHeavy,
-  recordsSize,
-  studentsFrom,
-  subscribeLogbook,
-} from '@/lib/logbook'
 import { useFleet } from './FleetProvider'
 import { ScenarioPanel } from './ScenarioPanel'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
 /**
- * The things a Teacher can change, and the honest account of where their records live.
+ * The things a Teacher can change, and what the ground station is doing.
  *
  * Thresholds are read-only here on purpose. What counts as a usable charge, and how long
  * silence lasts before Telemetry stops being trusted, are the ground station's decisions
  * — they are properties of the room and the radio, and a second copy of them in the
  * browser would drift the moment either changed.
+ *
+ * There is no records panel any more, and so no Export, Import or Clear everything. Notes,
+ * service decisions and lesson records still live in this one browser profile; what has gone
+ * is every route to moving or clearing them. That was decided with its consequences stated —
+ * see `docs/CHANGELOG.md`.
  */
 export function SettingsScreen() {
   const { snapshot, demo } = useFleet()
-  const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
-  const [message, setMessage] = useState<string | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
-
-  const notes = Object.keys(book.notes).length
-  const decisions = Object.keys(book.service).length
 
   return (
     <main
@@ -68,115 +55,8 @@ export function SettingsScreen() {
         </p>
       </Panel>
 
-      <Panel title="Your records">
-        <p className="m-0 text-value text-ink">
-          {notes === 0 && decisions === 0 && book.lessons.length === 0
-            ? 'Nothing saved yet.'
-            : `${book.lessons.length} lessons, ${notes} notes, ${decisions} service decisions.`}
-        </p>
-        <p className="m-0 text-value text-ink-subtle">
-          Notes, service decisions and lesson records are kept in this browser only. The
-          board sends nothing to the ground station, so there is nowhere else to put them
-          — which means they do not follow you to another laptop, and clearing site data
-          clears them. Export them if they matter.
-        </p>
-
-        {recordsAreHeavy(book) && (
-          /*
-           * Said before the quota is reached rather than after. The failure this prevents
-           * is silent: a save throws, the board carries on working perfectly, and a term
-           * of a Teacher's own records is simply not there.
-           */
-          <p className="m-0 text-value text-status-not-ready" role="status">
-            These records are getting large for a browser to hold
-            ({Math.round(recordsSize(book) / 1_000)} KB). Export them and clear the older
-            lessons before the browser starts refusing to save.
-          </p>
-        )}
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-            onClick={() => {
-              exportLogbook(book)
-              setMessage('Exported.')
-            }}
-          >
-            Export
-          </button>
-
-          <button
-            type="button"
-            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-            onClick={() => fileRef.current?.click()}
-          >
-            Import
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json"
-            className="hidden"
-            onChange={async (event) => {
-              const file = event.target.files?.[0]
-              if (!file) return
-              try {
-                // Every field defaulted rather than trusted: a logbook exported by an
-                // older build has none of the newer ones, and a Teacher importing last
-                // term's records should get them back, not an error.
-                const parsed = JSON.parse(await file.text()) as Parameters<
-                  typeof studentsFrom
-                >[0]
-                replaceLogbook({
-                  notes: parsed.notes ?? {},
-                  service: parsed.service ?? {},
-                  lessons: parsed.lessons ?? [],
-                  // Reads the older name too, so a file exported last term still restores.
-                  students: studentsFrom(parsed),
-                  roll: parsed.roll ?? [],
-                })
-                setMessage('Imported.')
-              } catch {
-                setMessage('That file could not be read as a logbook.')
-              }
-              event.target.value = ''
-            }}
-          />
-
-          <button
-            type="button"
-            className="min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault"
-            onClick={() => {
-              // Deliberately confirmed. Everything else on this board is reversible;
-              // this is the one control that destroys something a Teacher wrote.
-              if (window.confirm('Delete every note, service decision and lesson record?')) {
-                clearLogbook()
-                setMessage('Cleared.')
-              }
-            }}
-          >
-            Clear everything
-          </button>
-        </div>
-
-        {message && (
-          <p className="m-0 text-value text-ink-muted" role="status">
-            {message}
-          </p>
-        )}
-      </Panel>
-
       <ScenarioPanel />
 
-      <Panel title="Keyboard">
-        <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
-          <dt className="label self-center">Ctrl / ⌘ + K</dt>
-          <dd className="m-0 text-value">Jump to any Drone or screen</dd>
-          <dt className="label self-center">Esc</dt>
-          <dd className="m-0 text-value">Close whatever is open</dd>
-        </dl>
-      </Panel>
     </main>
   )
 }

@@ -368,30 +368,6 @@ export function alertQueue(
   )
 }
 
-/** The worst severity among a Drone's alerts, for ordering strips. */
-export function worstSeverity(vitals: DroneVitals): AlertSeverity | null {
-  return vitals.alerts[0]?.severity ?? null
-}
-
-/**
- * Strip order: worst first, and among Drones with the same worst severity, the one with
- * more of them.
- *
- * A Drone with two criticals and a Drone with one are not in the same trouble, and
- * falling back to alphabetical between them buried the worse aircraft under a callsign.
- */
-export function compareStrips(a: DroneVitals, b: DroneVitals): number {
-  const count = (vitals: DroneVitals, severity: AlertSeverity) =>
-    vitals.alerts.filter((alert) => alert.severity === severity).length
-
-  return (
-    count(b, 'critical') - count(a, 'critical') ||
-    count(b, 'warning') - count(a, 'warning') ||
-    count(b, 'info') - count(a, 'info') ||
-    a.callsign.localeCompare(b.callsign)
-  )
-}
-
 /**
  * When each condition began, so an alert can say how long it has been waiting.
  *

@@ -14,7 +14,7 @@ import {
   subscribeLogbook,
 } from '@/lib/logbook'
 import type { CommandKind } from '@techtechflight/contract'
-import { alertQueue, compareStrips, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
+import { alertQueue, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
 import type { TrackedCommand } from '@/lib/command-tracker'
 import { GuardedButton } from './ui/GuardedButton'
 import {
@@ -67,9 +67,10 @@ export function ControlScreen() {
     )
   }
 
-  // Worst first, and among equals the one with more of them. Drone Name breaks the final
-  // tie so a Fleet where nothing is wrong holds a stable order rather than reshuffling.
-  const strips = [...vitals].sort(compareStrips)
+  // Board order only — same muscle memory as the Fleet tiles. Urgency lives on the
+  // Attention bar (`alertQueue`); reshuffling strips when alerts appear or clear is what
+  // made this list dizzying. `FleetState.drones` (and thus `vitals`) are already that order.
+  const strips = vitals
 
   return (
     <main

@@ -200,7 +200,7 @@ The screen a Teacher watches. The only screen with Commands on it.
 │              ·Drone 3 ═══ Drone 1  conflict     │          │
 │                                                            │
 ├────────────────────────────────────────────────────────────┤
-│ 4  FLIGHT STRIPS       one row per Drone, worst first      │
+│ 4  FLIGHT STRIPS       one row per Drone, board order      │
 │    ...                                                     │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -305,9 +305,10 @@ rounded to two and a third digit would be precision it has not got.
 The same readout appears in the Drone detail dialog, in the same format, so opening a Drone
 does not make a Teacher learn a second one.
 
-The strip is ordered worst-first, weighted by how many Alerts a Drone holds within a
-severity, with Drone Name as the stable final tiebreak (B4). A Drone with two Now-level
-Alerts is not in the same trouble as one with a single Now.
+Strips stay in `DroneRegistration.boardOrder` — the same fixed places as the Fleet tiles
+(§1.1). Alerts may light a strip or change its numbers; they must not move the row. Urgency
+is the Attention bar's job (`alertQueue`, worst first). A Teacher who learned "worst floats
+to the top" on this list was reading a defect that felt deliberate.
 
 Rows have real height rather than an expanded hit area. A strip wraps its Alerts onto
 following lines, and those lines paint over an expanded target — leaving the bottom half of

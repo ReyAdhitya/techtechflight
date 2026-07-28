@@ -10,14 +10,18 @@ and `CONTEXT.md` remain the authority — this file points at them, it does not 
 
 ---
 
-### 1. Tiles never reorder when a Status changes
+### 1. Tiles and Control strips never reorder when Status or Alerts change
 
-`web/components/FleetBoard.tsx`
+`web/components/FleetBoard.tsx` · `web/components/ControlScreen.tsx`
 
-Order is by `DroneRegistration.boardOrder` and never by Status. A Teacher builds muscle
-memory for where each Drone sits; an element that jumps to the top because it got worse
-destroys exactly the glanceability the board exists for. Control rooms reached the same
-conclusion independently — see `docs/DESIGN.md` §1.1.
+Order is by `DroneRegistration.boardOrder` and never by Status or Alert severity. A Teacher
+builds muscle memory for where each Drone sits; an element that jumps to the top because it
+got worse destroys exactly the glanceability the board exists for. Control rooms reached the
+same conclusion independently — see `docs/DESIGN.md` §1.1.
+
+On Control, that means the **Every Drone** list stays put while the **Attention** bar alone
+carries urgency (`alertQueue`). Do not restore worst-first strip sorting — it was removed
+because live reordering made the list dizzying.
 
 ### 2. Colour is never the sole carrier of meaning
 

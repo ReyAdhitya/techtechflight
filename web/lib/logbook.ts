@@ -11,8 +11,8 @@ import type { DroneId, FleetEvent } from '@techtechflight/contract'
  * So the Logbook lives in this browser. That is a real limitation and worth being plain
  * about — it does not follow a Teacher to another laptop, and clearing site data clears
  * it. It is also the only option that keeps the board read-only, works in a school with
- * no internet, and needs no account. Everything in here is exportable from Settings so
- * it is never trapped.
+ * no internet, and needs no account. There is no export route: records stay in one
+ * browser profile (Settings Export/Import/Clear were withdrawn).
  */
 
 export type ServiceState = 'in-service' | 'watch' | 'out-of-service'

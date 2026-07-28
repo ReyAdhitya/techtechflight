@@ -5,6 +5,28 @@ would notice.
 
 ## Unreleased
 
+### Removed
+
+- **Settings no longer has a records panel or a keyboard panel.** Export, Import and Clear
+  everything are withdrawn with the first of them. Notes, service decisions and lesson records
+  stay exactly where they were — in one browser profile — but every route to moving them to
+  another laptop, or to clearing them short of clearing site data, is gone. That consequence
+  was stated and accepted. Settings keeps the ground station block and the scenario controls,
+  which `docs/DESIGN.md` §9 requires to live there and nowhere near a Command.
+- **The end-of-lesson prompt offering to export a heavy logbook went with them.** It told a
+  Teacher their records were getting large and offered the one control that could do something
+  about it. With that control deleted the prompt would have been a dead end, and a warning
+  with no remedy is worse than no warning.
+- **`Ctrl`/`⌘`+K and `Esc` still work, and are now undiscoverable.** The keyboard panel was
+  the only place on the board that said they existed. **This is a decision, not an oversight**
+  — recorded here so it reads as one at the next accessibility audit. `docs/DESIGN.md` §11.3
+  still requires every screen and every Drone to be reachable by keyboard, and they still are;
+  what has gone is the documentation of *how*, not the capability.
+- **Dead logbook code went with the panels:** `recordsAreHeavy`, `exportLogbook`,
+  `recordsSize`, `RECORDS_WARN_BYTES` and `replaceLogbook`, each of which lost its last
+  caller. There is no lint here, so an unused export is never flagged and reads as an API the
+  next person may build on.
+
 ### Changed
 
 - **"End the lesson" is a primary control rather than a ghost button.** It carried a hairline

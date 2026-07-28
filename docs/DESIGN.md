@@ -234,6 +234,10 @@ height against north — see [ADR-0016](./adr/0016-a-side-view-on-the-scope.md) 
 [ADR-0017](./adr/0017-a-front-view-on-the-scope.md). Conflict and link lines stay on Top-down
 only.
 
+A **Full screen** control temporarily lifts the 600 px / 37.5rem cap (ADR-0014) via a fixed
+overlay — **Exit full screen** or Escape restores the capped layout; the choice is not
+remembered. View toggles stay usable inside.
+
 A plan view looking down, metres from where the Fleet was set up.
 
 - Each Drone: a mark, its **Drone Name**, and its **height** as a number.

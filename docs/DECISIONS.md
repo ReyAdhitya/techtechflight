@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Scope fullscreen is an overlay, not browser Fullscreen API
+
+- **Decision:** Fixed inset overlay on `Scope` for Full screen / Exit + Escape. Do not call
+  `requestFullscreen`. Cap (ADR-0014) restored on exit; not persisted.
+- **Reason:** Classroom projectors and tablets are flaky with the browser Fullscreen API;
+  issue #31 preferred overlay. Opt-in only — strips stay the working surface by default.
+- **Note:** Independent of Front (#28); toggle list is whatever Scope already ships.
+
 ## 2026-07-28 Front elevation reuses Side's rules on the other floor axis
 
 - **Decision:** Add Scope view `front` — north × altitude — with ADR-0017. Factor

@@ -450,7 +450,7 @@ function CommandRow({
         )
       ) : (
         <GuardedButton
-          label="Stop immediately"
+          label="Stop"
           confirmLabel="Press again to stop"
           onConfirm={() => command(vitals.droneId, 'emergency-stop')}
           className="ml-auto"

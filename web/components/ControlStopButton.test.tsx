@@ -5,10 +5,10 @@ import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 
 /**
- * Stop immediately, then Release stop once the latch is on Telemetry.
+ * Stop, then Release stop once the latch is on Telemetry.
  *
- * The old label "Stop — hold" described the gesture, not the action. After the motors are
- * cut the same CTA must not stay — a Teacher would think Stop had failed to take.
+ * After the motors are cut the same CTA must not stay — a Teacher would think Stop had
+ * failed to take. The primary label is just Stop (not "Stop immediately").
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
@@ -29,7 +29,7 @@ afterEach(() => {
 })
 
 describe('the emergency stop on a flight strip', () => {
-  it('reads Stop immediately, never Stop — hold', () => {
+  it('reads Stop, never Stop immediately or Stop — hold', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
@@ -37,7 +37,8 @@ describe('the emergency stop on a flight strip', () => {
     )
     settle()
 
-    expect(screen.getAllByRole('button', { name: 'Stop immediately' }).length).toBe(6)
+    expect(screen.getAllByRole('button', { name: /^Stop$/ }).length).toBe(6)
+    expect(screen.queryByRole('button', { name: /Stop immediately/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Stop — hold/ })).not.toBeInTheDocument()
   })
 
@@ -52,7 +53,7 @@ describe('the emergency stop on a flight strip', () => {
       await new Promise((resolve) => setTimeout(resolve, 1_500))
     })
 
-    const stop = screen.getAllByRole('button', { name: 'Stop immediately' })[0]!
+    const stop = screen.getAllByRole('button', { name: /^Stop$/ })[0]!
     const strip = stop.closest('li')!
     fireEvent.pointerDown(stop)
     await act(async () => {
@@ -63,11 +64,11 @@ describe('the emergency stop on a flight strip', () => {
     await waitFor(() => {
       expect(within(strip).getByRole('button', { name: 'Release stop' })).toBeInTheDocument()
     })
-    expect(within(strip).queryByRole('button', { name: 'Stop immediately' })).not.toBeInTheDocument()
+    expect(within(strip).queryByRole('button', { name: /^Stop$/ })).not.toBeInTheDocument()
 
     fireEvent.click(within(strip).getByRole('button', { name: 'Release stop' }))
     await waitFor(() => {
-      expect(within(strip).getByRole('button', { name: 'Stop immediately' })).toBeInTheDocument()
+      expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
     })
   })
 })

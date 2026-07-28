@@ -288,10 +288,16 @@ export function Scope({
             altitudeM={drone.telemetry?.altitudeM}
             selected={selected === drone.id}
             onSelect={onSelect}
-            // Labels alternate above and below the mark. Six Drones in a classroom sit
-            // roughly a metre apart, which is wide enough for a name at the Teacher's
-            // font size — but not for two names on the same line when they close up.
-            below={index % 2 === 1}
+            /*
+             * Top-down: labels alternate above and below the mark. Six Drones in a classroom
+             * sit roughly a metre apart, which is wide enough for a name at the Teacher's
+             * font size — but not for two names on the same line when they close up.
+             *
+             * Side: the label goes towards the middle of the box instead. Alternating puts
+             * every grounded Drone's name below a mark that is already on the bottom edge,
+             * where it lands outside the frame and on top of the caption.
+             */
+            below={view === 'side' ? at(drone).yPercent < 50 : index % 2 === 1}
           />
         ))}
       </div>
@@ -307,8 +313,13 @@ export function Scope({
        */}
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-label">
         <span>Filled = flying</span>
-        {groups.size > 0 && <span>Dashed = linked as one group</span>}
-        {conflicts.length > 0 && <span>Solid = too close</span>}
+        {/*
+         * Keys only to symbols this view actually draws. The side view carries no ties and no
+         * conflict lines, so offering a key to them would send a Teacher looking for something
+         * that is not there.
+         */}
+        {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
+        {view === 'top-down' && conflicts.length > 0 && <span>Solid = too close</span>}
         {view === 'side' && heightless.length > 0 && (
           /*
            * Not drawn on the ground line, which would state they are landed when the truth is

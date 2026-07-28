@@ -549,3 +549,32 @@ describe('the side view', () => {
     expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(0)
   })
 })
+
+describe('the scope caption', () => {
+  /*
+   * A key to a symbol that is not in the picture sends a Teacher looking for something that is
+   * not there. The side view draws no ties and no conflict lines, so it offers no key to them.
+   */
+  it('keys only the symbols the showing view actually draws', () => {
+    const linked = (name: string, eastM: number) =>
+      aDroneState({
+        id: name.toLowerCase().replace(' ', '-'),
+        name,
+        status: 'Flying',
+        telemetry: aTelemetry({
+          airborne: true,
+          position: { eastM, northM: 0 },
+          altitudeM: 1,
+          linkGroupId: 'formation',
+        }),
+      })
+
+    render(<Scope drones={[linked('Drone 1', 0), linked('Drone 2', 2)]} />)
+    expect(screen.getByText('Dashed = linked as one group')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(screen.queryByText('Dashed = linked as one group')).not.toBeInTheDocument()
+    // "Filled = flying" is true of a mark in either view, so it stays.
+    expect(screen.getByText('Filled = flying')).toBeInTheDocument()
+  })
+})

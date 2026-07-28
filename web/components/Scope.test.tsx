@@ -667,11 +667,15 @@ describe('the scope caption', () => {
 
 describe('full screen on the scope', () => {
   it('expands into an overlay and restores on Exit or Escape', () => {
-    render(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
+    const { container } = render(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
-    expect(screen.getByRole('dialog', { name: 'Scope full screen' })).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog', { name: 'Scope full screen' })
+    expect(dialog).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeInTheDocument()
+    // Centred in the viewport — not stuck under the toggles with a void only below.
+    expect(dialog.className).toMatch(/justify-center/)
+    expect(dialog.className).toMatch(/items-center/)
 
     // View toggle still works inside the overlay.
     fireEvent.click(screen.getByRole('button', { name: 'Side' }))
@@ -680,6 +684,7 @@ describe('full screen on the scope', () => {
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(screen.queryByRole('dialog', { name: 'Scope full screen' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Full screen' })).toBeInTheDocument()
+    expect(container.querySelector('[aria-label="Full screen"]')).not.toBeNull()
   })
 
   it('does not remember being left expanded', () => {

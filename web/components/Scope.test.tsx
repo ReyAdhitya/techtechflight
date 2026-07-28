@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
-import type { DroneVitals } from '@/lib/vitals'
 import { Scope, WINDOW_SIDES_M, cellsAcross, gridStepM, scopeWindow } from './Scope'
 
 /**
@@ -25,23 +24,28 @@ const at = (name: string, eastM: number, northM: number, airborne = true) =>
     telemetry: aTelemetry({ airborne, position: { eastM, northM } }),
   })
 
-const aVitals = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
-  droneId: 'drone-1',
-  callsign: 'Drone 1',
-  status: 'Flying',
-  phase: 'on-ground',
-  airborne: false,
-  altitudeM: null,
-  verticalRateMps: null,
-  batteryFraction: 0.6,
-  enduranceMs: null,
-  responseAgeMs: 1_000,
-  position: { eastM: 0, northM: 0 },
-  separationM: null,
-  conflictWith: null,
-  alerts: [],
-  ...overrides,
-})
+/**
+ * The same Drone, with a stated height.
+ *
+ * `altitudeM` is optional on `Telemetry` and the absence is load-bearing: it means the
+ * airframe cannot measure height at all, which is a different fact from being on the floor.
+ * Passed explicitly here so a test that means "no barometer" cannot be read as an oversight.
+ *
+ * The key is left off rather than set to `undefined`, because `exactOptionalPropertyTypes`
+ * is on and the two are not the same thing to this codebase — which is the distinction the
+ * tests below exist to protect, so the fixture had better honour it too.
+ */
+const atHeight = (name: string, eastM: number, northM: number, altitudeM: number | undefined) =>
+  aDroneState({
+    id: name.toLowerCase().replace(' ', '-'),
+    name,
+    status: 'Flying',
+    telemetry: aTelemetry({
+      airborne: true,
+      position: { eastM, northM },
+      ...(altitudeM === undefined ? {} : { altitudeM }),
+    }),
+  })
 
 /** The x of every vertical grid rule, in the order they are drawn. */
 const verticalRules = (container: HTMLElement) =>
@@ -346,24 +350,47 @@ describe('what the scope shows', () => {
     ).toBeInTheDocument()
   })
 
+  it('writes the height under the Drone Name, to one decimal', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, 1.74)]} />)
+
+    expect(screen.getByText('1.7 m')).toBeInTheDocument()
+  })
+
   /*
-   * The label overlap, and the reason this is the piece that goes.
+   * The distinction `docs/DESIGN.md` §11.1 exists to protect. An airframe with no barometer
+   * and one sitting on the floor are different facts, and drawing them the same way tells a
+   * Teacher the second when the truth is the first.
+   */
+  it('writes nothing at all for a Drone that cannot measure its height', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, undefined)]} />)
+
+    expect(screen.getByText('Drone 1')).toBeInTheDocument()
+    expect(screen.queryByText(/^-?\d+\.\d m$/)).not.toBeInTheDocument()
+    expect(screen.queryByText('0.0 m')).not.toBeInTheDocument()
+  })
+
+  it('writes 0.0 m for a Drone that can measure its height and is on the floor', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, 0)]} />)
+
+    expect(screen.getByText('0.0 m')).toBeInTheDocument()
+  })
+
+  /*
+   * The label overlap, and the reason the second line is the piece that goes.
    *
-   * Six labels in a short strip run into one unreadable line, and the phase is what makes
-   * them do it — "On the ground" is three times the width of "Drone 4". Dropping it loses
-   * nothing, because the same phase is on that Drone's flight strip further down the same
-   * screen. The name has to survive at every width: a scope of anonymous dots does not
-   * answer "which one is that", which is the only reason the scope is there.
+   * Six labels in a short strip run into one unreadable line, and the second line is what
+   * makes them do it. The name has to survive at every width: a scope of anonymous dots does
+   * not answer "which one is that", which is the only reason the scope is there.
    *
    * jsdom has no layout engine and applies no media query, so this is checked on the
    * utilities the markup carries rather than by measuring anything (CLAUDE.md).
    */
-  it('drops the phase from a mark on a narrow screen, and never the Drone Name', () => {
-    render(<Scope drones={[at('Drone 1', 0, 0)]} vitals={[aVitals()]} />)
+  it('drops the height from a mark on a narrow screen, and never the Drone Name', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, 1.5)]} />)
 
-    const phase = screen.getByText('On the ground')
-    expect(phase.className).toContain('hidden')
-    expect(phase.className).toContain('sm:block')
+    const height = screen.getByText('1.5 m')
+    expect(height.className).toContain('hidden')
+    expect(height.className).toContain('sm:block')
 
     const name = screen.getByText('Drone 1')
     expect(name.className).not.toContain('hidden')

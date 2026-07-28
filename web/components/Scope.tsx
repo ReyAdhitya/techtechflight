@@ -1,7 +1,6 @@
 import { useRef } from 'react'
 import type { DroneState } from '@techtechflight/contract'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
-import { PHASE_PRESENTATION } from '@/lib/vitals-presentation'
 import { cn } from '@/lib/utils'
 
 /**
@@ -37,9 +36,12 @@ export function Scope({
 }: {
   drones: readonly DroneState[]
   /**
-   * Supplied on the tower, absent on History. With it the scope labels each Drone with
-   * what it is doing and marks pairs that are too close; without it the map stays the
-   * plain "where was everything" picture History wants.
+   * Supplied on the tower, absent on Reports. Its only job here is marking the pairs that
+   * are too close — separation is derived, and nothing else is.
+   *
+   * The Drone Name and the height are **not** taken from it. Both come off `DroneState`, so
+   * a screen that has no Vitals to give still gets a fully labelled picture rather than a
+   * field of anonymous dots.
    */
   vitals?: readonly DroneVitals[]
   /** Which Drone the Teacher is looking at, so a mark and its strip point at each other. */
@@ -191,7 +193,7 @@ export function Scope({
             key={drone.id}
             drone={drone}
             scope={scope}
-            phase={vitals?.find((entry) => entry.droneId === drone.id)?.phase}
+            altitudeM={drone.telemetry?.altitudeM}
             selected={selected === drone.id}
             onSelect={onSelect}
             // Labels alternate above and below the mark. Six Drones in a classroom sit
@@ -224,10 +226,10 @@ export function Scope({
 }
 
 /**
- * One Drone on the map: the mark, its name, and what it is doing.
+ * One Drone on the map: the mark, its name, and how high it is.
  *
  * HTML rather than SVG text. Inside the drawing these would be sized in user units, so
- * they would grow with a small room and shrink with a large one, and they would ignore
+ * they would grow with a small window and shrink with a large one, and they would ignore
  * the Teacher's browser font size and the large format entirely — the one place on the
  * board where a size was not relative (ADR-0008). Six "On the ground" labels in a 7 m
  * strip overlapped into one unreadable line because of it.
@@ -235,14 +237,22 @@ export function Scope({
 function Mark({
   drone,
   scope,
-  phase,
+  altitudeM,
   selected,
   onSelect,
   below,
 }: {
   drone: DroneState
   scope: ScopeWindow
-  phase: DroneVitals['phase'] | undefined
+  /**
+   * Height above this Drone's own take-off point.
+   *
+   * `undefined` means the airframe cannot measure height at all, and it must be drawn as
+   * nothing rather than as `0.0 m`. A Drone with no barometer and a Drone sitting on the
+   * floor are different facts, and a Teacher who reads one as the other is being misled by
+   * the board (`docs/DESIGN.md` §11.1).
+   */
+  altitudeM: number | undefined
   selected: boolean
   onSelect: ((droneId: string) => void) | undefined
   below: boolean
@@ -284,20 +294,19 @@ function Mark({
     >
       <span className="text-label text-ink-muted">{drone.name}</span>
       {/*
-       * The phase goes on a narrow screen; the Drone Name never does.
+       * The height, not the phase word. "Level" told a Teacher the Drone was holding its
+       * height without telling them *what* height, and the number is the thing they can act
+       * on. The phase is still on that Drone's flight strip, in words.
        *
-       * Six labels in a short strip overlap into one unreadable line, and the phase is what
-       * makes them do it — "On the ground" is three times the width of "Drone 4", so it is
-       * the first thing to collide. Nothing is lost by dropping it: the same phase is on
-       * that Drone's flight strip a little further down the same screen.
-       *
-       * The name stays whatever the width, because "which one is that" is the question the
-       * scope exists to answer. A scope of anonymous dots is not a smaller scope, it is a
-       * useless one.
+       * The second line goes on a narrow screen; the Drone Name never does. Six labels in a
+       * short strip overlap into one unreadable line, and the second line is what makes them
+       * do it. The name stays at every width, because "which one is that" is the question
+       * the scope exists to answer — a scope of anonymous dots is not a smaller scope, it is
+       * a useless one.
        */}
-      {phase && (
+      {altitudeM !== undefined && (
         <span className="hidden text-label text-ink-subtle sm:block">
-          {PHASE_PRESENTATION[phase].label}
+          {altitudeM.toFixed(1)} m
         </span>
       )}
     </span>

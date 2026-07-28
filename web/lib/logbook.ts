@@ -22,7 +22,7 @@ export const SERVICE_PRESENTATION: Readonly<
 > = {
   'in-service': {
     label: 'In service',
-    meaning: 'Normal. Hand it to a Student like any other.',
+    meaning: 'Normal. Issue to a Student as normal.',
   },
   /*
    * The key is `watch` and must stay `watch`. It is serialized into the browser logbook, so
@@ -35,7 +35,7 @@ export const SERVICE_PRESENTATION: Readonly<
   },
   'out-of-service': {
     label: 'Out of service',
-    meaning: 'Do not hand this one out. It is waiting to be looked at.',
+    meaning: 'Do not issue. Pending inspection.',
   },
 }
 

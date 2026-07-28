@@ -106,9 +106,15 @@ export function Scope({
           preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0 h-full w-full"
           role="img"
-          aria-label={`Positions of ${placed.length} Drones in the room`}
+          /*
+           * "in the room" would be the one claim ADR-0014 exists to deny — that this frame
+           * is the space the Drones may fly in. A sighted Teacher sees a picture with no
+           * walls drawn and reads it correctly; a Teacher on a screen reader was being told
+           * the opposite, which makes it an accessibility defect rather than a wording one.
+           */
+          aria-label={`Where ${placed.length} Drones are, looking down`}
         >
-          {/* A fixed grid, so a distance on screen can be read as a distance in the room. */}
+          {/* A fixed grid, so a distance on screen can be read as a distance in metres. */}
           {gridLines(room.westM, room.eastM, stepM).map((metre) => (
             <line
               key={`v${metre}`}

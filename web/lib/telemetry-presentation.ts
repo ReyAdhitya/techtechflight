@@ -52,7 +52,7 @@ export const AUTO_LANDING_PRESENTATION: Readonly<
   },
   unavailable: {
     label: 'Not available',
-    meaning: 'Nothing to land — this Drone is already on the ground.',
+    meaning: 'Already on the ground. No landing action available.',
   },
   ready: {
     label: 'Ready',

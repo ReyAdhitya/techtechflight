@@ -81,11 +81,10 @@ would notice.
   reshaped and the number of cells changed on every telemetry tick — while `percentOf`
   renormalised each Drone into that same moving box, which left the Drones looking like the
   stationary thing. Reported as *"the squares move, the dots should move"*, which was exactly
-  right. The window is now a square from a fixed ladder of five sizes, centred on the setup
-  point, growing when a Drone leaves it and never shrinking. Cells are half a metre at the
-  default window and the caption states which — read from `gridStepM()`, so it cannot lie
-  when the window grows. A Drone beyond the largest window is held on the edge and named,
-  never dropped. See [ADR-0014](./adr/0014-a-fixed-scope-window.md) for why a fixed window is
+  right. The window is now a square from a fixed ladder of five sizes, growing when a Drone
+  leaves it and never shrinking, with cells of half a metre at the default size. A Drone
+  beyond the largest window is held on the edge and named, never dropped. (Where it centres,
+  and the caption that stated the cell size, both changed again below.) See [ADR-0014](./adr/0014-a-fixed-scope-window.md) for why a fixed window is
   not the flight area ADR-0012 deferred; without that distinction written down, the next
   reader deletes this.
 - **The scope is an aid again, not the whole screen.** Making it square made it 1216 px tall

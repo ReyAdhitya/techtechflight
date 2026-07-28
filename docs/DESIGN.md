@@ -285,7 +285,7 @@ gone, an empty cell would leave the row silent about where the Drone is. An airf
 cannot measure height still reads `Height not reported` rather than a zero (§11.1).
 
 **The coordinates go on their own line and never into the head row.** Added 2026-07-28, on
-every strip rather than only the selected Drone. The head row's six cells are the whole reason
+every strip rather than only the selected Drone. The head row's five cells are the whole reason
 this format is justified — the eye learns where charge is and stops re-finding it — and
 threading three more numbers through it would push charge and response age sideways for a
 value a Teacher reads far less often than either.

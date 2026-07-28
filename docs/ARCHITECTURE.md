@@ -340,7 +340,7 @@ components/
                          ── FlightStrip ── ExerciseLine
                                         ── AlertLine ── AcknowledgeButton
                                         ── CommandRow ── CommandButton
-                                                       ── GuardedButton
+                                                       ── Stop (single press)
 
   LessonScreen           ── ReadinessHeader · Blockers
                          ── AssignmentColumn ── StudentNameField

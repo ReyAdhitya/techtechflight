@@ -108,7 +108,7 @@ here is New.
 | C5 | It is never possible to send a Command and be uncertain whether a real aircraft was involved | New |
 | C6 | A Command to a Drone that is not responding is shown as sent and unacknowledged, never as done | New |
 | C7 | Every Command issued during a Lesson is recorded in that Lesson's record | New |
-| C8 | Emergency stop is confirmed before it is sent, and is the only Command that is | New |
+| C8 | Emergency stop is confirmed before it is sent, and is the only Command that is | **Superseded 2026-07-28** — owner: single-press Stop; see Decisions |
 | C9 | **Scenario triggers are never presented as Commands** | New |
 | C10 | The ground station's stdin scenario keys remain until the interface covers the same ground | Exists — retain |
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { clearLogbook } from '@/lib/logbook'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
@@ -57,6 +57,20 @@ describe('the Flight Control Center, with a Fleet that is reporting where it is'
 
     const marks = screen.getAllByRole('button', { name: /Drone \d/ })
     expect(marks.length).toBeGreaterThan(0)
+  })
+
+  it('offers Land Hold Stop in full screen when a mark is selected', () => {
+    show(<ControlScreen />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
+    const dialog = screen.getByRole('dialog', { name: 'Scope full screen' })
+    const mark = within(dialog).getAllByRole('button', { name: /Drone \d/ })[0]!
+    fireEvent.click(mark)
+
+    const dock = within(dialog).getByRole('region', { name: /Controls for Drone/ })
+    expect(within(dock).getByRole('button', { name: 'Land' })).toBeInTheDocument()
+    expect(within(dock).getByRole('button', { name: 'Hold' })).toBeInTheDocument()
+    expect(within(dock).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
   })
 
   it('gives the scope a name that does not call it a room', () => {

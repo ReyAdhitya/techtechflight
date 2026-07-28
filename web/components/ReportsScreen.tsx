@@ -1,10 +1,41 @@
 'use client'
 
+import { useRef } from 'react'
 import { FleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
+
+const PRINT_TITLE = 'TechTech Flight — Lesson records'
+
+/**
+ * Open the browser print dialog with a document title that belongs on paper.
+ *
+ * The URL and clock in the preview are the browser's own Headers and footers — CSS
+ * cannot remove them. Clearing the tab title to the product line, and putting the
+ * printed-at stamp in the page itself, is what we can control; Teachers turn the
+ * browser chrome off under More settings.
+ */
+function printReports(stamp: HTMLElement | null): void {
+  if (stamp) {
+    const when = new Date()
+    stamp.setAttribute('datetime', when.toISOString())
+    stamp.textContent = when.toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })
+  }
+
+  const previous = document.title
+  document.title = PRINT_TITLE
+  const restore = () => {
+    document.title = previous
+    window.removeEventListener('afterprint', restore)
+  }
+  window.addEventListener('afterprint', restore)
+  window.print()
+}
 
 /**
  * The screen a Teacher reads afterwards.
@@ -18,6 +49,8 @@ import { READING_FRAME } from '@/lib/frame'
  * opens while six Drones are up.
  */
 export function ReportsScreen() {
+  const printedAtRef = useRef<HTMLTimeElement>(null)
+
   return (
     <main
       id="content"
@@ -28,19 +61,30 @@ export function ReportsScreen() {
         <h1 className="m-0 font-display text-summary font-medium">Reports</h1>
         <button
           type="button"
-          onClick={() => window.print()}
+          onClick={() => printReports(printedAtRef.current)}
           className="print-hide min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
         >
           Print
         </button>
       </div>
 
+      <p className="print-hide m-0 max-w-prose text-value text-ink-subtle">
+        Print opens a paper copy of the Lessons and recurring defects. In the print dialog,
+        open More settings and turn off Headers and footers so the page URL and clock do
+        not appear on the sheet.
+      </p>
+
       {/*
-        * A printed page has no navigation and no context. It says what it is and when it
-        * was printed, because a sheet of paper on a desk next term has nothing else to go
-        * on. Only ever visible on paper.
-        */}
-      <p className="print-only m-0 text-value">TechTech Flight — Lesson records</p>
+       * A printed page has no navigation and no context. It says what it is and when it
+       * was printed, because a sheet of paper on a desk next term has nothing else to go
+       * on. Only ever visible on paper.
+       */}
+      <header className="print-only print-report-header">
+        <p className="m-0 font-display text-heading font-medium">{PRINT_TITLE}</p>
+        <p className="m-0 text-value">
+          Printed <time ref={printedAtRef} />
+        </p>
+      </header>
 
       <LessonReports />
 

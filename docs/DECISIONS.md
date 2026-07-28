@@ -9,6 +9,31 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Unknown SITL battery is an estimate, not silence
+
+- **Decision:** If a craft is heartbeating but `batteryRemaining` / voltage are absent or
+  sentinel (`-1` / `0`), emit Telemetry with `batteryFraction: 1` and `batteryIsEstimate:
+  true` rather than withholding the observation.
+- **Reason:** Older ArduPilot SITL (e.g. dronekit ArduCopter 3.3) never fills charge; silence
+  made Drone 1 read Offline while UDP was live. Contact without a measured cell is still
+  contact.
+- **Note:** Match decoded messages by registry `clazz`, not `instanceof` — SITL traffic and
+  recorded fixtures both need it. Still no `CommandableSource` (ADR-0011).
+
+## 2026-07-28 MAVLink lives in `fleet-adapters/`, opted in by env
+
+- **Decision:** Put the MAVLink `TelemetrySource` in a new `fleet-adapters/` workspace, and
+  select it from `ground-station/src/main.ts` only when `TELEMETRY_SOURCE=mavlink`. The
+  simulator remains the default. Host/port override via `MAVLINK_HOST` / `MAVLINK_PORT`.
+- **Reason:** ADR-0013 forbids `node:dgram` in `fleet-core`. The issue (#15) already named
+  the workspace. An env switch keeps every existing demo and the Vercel `DEMO_ONLY` path on
+  the simulator without a second binary.
+- **Alternatives considered:** Always-on dual source (rejected: two Fleets on one board);
+  replace the simulator (rejected: ADR-0001 — the simulator is permanent); put the adapter
+  inside `ground-station/` (rejected: the plan and the issue both say `fleet-adapters/`).
+- **Note:** System id maps to `CLASSROOM_FLEET` by `boardOrder` so SITL's usual sysid `1`
+  lands on Drone 1. Commands stay unavailable by omission of `CommandableSource`.
+
 ## 2026-07-28 Living docs follow the merged stack, not the pre-merge world
 
 - **Decision:** Align CLAUDE.md / PLAYBOOK / logbook header / ADR-0014 / DESIGN.md §4.4 with

@@ -79,4 +79,5 @@ Gotchas above, then commit and push. Never leave completed work uncommitted.
 - Test: `npm test` · Typecheck: `npm run typecheck`
 - Build: `npm run build --workspace=web` (add `NEXT_PUBLIC_DEMO_ONLY=1` for the standalone
   deploy, which runs the Fleet in the browser)
-- There is **no lint and no CI**. `npm test` and `npm run typecheck` are the whole gate.
+- There is **no lint**. CI (`.github/workflows/ci.yml`) runs `npm test` and
+  `npm run typecheck` on push and pull request — that pair is still the whole gate.

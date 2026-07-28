@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Living docs follow the merged stack, not the pre-merge world
+
+- **Decision:** Align CLAUDE.md / PLAYBOOK / logbook header / ADR-0014 / DESIGN.md §4.4 with
+  what PR #22 shipped (#23). Do not restore the `Grid:` caption or Settings export.
+- **Reason:** Agents and reviewers were "fixing" correct code against stale claims.
+- **Note:** Showcase register and product-string residual stay on #13 / owner taste — not here.
+
 ## 2026-07-28 Register residual is a closed list, not a second sweep
 
 - **Decision:** Finish #13 from the Planner's residual table only — Lesson, Maintenance,

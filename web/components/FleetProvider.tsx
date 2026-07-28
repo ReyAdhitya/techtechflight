@@ -109,7 +109,7 @@ function builtForDemoOnly(): boolean {
  * component test that rendered a demonstration Fleet ran against `Math.random` with
  * spontaneous take-offs and link drops switched on. That is weather, and it failed the
  * suite about one run in three, a different test each time. `npm test` is the whole gate
- * in a repository with no CI, and a gate that is red one run in three has stopped being one.
+ * (and CI runs it), and a gate that is red one run in three has stopped being one.
  *
  * Undefined in the product, deliberately. A demonstration that never surprises anyone is
  * exactly the wrong thing — the ground station's own scenario keys exist for the opposite

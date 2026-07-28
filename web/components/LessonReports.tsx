@@ -58,7 +58,7 @@ export function LessonReports() {
           {finished.slice(0, 20).map((lesson) => (
             <li
               key={lesson.id}
-              className="flex flex-col gap-2 rounded-surface border border-hairline bg-surface-1 p-4"
+              className="lesson-report flex flex-col gap-2 rounded-surface border border-hairline bg-surface-1 p-4"
             >
               <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
                 <span className="font-display text-body font-medium text-ink">{lesson.label}</span>

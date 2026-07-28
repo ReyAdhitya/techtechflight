@@ -332,20 +332,15 @@ is not reintroduced.
 **More** holds auto-land and anything added later. Commands are absent from every other
 screen in the product.
 
-**Emergency stop is a guarded control** labelled **Stop**. It sits apart on the right, and it
-is a **press-and-hold** — roughly a second, with a ring that fills — rather than a button
-behind a confirmation dialog. The reasoning: an emergency stop needs to be fast, and a modal
-is not fast; but an accidental emergency stop on the wrong Drone is worse than a slow one.
-Physical guarded switches solve this exact problem with deliberate effort rather than with a
-question. It satisfies C8 without a dialog to dismiss.
+**Emergency stop** is labelled **Stop**. It sits apart on the right. It is a **single
+press**, same as Land and Hold — no press-and-hold, no second confirm, no dialog. The owner
+chose speed over a guard: in a classroom the Teacher already meant the cut. (This supersedes
+the earlier C8 press-and-hold reading of DESIGN; see Decisions 2026-07-28.)
 
 Once Telemetry shows the latch (`emergency` phase), the control **must not** still read as
 Stop. It becomes **Release stop** on a simulated Fleet (clearing the latch), or stays present
 but unavailable with the reason in words on a hardware Fleet that cannot release from here
 (§9).
-
-For keyboard and switch users, press-and-hold is not available. Focus plus `Enter` opens an
-explicit confirmation step instead. Two paths, same guarantee.
 
 **Command feedback obeys C4 absolutely.** Nothing is optimistic. After sending, the strip
 reads *"Land — sent"*, then *"Land — waiting for a response"*, and only ever shows the Drone
@@ -531,6 +526,11 @@ A Lesson report prints (G3). This is a real constraint and shapes the design:
   no context.
 - Chrome, navigation and controls do not print.
 - Nothing scrolls; the report is a document, not a viewport.
+- Print stylesheet forces light (paper) colour tokens even when the board is in dark theme —
+  otherwise ink utilities stay light-on-white and the preview looks empty.
+- The page URL and clock in the browser preview are the browser's Headers and footers, not
+  the product. Teachers turn those off under More settings; the document stamps printed-at
+  itself.
 
 ---
 
@@ -574,7 +574,7 @@ would leave a Teacher wondering whether they had missed it.
 | Flight strip | Extend — Exercise line, Command row, acknowledged-Alert line |
 | Attention bar | Extend — one Alert at a time, Acknowledge |
 | Simulation label | New |
-| Command button, guarded (press-and-hold) control | New |
+| Command button, Stop as a single press (was press-and-hold) | Updated |
 | Assignment column, Student name field with autocomplete | New |
 | Exercise list with reordering | New |
 | Lesson report, print stylesheet | New |
@@ -642,8 +642,8 @@ Stated so it is not mistaken for an oversight:
 1. **History and Maintenance leaving the primary navigation** (§3.1) is the one change here
    that overrides a deliberate existing decision rather than extending it. Both surfaces
    survive with their content intact, but the call is yours.
-2. **Press-and-hold for emergency stop** (§4.5) is an unusual pattern and worth an explicit
-   yes. The alternative is a confirmation dialog, which is slower in the moment it matters.
+2. ~~**Press-and-hold for emergency stop**~~ **Resolved 2026-07-28.** §4.5 is a **single
+   press** (owner). C8's confirm-before-send reading is superseded; see Decisions.
 3. **Browser-based simulation needs its own ADR in Phase 4** — it puts a Telemetry Source in
    the browser, which touches the seam ADR-0001 drew and the split ADR-0003 made. The design
    above assumes it; the architecture has to justify it.

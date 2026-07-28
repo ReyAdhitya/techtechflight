@@ -698,9 +698,9 @@ describe('full screen on the scope', () => {
     const dialog = screen.getByRole('dialog', { name: 'Scope full screen' })
     expect(dialog).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeInTheDocument()
-    // Centred in the viewport — not stuck under the toggles with a void only below.
-    expect(dialog.className).toMatch(/justify-center/)
-    expect(dialog.className).toMatch(/items-center/)
+    // Picture block stays centred in the free space — not stuck under the toggles.
+    expect(dialog.querySelector('.justify-center')).not.toBeNull()
+    expect(dialog.querySelector('.items-center')).not.toBeNull()
 
     // View toggle still works inside the overlay.
     fireEvent.click(screen.getByRole('button', { name: 'Side' }))
@@ -719,5 +719,21 @@ describe('full screen on the scope', () => {
     first.unmount()
     render(<Scope drones={drones} />)
     expect(screen.queryByRole('dialog', { name: 'Scope full screen' })).not.toBeInTheDocument()
+  })
+
+  it('shows the selected-drone panel only while expanded and a mark is chosen', () => {
+    render(
+      <Scope
+        drones={[atHeight('Drone 1', 0, 0, 1), atHeight('Drone 2', 3, 1, 1)]}
+        selected="drone-1"
+        onSelect={() => {}}
+        selectedPanel={<div>Land Hold Stop for selected</div>}
+      />,
+    )
+
+    expect(screen.queryByText('Land Hold Stop for selected')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
+    expect(screen.getByText('Land Hold Stop for selected')).toBeInTheDocument()
   })
 })

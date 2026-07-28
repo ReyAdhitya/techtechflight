@@ -181,7 +181,7 @@ export function FleetReliability() {
                   {entry.flights} {entry.flights === 1 ? 'flight' : 'flights'}
                 </span>
 
-                <label className="ml-auto flex items-center gap-2">
+                <label className="print-hide ml-auto flex items-center gap-2">
                   <span className="visually-hidden">Service state for {entry.drone.name}</span>
                   <select
                     value={state}

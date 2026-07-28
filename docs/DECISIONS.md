@@ -9,6 +9,42 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Stop is a single press (owner overrides C8 hold)
+
+- **Decision:** Emergency **Stop** is an ordinary click — no `GuardedButton` hold, no
+  "Press again to stop". Release stop behaviour unchanged.
+- **Reason:** Owner — hold/confirm felt awkward; classroom needs the cut immediately.
+- **Note:** Supersedes DESIGN §4.5 press-and-hold reading of C8 for this product. Accidental
+  strip presses remain a residual risk; strip order + fault styling still separate Stop.
+
+## 2026-07-28 Full-screen Scope docks Commands for the selected mark
+
+- **Decision:** Pass a `selectedPanel` into `Scope`; when expanded and a mark is selected,
+  show Land / Hold / Stop (same `CommandRow` as the strip) in a bottom dock. Reports omits
+  the panel.
+- **Reason:** Owner feedback — selecting on the graph works, but fullscreen covers Every
+  Drone so Commands were unreachable.
+- **Note:** Overlay still temporary (ADR-0014 / #31); Clear or re-tap mark deselects.
+
+## 2026-07-28 Emergency stop has no "Stop — done" receipt on the strip
+
+- **Decision:** When Telemetry shows the emergency latch, drop the command-tracker line for
+  that Stop (forget on satisfied; never render done/held receipt). Keep Land/Hold receipts.
+- **Reason:** Owner — "Stop — done" stuck beside Release stop and read as a second broken
+  control. Latch + alert already say the cut held.
+- **Note:** Brief Stop — sent / waiting before latch may still flash; that is C4, not the
+  stuck done line.
+
+## 2026-07-28 Reports print forces paper tokens; browser chrome is off-dialog
+
+- **Decision:** `@media print` resets light colour tokens on `:root` and `[data-theme='dark']`,
+  breaks only on `.lesson-report`, and the Print control stamps printed-at + sets the
+  document title. Browser Headers and footers (URL, clock) stay a Teacher toggle in the
+  print dialog — not something CSS can own.
+- **Reason:** Dark theme left semantic ink light-on-white (blank preview); blanket
+  `break-inside: avoid` on `section`/`li` emptied page 1. G3 still wants a usable A4 sheet.
+- **Note:** History stays `print-hide`; Lessons + recurring defects print.
+
 ## 2026-07-28 Strip freespace is the response column, not charge
 
 - **Decision:** Control Every Drone list uses `grid-cols-[auto_auto_auto_auto_1fr]` — Name,

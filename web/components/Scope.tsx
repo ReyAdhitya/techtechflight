@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { DroneState } from '@techtechflight/contract'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { cn } from '@/lib/utils'
@@ -33,6 +33,7 @@ export function Scope({
   vitals,
   selected,
   onSelect,
+  selectedPanel,
 }: {
   drones: readonly DroneState[]
   /**
@@ -47,6 +48,12 @@ export function Scope({
   /** Which Drone the Teacher is looking at, so a mark and its strip point at each other. */
   selected?: string | null
   onSelect?: ((droneId: string) => void) | undefined
+  /**
+   * Controls for the selected Drone while the scope is full screen. The overlay covers the
+   * strip list, so Land/Hold/Stop have to live here or they are unreachable. Ignored when
+   * collapsed or when nothing is selected — Reports never passes one.
+   */
+  selectedPanel?: ReactNode
 }) {
   /*
    * The window already on screen — its size and where its middle sits. Held across renders
@@ -136,6 +143,7 @@ export function Scope({
   }
 
   const elevation = isElevation(view)
+  const showSelectedPanel = expanded && selected != null && selectedPanel != null
 
   return (
     /*
@@ -148,20 +156,27 @@ export function Scope({
      *
      * In rem, so the cap follows the display scale like everything else does — LARGE FORMAT
      * grows the scope with the type rather than stranding it at a fixed size (ADR-0008).
+     *
+     * Full screen is a column: picture centred in the free space, optional selected-drone
+     * dock pinned under it — the overlay hides Every Drone strips, so Commands live here.
      */
     <figure
       className={cn(
         'flex flex-col gap-3',
         expanded
-          ? // Whole composition centred in the viewport — letterbox must not hug the top
-            // with a void only below (owner #38).
-            'fixed inset-0 z-50 m-0 max-h-none max-w-none items-center justify-center overflow-auto rounded-none bg-canvas p-4'
+          ? 'fixed inset-0 z-50 m-0 max-h-none max-w-none items-center overflow-auto rounded-none bg-canvas p-4'
           : 'mx-auto my-0 w-full max-w-[37.5rem]',
       )}
       {...(expanded
         ? { role: 'dialog' as const, 'aria-label': 'Scope full screen', 'aria-modal': true }
         : {})}
     >
+      <div
+        className={cn(
+          'flex w-full flex-col gap-3',
+          expanded && 'min-h-0 flex-1 items-center justify-center',
+        )}
+      >
       {/*
        * Words, not icons. docs/DESIGN.md §1.2 refuses instruments a Teacher has to learn, and
        * tiny glyphs for three viewpoints are exactly that. Real buttons, so the set is
@@ -241,7 +256,10 @@ export function Scope({
       <div
         className={cn(
           'relative w-full rounded-surface border border-hairline bg-canvas',
-          expanded && 'max-h-[min(100%,calc(100vh-8rem))] w-full max-w-[min(100%,90vh)]',
+          expanded &&
+            (showSelectedPanel
+              ? 'max-h-[min(100%,calc(100vh-16rem))] w-full max-w-[min(100%,90vh)]'
+              : 'max-h-[min(100%,calc(100vh-8rem))] w-full max-w-[min(100%,90vh)]'),
         )}
         style={{ aspectRatio: elevation ? `${scope.widthM} / ${ceilingM}` : '1' }}
       >
@@ -431,6 +449,11 @@ export function Scope({
           </span>
         )}
       </figcaption>
+      </div>
+
+      {showSelectedPanel && (
+        <div className="mt-auto w-full max-w-[min(100%,42rem)] shrink-0 pt-2">{selectedPanel}</div>
+      )}
     </figure>
   )
 }

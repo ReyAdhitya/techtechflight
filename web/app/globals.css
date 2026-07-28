@@ -845,6 +845,14 @@
  *
  * A printed page has no navigation and no context, so the header carries the School and
  * the date and everything else that only makes sense on a screen is removed.
+ *
+ * Dark theme is forced back to paper here. Setting only `body { color: #000 }` leaves the
+ * semantic tokens (`--foreground`, `--ink-subtle`, `--card`) on their dark values, so
+ * `text-ink` stays light-on-white and the preview looks like blank pages.
+ *
+ * Browser URL / clock headers are not under CSS control — Teachers turn those off in the
+ * print dialog. `@page` margin stays non-zero so a forgotten footer does not collide with
+ * the last line; the document's own print header carries product + printed-at.
  */
 @media print {
   .site-header-shell,
@@ -855,13 +863,45 @@
     display: none !important;
   }
 
+  /*
+   * Paper tokens, including when the screen is on `data-theme="dark"`. Values match the
+   * light :root block above — warm paper is fine on a colour printer and greys cleanly.
+   */
   :root,
+  [data-theme='dark'],
+  [data-theme='light'] {
+    --background: #ffffff;
+    --foreground: #1b1815;
+    --card: #ffffff;
+    --popover: #ffffff;
+    --secondary: #faf9f6;
+    --muted: #f1eee8;
+    --muted-foreground: #726c62;
+    --accent: #f6f1e8;
+    --border: #cfc8bc;
+    --input: #ddd7cc;
+    --ink-subtle: #4a463f;
+    --console: #ffffff;
+    --console-elev: #ffffff;
+    --console-foreground: #1b1815;
+    --console-muted: #726c62;
+    --console-line: rgb(27 22 16 / 0.13);
+    color-scheme: light;
+  }
+
+  html,
   body {
     background: #fff !important;
-    color: #000 !important;
+    color: #1b1815 !important;
   }
 
   /* A document rather than a viewport: nothing scrolls, nothing is clipped. */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   main {
     max-width: none !important;
     padding: 0 !important;
@@ -872,6 +912,20 @@
     display: block !important;
   }
 
+  .print-report-header {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0 0 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #cfc8bc;
+  }
+
+  /* Interactive controls belong on screen; the words beside them already say enough. */
+  main select {
+    display: none !important;
+  }
+
   /* Severity survives without hue, because it was never only hue. */
   .text-status-fault,
   .text-status-not-ready {
@@ -879,9 +933,11 @@
     font-weight: 600;
   }
 
-  /* A report is read as a whole; a Lesson split across a page break is not. */
-  li,
-  section {
+  /*
+   * Keep one Lesson card together when it fits. Blanket `section` / `li` avoid left
+   * blank first pages whenever a tall block refused to start on page 1.
+   */
+  .lesson-report {
     break-inside: avoid;
   }
 
@@ -891,7 +947,7 @@
 
   @page {
     size: A4;
-    margin: 18mm;
+    margin: 14mm;
   }
 }
 

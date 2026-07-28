@@ -58,7 +58,7 @@ export function DroneScreen() {
     return (
       <main id="content" tabIndex={-1} className="flex flex-col gap-4 p-8">
         <h1 className="m-0 font-display text-heading font-medium">No such Drone</h1>
-        <p className="m-0 max-w-[46ch] text-body text-ink-muted">
+        <p className="m-0 text-body text-ink-muted">
           {droneId
             ? `This Fleet has no Drone with the id ${droneId}. It may have been removed since this link was made.`
             : 'No Drone was named in the address.'}

@@ -5,7 +5,8 @@ what the wider ecosystem says today. Re-research before trusting this after ~3 m
 
 ## Detected stack & versions
 
-npm workspaces, no monorepo tool. Four packages plus a retired `dashboard/`.
+npm workspaces, no monorepo tool. Five packages (`contract`, `fleet-core`,
+`fleet-adapters`, `ground-station`, `web`) plus a retired `dashboard/`.
 
 | Area | Choice | Installed | Notes |
 |---|---|---|---|

@@ -59,6 +59,11 @@ Argue with them in an ADR or leave them alone.
 directory as its working directory. Git Bash rewrites a bare `/route` argument into a
 Windows path — pass routes to `scripts/shot.mjs` from PowerShell.
 
+**MAVLink is Node-only.** `@techtechflight/fleet-adapters` speaks UDP via `node:dgram` and
+must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground station in with
+`TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
+`CommandableSource` — monitoring only (ADR-0011).
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

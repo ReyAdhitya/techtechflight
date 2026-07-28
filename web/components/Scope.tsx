@@ -204,13 +204,16 @@ export function Scope({
         ))}
       </div>
 
+      {/*
+       * Keys to the symbols, and nothing that claims a size.
+       *
+       * "Grid: 0.5 m" used to head this list. It read as a claim about what a cell measures
+       * on the glass, and every monitor is a different size, so on screen it could never be
+       * true. The grid itself is unchanged — half-metre cells, fixed window, snapped centre.
+       * With each Drone's height now written on its own mark, the readable quantity is on
+       * the Drone rather than in a legend, which is where it was always more use.
+       */}
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-label">
-        {/*
-         * The cell, not the window. With a window fixed by the display its own size says
-         * nothing about the room, whereas one cell is the thing a Teacher can hold two
-         * Drones up against. This is the scale reference docs/DESIGN.md §4.3 asks for.
-         */}
-        <span>Grid: {formatStep(stepM)} m</span>
         <span>Filled = flying</span>
         {groups.size > 0 && <span>Dashed = linked as one group</span>}
         {conflicts.length > 0 && <span>Solid = too close</span>}
@@ -632,6 +635,10 @@ export function cellsAcross(windowSideM: number): number {
  * The table above is what today's ladder and today's steps happen to produce. It is not the
  * rule. **The rule is the band**, and it is asserted over the exported ladder in the test, so
  * a rung added later cannot quietly fall outside it.
+ *
+ * Nothing on screen states the step any more. The caption that did read as a claim about
+ * what a cell measured on the glass, and every monitor is a different size, so it could not
+ * be true there. It is exported for `cellsAcross` and for the test.
  */
 export function gridStepM(windowSideM: number): number {
   const inBand = GRID_STEPS_M.find((step) => {
@@ -665,7 +672,3 @@ function gridLines(lowM: number, highM: number, stepM: number): number[] {
   return lines
 }
 
-/** `0.5`, `1`, `2` — never `1.0`, which claims a precision the grid has not got. */
-function formatStep(stepM: number): string {
-  return Number.isInteger(stepM) ? `${stepM}` : stepM.toFixed(1)
-}

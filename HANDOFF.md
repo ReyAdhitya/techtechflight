@@ -59,7 +59,7 @@ Closed in code, open on GitHub (nothing is merged yet, so nothing was closed):
 | 11 | "Keep an eye on it" becomes "Under observation" | ✅ |
 | 19 | A side view on the scope, toggled with the top-down | ✅ |
 | 20 | Drop the phase word from the flight strip | ✅ |
-| 21 | Let the section descriptions use the width their surface has | 🔄 in progress |
+| 21 | Let the section descriptions use the width their surface has | ✅ |
 | **15** | **Read real Drones over MAVLink, developed against SITL** | ❌ **not started** |
 
 **#15 is the only substantial work left**, and it is the product owner's original request —
@@ -68,14 +68,15 @@ file the others open.
 
 ## What remains, in order
 
-1. **Finish #21.** Remove `max-w-[..ch]` from four screens so descriptions align with the
-   surface beneath them. See the issue's comment for the before/after the owner confirmed.
-2. **One code review over the whole stack**, not per issue. The owner explicitly wants it
+1. **One code review over the whole stack**, not per issue. The owner explicitly wants it
    last, once, before merging.
-3. **Merge the tip branch into `main`.** Nothing has been merged; the public repository
+2. **Merge the tip branch into `main`.** Nothing has been merged; the public repository
    still shows the old board, and GitHub's contribution graph counts only `main`.
-4. **#15** whenever it is wanted. Approach is fully specified in the issue: MAVLink over
+3. **#15** whenever it is wanted. Approach is fully specified in the issue: MAVLink over
    UDP against ArduPilot SITL, in a new `fleet-adapters/` workspace.
+
+Every board correction the product owner asked for is built. Only #15 is outstanding, and it
+is a project rather than a correction.
 
 ## Rules that are not obvious and cost real time when broken
 

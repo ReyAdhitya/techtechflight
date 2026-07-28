@@ -86,27 +86,29 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T7',
     name: 'Height / Side view',
-    hits: 'Strip Z · toggle Side — marks separate vertically',
+    hits: 'Strip Z · toggle Side — marks separate vertically (and on north)',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
       s.setAltitude(D1, 0.5)
       s.setAltitude(D2, 2.5)
-      s.placeNear(D2, D1, 2)
+      // Side horizontal is north — separate them on that axis.
+      s.setPosition(D1, 1, 0)
+      s.setPosition(D2, 1, 3)
     },
   },
   {
     id: 'T7b',
     name: 'Front view',
-    hits: 'Toggle Front (#28) — north axis separation; SKIP if Front not shipped',
+    hits: 'Toggle Front — classroom row spreads on east',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
       s.setAltitude(D1, 1.5)
       s.setAltitude(D2, 1.5)
-      // Same east, different north — Side stacks; Front separates.
-      s.setPosition(D1, 1, 0)
-      s.setPosition(D2, 1, 3)
+      // Front horizontal is east — different east, same north.
+      s.setPosition(D1, 0, 0)
+      s.setPosition(D2, 3, 0)
     },
   },
   {

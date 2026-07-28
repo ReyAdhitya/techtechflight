@@ -7,6 +7,13 @@ would notice.
 
 ### Fixed
 
+- **A Teacher on a screen reader is no longer told the scope is a room.** The `<svg>` was
+  labelled *"Positions of N Drones in the room"* — the one claim ADR-0014 exists to deny.
+  Sighted Teachers see a frame with no walls and read it correctly; a screen reader gave the
+  opposite model of the picture, which makes it an accessibility defect rather than a wording
+  one. It now reads *"Where N Drones are, looking down"*. `roomExtent` / `RoomExtent` were
+  renamed to `scopeWindow` / `ScopeWindow` for the same reason, and the component's own doc
+  comment, which still claimed the box was shaped like the room, went with them.
 - **The scope's grid holds still, and its cells are square.** The window was the Fleet's own
   extent plus a metre, recomputed on every Fleet State, so the grid shifted, the frame
   reshaped and the number of cells changed on every telemetry tick — while `percentOf`

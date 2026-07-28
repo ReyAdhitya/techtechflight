@@ -231,7 +231,7 @@ function ServicePanel({
 }) {
   return (
     <section className="flex flex-col gap-3 rounded-surface border border-hairline bg-surface-1 p-4">
-      <h2 className="label m-0">Your decision about this Drone</h2>
+      <h2 className="label m-0">Service decision</h2>
       <div className="flex flex-wrap gap-2">
         {(Object.keys(SERVICE_PRESENTATION) as ServiceState[]).map((candidate) => (
           <button
@@ -253,8 +253,8 @@ function ServicePanel({
       <p className="m-0 text-value text-ink-subtle">{SERVICE_PRESENTATION[state].meaning}</p>
       {demo && (
         <p className="m-0 text-value text-ink-subtle">
-          This is saved in this browser. On the demonstration Fleet it is yours to play
-          with and affects nothing real.
+          Stored in this browser. On the demonstration Fleet the decision is local and
+          does not affect real aircraft.
         </p>
       )}
     </section>
@@ -268,13 +268,13 @@ function NotePanel({ droneId, text }: { droneId: string; text: string }) {
   return (
     <section className="flex flex-col gap-2">
       <label className="label" htmlFor={`note-${droneId}`}>
-        Your note
+        Note
       </label>
       <textarea
         id={`note-${droneId}`}
         value={value}
         rows={3}
-        placeholder="Anything worth remembering about this one — a loose arm, a sticky button…"
+        placeholder="Airframe notes — a loose arm, a sticky control…"
         className="rounded-surface border border-hairline bg-surface-1 p-3 text-value text-ink"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
@@ -282,7 +282,7 @@ function NotePanel({ droneId, text }: { droneId: string; text: string }) {
           setDraft(null)
         }}
       />
-      <p className="m-0 text-value text-ink-subtle">Saved when you click away.</p>
+      <p className="m-0 text-value text-ink-subtle">Saved when focus leaves the field.</p>
     </section>
   )
 }

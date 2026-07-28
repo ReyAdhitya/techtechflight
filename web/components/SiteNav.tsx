@@ -25,7 +25,7 @@ export const DESTINATIONS = [
   { href: '/control', label: 'Control', hint: 'The Flight Control Center — the lesson as it runs' },
   { href: '/', label: 'Fleet', hint: 'Every Drone, and what needs doing to it' },
   { href: '/lesson', label: 'Lesson', hint: 'Plan it, then start it' },
-  { href: '/students', label: 'Students', hint: 'The class, and who is flying what' },
+  { href: '/students', label: 'Students', hint: 'The class, and Drone assignment' },
   { href: '/reports', label: 'Reports', hint: 'What happened, and which Drone keeps doing it' },
 ] as const
 

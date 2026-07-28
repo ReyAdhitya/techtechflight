@@ -95,13 +95,13 @@ function PreFlight({
         <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
           <span className="tnum tracking-[-0.02em]">{usable.length}</span>
           <span className="text-heading text-ink-subtle">
-            of {drones.length} ready to hand out
+            of {drones.length} serviceable
           </span>
         </h1>
         <p className="m-0 text-body text-ink-muted">
           {usable.length === 0
             ? 'Nothing is ready yet. The list below is what stands in the way.'
-            : `Enough for ${usable.length} ${usable.length === 1 ? 'Student' : 'Students'} flying at once.`}
+            : `Sufficient for ${usable.length} ${usable.length === 1 ? 'Student' : 'Students'} airborne at once.`}
         </p>
       </div>
 
@@ -207,8 +207,8 @@ function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) 
       </div>
 
       <p className="m-0 text-body text-ink-muted">
-        Watch it from the Flight Control Center. Everything that needs you is there, in the
-        order it needs you, and the lesson ends from there too.
+        Monitor from the Flight Control Center. Every item requiring action is listed there, in
+        the order it requires action, and the lesson is ended from there.
       </p>
 
       <Link

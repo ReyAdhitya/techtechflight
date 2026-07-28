@@ -74,7 +74,7 @@ export function HistorySections() {
          */}
         <p className="tnum m-0 text-value text-ink-subtle">
           Covering the last {formatDuration(window)} — since{' '}
-          {formatClock(history.since)}. Anything older has been let go.
+          {formatClock(history.since)}. Anything older has been discarded.
         </p>
       </div>
 

@@ -35,19 +35,19 @@ export function AttentionBar({
       <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
         <span className="tnum tracking-[-0.02em]">{queue.length}</span>
         <span className="text-heading text-ink-subtle">
-          {queue.length === 1 ? 'thing needs you' : 'things need you'}
+          {queue.length === 1 ? 'item requires action' : 'items require action'}
         </span>
       </h1>
 
       {worst === undefined ? (
         <p className="m-0 text-body text-ink-muted">
-          Nothing needs you. Every Drone in contact is behaving.
+          No items require action. All Drones in contact are nominal.
         </p>
       ) : (
         <div
           className={cn('flex flex-col gap-1 border-l-2 pl-3', SEVERITY_PRESENTATION[worst.severity].className)}
           role="status"
-          aria-label="What needs you next"
+          aria-label="Items requiring action"
         >
           <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-body text-ink">
             <span

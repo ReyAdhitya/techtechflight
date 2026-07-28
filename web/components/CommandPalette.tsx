@@ -128,7 +128,7 @@ export function CommandPalette() {
 
         <ul className="m-0 max-h-80 list-none overflow-y-auto p-0">
           {matches.length === 0 && (
-            <li className="px-4 py-3 text-value text-ink-subtle">Nothing matches that.</li>
+            <li className="px-4 py-3 text-value text-ink-subtle">No match.</li>
           )}
           {matches.map((command, index) => (
             <li key={command.id}>

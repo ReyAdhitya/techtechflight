@@ -62,7 +62,7 @@ describe('who is flying what', () => {
   it('says nobody has one yet, rather than showing an empty list', () => {
     show()
 
-    expect(screen.getByText(/Nobody has a Drone yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/No Drone is assigned/i)).toBeInTheDocument()
   })
 
   it('shows the Student, the Drone and what the Drone is doing', () => {

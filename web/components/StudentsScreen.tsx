@@ -61,7 +61,7 @@ export function StudentsScreen() {
 
         {flying.length === 0 ? (
           <p className="m-0 text-value text-ink-subtle">
-            Nobody has a Drone yet. Hand them out from the Lesson screen.
+            No Drone is assigned. Assignments are made on the Lesson screen.
           </p>
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
@@ -103,7 +103,7 @@ export function StudentsScreen() {
         <div className="flex flex-col gap-1">
           <h2 className="label m-0">The class</h2>
           <p className="m-0 text-value text-ink-subtle">
-            Kept so you type a class once rather than once a period. Names are all this
+            Retained so a class is entered once rather than once a period. Names are all this
             board stores about a Student — nothing is recorded against them.
           </p>
         </div>

@@ -56,7 +56,7 @@ export function ExerciseList({
 
       {exercises.length === 0 ? (
         <p className="m-0 text-value text-ink-subtle">
-          None yet. A Lesson can run perfectly well without any — this is for when you want
+          None recorded. A Lesson runs without them; these are for when the board is to
           the board to show what each Student is meant to be doing.
         </p>
       ) : (

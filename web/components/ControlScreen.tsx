@@ -356,7 +356,7 @@ function FlightStrip({
                 */}
               {isAcknowledged(vitals.droneId, alert) && (
                 <span className="tnum text-value text-ink-muted">
-                  You have this — {formatAge(Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)))}
+                  Acknowledged — {formatAge(Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)))}
                 </span>
               )}
             </li>

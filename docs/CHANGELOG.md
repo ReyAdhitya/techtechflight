@@ -5,6 +5,13 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **Register residual after PR #22.** Lesson and Maintenance blocking copy, logbook
+  service-state meanings, the Drone screen cluster, auto-landing unavailable, and the
+  Control acknowledged-alert line — the ADR-0015 "before" strings the first sweep missed
+  behind route params and warm leftovers. Key `'watch'` and the five Status words untouched.
+
 ### Added
 
 - **The scope has a side view, toggled with the top-down.** The plan view answers *which one

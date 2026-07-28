@@ -62,6 +62,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Note:** `compareStrips` deleted — it had no other callers. Do not restore worst-first
   strip sort without an ADR arguing against position #1.
 
+## 2026-07-28 Front uses east; Side uses north; fullscreen is an icon
+
+- **Decision:** Swap elevation floor axes — Front horizontal = east, Side = north — so the
+  default classroom row spreads on Front. Fullscreen control is icon-only with aria-labels
+  (owner override of DESIGN §1.2 for that one control). Expanded overlay centres the
+  composition in the viewport.
+- **Reason:** Owner defects #38 — text fullscreen label, letterbox hugging the top, Front
+  stacking every parked Drone in one place (`northM: 0`).
+- **Note:** Do not fake positions in the UI; the mapping changed. Training T7/T7b layouts
+  follow the new axes.
+
 ## 2026-07-28 Unknown SITL battery is an estimate, not silence
 
 - **Decision:** If a craft is heartbeating but `batteryRemaining` / voltage are absent or

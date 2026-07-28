@@ -118,11 +118,12 @@ export function Scope({
     if (view === 'top-down') return scope.percentOf(drone)
     const altitudeM = Math.min(ceilingM, Math.max(0, drone.telemetry!.altitudeM!))
     const yPercent = (1 - altitudeM / ceilingM) * 100
-    if (view === 'front') {
-      // North → x (Side uses east). Same window; the floor axis is the only difference.
+    if (view === 'side') {
+      // North → x. Front uses east so the classroom row (eastM: 0,1,2…) spreads there.
       const { y } = scope.projectOf(drone)
       return { xPercent: ((scope.heightM - y) / scope.heightM) * 100, yPercent }
     }
+    // Front: east → x (same as top-down's horizontal).
     const { xPercent } = scope.percentOf(drone)
     return { xPercent, yPercent }
   }
@@ -152,7 +153,9 @@ export function Scope({
       className={cn(
         'flex flex-col gap-3',
         expanded
-          ? 'fixed inset-0 z-50 m-0 max-h-none max-w-none overflow-auto rounded-none bg-canvas p-4'
+          ? // Whole composition centred in the viewport — letterbox must not hug the top
+            // with a void only below (owner #38).
+            'fixed inset-0 z-50 m-0 max-h-none max-w-none items-center justify-center overflow-auto rounded-none bg-canvas p-4'
           : 'mx-auto my-0 w-full max-w-[37.5rem]',
       )}
       {...(expanded
@@ -164,7 +167,12 @@ export function Scope({
        * tiny glyphs for three viewpoints are exactly that. Real buttons, so the set is
        * reachable from a keyboard (§11.3).
        */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-2',
+          expanded && 'w-full max-w-[min(100%,90vh)] justify-between',
+        )}
+      >
         <div className="flex flex-wrap gap-2" role="group" aria-label="How to draw the Drones">
           {SCOPE_VIEWS.map((option) => (
             <button
@@ -186,10 +194,35 @@ export function Scope({
         <button
           ref={exitFullScreenRef}
           type="button"
+          aria-label={expanded ? 'Exit full screen' : 'Full screen'}
           onClick={() => setExpanded((open) => !open)}
-          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-pill border border-hairline bg-transparent text-ink hover:border-ink"
         >
-          {expanded ? 'Exit full screen' : 'Full screen'}
+          {/*
+           * Icon only — owner override of DESIGN §1.2 for this control. View toggles stay
+           * words. aria-label carries Full screen / Exit full screen for §11.3.
+           */}
+          {expanded ? (
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M6 2v4H2M12 2v4h4M6 16v-4H2M12 16v-4h4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M2 6V2h4M12 2h4v4M16 12v4h-4M6 16H2v-4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </button>
       </div>
 
@@ -208,7 +241,7 @@ export function Scope({
       <div
         className={cn(
           'relative w-full rounded-surface border border-hairline bg-canvas',
-          expanded && 'mx-auto max-h-[min(100%,calc(100vh-8rem))] max-w-[min(100%,90vh)]',
+          expanded && 'max-h-[min(100%,calc(100vh-8rem))] w-full max-w-[min(100%,90vh)]',
         )}
         style={{ aspectRatio: elevation ? `${scope.widthM} / ${ceilingM}` : '1' }}
       >
@@ -236,7 +269,7 @@ export function Scope({
           }
         >
           {/* A fixed grid, so a distance on screen can be read as a distance in metres. */}
-          {(view === 'front'
+          {(view === 'side'
             ? gridLines(scope.southM, scope.northM, stepM).map((metre) => ({
                 key: `v${metre}`,
                 x: metre - scope.southM,
@@ -586,7 +619,7 @@ export type ScopeView = 'top-down' | 'side' | 'front'
 
 const SCOPE_VIEWS = ['top-down', 'side', 'front'] as const satisfies readonly ScopeView[]
 
-/** Height against a floor axis — Side (east) or Front (north). */
+/** Height against a floor axis — Side (north) or Front (east). */
 export function isElevation(view: ScopeView): boolean {
   return view === 'side' || view === 'front'
 }

@@ -229,14 +229,15 @@ condition clears and later recurs.
 ### 4.3 The scope
 
 Three pictures in one box, toggled in words: **Top-down** · **Side** · **Front**. Default
-Top-down on every load; the choice is not remembered. Side is height against east; Front is
-height against north — see [ADR-0016](./adr/0016-a-side-view-on-the-scope.md) and
+Top-down on every load; the choice is not remembered. Side is height against **north**; Front
+is height against **east** (so the classroom row spreads on Front) — see
+[ADR-0016](./adr/0016-a-side-view-on-the-scope.md) and
 [ADR-0017](./adr/0017-a-front-view-on-the-scope.md). Conflict and link lines stay on Top-down
 only.
 
-A **Full screen** control temporarily lifts the 600 px / 37.5rem cap (ADR-0014) via a fixed
-overlay — **Exit full screen** or Escape restores the capped layout; the choice is not
-remembered. View toggles stay usable inside.
+A **Full screen** control (icon only, with `aria-label`) temporarily lifts the 600 px /
+37.5rem cap (ADR-0014) via a fixed overlay centred in the viewport — Exit or Escape restores
+the capped layout; the choice is not remembered. View toggles stay words and usable inside.
 
 A plan view looking down, metres from where the Fleet was set up.
 

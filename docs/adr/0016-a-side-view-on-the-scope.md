@@ -1,7 +1,8 @@
 # The scope gets a side view, in the same box, on the same scale
 
-The scope draws two pictures of the same Fleet: **Top-down**, which it always drew, and
-**Side**, which shows height. A labelled toggle swaps between them. One is showing at a time.
+The scope draws **Top-down** and **Side** (height against a floor axis). A labelled toggle
+swaps between them. One is showing at a time. As of [ADR-0017](./0017-a-front-view-on-the-scope.md)
+/ #38, Side’s horizontal axis is **north** (Front takes **east** so the classroom row spreads).
 
 Numbered 0016 rather than 0015 because
 [ADR-0015](./0015-a-professional-register.md) took that number first.

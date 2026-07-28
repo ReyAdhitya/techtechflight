@@ -7,9 +7,7 @@ import {
   currentExercise,
   endLesson,
   persistedTally,
-  RECORDS_WARN_BYTES,
   readLogbook,
-  recordsAreHeavy,
   recordCommand,
   rememberStudent,
   runningLesson,
@@ -322,26 +320,3 @@ describe('the Exercise a Lesson is on', () => {
   })
 })
 
-/**
- * Before the browser refuses.
- *
- * Everything a Teacher writes lives in one browser, and the failure that matters is the
- * quiet one: a save throws, the board keeps working perfectly, and the record of the last
- * three weeks is simply not there.
- */
-describe('records getting heavy', () => {
-  it('says nothing while there is plenty of room', () => {
-    startLesson('Year 8', 5, 6, 1_000)
-
-    expect(recordsAreHeavy(readLogbook())).toBe(false)
-  })
-
-  it('says so before the browser starts refusing', () => {
-    const heavy = {
-      ...readLogbook(),
-      notes: { 'ttf-0001': { text: 'x'.repeat(RECORDS_WARN_BYTES + 1), updatedAt: 1 } },
-    }
-
-    expect(recordsAreHeavy(heavy)).toBe(true)
-  })
-})

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DroneVitals } from './vitals'
-import { formatVerticalMovement } from './vitals-presentation'
+import { formatCoordinates, formatVerticalMovement } from './vitals-presentation'
 
 /**
  * Height with its direction, and nothing at all when there is no height to give.
@@ -59,5 +59,71 @@ describe('height on the flight strip', () => {
     expect(formatVerticalMovement(aVitals({ airborne: true, altitudeM: null }))).toBe(
       'Height not reported',
     )
+  })
+})
+
+/**
+ * Where a Drone is, as three numbers.
+ *
+ * Added on every strip on 2026-07-28, which required `docs/DESIGN.md` §1.2 to be narrowed —
+ * numbers are not the primary language, and this sits beside the instruction rather than in
+ * place of it. What is worth testing hardest is the absences: the two ways a reading can be
+ * missing, which §11.1 requires to be drawn differently from a zero.
+ */
+describe('the coordinate group', () => {
+  it('labels each axis with its letter and its direction', () => {
+    expect(
+      formatCoordinates(aVitals({ position: { eastM: 2.4, northM: 1.1 }, altitudeM: 1.7 })),
+    ).toBe('X 2.4 m E · Y 1.1 m N · Z 1.7 m')
+  })
+
+  it('turns the sign into the direction a Teacher would say out loud', () => {
+    expect(
+      formatCoordinates(aVitals({ position: { eastM: -2.4, northM: -1.1 }, altitudeM: 0.5 })),
+    ).toBe('X 2.4 m W · Y 1.1 m S · Z 0.5 m')
+  })
+
+  /*
+   * 0 m east and 0 m west are the same place. Picking one would be noise dressed as
+   * precision, and the demonstration Fleet sits on the north axis, so this is the common
+   * case rather than an edge one.
+   */
+  it('claims no direction where there is none', () => {
+    expect(
+      formatCoordinates(aVitals({ position: { eastM: 0, northM: 3 }, altitudeM: 0 })),
+    ).toBe('X 0.0 m · Y 3.0 m N · Z 0.0 m')
+  })
+
+  /*
+   * The acceptance item. An airframe with no barometer and one sitting on the floor are
+   * different facts, and drawing the first as the second tells a Teacher something false.
+   */
+  it('says a height was not reported rather than drawing a zero', () => {
+    const line = formatCoordinates(aVitals({ position: { eastM: 1, northM: 1 }, altitudeM: null }))
+
+    expect(line).toBe('X 1.0 m E · Y 1.0 m N · Z not reported')
+    expect(line).not.toMatch(/Z .*0/)
+  })
+
+  it('draws a real zero as a reading, because that is what it is', () => {
+    expect(
+      formatCoordinates(aVitals({ position: { eastM: 1, northM: 1 }, altitudeM: 0 })),
+    ).toBe('X 1.0 m E · Y 1.0 m N · Z 0.0 m')
+  })
+
+  /*
+   * No line at all rather than a row of dashes. A group full of placeholders reads as a
+   * measurement that failed, when the truth is that none was offered.
+   */
+  it('gives nothing at all for a Drone that has not said where it is', () => {
+    expect(formatCoordinates(aVitals({ position: null }))).toBeNull()
+  })
+
+  /* The detail dialog hands it a Telemetry, where absence is `undefined` rather than `null`. */
+  it('reads a Telemetry as happily as a Vitals', () => {
+    expect(formatCoordinates({ position: { eastM: 2, northM: 0 } })).toBe(
+      'X 2.0 m E · Y 0.0 m · Z not reported',
+    )
+    expect(formatCoordinates({})).toBeNull()
   })
 })

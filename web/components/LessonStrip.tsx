@@ -58,7 +58,15 @@ export function LessonStrip({
 
       <button
         type="button"
-        className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+        /*
+         * The same filled treatment "Start the lesson" carries in LessonScreen, character
+         * for character. The two are symmetrical halves of one lifecycle and a Teacher has
+         * to find the closing half across a room; as a ghost button it read as an aside.
+         *
+         * Not a Status colour. design.md §9 reserves colour for exception, and a lesson
+         * ending on time is the normal path rather than a fault.
+         */
+        className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
         onClick={() => {
           const at = now || Date.now()
           /*

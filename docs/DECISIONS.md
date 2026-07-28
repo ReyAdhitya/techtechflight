@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Control strips follow boardOrder; Attention carries urgency
+
+- **Decision:** Drop `compareStrips` from Control's Every Drone list. Strips use the same
+  `FleetState.drones` / `boardOrder` order as Fleet tiles. Keep `alertQueue` worst-first on
+  the Attention bar.
+- **Reason:** Owner reported the live list as dizzying — rows swapped on every alert tick.
+  Numbers updating is fine; positions moving is not. Aligns with deliberate position #1 and
+  DESIGN.md §1.1; overrides the old wireframe "worst first" line for strips.
+- **Note:** `compareStrips` deleted — it had no other callers. Do not restore worst-first
+  strip sort without an ADR arguing against position #1.
+
 ## 2026-07-28 Unknown SITL battery is an estimate, not silence
 
 - **Decision:** If a craft is heartbeating but `batteryRemaining` / voltage are absent or

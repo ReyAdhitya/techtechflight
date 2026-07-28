@@ -30,6 +30,13 @@ export default defineConfig({
         },
       },
       {
+        test: {
+          name: 'fleet-adapters',
+          environment: 'node',
+          include: ['fleet-adapters/**/*.test.ts'],
+        },
+      },
+      {
         plugins: [react()],
         resolve: {
           alias: {

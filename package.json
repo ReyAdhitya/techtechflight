@@ -5,6 +5,7 @@
   "workspaces": [
     "contract",
     "fleet-core",
+    "fleet-adapters",
     "ground-station",
     "web"
   ],
@@ -15,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:devices": "node scripts/audit-devices.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p fleet-core/tsconfig.json && tsc --noEmit -p web/tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p fleet-core/tsconfig.json && tsc --noEmit -p fleet-adapters/tsconfig.json && tsc --noEmit -p web/tsconfig.json"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

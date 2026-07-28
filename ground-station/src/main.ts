@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
-import type { FleetThresholds } from '@techtechflight/contract'
+import type { FleetThresholds, TelemetrySource } from '@techtechflight/contract'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
+import { MavlinkTelemetrySource } from '@techtechflight/fleet-adapters'
 import { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 import {
   CLASSROOM_FLEET,
@@ -16,15 +17,33 @@ const boardDir = resolve(here, '../../web/out')
 
 const clock = new SystemClock()
 
-const simulator = new SimulatedTelemetrySource({
-  registrations: CLASSROOM_FLEET,
-  clock,
-  reportIntervalMs: 1_000,
-})
+/*
+ * The simulator stays the default. Point TELEMETRY_SOURCE=mavlink at ArduPilot SITL
+ * (UDP 14550) — or later a radio — when reading real craft. That path is monitoring
+ * only: the MAVLink adapter does not implement CommandableSource (ADR-0011).
+ */
+const simulator =
+  process.env['TELEMETRY_SOURCE'] === 'mavlink'
+    ? null
+    : new SimulatedTelemetrySource({
+        registrations: CLASSROOM_FLEET,
+        clock,
+        reportIntervalMs: 1_000,
+      })
+
+const source: TelemetrySource =
+  simulator ??
+  new MavlinkTelemetrySource({
+    clock,
+    host: process.env['MAVLINK_HOST'] ?? '127.0.0.1',
+    port: numberFrom('MAVLINK_PORT', 14_550),
+    idForSystem: (systemId) =>
+      CLASSROOM_FLEET.find((drone) => drone.boardOrder === systemId)?.id ?? `mav-${systemId}`,
+  })
 
 const station = new GroundStation({
   registrations: CLASSROOM_FLEET,
-  source: simulator,
+  source,
   clock,
   // Both time thresholds are configurable, per the spec. How long a Drone may be quiet
   // before its Telemetry stops being trustworthy is a property of the room and the
@@ -68,6 +87,12 @@ function numberFrom(variable: string, fallback: number): number {
 
 station.start()
 
+if (!simulator) {
+  console.log(
+    `Reading MAVLink on udp://${process.env['MAVLINK_HOST'] ?? '127.0.0.1'}:${numberFrom('MAVLINK_PORT', 14_550)} (monitoring only)`,
+  )
+}
+
 /*
  * The record of the recent past.
  *
@@ -93,15 +118,16 @@ if (!existsSync(boardDir)) {
   console.log('Board not built — run `npm run build --workspace=web`, or `npm run dev:web`.')
 }
 
-installScenarioKeys()
+if (simulator) installScenarioKeys(simulator)
 
 /**
  * Scenario triggers for a demonstration, driven from this terminal.
  *
  * Deliberately on the ground station's stdin rather than the socket: the dashboard is
  * read-only and this spec has no command path, so a demo affordance must not become one.
+ * Only the simulated Fleet has these — a MAVLink source is monitoring, not a stage set.
  */
-function installScenarioKeys(): void {
+function installScenarioKeys(simulator: SimulatedTelemetrySource): void {
   const input = process.stdin
   if (!input.isTTY) return
 

@@ -7,6 +7,10 @@ would notice.
 
 ### Fixed
 
+- **MAVLink adapter stays live when SITL omits battery.** Match frames by registry class
+  (not `instanceof`), and when HEARTBEAT is present but charge is unknown emit
+  `batteryFraction: 1` with `batteryIsEstimate: true` so the strip shows contact instead of
+  Offline. Verified end-to-end against ArduCopter 3.3 SITL in WSL (UDP 14550).
 - **Living docs match the merged board-corrections stack.** CI is acknowledged (no lint
   remains true); the logbook header no longer claims Settings export; ADR-0014 no longer
   requires a live `Grid:` caption; DESIGN.md strip anatomy is five head-row cells.
@@ -17,6 +21,13 @@ would notice.
 
 ### Added
 
+- **A MAVLink Telemetry Source, developed against ArduPilot SITL.** New `fleet-adapters/`
+  workspace (Node-only — `node:dgram` cannot enter `fleet-core`, ADR-0013). Reads HEARTBEAT,
+  SYS_STATUS, BATTERY_STATUS, LOCAL_POSITION_NED, GLOBAL_POSITION_INT and ATTITUDE over UDP
+  `127.0.0.1:14550` by default. Fresh `Telemetry` objects per reading; `Clock` injected; no
+  `CommandableSource` (ADR-0011) — against real hardware this is monitoring, not control.
+  The ground station still defaults to the simulator; `TELEMETRY_SOURCE=mavlink` opts in.
+  Adapter tests use recorded frames and a `TestClock` — no socket, no sleeps.
 - **The scope has a side view, toggled with the top-down.** The plan view answers *which one
   is that* and *are two about to meet*; it cannot answer **are those two at the same height**,
   and two marks a hand's width apart in plan may be three metres apart vertically and in no

@@ -434,7 +434,7 @@ describe('opening a single Drone', () => {
     expect(dialog.getByText('41.2')).toBeInTheDocument()
     expect(dialog.getByText('1.4.2')).toBeInTheDocument()
     expect(dialogElement).toHaveAccessibleDescription(
-      /take this one out of service.*motion sensor needs recalibrating/i,
+      /withdraw from service.*motion sensor needs recalibrating/i,
     )
   })
 

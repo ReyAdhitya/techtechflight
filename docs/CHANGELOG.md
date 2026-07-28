@@ -27,6 +27,10 @@ would notice.
 
 ### Added
 
+- **The scope has a Front elevation view.** Height against **north**, beside Side (height
+  against east). Same box, same ceiling ladder, same heightless-and-named rule; conflict and
+  link lines stay top-down only. ADR-0017; supersedes ADR-0016's "any third view". Toggle:
+  Top-down · Side · Front. See [ADR-0017](./adr/0017-a-front-view-on-the-scope.md).
 - **A MAVLink Telemetry Source, developed against ArduPilot SITL.** New `fleet-adapters/`
   workspace (Node-only — `node:dgram` cannot enter `fleet-core`, ADR-0013). Reads HEARTBEAT,
   SYS_STATUS, BATTERY_STATUS, LOCAL_POSITION_NED, GLOBAL_POSITION_INT and ATTITUDE over UDP

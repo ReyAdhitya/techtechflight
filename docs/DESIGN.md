@@ -193,7 +193,7 @@ The screen a Teacher watches. The only screen with Commands on it.
 │    ▌ Now   Drone 3 — Separate it from Drone 1, 0.9m apart. │
 │            Flown by Priya.            [ Acknowledge ]      │
 ├────────────────────────────────────────────────────────────┤
-│ 3  THE SCOPE           where everything is, looking down   │
+│ 3  THE SCOPE           Top-down · Side · Front (toggle)    │
 │                                                            │
 │         ·Drone 5                  ·Drone 1 ─────┐          │
 │                                                 │ linked   │
@@ -227,6 +227,12 @@ visible where the Drone is. It returns to the queue if its severity worsens, or 
 condition clears and later recurs.
 
 ### 4.3 The scope
+
+Three pictures in one box, toggled in words: **Top-down** · **Side** · **Front**. Default
+Top-down on every load; the choice is not remembered. Side is height against east; Front is
+height against north — see [ADR-0016](./adr/0016-a-side-view-on-the-scope.md) and
+[ADR-0017](./adr/0017-a-front-view-on-the-scope.md). Conflict and link lines stay on Top-down
+only.
 
 A plan view looking down, metres from where the Fleet was set up.
 

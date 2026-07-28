@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Front elevation reuses Side's rules on the other floor axis
+
+- **Decision:** Add Scope view `front` — north × altitude — with ADR-0017. Factor
+  `isElevation()` for shared ceiling / ground / heightless / aspect behaviour.
+- **Reason:** Side stacks Drones that share an easting; Front separates them. Owner asked
+  for the missing elevation without a second box (ADR-0014).
+- **Note:** ADR-0016 "any third view" superseded in writing. Conflict lines still top-down
+  only.
+
 ## 2026-07-28 Release stop clears the latch; it is not a Scenario
 
 - **Decision:** After `emergency` phase, replace **Stop immediately** with **Release stop**

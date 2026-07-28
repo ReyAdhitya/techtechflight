@@ -430,6 +430,7 @@ describe('what the scope shows', () => {
  * the shape of what it draws, and a metre up is the same length as a metre across.
  */
 const showSide = () => fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+const showFront = () => fireEvent.click(screen.getByRole('button', { name: 'Front' }))
 
 const box = (container: HTMLElement) =>
   container.querySelector('[style*="aspect-ratio"]') as HTMLElement
@@ -546,6 +547,91 @@ describe('the side view', () => {
     expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(1)
 
     showSide()
+    expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(0)
+  })
+})
+
+describe('the front view', () => {
+  it('offers three viewpoints, with Front reachable from Top-down', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
+
+    expect(screen.getByRole('button', { name: 'Top-down' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Side' })).toBeInTheDocument()
+    showFront()
+    expect(screen.getByRole('button', { name: 'Front' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  /*
+   * The whole reason Front exists: same east, different north, same height — Side stacks
+   * them; Front separates them on x.
+   */
+  it('separates two Drones Side would stack, when only north differs', () => {
+    render(
+      <Scope
+        drones={[atHeight('Drone 1', 1, 0, 1.5), atHeight('Drone 2', 1, 3, 1.5)]}
+        onSelect={() => {}}
+      />,
+    )
+
+    showSide()
+    const sideLeft = {
+      a: screen.getByRole('button', { name: /Drone 1/ }).style.left,
+      b: screen.getByRole('button', { name: /Drone 2/ }).style.left,
+    }
+    expect(sideLeft.a).toBe(sideLeft.b)
+
+    showFront()
+    const frontLeft = {
+      a: screen.getByRole('button', { name: /Drone 1/ }).style.left,
+      b: screen.getByRole('button', { name: /Drone 2/ }).style.left,
+    }
+    expect(frontLeft.a).not.toBe(frontLeft.b)
+  })
+
+  it('matches Side on equal metre scale and ceiling shape', () => {
+    const { container } = render(<Scope drones={[atHeight('Drone 1', 0, 0, 1.5)]} />)
+    showFront()
+
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 2')
+    expect(box(container).style.aspectRatio).toBe('8 / 2')
+  })
+
+  it('leaves out a heightless Drone and names it, like Side', () => {
+    render(
+      <Scope
+        drones={[atHeight('Drone 1', 0, 0, 1), atHeight('Drone 2', 0, 2, undefined)]}
+        onSelect={() => {}}
+      />,
+    )
+    showFront()
+
+    expect(screen.queryByRole('button', { name: /Drone 2/ })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Drone 2 does not report a height', { selector: 'span' }),
+    ).toBeInTheDocument()
+  })
+
+  it('draws no conflict or link line from the front', () => {
+    const linked = (name: string, northM: number) =>
+      aDroneState({
+        id: name.toLowerCase().replace(' ', '-'),
+        name,
+        status: 'Flying',
+        telemetry: aTelemetry({
+          airborne: true,
+          position: { eastM: 0, northM },
+          altitudeM: 1,
+          linkGroupId: 'formation',
+        }),
+      })
+
+    const { container } = render(<Scope drones={[linked('Drone 1', 0), linked('Drone 2', 2)]} />)
+    expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(1)
+
+    showFront()
     expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(0)
   })
 })

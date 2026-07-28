@@ -152,7 +152,9 @@ export function Scope({
       className={cn(
         'flex flex-col gap-3',
         expanded
-          ? 'fixed inset-0 z-50 m-0 max-h-none max-w-none overflow-auto rounded-none bg-canvas p-4'
+          ? // Whole composition centred in the viewport — letterbox must not hug the top
+            // with a void only below (owner #38).
+            'fixed inset-0 z-50 m-0 max-h-none max-w-none items-center justify-center overflow-auto rounded-none bg-canvas p-4'
           : 'mx-auto my-0 w-full max-w-[37.5rem]',
       )}
       {...(expanded
@@ -164,7 +166,12 @@ export function Scope({
        * tiny glyphs for three viewpoints are exactly that. Real buttons, so the set is
        * reachable from a keyboard (§11.3).
        */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-2',
+          expanded && 'w-full max-w-[min(100%,90vh)] justify-between',
+        )}
+      >
         <div className="flex flex-wrap gap-2" role="group" aria-label="How to draw the Drones">
           {SCOPE_VIEWS.map((option) => (
             <button
@@ -233,7 +240,7 @@ export function Scope({
       <div
         className={cn(
           'relative w-full rounded-surface border border-hairline bg-canvas',
-          expanded && 'mx-auto max-h-[min(100%,calc(100vh-8rem))] max-w-[min(100%,90vh)]',
+          expanded && 'max-h-[min(100%,calc(100vh-8rem))] w-full max-w-[min(100%,90vh)]',
         )}
         style={{ aspectRatio: elevation ? `${scope.widthM} / ${ceilingM}` : '1' }}
       >

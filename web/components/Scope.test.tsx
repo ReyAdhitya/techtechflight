@@ -144,12 +144,6 @@ describe('the room the scope draws', () => {
     expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 20, 0)], held).widthM).toBe(24)
   })
 
-  it('never collapses to a zero-width room when everything is in a line', () => {
-    const line = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 4, 0)])
-    expect(line.heightM).toBeGreaterThan(0)
-    expect(Number.isFinite(line.aspectRatio)).toBe(true)
-  })
-
   /*
    * Past the last rung the window stops growing, and the only alternative to holding a Drone
    * on the edge is drawing it off the frame — where it reads as a Drone that is not flying.

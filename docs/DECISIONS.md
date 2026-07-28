@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Strip freespace is the response column, not charge
+
+- **Decision:** Control Every Drone list uses `grid-cols-[auto_auto_auto_auto_1fr]` — Name,
+  Student, height, charge are `auto`; response takes `1fr` and is `text-right`. Stop stays
+  separated from Land/Hold via `ml-auto`.
+- **Reason:** `1fr` on charge left-aligned text in a stretched column → cavern before
+  Response (#41 / owner screenshot).
+- **Note:** Five-cell order and boardOrder (#27) unchanged. Plan:
+  `docs/plans/2026-07-28-flight-strip-tighten.md`.
+
 ## 2026-07-28 Training scenarios are Settings runners, not strip Commands
 
 - **Decision:** Named T-scenarios on `ScenarioControls` (+ `placeNear` / `setAltitude` /

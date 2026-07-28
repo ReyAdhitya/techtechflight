@@ -8,7 +8,8 @@ would notice.
 ### Fixed
 
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the
-  GuardedButton / C8 press-and-hold path for classroom speed.
+  GuardedButton / C8 press-and-hold path for classroom speed. DESIGN §13.2 marked resolved
+  so it no longer contradicts §4.5.
 - **No more "Stop — done" beside Release stop.** Emergency-stop receipt clears when the latch
   is on Telemetry; Release stop + the critical alert are the lasting signal. Land/Hold still
   get sent/waiting/done.

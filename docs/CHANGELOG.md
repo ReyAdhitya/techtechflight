@@ -54,6 +54,11 @@ would notice.
 
 ### Changed
 
+- **The flight strip no longer names a phase.** It read `Level · 2.6 m`, which is the same
+  fact twice: a Drone holding 2.6 m is what *Level* means, and the height carries the number
+  the word could not. The direction stays — an arrow and a rate answer *is it going up or
+  down*, which one height cannot give. A grounded Drone now reads `0.0 m` in a cell that used
+  to be empty, because the phase word beside it was the only thing saying where it was.
 - **A Drone being watched is now "Under observation", not "Keep an eye on it".** Standing
   airworthiness vocabulary, parallel in grammar to `In service` and `Out of service` either
   side of it, and free of jargon a Teacher would need training on. **The stored `watch` key is

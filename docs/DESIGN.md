@@ -62,6 +62,13 @@ sole carrier of meaning. Every Status, phase and severity carries a word and a s
 **Numeric readouts as the primary language.** "0.4 m, −0.7 m/s" is a measurement where an
 instruction belongs. Every Alert says what to *do*.
 
+*Narrowed on 2026-07-28.* The refusal is about what is **primary**, not about numbers as
+such. A Teacher asked for position on every strip, and a labelled coordinate group is now
+carried there — **in addition to** the instruction, never instead of it. The Alert still
+leads and still says what to do; the numbers sit on a line of their own beneath the head row,
+where a Teacher who wants them can find them and a Teacher who does not is not made to read
+past them. See §4.4.
+
 **Skeuomorphic instruments.** Attitude indicators and horizon balls are for someone flying
 the aircraft. Nobody flies from this screen.
 
@@ -256,6 +263,7 @@ Fixed anatomy. The eye learns the positions.
 ┌──────────────────────────────────────────────────────────────────┐
 │ Drone 3    Priya      Level    1.7 m ↓0.4 m/s   63% · ~8 min     │
 │                                            Response 2s ago       │
+│ X 2.4 m E · Y 1.1 m N · Z 1.7 m                                  │
 │ Exercise 2: Hover                                                │
 │ Nearest aircraft: 0.9 m from Drone 1                             │
 │ ▌Now  Separate it from Drone 1 — 0.9m apart.    [ Acknowledge ]  │
@@ -264,7 +272,28 @@ Fixed anatomy. The eye learns the positions.
 ```
 
 Left to right: **Drone Name · Student · phase · height with direction · charge with time
-remaining · response age.** Then Exercise, separation, Alerts, Commands.
+remaining · response age.** Then the coordinate group, Exercise, separation, Alerts, Commands.
+
+**The coordinates go on their own line and never into the head row.** Added 2026-07-28, on
+every strip rather than only the selected Drone. The head row's six cells are the whole reason
+this format is justified — the eye learns where charge is and stops re-finding it — and
+threading three more numbers through it would push charge and response age sideways for a
+value a Teacher reads far less often than either.
+
+Format: `X 2.4 m E · Y 1.1 m N · Z 1.7 m`. Each axis carries its letter *and* its direction,
+so the letters are learnable without being the only key. One decimal, because the Telemetry is
+rounded to two and a third digit would be precision it has not got.
+
+- **A Drone that has reported no position renders no line at all** — not a row of dashes. A
+  group full of placeholders reads as a measurement that failed, when none was offered.
+- **A height that was never reported reads `Z not reported`**, never `0.0`. An airframe with
+  no barometer and one sitting on the floor are different facts (§11.1). A Drone that measures
+  zero shows `Z 0.0 m`, which is a reading.
+- **A direction is only claimed where there is one.** At exactly zero the letter is dropped:
+  0 m east and 0 m west are the same place.
+
+The same readout appears in the Drone detail dialog, in the same format, so opening a Drone
+does not make a Teacher learn a second one.
 
 The strip is ordered worst-first, weighted by how many Alerts a Drone holds within a
 severity, with Drone Name as the stable final tiebreak (B4). A Drone with two Now-level

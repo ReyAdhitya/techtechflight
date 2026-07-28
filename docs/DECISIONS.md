@@ -9,6 +9,102 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 `ScopeWindow` is the projection; `WindowChoice` is the decision
+
+- **Decision:** Rename `RoomExtent` → `ScopeWindow` and `roomExtent()` → `scopeWindow()`, and
+  rename the small held record that was already called `ScopeWindow` to `WindowChoice`, on
+  the member `.choice`.
+- **Reason:** The review asked for `scopeWindow` and noted the name was already taken by the
+  held record, so something had to move. The projection object is what every caller touches
+  and what the ADR is about, so it gets the honest name; the held record is a decision — how
+  big, and where the middle is — and `WindowChoice` says that.
+- **Alternatives considered:** `ScopeProjection` for the big one, leaving `ScopeWindow` on
+  the small one (rejected: the review asked for `scopeWindow` specifically, and a projection
+  is what the object *does* rather than what it *is*); `HeldWindow` for the small one
+  (rejected: it is only "held" from the component's point of view — `chooseWindow` returns
+  one before anything holds it).
+- **Note:** No user-facing string changed except the `aria-label`, which is finding 4 of the
+  same review and landed in its own commit.
+
+## 2026-07-28 The two ladder walks in `Scope.tsx` stay separate
+
+- **Decision:** Do not fold `chooseWindow`'s rung walk and `gridStepM`'s step walk into one
+  "first that fits, else the fallback" helper, though the review noted the shape twice.
+- **Reason:** They stopped being the same shape once the cell floor landed. `chooseWindow`
+  skips rungs below the held side, returns a derived `WindowChoice` rather than the rung, and
+  falls back to the **last** rung; `gridStepM` skips nothing, returns the step, and falls back
+  to the **first**. A shared helper would need a skip predicate, a mapper and a fallback
+  selector — three parameters to save two lines each — and it would hide that the two
+  fallbacks point in opposite directions, which is the one interesting thing about them.
+- **Note:** The cells-across arithmetic *was* folded, into the exported `cellsAcross()`, which
+  is what the ladder test now asserts on. `gridStepM` cannot use it without recursing, and
+  `gridLines` counts rules over an arbitrary span rather than cells across the window, so
+  neither is the same calculation.
+
+## 2026-07-27 The scope's window is reconsidered only when a Drone leaves it
+
+- **Decision:** Keep the held window — size *and* centre — untouched for as long as it
+  contains every placed Drone. Recompute only when one has left. When recomputing, centre on
+  the midpoint of the Fleet's extent and snap that centre to a multiple of the grid cell.
+- **Reason:** "Centred on the Fleet" and "the grid does not move" pull against each other,
+  because the Fleet's midpoint moves continuously. Snapping alone would still pan the picture
+  by a cell every time the midpoint crossed a half-cell boundary — occasional rather than
+  constant, but a whole-Fleet jump is more startling than a slow drift, not less. Gating on
+  containment removes it entirely: the window changes when a Drone leaves the frame, which is
+  a reason the Teacher can see.
+- **Alternatives considered:** Snapping without the containment gate (the pan above);
+  centring on the mean position rather than the extent's midpoint (an outlier drags the
+  centre less, but the picture then no longer frames the outermost Drones, which is what the
+  window is for); re-centring on a timer or with an animation (motion on a board whose
+  complaint was motion).
+- **Note:** Each rung is tested *after* its own snap rather than picked from the raw reach,
+  because snapping can shift the centre by half a cell and push a Drone out of a rung that
+  fitted before the snap.
+
+## 2026-07-27 The scope's window is held in a ref, and clamping lives in `project`
+
+- **Decision:** Hold the chosen window side in a `useRef` inside `Scope`, written during
+  render, rather than in `useState` adjusted during render or in an effect. And do the
+  edge-clamping inside `roomExtent`'s `project()` rather than at each call site.
+- **Reason:** The ref write is idempotent — the same props give the same side whether render
+  runs once or twice — so the usual objection to writing a ref during render does not apply
+  here, and `useState` would have cost a second render pass for a value no one re-renders on.
+  Clamping in `project()` means `projectOf`, `percentOf` and the conflict lines all inherit
+  it for free; clamping at the call sites would have been four places to forget, and the
+  conflict line is the one that would have been forgotten, because it is the only one that
+  does not go through a Drone.
+- **Alternatives considered:** Recomputing the window freely each render (this is the
+  original bug in miniature — a Drone on a rung boundary flips it every tick); lifting the
+  held side to `ControlScreen` as state (it is display bookkeeping, not screen state, and
+  `HistoryScreen` would have had to carry it too for no reason); clamping in `percentOf`
+  only, which leaves an unclamped conflict line drawn off the frame.
+- **Note:** The ref means the window resets when the scope unmounts. That is deliberate — a
+  Teacher who navigates away and back gets the smallest window that fits, and "never shrinks"
+  is a statement about a continuous look at the board, not about the session.
+
+## 2026-07-27 The tests are pinned, and the demonstration stays unpredictable
+
+- **Decision:** Make the demonstration Fleet deterministic **in tests only**, by giving
+  `FleetProvider` a `demonstration` prop that forwards `random` and `spontaneous` to
+  `LocalFleetLink`. The product passes nothing and keeps `Math.random` with spontaneous
+  events on.
+- **Reason:** The flakiness came from tests asserting against weather, not from the weather
+  being wrong. Spontaneity is a feature of the demonstration — it is the same reason the
+  ground station binds scenario keys to its own stdin, so a demonstration never has to wait
+  for something to happen. Removing it to make tests pass would have fixed the suite by
+  damaging the product.
+- **Alternatives considered:** Defaulting `spontaneous` to false and opting the demo *in*
+  (quiet by default is the wrong default for the one build anyone looks at); sniffing
+  `NODE_ENV` inside `FleetProvider` (production code that behaves differently under test is
+  how a suite stops describing the product); mocking the simulator per test (six files each
+  inventing their own Fleet, and no longer testing the real derivation path that
+  `LocalFleetLink` exists to provide).
+- **Note:** The pinned values live in one place, `web/test-support/fleet.ts`, and match
+  what `local-fleet-link.test.ts` already used — so the suite has one answer to "what does
+  a Drone do when nothing asks it to". It must stay module-level: `FleetProvider` rebuilds
+  its link when those options change, so a fresh object per render would restart the Fleet
+  on every render.
+
 ## 2026-07-24 The commit and branch convention moves to conventional commits
 
 - **Decision:** New work uses `feat:` / `fix:` / `docs:` / `chore:` prefixes, on a branch,

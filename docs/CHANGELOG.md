@@ -5,8 +5,140 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **The scope has a side view, toggled with the top-down.** The plan view answers *which one
+  is that* and *are two about to meet*; it cannot answer **are those two at the same height**,
+  and two marks a hand's width apart in plan may be three metres apart vertically and in no
+  danger at all. One box, one view, a labelled control to swap — stacking a second picture
+  would have undone the 600 px cap the week it landed. A metre up is the same length as a
+  metre across, because a stretched vertical axis makes two Drones look separated when they
+  are not. Top-down on every load; the choice is not remembered. A Drone that cannot measure
+  its height is left out and named rather than drawn on the ground line, which would say it
+  had landed when the truth is that it cannot say. See
+  [ADR-0016](./adr/0016-a-side-view-on-the-scope.md), including why the ground line is not the
+  flight area ADR-0012 defers.
+- **Every flight strip carries X, Y and Z.** `X 2.4 m E · Y 1.1 m N · Z 1.7 m`, on its own
+  line beneath the head row — never inside it, because §4.4 justifies the whole strip format
+  on the eye learning fixed positions and three more numbers in the head row would push charge
+  and response age sideways. Each axis carries its letter *and* its direction, so the letters
+  are learnable without being the only key. A Drone that has reported no position gets no line
+  at all rather than a row of dashes, and a height that was never reported reads `Z not
+  reported` rather than `0.0` — an airframe with no barometer and one on the floor are
+  different facts (§11.1). At exactly zero no direction is claimed, since 0 m east and 0 m
+  west are the same place. The same readout is in the Drone detail dialog. This required
+  `docs/DESIGN.md` §1.2 to be **narrowed**: numbers are still not the primary language, and
+  position is carried in addition to the instruction rather than instead of it.
+
+### Removed
+
+- **Settings no longer has a records panel or a keyboard panel.** Export, Import and Clear
+  everything are withdrawn with the first of them. Notes, service decisions and lesson records
+  stay exactly where they were — in one browser profile — but every route to moving them to
+  another laptop, or to clearing them short of clearing site data, is gone. That consequence
+  was stated and accepted. Settings keeps the ground station block and the scenario controls,
+  which `docs/DESIGN.md` §9 requires to live there and nowhere near a Command.
+- **The end-of-lesson prompt offering to export a heavy logbook went with them.** It told a
+  Teacher their records were getting large and offered the one control that could do something
+  about it. With that control deleted the prompt would have been a dead end, and a warning
+  with no remedy is worse than no warning.
+- **`Ctrl`/`⌘`+K and `Esc` still work, and are now undiscoverable.** The keyboard panel was
+  the only place on the board that said they existed. **This is a decision, not an oversight**
+  — recorded here so it reads as one at the next accessibility audit. `docs/DESIGN.md` §11.3
+  still requires every screen and every Drone to be reachable by keyboard, and they still are;
+  what has gone is the documentation of *how*, not the capability.
+- **Dead logbook code went with the panels:** `recordsAreHeavy`, `exportLogbook`,
+  `recordsSize`, `RECORDS_WARN_BYTES` and `replaceLogbook`, each of which lost its last
+  caller. There is no lint here, so an unused export is never flagged and reads as an API the
+  next person may build on.
+
+### Changed
+
+- **The whole board speaks in a professional register.** *"3 things need you"* is now *"3
+  items require action"*; *"5 of 6 ready to hand out"* is *"5 of 6 serviceable"*; *"Nobody has
+  a Drone yet. Hand them out from the Lesson screen."* is *"No Drone is assigned. Assignments
+  are made on the Lesson screen."* `CONTEXT.md`'s education-first rule is superseded and says
+  so — see [ADR-0015](./adr/0015-a-professional-register.md), which landed before any string
+  moved. **What did not change:** every Alert still says what to *do* (§1.2 — the register
+  changes the vocabulary, never the grammar of an order), severity is still `Now · Soon ·
+  Later`, the classroom nouns are still Teacher, Student, Lesson and Exercise, and the five
+  `Status` strings are untouched because they are the type, the wire format and the display
+  text at once. The language is English throughout, as it always was; the register moved, not
+  the language.
+- **The flight strip no longer names a phase.** It read `Level · 2.6 m`, which is the same
+  fact twice: a Drone holding 2.6 m is what *Level* means, and the height carries the number
+  the word could not. The direction stays — an arrow and a rate answer *is it going up or
+  down*, which one height cannot give. A grounded Drone now reads `0.0 m` in a cell that used
+  to be empty, because the phase word beside it was the only thing saying where it was.
+- **A Drone being watched is now "Under observation", not "Keep an eye on it".** Standing
+  airworthiness vocabulary, parallel in grammar to `In service` and `Out of service` either
+  side of it, and free of jargon a Teacher would need training on. **The stored `watch` key is
+  untouched** — it is serialized into the browser logbook, so renaming it to match the new
+  words would silently invalidate every service decision on every Teacher's laptop, with no
+  migration and no error. A test now pins the key against exactly that.
+- **"End the lesson" is a primary control rather than a ghost button.** It carried a hairline
+  border and a transparent fill, for the one control a Teacher has to find across a room at
+  the moment a class is packing up. It now uses the filled treatment "Start the lesson"
+  already had, character for character — the two are symmetrical halves of one lifecycle. Not
+  a Status colour: `design.md` §9 reserves colour for exception, and a lesson ending on time
+  is the normal path. A test now weighs the pair against each other, since they live in
+  different files with separate copies of the class string, which is how they drifted apart.
+- **The scope writes each Drone's height under its name, in place of the phase word.**
+  *"Level"* said the Drone was holding its height without saying what height; the number is
+  the thing a Teacher can act on, and the phase is still on the flight strip in words. An
+  airframe that cannot measure height draws no number at all — not a dash, not `0.0 m`, which
+  is what a Drone on the floor correctly says. The height comes off `DroneState` rather than
+  Vitals, so Reports gets labelled marks too.
+- **The scope no longer captions its grid with a cell size.** *"Grid: 0.5 m"* read as a claim
+  about what a cell measures on the glass, and every monitor is a different size, so on screen
+  it could never be true. The grid itself is unchanged. The symbol keys stay — *Filled =
+  flying* says what a mark means, not how big it is.
+
 ### Fixed
 
+- **A Teacher on a screen reader is no longer told the scope is a room.** The `<svg>` was
+  labelled *"Positions of N Drones in the room"* — the one claim ADR-0014 exists to deny.
+  Sighted Teachers see a frame with no walls and read it correctly; a screen reader gave the
+  opposite model of the picture, which makes it an accessibility defect rather than a wording
+  one. It now reads *"Where N Drones are, looking down"*. `roomExtent` / `RoomExtent` were
+  renamed to `scopeWindow` / `ScopeWindow` for the same reason, and the component's own doc
+  comment, which still claimed the box was shaped like the room, went with them.
+- **The scope's grid holds still, and its cells are square.** The window was the Fleet's own
+  extent plus a metre, recomputed on every Fleet State, so the grid shifted, the frame
+  reshaped and the number of cells changed on every telemetry tick — while `percentOf`
+  renormalised each Drone into that same moving box, which left the Drones looking like the
+  stationary thing. Reported as *"the squares move, the dots should move"*, which was exactly
+  right. The window is now a square from a fixed ladder of five sizes, growing when a Drone
+  leaves it and never shrinking, with cells of half a metre at the default size. A Drone
+  beyond the largest window is held on the edge and named, never dropped. (Where it centres,
+  and the caption that stated the cell size, both changed again below.) See [ADR-0014](./adr/0014-a-fixed-scope-window.md) for why a fixed window is
+  not the flight area ADR-0012 deferred; without that distinction written down, the next
+  reader deletes this.
+- **The scope is an aid again, not the whole screen.** Making it square made it 1216 px tall
+  at 1440 px, which put every flight strip below the fold — the strips are where a Teacher
+  works, so that had the priority backwards. It is capped at 600 px and centred, in rem so
+  LARGE FORMAT still grows it. All six strips are visible again without scrolling.
+- **The scope frames the Drones instead of the setup point.** The window used to centre on
+  the origin, so a Fleet set up in a corner drew in a corner with half the picture empty —
+  and the wasted half pushed the marks together. It now centres on the middle of the Fleet,
+  with the centre snapped to a whole cell so the grid still cannot drift, and it is only
+  reconsidered when a Drone actually leaves it. The demonstration Fleet went from a 12 m
+  window to an 8 m one for the same six Drones.
+- **The scope's labels stop colliding on a phone.** Six labels in a short strip ran into one
+  unreadable line at 390 px — the bug recorded in `Scope.tsx` found once before. Below 640 px
+  a mark now shows only its Drone Name; the phase goes, because it is three times the width
+  and is already on that Drone's flight strip further down the same screen. The name stays at
+  every width, since answering *"which one is that"* is the whole reason the scope exists.
+- **`npm test` is deterministic again.** Every component test that rendered a demonstration
+  Fleet ran the real simulator with `Math.random` and spontaneous events switched on, so a
+  Drone could take off unasked or drop its link on a 0.2%-per-tick roll in the middle of an
+  assertion that it was standing still. The suite failed about one run in three and named a
+  different test each time — recorded as O7 in `docs/TEST_REPORT.md` as a transient that did
+  not reproduce. It reproduces. `LocalFleetOptions` had carried the seam for pinning this
+  since it was written; `FleetProvider` simply could not reach it. Five consecutive full runs
+  now pass 374 of 374. This matters more than a flaky test usually would: there is no CI, so
+  `npm test` run by hand is the whole gate, and a gate that is red one run in three has
+  stopped being one.
 - **The simulation label is a strip under the bar again, not a white block beside it.**
   `.site-header-shell` was `display: flex` with no axis, so the bar and the label became
   columns of a row. On a phone the label swelled to a quarter of the viewport. The label's
@@ -24,6 +156,29 @@ would notice.
 
 ### Added
 
+- **The rule a hardware adapter has to keep is written down as a test.** `CODEBASE_AUDIT.md`
+  §8 noticed that `sameFleet` compares Telemetry by reference and judged it worth a test
+  rather than a fix. Probing it first found something sharper than the note recorded: the
+  ground station keeps the Telemetry object it is handed rather than copying it, so a source
+  that fills one buffer and re-emits it — what a serial or MQTT adapter is most likely to do
+  — would silently rewrite Fleet States it had already published, and a second reading
+  inside the same millisecond would go unpublished. `telemetry-ownership.test.ts` asserts the
+  requirement rather than the hazard, so it does not lock the defect in place. The fix, if it
+  ever bites, is a copy on ingest. See ADR-0001 for why this is the seam that has to hold.
+- **CI, for the first time.** `.github/workflows/ci.yml` runs `npm run typecheck`, `npm test`
+  and the static export on every push to `main` and every pull request, on Linux **and**
+  Windows — the repository is developed on one and deployed on the other, and every
+  path-handling bug it has had lived in that gap. The two gates were always the whole gate;
+  what was missing was anything that ran them without being asked. `npm run audit:devices`
+  stays out: it needs a real browser and a built board, and belongs in a job somebody
+  watches rather than one that blocks a merge.
+- **`scripts/shot.mjs` is in the repository.** `CLAUDE.md` has named it as one of the two
+  defences against a layout bug the jsdom suite cannot see, while it sat untracked — one
+  `git clean` from gone, along with the Chromium-resolution knowledge it carries. It now
+  photographs the whole page rather than a fixed 320px crop of the header, says plainly
+  when the board is not built or Chromium is missing instead of failing inside Playwright,
+  and finds Chromium on macOS and Linux as well as Windows. Shots land in `scripts/shots/`,
+  gitignored — evidence for one fix, stale by the next.
 - `docs/PLAYBOOK.md` — detected stack, how far behind current, conventions, pitfalls.
 - `docs/DESIGN-TOKENS.md` — the design system as actually built, including the two-layer
   token structure that was not written down anywhere.

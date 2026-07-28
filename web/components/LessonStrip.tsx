@@ -1,14 +1,10 @@
 'use client'
 
 import type { FleetEvent } from '@techtechflight/contract'
-import { useState } from 'react'
 import {
   addIncident,
   currentExercise,
   endLesson,
-  exportLogbook,
-  recordsAreHeavy,
-  readLogbook,
   tallyEvents,
   type LessonRecord,
 } from '@/lib/logbook'
@@ -32,7 +28,6 @@ export function LessonStrip({
   readonly events: readonly FleetEvent[]
   readonly now: number
 }) {
-  const [justEnded, setJustEnded] = useState(false)
   const elapsed = Math.max(0, now - lesson.startedAt)
   const onNow = currentExercise(lesson, now)
   const sinceStart = events.filter((event) => event.at >= lesson.startedAt)
@@ -58,7 +53,15 @@ export function LessonStrip({
 
       <button
         type="button"
-        className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+        /*
+         * The same filled treatment "Start the lesson" carries in LessonScreen, character
+         * for character. The two are symmetrical halves of one lifecycle and a Teacher has
+         * to find the closing half across a room; as a ghost button it read as an aside.
+         *
+         * Not a Status colour. design.md §9 reserves colour for exception, and a lesson
+         * ending on time is the normal path rather than a fault.
+         */
+        className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
         onClick={() => {
           const at = now || Date.now()
           /*
@@ -82,30 +85,11 @@ export function LessonStrip({
            * Drone keeps giving trouble" survives the ground station being restarted.
            */
           endLesson(lesson.id, at, tallyEvents(sinceStart))
-          // Offered rather than done. Whether a record leaves this browser is the
-          // Teacher's decision, and a download nobody asked for is a download nobody
-          // trusts.
-          setJustEnded(recordsAreHeavy(readLogbook()))
         }}
       >
         End the lesson
       </button>
 
-      {justEnded && (
-        <p className="m-0 flex flex-wrap items-center gap-3 text-value text-ink-subtle" role="status">
-          Your records are getting large for a browser to hold.
-          <button
-            type="button"
-            onClick={() => {
-              exportLogbook()
-              setJustEnded(false)
-            }}
-            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-          >
-            Export them now
-          </button>
-        </p>
-      )}
     </section>
   )
 }

@@ -57,7 +57,7 @@ export function WhatNeedsDoing() {
           <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
             <span className="tnum tracking-[-0.02em]">{todo.length}</span>
             <span className="text-heading text-ink-subtle">
-              {todo.length === 1 ? 'thing needs doing' : 'things need doing'}
+              {todo.length === 1 ? 'item requires action' : 'items require action'}
             </span>
           </h1>
           {todo.length === 0 && (
@@ -134,17 +134,24 @@ export function FleetReliability() {
       <section className="flex flex-col gap-4 ">
         <div className="flex flex-col gap-1">
           <h2 className="m-0 font-display text-heading font-medium">
-            Which Drones keep giving trouble
+            Recurring defects by Drone
           </h2>
-          <p className="m-0 max-w-[60ch] text-value text-ink-subtle">
+          {/*
+           * No measure cap. The Drone cards directly beneath span the column, and a caption
+           * that stops halfway reads as something that ran out rather than as a decision.
+           * The 45-75 character measure is a rule for long-form reading; this is three
+           * sentences above the thing they describe, and the eye never travels far enough
+           * for it to earn its keep against the misalignment it costs.
+           */}
+          <p className="m-0 text-value text-ink-subtle">
             {lessonsCounted === 0
-              ? `Counted across everything the ground station still remembers. A Drone with
-                 one fault had a bad morning; a Drone at the top of this list every week is
-                 one to take up with the supplier.`
-              : `Counted across everything the ground station still remembers, plus
-                 ${lessonsCounted} finished ${lessonsCounted === 1 ? 'lesson' : 'lessons'}
-                 kept on this laptop. A Drone with one fault had a bad morning; a Drone at
-                 the top of this list every week is one to take up with the supplier.`}
+              ? `Counted across everything the ground station still holds. A single fault is
+                 an isolated occurrence; a Drone at the top of this list week after week is
+                 one to raise with the supplier.`
+              : `Counted across everything the ground station still holds, plus
+                 ${lessonsCounted} completed ${lessonsCounted === 1 ? 'lesson' : 'lessons'}
+                 retained on this laptop. A single fault is an isolated occurrence; a Drone
+                 at the top of this list week after week is one to raise with the supplier.`}
           </p>
         </div>
 

@@ -64,7 +64,8 @@ Status describes **what a physical aircraft is**, and the two must not be confus
 | Ready / Flying | `--foreground` | `--foreground` | no colour of its own |
 | Offline | `--muted-foreground` | `--muted-foreground` | recedes; not an error |
 
-The amber/coral separation is deliberate and reasoned (`NOTES.md`): two severities that must
+The amber/coral separation is deliberate and reasoned
+(`docs/DELIBERATE-POSITIONS.md`): two severities that must
 stay distinguishable to a colour-blind eye and on a washed-out projector, which is why
 **shape carries them too** — Fault's rail is solid, Not Ready's is interrupted.
 

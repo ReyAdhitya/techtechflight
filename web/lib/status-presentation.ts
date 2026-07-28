@@ -20,27 +20,27 @@ export const STATUS_PRESENTATION: Readonly<Record<Status, StatusPresentation>> =
   Ready: {
     label: 'Ready',
     shape: 'filled',
-    meaning: 'Charged, in contact, and safe to hand to a Student.',
+    meaning: 'Charged, in contact, and serviceable for issue to a Student.',
   },
   Flying: {
     label: 'Flying',
     shape: 'ringed',
-    meaning: 'Airborne right now.',
+    meaning: 'Airborne.',
   },
   'Not Ready': {
     label: 'Not Ready',
     shape: 'half',
-    meaning: 'Something is preventing flight — usually charge. Fixable before the lesson.',
+    meaning: 'Flight is inhibited, usually by charge state. Rectifiable before the lesson.',
   },
   Fault: {
     label: 'Fault',
     shape: 'square',
-    meaning: 'Take this one out of service. Not fixable before the lesson.',
+    meaning: 'Withdraw from service. Not rectifiable before the lesson.',
   },
   Offline: {
     label: 'Offline',
     shape: 'hollow',
-    meaning: 'No recent contact. Normal for a Drone that is switched off.',
+    meaning: 'No recent contact. Expected for a Drone that is powered down.',
   },
 }
 

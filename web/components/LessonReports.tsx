@@ -51,7 +51,7 @@ export function LessonReports() {
 
       {finished.length === 0 ? (
         <p className="m-0 text-value text-ink-subtle">
-          None finished yet. A Lesson writes its record when you end it.
+          No Lesson has been completed. A record is written when a Lesson is ended.
         </p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-3 p-0">

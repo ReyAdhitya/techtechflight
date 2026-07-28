@@ -76,9 +76,13 @@ documents are which. Authoritative: **`CONTEXT.md`**, **`docs/adr/*`**, **`READM
 
 Not authoritative, and easy to mistake for it:
 
-- `MISSION.md`, `NOTES.md`, `RESOURCES.md`, `lessons/`, `learning-records/`, `reference/`
-  — a personal UI-design coaching track that *uses* this repo as its subject. It describes
-  the author's learning goals, not the product's requirements.
+- ~~`MISSION.md`, `NOTES.md`, `RESOURCES.md`, `lessons/`, `learning-records/`,
+  `reference/`~~ — a personal UI-design coaching track that *used* this repo as its
+  subject. It described the author's learning goals, not the product's requirements.
+  **Removed from the repository on 2026-07-27**, before it went public, for exactly the
+  reason this entry gives: it was never about the product. The six deliberate positions
+  `NOTES.md` carried were product content and survive in
+  `docs/DELIBERATE-POSITIONS.md`.
 - `design.md` — the design system for **a different product** ("Proposal Console"). ADR-0009
   adopts its palette for this board; the rest of the file is about another application.
 

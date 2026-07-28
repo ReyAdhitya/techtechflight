@@ -10,7 +10,7 @@ export default function MaintenancePage() {
   return (
     <MovedTo
       href="/reports"
-      what="What needs doing is now on the Fleet screen, and which Drones keep giving trouble is in Reports."
+      what="Outstanding actions are now on the Fleet screen, and recurring defects are in Reports."
       label="Go to Reports"
     />
   )

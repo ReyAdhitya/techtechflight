@@ -62,6 +62,13 @@ sole carrier of meaning. Every Status, phase and severity carries a word and a s
 **Numeric readouts as the primary language.** "0.4 m, −0.7 m/s" is a measurement where an
 instruction belongs. Every Alert says what to *do*.
 
+*Narrowed on 2026-07-28.* The refusal is about what is **primary**, not about numbers as
+such. A Teacher asked for position on every strip, and a labelled coordinate group is now
+carried there — **in addition to** the instruction, never instead of it. The Alert still
+leads and still says what to do; the numbers sit on a line of their own beneath the head row,
+where a Teacher who wants them can find them and a Teacher who does not is not made to read
+past them. See §4.4.
+
 **Skeuomorphic instruments.** Attitude indicators and horizon balls are for someone flying
 the aircraft. Nobody flies from this screen.
 
@@ -221,22 +228,32 @@ condition clears and later recurs.
 
 ### 4.3 The scope
 
-A plan view of the room, looking down, metres from where the Fleet was set up.
+A plan view looking down, metres from where the Fleet was set up.
 
-- Each Drone: a mark, its **Drone Name**, and its phase in words.
+- Each Drone: a mark, its **Drone Name**, and its **height** as a number.
 - **Conflict**: a solid line between two Drones that are too close. Deduplicated so a pair
   draws one line.
 - **Linked group**: a dashed line, distinct from a conflict line by pattern and not only by
   colour.
-- **Altitude** is carried by the mark's size *and* stated in the strip. Size alone is not a
-  reading.
+- **Altitude** is carried by the mark's size *and* written under the Drone Name *and* stated
+  in the strip. Size alone is not a reading. An airframe that cannot measure height shows no
+  number at all — never `0.0 m`, which is what a Drone on the floor says (§11.1).
 - **Selection is linked**: choosing a strip highlights its mark, and choosing a mark
   highlights its strip. Answering *"which one is that?"* is the question the scope exists for.
+- **Below 640 px the Drone Name is all that is drawn.** Six labels in a short strip collide
+  into one unreadable line, and the height is the longer of the two — and it is on the flight
+  strip anyway. The name never goes: a scope of anonymous dots answers nothing.
 
 **No room outline, no zones, no boundaries.** ADR-0012 defers the flight area because
 absolute geometry needs an origin nobody has confirmed. Drawing walls would be modelling the
 room by the back door, and the only walls that exist today are four numbers invented so the
-simulated rangefinder has something to find. A scale reference is shown instead.
+simulated rangefinder has something to find.
+
+**No scale reference either, as of 2026-07-28.** The scope drew a fixed grid captioned with
+its cell size, and the caption read as a claim about what a cell measured on the glass — which
+no page can know, since every monitor is a different size. The grid stays as an aid to
+judging one distance against another; the caption is gone, and the readable quantity is the
+height written on each mark. See `docs/adr/0014-a-fixed-scope-window.md`.
 
 ### 4.4 The flight strip
 
@@ -244,8 +261,9 @@ Fixed anatomy. The eye learns the positions.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ Drone 3    Priya      Level    1.7 m ↓0.4 m/s   63% · ~8 min     │
+│ Drone 3    Priya      1.7 m ↓0.4 m/s     63% · ~8 min            │
 │                                            Response 2s ago       │
+│ X 2.4 m E · Y 1.1 m N · Z 1.7 m                                  │
 │ Exercise 2: Hover                                                │
 │ Nearest aircraft: 0.9 m from Drone 1                             │
 │ ▌Now  Separate it from Drone 1 — 0.9m apart.    [ Acknowledge ]  │
@@ -253,8 +271,39 @@ Fixed anatomy. The eye learns the positions.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-Left to right: **Drone Name · Student · phase · height with direction · charge with time
-remaining · response age.** Then Exercise, separation, Alerts, Commands.
+Left to right: **Drone Name · Student · height with direction · charge with time remaining ·
+response age.** Then the coordinate group, Exercise, separation, Alerts, Commands.
+
+**No phase word, as of 2026-07-28.** The strip read `Level · 2.6 m`, which is the same fact
+twice — a Drone holding 2.6 m is what *Level* means — and the height carries the number the
+word could not. The direction stays: an arrow and a rate answer *is it going up or down*,
+which one height cannot give, and that is not the phase.
+
+A Drone on the ground therefore reads `0.0 m`, with no arrow and no *steady*. That cell used
+to be left empty because the phase word beside it already said "On the ground"; with the word
+gone, an empty cell would leave the row silent about where the Drone is. An airframe that
+cannot measure height still reads `Height not reported` rather than a zero (§11.1).
+
+**The coordinates go on their own line and never into the head row.** Added 2026-07-28, on
+every strip rather than only the selected Drone. The head row's six cells are the whole reason
+this format is justified — the eye learns where charge is and stops re-finding it — and
+threading three more numbers through it would push charge and response age sideways for a
+value a Teacher reads far less often than either.
+
+Format: `X 2.4 m E · Y 1.1 m N · Z 1.7 m`. Each axis carries its letter *and* its direction,
+so the letters are learnable without being the only key. One decimal, because the Telemetry is
+rounded to two and a third digit would be precision it has not got.
+
+- **A Drone that has reported no position renders no line at all** — not a row of dashes. A
+  group full of placeholders reads as a measurement that failed, when none was offered.
+- **A height that was never reported reads `Z not reported`**, never `0.0`. An airframe with
+  no barometer and one sitting on the floor are different facts (§11.1). A Drone that measures
+  zero shows `Z 0.0 m`, which is a reading.
+- **A direction is only claimed where there is one.** At exactly zero the letter is dropped:
+  0 m east and 0 m west are the same place.
+
+The same readout appears in the Drone detail dialog, in the same format, so opening a Drone
+does not make a Teacher learn a second one.
 
 The strip is ordered worst-first, weighted by how many Alerts a Drone holds within a
 severity, with Drone Name as the stable final tiebreak (B4). A Drone with two Now-level

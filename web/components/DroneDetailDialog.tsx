@@ -5,6 +5,7 @@ import type { DroneState, Status } from '@techtechflight/contract'
 import { formatAge, formatExactTime } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
 import { STATUS_PRESENTATION, isFixableBeforeTheLesson } from '@/lib/status-presentation'
+import { formatCoordinates } from '@/lib/vitals-presentation'
 import { Button } from './ui/Button'
 
 const STATUS_COLOUR: Record<Status, string> = {
@@ -149,6 +150,17 @@ export function DroneDetailDialog({ drone, ageMs, onClose }: DroneDetailDialogPr
 
                 <dt className="label self-center">Airborne</dt>
                 <dd className="m-0 text-value">{telemetry.airborne ? 'Yes' : 'No'}</dd>
+
+                {/*
+                 * The same three numbers the flight strip carries, in the same format, so a
+                 * Teacher who opens a Drone is not made to learn a second one.
+                 */}
+                {formatCoordinates(telemetry) && (
+                  <>
+                    <dt className="label self-center">Position</dt>
+                    <dd className="tnum m-0 text-value">{formatCoordinates(telemetry)}</dd>
+                  </>
+                )}
 
                 {Object.entries(telemetry.extra ?? {}).map(([key, value]) => (
                   <Value key={key} name={key} value={value} />

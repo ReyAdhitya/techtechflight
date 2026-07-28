@@ -39,10 +39,10 @@ export function AssignmentColumn({
   return (
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h2 className="label m-0">Who flies what</h2>
+        <h2 className="label m-0">Drone assignment</h2>
         {shortfall > 0 && (
           <p className="m-0 text-value text-status-not-ready">
-            {assigned.length} Students, {ready.length} ready to hand out.
+            {assigned.length} Students, {ready.length} serviceable.
           </p>
         )}
       </div>

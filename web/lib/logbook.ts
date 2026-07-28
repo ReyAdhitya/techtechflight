@@ -24,9 +24,14 @@ export const SERVICE_PRESENTATION: Readonly<
     label: 'In service',
     meaning: 'Normal. Hand it to a Student like any other.',
   },
+  /*
+   * The key is `watch` and must stay `watch`. It is serialized into the browser logbook, so
+   * renaming it would silently invalidate every service decision a Teacher has stored, with
+   * no migration and no error. Only the two strings below are copy.
+   */
   watch: {
-    label: 'Keep an eye on it',
-    meaning: 'Usable, but it has been misbehaving. Worth watching this lesson.',
+    label: 'Under observation',
+    meaning: 'Serviceable. A recent fault history requires monitoring during the lesson.',
   },
   'out-of-service': {
     label: 'Out of service',

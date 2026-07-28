@@ -82,7 +82,7 @@ export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
           <h1 className="m-0 font-display text-heading font-medium">
             No Drones in this Fleet
           </h1>
-          <p className="m-0 max-w-[42ch] text-body text-ink-muted">
+          <p className="m-0 text-body text-ink-muted">
             This School has no Drones registered yet. They appear here as soon as the
             ground station knows about them.
           </p>

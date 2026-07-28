@@ -27,6 +27,11 @@ would notice.
 
 ### Added
 
+- **AED-style training scenarios in Settings.** Named Run/Reset drills (T1–T8, T11–T12) that
+  drive the simulated Fleet so every Teacher surface can be exercised without a real aircraft.
+  C9: Settings only, never on strips. Catalog and coverage map in
+  [`docs/training-scenarios.md`](./training-scenarios.md). T7b / T9 / T10 documented as
+  checklist (Front waits on #28; Lesson/Reports are human steps).
 - **Full screen on the Control scope.** Opt-in overlay lifts the ADR-0014 cap so the grid can
   fill the viewport; **Exit full screen** or Escape restores the capped layout. View toggle
   stays usable inside; choice is not persisted.

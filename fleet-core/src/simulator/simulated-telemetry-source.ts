@@ -251,6 +251,58 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     this.#drone(droneId).batteryFraction = clamp(fraction)
   }
 
+  /**
+   * Put two Drones a stated distance apart on the floor (same north, east offset).
+   * Caller takes them off if the scenario needs them airborne.
+   */
+  placeNear(droneId: DroneId, nearDroneId: DroneId, separationM: number): void {
+    const anchor = this.#drone(nearDroneId)
+    const moved = this.#drone(droneId)
+    moved.eastM = anchor.eastM + separationM
+    moved.northM = anchor.northM
+  }
+
+  /** Place a craft at a floor position (training layouts). */
+  setPosition(droneId: DroneId, eastM: number, northM: number): void {
+    const drone = this.#drone(droneId)
+    drone.eastM = eastM
+    drone.northM = northM
+  }
+
+  /** Snap height (and airborne when above zero). For Side/Front training pictures. */
+  setAltitude(droneId: DroneId, altitudeM: number): void {
+    const drone = this.#drone(droneId)
+    const height = Math.max(0, altitudeM)
+    drone.altitudeM = height
+    drone.targetAltitudeM = height
+    if (height > 0) {
+      drone.airborne = true
+      drone.charging = false
+    } else {
+      drone.airborne = false
+      drone.autoLanding = false
+    }
+  }
+
+  /** Park every craft back on the bench — clears faults, links, stops, and charge mid-pack. */
+  resetClassroom(): void {
+    for (const drone of this.#drones.values()) {
+      drone.batteryFraction = 0.7
+      drone.airborne = false
+      drone.fault = null
+      drone.linkUp = true
+      drone.charging = false
+      drone.eastM = drone.homeEastM
+      drone.northM = drone.homeNorthM
+      drone.altitudeM = 0
+      drone.targetAltitudeM = 0
+      drone.emergencyStopTriggered = false
+      drone.autoLanding = false
+      drone.streaming = false
+      drone.linkGroupId = null
+    }
+  }
+
   #drone(droneId: DroneId): SimulatedDrone {
     const drone = this.#drones.get(droneId)
     if (!drone) throw new Error(`The simulator has no Drone ${droneId}`)

@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Training scenarios are Settings runners, not strip Commands
+
+- **Decision:** Named T-scenarios on `ScenarioControls` (+ `placeNear` / `setAltitude` /
+  `setPosition` / e-stop / `link` / `resetClassroom`), UI in Settings
+  `TrainingScenariosPanel`. Atomic Demonstration panel stays for ad-hoc triggers.
+- **Reason:** Owner bar — kena semua Teacher surfaces. C9 forbids scenario buttons on strips.
+- **Note:** T7b available with Front on main (#28). T9/T10 checklist. MAVLink out of scope for #30.
+
 ## 2026-07-28 Scope fullscreen is an overlay, not browser Fullscreen API
 
 - **Decision:** Fixed inset overlay on `Scope` for Full screen / Exit + Escape. Do not call

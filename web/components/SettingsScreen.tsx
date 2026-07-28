@@ -2,6 +2,7 @@
 
 import { useFleet } from './FleetProvider'
 import { ScenarioPanel } from './ScenarioPanel'
+import { TrainingScenariosPanel } from './TrainingScenariosPanel'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -54,6 +55,8 @@ export function SettingsScreen() {
           here, so both halves can never disagree about them.
         </p>
       </Panel>
+
+      <TrainingScenariosPanel />
 
       <ScenarioPanel />
 

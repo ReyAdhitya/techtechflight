@@ -136,7 +136,14 @@ export function FleetReliability() {
           <h2 className="m-0 font-display text-heading font-medium">
             Recurring defects by Drone
           </h2>
-          <p className="m-0 max-w-[60ch] text-value text-ink-subtle">
+          {/*
+           * No measure cap. The Drone cards directly beneath span the column, and a caption
+           * that stops halfway reads as something that ran out rather than as a decision.
+           * The 45-75 character measure is a rule for long-form reading; this is three
+           * sentences above the thing they describe, and the eye never travels far enough
+           * for it to earn its keep against the misalignment it costs.
+           */}
+          <p className="m-0 text-value text-ink-subtle">
             {lessonsCounted === 0
               ? `Counted across everything the ground station still holds. A single fault is
                  an isolated occurrence; a Drone at the top of this list week after week is

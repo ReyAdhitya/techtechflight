@@ -5,6 +5,20 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **Every flight strip carries X, Y and Z.** `X 2.4 m E · Y 1.1 m N · Z 1.7 m`, on its own
+  line beneath the head row — never inside it, because §4.4 justifies the whole strip format
+  on the eye learning fixed positions and three more numbers in the head row would push charge
+  and response age sideways. Each axis carries its letter *and* its direction, so the letters
+  are learnable without being the only key. A Drone that has reported no position gets no line
+  at all rather than a row of dashes, and a height that was never reported reads `Z not
+  reported` rather than `0.0` — an airframe with no barometer and one on the floor are
+  different facts (§11.1). At exactly zero no direction is claimed, since 0 m east and 0 m
+  west are the same place. The same readout is in the Drone detail dialog. This required
+  `docs/DESIGN.md` §1.2 to be **narrowed**: numbers are still not the primary language, and
+  position is carried in addition to the instruction rather than instead of it.
+
 ### Removed
 
 - **Settings no longer has a records panel or a keyboard panel.** Export, Import and Clear

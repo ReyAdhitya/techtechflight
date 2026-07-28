@@ -43,6 +43,12 @@ would notice.
 
 ### Changed
 
+- **A Drone being watched is now "Under observation", not "Keep an eye on it".** Standing
+  airworthiness vocabulary, parallel in grammar to `In service` and `Out of service` either
+  side of it, and free of jargon a Teacher would need training on. **The stored `watch` key is
+  untouched** — it is serialized into the browser logbook, so renaming it to match the new
+  words would silently invalidate every service decision on every Teacher's laptop, with no
+  migration and no error. A test now pins the key against exactly that.
 - **"End the lesson" is a primary control rather than a ghost button.** It carried a hairline
   border and a transparent fill, for the one control a Teacher has to find across a room at
   the moment a class is packing up. It now uses the filled treatment "Start the lesson"

@@ -66,12 +66,20 @@ export interface ScenarioControls {
   takeOff(droneId: string): void
   setBattery(droneId: string, fraction: number): void
   plugIn(droneId: string): void
+  placeNear(droneId: string, nearDroneId: string, separationM: number): void
+  setPosition(droneId: string, eastM: number, northM: number): void
+  setAltitude(droneId: string, altitudeM: number): void
+  triggerEmergencyStop(droneId: string): void
   /**
    * Clear a latched emergency stop. Counterpart to the Stop command on a simulated Fleet —
    * not inventing a fault (C9), so Control may offer **Release stop** when the latch is set.
    * Absent on a hardware Fleet (`scenarios` is null there).
    */
   resetEmergencyStop(droneId: string): void
+  link(droneIds: readonly string[], groupId?: string): void
+  unlink(droneId: string): void
+  /** Park the whole classroom set — clears training scenarios. */
+  resetClassroom(): void
 }
 
 export interface FleetLink {

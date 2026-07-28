@@ -10,7 +10,6 @@ import {
   AlertTracker,
   AltitudeTracker,
   alertQueue,
-  compareStrips,
   enduranceMs,
   fleetVitals,
   flightPhase,
@@ -384,37 +383,27 @@ describe('when a condition began', () => {
   })
 })
 
-describe('strip order', () => {
+describe('strip order follows the Fleet board', () => {
   const withAlerts = (id: string, name: string, telemetry: Parameters<typeof aTelemetry>[0]) =>
     aDroneState({ id, name, lastContact: NOW, telemetry: aTelemetry(telemetry) })
 
-  it('puts two criticals above one, rather than falling back to the callsign', () => {
-    // 'Zulu' would sort last alphabetically, and has the worse aircraft.
-    const oneCritical = withAlerts('a', 'Alpha', { emergencyStopTriggered: true })
-    const twoCriticals = withAlerts('z', 'Zulu', {
+  it('keeps board order when a later Drone is worse', () => {
+    // Zulu would float to the top under worst-first; boardOrder says Alpha stays first.
+    const fine = withAlerts('a', 'Alpha', {})
+    const critical = withAlerts('z', 'Zulu', {
       emergencyStopTriggered: true,
       fault: { code: 'IMU', description: 'Motion sensor needs recalibrating' },
     })
-    const ordered = [...fleetVitals(input(aFleetState([oneCritical, twoCriticals], NOW)))].sort(
-      compareStrips,
-    )
-    expect(ordered[0]!.callsign).toBe('Zulu')
+    const ordered = fleetVitals(input(aFleetState([fine, critical], NOW)))
+    expect(ordered.map((entry) => entry.callsign)).toEqual(['Alpha', 'Zulu'])
   })
 
-  it('leaves a Fleet with nothing wrong in a stable callsign order', () => {
-    const fine = (id: string, name: string) =>
-      aDroneState({ id, name, lastContact: NOW, telemetry: aTelemetry({}) })
-    const ordered = [...fleetVitals(input(aFleetState([fine('c', 'Charlie'), fine('a', 'Alpha')], NOW)))].sort(
-      compareStrips,
-    )
-    expect(ordered.map((entry) => entry.callsign)).toEqual(['Alpha', 'Charlie'])
-  })
-
-  it('sinks a Drone with nothing wrong below one with only information', () => {
+  it('still leaves urgency on the Attention queue, worst first', () => {
     const fine = withAlerts('a', 'Alpha', {})
-    const lowOnCharge = withAlerts('z', 'Zulu', { batteryFraction: 0.1 })
-    const ordered = [...fleetVitals(input(aFleetState([fine, lowOnCharge], NOW)))].sort(compareStrips)
-    expect(ordered[0]!.callsign).toBe('Zulu')
+    const critical = withAlerts('z', 'Zulu', { emergencyStopTriggered: true })
+    const vitals = fleetVitals(input(aFleetState([fine, critical], NOW)))
+    expect(vitals.map((entry) => entry.callsign)).toEqual(['Alpha', 'Zulu'])
+    expect(alertQueue(vitals)[0]!.callsign).toBe('Zulu')
   })
 })
 

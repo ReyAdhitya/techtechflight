@@ -21,7 +21,7 @@ npm workspaces, no monorepo tool. Four packages plus a retired `dashboard/`.
 | Tests | Vitest + Testing Library + jsdom | 3.2.7 | 25 files, 339 tests, one runner across all workspaces |
 | Browser automation | playwright-core | 1.61.1 | `scripts/shot.mjs`, screenshots only |
 | Lint | **none** | — | no ESLint, no Prettier, no `lint` script |
-| CI | **none** | — | no `.github/workflows` |
+| CI | GitHub Actions | `.github/workflows/ci.yml` | `npm test` + `npm run typecheck` (+ web build) on push/PR |
 | Deploy | Vercel, static | — | `vercel.json`, `NEXT_PUBLIC_DEMO_ONLY=1` build |
 
 Baseline on 2026-07-24: `npm test` → **339 passed / 25 files**. `npm run build` → 15 static
@@ -90,7 +90,8 @@ are legitimate; the aliases are what components use.
 linear, committed straight to `main`. So `BROWNFIELD.md`'s branch-and-PR rule is a *change*
 to this repo's habit rather than a continuation of it. Worth an explicit decision.
 
-**No lint, no CI.** `npm test` and `npm run typecheck` are the whole gate, run by hand.
+**No lint.** `npm test` and `npm run typecheck` are still the whole gate; CI runs both
+on push and pull request so nobody has to remember.
 
 ## Current best practice (with sources)
 

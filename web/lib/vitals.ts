@@ -255,7 +255,7 @@ function alertsFor(
     alerts.push({
       kind: 'emergency-stop',
       severity: 'critical',
-      text: 'Go to it and release the emergency stop. The motors stay cut until someone does.',
+      text: 'Attend the aircraft and release the emergency stop. Motors remain cut until released.',
     })
   }
 
@@ -263,7 +263,7 @@ function alertsFor(
     alerts.push({
       kind: 'fault',
       severity: 'critical',
-      text: `Take it out of service — ${telemetry.fault.description}`,
+      text: `Withdraw from service. ${telemetry.fault.description}`,
     })
   }
 
@@ -271,7 +271,7 @@ function alertsFor(
     alerts.push({
       kind: 'separation',
       severity: 'critical',
-      text: `Separate it from ${vitals.conflictWith} — ${vitals.separationM.toFixed(1)}m apart.`,
+      text: `Increase separation from ${vitals.conflictWith}. ${vitals.separationM.toFixed(1)} m apart.`,
     })
   }
 
@@ -284,8 +284,8 @@ function alertsFor(
       // The magnitude goes in the sentence. "Has stopped responding" is true of eleven
       // seconds and of ten minutes, and a Teacher needs to tell those apart at a glance.
       text: airborne
-        ? `It is up and has not responded for ${Math.round(vitals.responseAgeMs / 1_000)}s. Look at the room, not the screen.`
-        : `No response for ${Math.round(vitals.responseAgeMs / 1_000)}s. Check it is switched on.`,
+        ? `Airborne with no response for ${Math.round(vitals.responseAgeMs / 1_000)}s. Observe the aircraft directly, not the board.`
+        : `No response for ${Math.round(vitals.responseAgeMs / 1_000)}s. Confirm power is on.`,
     })
   }
 
@@ -294,7 +294,7 @@ function alertsFor(
     alerts.push({
       kind: 'obstacle',
       severity: 'warning',
-      text: `Move it away from what it is near — ${proximity.metres.toFixed(1)}m.`,
+      text: `Increase clearance from the obstruction. ${proximity.metres.toFixed(1)} m.`,
     })
   }
 
@@ -302,7 +302,7 @@ function alertsFor(
     alerts.push({
       kind: 'low-endurance',
       severity: 'warning',
-      text: 'Bring it down — under two minutes of useful charge left.',
+      text: 'Land now. Under two minutes of usable charge remaining.',
     })
   }
 
@@ -314,7 +314,7 @@ function alertsFor(
       alerts.push({
         kind: 'uneven-motors',
         severity: 'warning',
-        text: 'Land it and look at the motors — they are working unevenly.',
+        text: 'Land and inspect the motors. Thrust is uneven across them.',
         })
     }
   }
@@ -327,7 +327,7 @@ function alertsFor(
     alerts.push({
       kind: 'battery-low',
       severity: 'info',
-      text: 'Put it on charge before it is handed out.',
+      text: 'Place on charge before issue.',
     })
   }
 

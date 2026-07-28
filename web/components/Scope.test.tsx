@@ -53,9 +53,15 @@ const verticalRules = (container: HTMLElement) =>
     .filter((rule) => rule.getAttribute('x1') === rule.getAttribute('x2'))
     .map((rule) => rule.getAttribute('x1'))
 
+const drawingSvg = (container: HTMLElement) =>
+  container.querySelector('svg[role="img"]') as SVGElement
+
 /** Where each mark sits, as the inline percentages the HTML layer is positioned by. */
 const markPositions = () =>
-  screen.getAllByRole('button').map((mark) => `${mark.style.left} ${mark.style.top}`)
+  screen
+    .getAllByRole('button')
+    .filter((button) => button.style.left !== '')
+    .map((mark) => `${mark.style.left} ${mark.style.top}`)
 
 describe('the window the scope draws', () => {
   /*
@@ -213,14 +219,14 @@ describe('the grid across two Fleet States', () => {
     const moved = [at('Drone 1', 1.5, -1), at('Drone 2', 3, 2.5)]
 
     const { container, rerender } = render(<Scope drones={settled} onSelect={() => {}} />)
-    const viewBox = container.querySelector('svg')!.getAttribute('viewBox')
+    const viewBox = drawingSvg(container).getAttribute('viewBox')
     const rules = verticalRules(container)
     const marks = markPositions()
 
     rerender(<Scope drones={moved} onSelect={() => {}} />)
 
     expect(rules.length).toBeGreaterThan(0)
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe(viewBox)
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe(viewBox)
     expect(verticalRules(container)).toEqual(rules)
     expect(markPositions()).not.toEqual(marks)
   })
@@ -235,12 +241,12 @@ describe('the grid across two Fleet States', () => {
     const closed = [at('Drone 1', 0, 0), at('Drone 2', 1, 0)]
 
     const { container, rerender } = render(<Scope drones={spread} onSelect={() => {}} />)
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 12 12')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 12 12')
     const rules = verticalRules(container)
 
     rerender(<Scope drones={closed} onSelect={() => {}} />)
 
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 12 12')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 12 12')
     expect(verticalRules(container)).toEqual(rules)
   })
 
@@ -465,21 +471,21 @@ describe('the side view', () => {
     showSide()
 
     // 8 m window, and 1.5 m of altitude takes the 2 m rung.
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 2')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 8 2')
     expect(box(container).style.aspectRatio).toBe('8 / 2')
   })
 
   it('takes the smallest ceiling that holds every Drone, and never gives it back', () => {
     const { container, rerender } = render(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
     showSide()
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 2')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 8 2')
 
     rerender(<Scope drones={[atHeight('Drone 1', 0, 0, 3)]} />)
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 4')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 8 4')
 
     // Back down again: the ceiling holds, exactly as the window does.
     rerender(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 4')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 8 4')
   })
 
   it('puts a Drone on the ground line when it reports being on the ground', () => {
@@ -512,14 +518,14 @@ describe('the side view', () => {
   })
 
   /*
-   * Swapping between the two only tells a Teacher anything if they agree about left-to-right.
-   * Both read the same window, so a Drone does not jump sideways when the view changes.
+   * Swapping only tells a Teacher anything if Front agrees with top-down about left-to-right
+   * (both are east). Side reads north instead.
    */
-  it('places a Drone at the same horizontal position as the top-down does', () => {
+  it('places a Drone on Front at the same horizontal as the top-down', () => {
     render(<Scope drones={[atHeight('Drone 1', 3, 1, 1)]} onSelect={() => {}} />)
 
     const across = screen.getByRole('button', { name: /Drone 1/ }).style.left
-    showSide()
+    showFront()
 
     expect(screen.getByRole('button', { name: /Drone 1/ }).style.left).toBe(across)
   })
@@ -565,10 +571,33 @@ describe('the front view', () => {
   })
 
   /*
-   * The whole reason Front exists: same east, different north, same height — Side stacks
-   * them; Front separates them on x.
+   * Front's horizontal is east — the classroom row. Side's is north. Same east / different
+   * north therefore stacks on Front and separates on Side (swapped from the first Front ADR).
    */
-  it('separates two Drones Side would stack, when only north differs', () => {
+  it('spreads the classroom row on Front; Side stacks same-north craft', () => {
+    render(
+      <Scope
+        drones={[atHeight('Drone 1', 0, 0, 1.5), atHeight('Drone 2', 3, 0, 1.5)]}
+        onSelect={() => {}}
+      />,
+    )
+
+    showFront()
+    const frontLeft = {
+      a: screen.getByRole('button', { name: /Drone 1/ }).style.left,
+      b: screen.getByRole('button', { name: /Drone 2/ }).style.left,
+    }
+    expect(frontLeft.a).not.toBe(frontLeft.b)
+
+    showSide()
+    const sideLeft = {
+      a: screen.getByRole('button', { name: /Drone 1/ }).style.left,
+      b: screen.getByRole('button', { name: /Drone 2/ }).style.left,
+    }
+    expect(sideLeft.a).toBe(sideLeft.b)
+  })
+
+  it('separates on Side when only north differs; Front stacks them', () => {
     render(
       <Scope
         drones={[atHeight('Drone 1', 1, 0, 1.5), atHeight('Drone 2', 1, 3, 1.5)]}
@@ -577,25 +606,21 @@ describe('the front view', () => {
     )
 
     showSide()
-    const sideLeft = {
-      a: screen.getByRole('button', { name: /Drone 1/ }).style.left,
-      b: screen.getByRole('button', { name: /Drone 2/ }).style.left,
-    }
-    expect(sideLeft.a).toBe(sideLeft.b)
+    expect(screen.getByRole('button', { name: /Drone 1/ }).style.left).not.toBe(
+      screen.getByRole('button', { name: /Drone 2/ }).style.left,
+    )
 
     showFront()
-    const frontLeft = {
-      a: screen.getByRole('button', { name: /Drone 1/ }).style.left,
-      b: screen.getByRole('button', { name: /Drone 2/ }).style.left,
-    }
-    expect(frontLeft.a).not.toBe(frontLeft.b)
+    expect(screen.getByRole('button', { name: /Drone 1/ }).style.left).toBe(
+      screen.getByRole('button', { name: /Drone 2/ }).style.left,
+    )
   })
 
   it('matches Side on equal metre scale and ceiling shape', () => {
     const { container } = render(<Scope drones={[atHeight('Drone 1', 0, 0, 1.5)]} />)
     showFront()
 
-    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 2')
+    expect(drawingSvg(container).getAttribute('viewBox')).toBe('0 0 8 2')
     expect(box(container).style.aspectRatio).toBe('8 / 2')
   })
 

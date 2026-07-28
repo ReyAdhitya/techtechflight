@@ -13,7 +13,7 @@ Teacher surface without a real aircraft. Runners live in **Settings** only (C9).
 | Control — Attention bar | T1, T2, T5 | [x] |
 | Control — Scope top-down conflict/link | T1, T6 | [x] |
 | Control — Scope Side (height) | T7 | [x] |
-| Control — Scope Front | T7b | [ ] SKIP until #28 merges |
+| Control — Scope Front | T7b | [x] (east axis after #38) |
 | Control — flight strips | T1, T2, T7 | [x] |
 | Control — Commands Land/Hold/Stop (sim) | T8 | [x] |
 | Control — LessonStrip | T9 | [x] checklist |

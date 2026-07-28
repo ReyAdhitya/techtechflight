@@ -1,25 +1,28 @@
 # The scope gets a front view, same box, same elevation rules
 
 The scope draws three pictures of the same Fleet: **Top-down**, **Side** (height against
-east), and **Front** (height against north). A labelled toggle swaps between them. One is
-showing at a time.
+**north**), and **Front** (height against **east**). A labelled toggle swaps between them.
+One is showing at a time.
 
 Numbered 0017. Builds on [ADR-0016](./0016-a-side-view-on-the-scope.md).
 
+Axes were swapped 2026-07-28 (#38): the classroom Fleet parks on `eastM: 0,1,2…` at
+`northM: 0`, so Front must use **east** horizontally or the whole row stacks in one place.
+
 ## Why a third view
 
-Side answers *are those two at the same height* along the east–west line. It cannot separate
-two Drones that share an easting and differ only in north — they stack on the same vertical
-line in Side, and a Teacher cannot tell them apart in that picture.
+Side answers *are those two at the same height* along the north–south line. It cannot separate
+two Drones that share a northing and differ only in east — they stack on the same vertical
+line in Side.
 
-Front is the missing elevation: **north × altitude**, looking from the west. Same question
-Side asks, on the axis Side does not use.
+Front is the elevation that matches the classroom row: **east × altitude**. Same question
+Side asks, on the axis the parked set actually uses.
 
 | View | Horizontal | Vertical |
 |---|---|---|
 | Top-down | East | North |
-| Side | East | Altitude |
-| Front | North | Altitude |
+| Side | **North** | Altitude |
+| Front | **East** | Altitude |
 
 ## Why the same rules as Side
 

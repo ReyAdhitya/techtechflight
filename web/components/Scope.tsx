@@ -118,11 +118,12 @@ export function Scope({
     if (view === 'top-down') return scope.percentOf(drone)
     const altitudeM = Math.min(ceilingM, Math.max(0, drone.telemetry!.altitudeM!))
     const yPercent = (1 - altitudeM / ceilingM) * 100
-    if (view === 'front') {
-      // North → x (Side uses east). Same window; the floor axis is the only difference.
+    if (view === 'side') {
+      // North → x. Front uses east so the classroom row (eastM: 0,1,2…) spreads there.
       const { y } = scope.projectOf(drone)
       return { xPercent: ((scope.heightM - y) / scope.heightM) * 100, yPercent }
     }
+    // Front: east → x (same as top-down's horizontal).
     const { xPercent } = scope.percentOf(drone)
     return { xPercent, yPercent }
   }
@@ -268,7 +269,7 @@ export function Scope({
           }
         >
           {/* A fixed grid, so a distance on screen can be read as a distance in metres. */}
-          {(view === 'front'
+          {(view === 'side'
             ? gridLines(scope.southM, scope.northM, stepM).map((metre) => ({
                 key: `v${metre}`,
                 x: metre - scope.southM,
@@ -618,7 +619,7 @@ export type ScopeView = 'top-down' | 'side' | 'front'
 
 const SCOPE_VIEWS = ['top-down', 'side', 'front'] as const satisfies readonly ScopeView[]
 
-/** Height against a floor axis — Side (east) or Front (north). */
+/** Height against a floor axis — Side (north) or Front (east). */
 export function isElevation(view: ScopeView): boolean {
   return view === 'side' || view === 'front'
 }

@@ -7,6 +7,10 @@ would notice.
 
 ### Fixed
 
+- **Scope Front spreads the classroom row (#38).** Elevation floor axes swapped — Front
+  horizontal = **east**, Side = **north** — so parked craft at `eastM: 0,1,2…` / `northM: 0`
+  separate on Front. ADR-0016/0017 and training T7/T7b follow. (Fullscreen icon-only and
+  centred overlay composition landed in the same branch.)
 - **Emergency stop label is just Stop.** Dropped "immediately" — the primary CTA is **Stop**;
   after the latch it remains **Release stop**.
 - **Stop, then Release stop when latched.** Control strips no longer say "Stop — hold"; after

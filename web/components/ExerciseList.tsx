@@ -57,7 +57,7 @@ export function ExerciseList({
       {exercises.length === 0 ? (
         <p className="m-0 text-value text-ink-subtle">
           None recorded. A Lesson runs without them; these are for when the board is to
-          the board to show what each Student is meant to be doing.
+          show what each Student is meant to be doing.
         </p>
       ) : (
         <ol className="m-0 flex list-none flex-col gap-2 p-0">

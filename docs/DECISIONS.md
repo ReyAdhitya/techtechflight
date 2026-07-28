@@ -34,10 +34,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Note:** ADR-0016 "any third view" superseded in writing. Conflict lines still top-down
   only.
 
+## 2026-07-28 Emergency stop CTA is just Stop
+
+- **Decision:** Primary strip label is **Stop**, not "Stop immediately". Confirm / hold copy
+  unchanged; latched state still **Release stop**.
+- **Reason:** Owner — "immediately" is noise on the button.
+- **Note:** Follows #32's Release-stop behaviour; only the idle label tightens (#37).
+
 ## 2026-07-28 Release stop clears the latch; it is not a Scenario
 
-- **Decision:** After `emergency` phase, replace **Stop immediately** with **Release stop**
-  calling `ScenarioControls.resetEmergencyStop` on a simulated Fleet. On hardware
+- **Decision:** After `emergency` phase, replace **Stop** with **Release stop** calling
+  `ScenarioControls.resetEmergencyStop` on a simulated Fleet. On hardware
   (`scenarios === null`), keep the control present but disabled with a reason in words.
 - **Reason:** A stale Stop CTA after the motors are cut reads as failure. The physical
   counterpart is walking over to release the cut-out — not inventing a fault (C9).

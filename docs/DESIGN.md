@@ -277,7 +277,7 @@ Fixed anatomy. The eye learns the positions.
 │ Exercise 2: Hover                                                │
 │ Nearest aircraft: 0.9 m from Drone 1                             │
 │ ▌Now  Separate it from Drone 1 — 0.9m apart.    [ Acknowledge ]  │
-│ [ Land ]  [ Hold ]  [ More ▾ ]              [ Stop immediately ] │
+│ [ Land ]  [ Hold ]  [ More ▾ ]              [ Stop ]             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -331,12 +331,12 @@ is not reintroduced.
 **More** holds auto-land and anything added later. Commands are absent from every other
 screen in the product.
 
-**Emergency stop is a guarded control** labelled **Stop immediately**. It sits apart on the
-right, and it is a **press-and-hold** — roughly a second, with a ring that fills — rather
-than a button behind a confirmation dialog. The reasoning: an emergency stop needs to be
-fast, and a modal is not fast; but an accidental emergency stop on the wrong Drone is worse
-than a slow one. Physical guarded switches solve this exact problem with deliberate effort
-rather than with a question. It satisfies C8 without a dialog to dismiss.
+**Emergency stop is a guarded control** labelled **Stop**. It sits apart on the right, and it
+is a **press-and-hold** — roughly a second, with a ring that fills — rather than a button
+behind a confirmation dialog. The reasoning: an emergency stop needs to be fast, and a modal
+is not fast; but an accidental emergency stop on the wrong Drone is worse than a slow one.
+Physical guarded switches solve this exact problem with deliberate effort rather than with a
+question. It satisfies C8 without a dialog to dismiss.
 
 Once Telemetry shows the latch (`emergency` phase), the control **must not** still read as
 Stop. It becomes **Release stop** on a simulated Fleet (clearing the latch), or stays present

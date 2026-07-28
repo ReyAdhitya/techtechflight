@@ -27,6 +27,9 @@ would notice.
 
 ### Added
 
+- **Full screen on the Control scope.** Opt-in overlay lifts the ADR-0014 cap so the grid can
+  fill the viewport; **Exit full screen** or Escape restores the capped layout. View toggle
+  stays usable inside; choice is not persisted.
 - **The scope has a Front elevation view.** Height against **north**, beside Side (height
   against east). Same box, same ceiling ladder, same heightless-and-named rule; conflict and
   link lines stay top-down only. ADR-0017; supersedes ADR-0016's "any third view". Toggle:

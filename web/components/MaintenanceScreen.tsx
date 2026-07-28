@@ -138,13 +138,13 @@ export function FleetReliability() {
           </h2>
           <p className="m-0 max-w-[60ch] text-value text-ink-subtle">
             {lessonsCounted === 0
-              ? `Counted across everything the ground station still remembers. A Drone with
-                 one fault had a bad morning; a Drone at the top of this list every week is
-                 one to take up with the supplier.`
-              : `Counted across everything the ground station still remembers, plus
-                 ${lessonsCounted} finished ${lessonsCounted === 1 ? 'lesson' : 'lessons'}
-                 kept on this laptop. A Drone with one fault had a bad morning; a Drone at
-                 the top of this list every week is one to take up with the supplier.`}
+              ? `Counted across everything the ground station still holds. A single fault is
+                 an isolated occurrence; a Drone at the top of this list week after week is
+                 one to raise with the supplier.`
+              : `Counted across everything the ground station still holds, plus
+                 ${lessonsCounted} completed ${lessonsCounted === 1 ? 'lesson' : 'lessons'}
+                 retained on this laptop. A single fault is an isolated occurrence; a Drone
+                 at the top of this list week after week is one to raise with the supplier.`}
           </p>
         </div>
 

@@ -221,22 +221,32 @@ condition clears and later recurs.
 
 ### 4.3 The scope
 
-A plan view of the room, looking down, metres from where the Fleet was set up.
+A plan view looking down, metres from where the Fleet was set up.
 
-- Each Drone: a mark, its **Drone Name**, and its phase in words.
+- Each Drone: a mark, its **Drone Name**, and its **height** as a number.
 - **Conflict**: a solid line between two Drones that are too close. Deduplicated so a pair
   draws one line.
 - **Linked group**: a dashed line, distinct from a conflict line by pattern and not only by
   colour.
-- **Altitude** is carried by the mark's size *and* stated in the strip. Size alone is not a
-  reading.
+- **Altitude** is carried by the mark's size *and* written under the Drone Name *and* stated
+  in the strip. Size alone is not a reading. An airframe that cannot measure height shows no
+  number at all — never `0.0 m`, which is what a Drone on the floor says (§11.1).
 - **Selection is linked**: choosing a strip highlights its mark, and choosing a mark
   highlights its strip. Answering *"which one is that?"* is the question the scope exists for.
+- **Below 640 px the Drone Name is all that is drawn.** Six labels in a short strip collide
+  into one unreadable line, and the height is the longer of the two — and it is on the flight
+  strip anyway. The name never goes: a scope of anonymous dots answers nothing.
 
 **No room outline, no zones, no boundaries.** ADR-0012 defers the flight area because
 absolute geometry needs an origin nobody has confirmed. Drawing walls would be modelling the
 room by the back door, and the only walls that exist today are four numbers invented so the
-simulated rangefinder has something to find. A scale reference is shown instead.
+simulated rangefinder has something to find.
+
+**No scale reference either, as of 2026-07-28.** The scope drew a fixed grid captioned with
+its cell size, and the caption read as a claim about what a cell measured on the glass — which
+no page can know, since every monitor is a different size. The grid stays as an aid to
+judging one distance against another; the caption is gone, and the readable quantity is the
+height written on each mark. See `docs/adr/0014-a-fixed-scope-window.md`.
 
 ### 4.4 The flight strip
 

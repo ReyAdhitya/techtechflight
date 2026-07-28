@@ -5,7 +5,7 @@ import { PHASE_PRESENTATION } from '@/lib/vitals-presentation'
 import { cn } from '@/lib/utils'
 
 /**
- * Where the Drones are, looking down on the room.
+ * Where the Drones are, looking down.
  *
  * The point is not navigation — nobody flies from this. It answers the question a
  * Teacher actually has when six Drones are up: *which one is that*, and *are two of them
@@ -15,14 +15,18 @@ import { cn } from '@/lib/utils'
  * Drones that have been linked into a group are joined by a line, so a formation reads
  * as one thing rather than as several Drones that happen to be near each other.
  *
+ * What is drawn is a **window** — a square of space the display chose, never the flight
+ * area, which ADR-0012 defers and `docs/adr/0014-a-fixed-scope-window.md` explains at
+ * length. Nothing is drawn at its edge and no Alert derives from it.
+ *
  * Two things are drawn in two different spaces, on purpose:
  *
- * - **The room** is an SVG whose user units *are metres*, inside a box shaped like the
- *   room. Grid, ties and conflicts are geometry, and geometry has to scale with the room
- *   or a distance on screen stops meaning a distance in it.
+ * - **The window** is an SVG whose user units *are metres*. Grid, ties and conflicts are
+ *   geometry, and a viewBox measured in metres is what keeps a distance on screen meaning
+ *   a distance between two Drones.
  * - **The Drones** are HTML, positioned as a percentage of that same box. A mark and a
- *   Drone Name are not geometry — they must stay the same size whether the room is 4 m
- *   or 40 m across, they must follow the Teacher's own font size (ADR-0008), and a mark
+ *   Drone Name are not geometry — they must stay the same size whether the window is 8 m
+ *   or 32 m across, they must follow the Teacher's own font size (ADR-0008), and a mark
  *   a Teacher can select has to be a real control rather than a shape with a click on it.
  */
 export function Scope({
@@ -49,7 +53,7 @@ export function Scope({
    * centre by following the Fleet. Writing it during render is safe because the write is
    * idempotent — the same props give the same window, twice or once.
    */
-  const held = useRef<ScopeWindow | undefined>(undefined)
+  const held = useRef<WindowChoice | undefined>(undefined)
 
   const placed = drones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
@@ -63,9 +67,9 @@ export function Scope({
     )
   }
 
-  const room = roomExtent(placed, held.current)
-  held.current = room.window
-  const stepM = gridStepM(room.widthM)
+  const scope = scopeWindow(placed, held.current)
+  held.current = scope.choice
+  const stepM = gridStepM(scope.widthM)
   const conflicts = conflictPairs(placed, vitals)
 
   const groups = new Map<string, DroneState[]>()
@@ -102,7 +106,7 @@ export function Scope({
         style={{ aspectRatio: '1' }}
       >
         <svg
-          viewBox={`0 0 ${room.widthM} ${room.heightM}`}
+          viewBox={`0 0 ${scope.widthM} ${scope.heightM}`}
           preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0 h-full w-full"
           role="img"
@@ -115,24 +119,24 @@ export function Scope({
           aria-label={`Where ${placed.length} Drones are, looking down`}
         >
           {/* A fixed grid, so a distance on screen can be read as a distance in metres. */}
-          {gridLines(room.westM, room.eastM, stepM).map((metre) => (
+          {gridLines(scope.westM, scope.eastM, stepM).map((metre) => (
             <line
               key={`v${metre}`}
-              x1={room.project(metre, 0).x}
-              x2={room.project(metre, 0).x}
+              x1={scope.project(metre, 0).x}
+              x2={scope.project(metre, 0).x}
               y1="0"
-              y2={room.heightM}
+              y2={scope.heightM}
               className="stroke-hairline"
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          {gridLines(room.southM, room.northM, stepM).map((metre) => (
+          {gridLines(scope.southM, scope.northM, stepM).map((metre) => (
             <line
               key={`h${metre}`}
               x1="0"
-              x2={room.widthM}
-              y1={room.project(0, metre).y}
-              y2={room.project(0, metre).y}
+              x2={scope.widthM}
+              y1={scope.project(0, metre).y}
+              y2={scope.project(0, metre).y}
               className="stroke-hairline"
               vectorEffect="non-scaling-stroke"
             />
@@ -141,8 +145,8 @@ export function Scope({
           {/* Linked Drones first, so the tie sits under the Drones it joins. */}
           {[...groups.values()].map((members) =>
             members.slice(1).map((drone, index) => {
-              const from = room.projectOf(members[index]!)
-              const to = room.projectOf(drone)
+              const from = scope.projectOf(members[index]!)
+              const to = scope.projectOf(drone)
               return (
                 <line
                   key={`${members[index]!.id}-${drone.id}`}
@@ -165,8 +169,8 @@ export function Scope({
            * by a line here is the one thing on this map that means act now.
            */}
           {conflicts.map((pair) => {
-            const from = room.project(pair.from.eastM, pair.from.northM)
-            const to = room.project(pair.to.eastM, pair.to.northM)
+            const from = scope.project(pair.from.eastM, pair.from.northM)
+            const to = scope.project(pair.to.eastM, pair.to.northM)
             return (
               <line
                 key={pair.key}
@@ -186,7 +190,7 @@ export function Scope({
           <Mark
             key={drone.id}
             drone={drone}
-            room={room}
+            scope={scope}
             phase={vitals?.find((entry) => entry.droneId === drone.id)?.phase}
             selected={selected === drone.id}
             onSelect={onSelect}
@@ -208,9 +212,9 @@ export function Scope({
         <span>Filled = flying</span>
         {groups.size > 0 && <span>Dashed = linked as one group</span>}
         {conflicts.length > 0 && <span>Solid = too close</span>}
-        {room.beyond.length > 0 && (
+        {scope.beyond.length > 0 && (
           <span>
-            {namesOf(room.beyond)} {room.beyond.length === 1 ? 'is' : 'are'} further out than
+            {namesOf(scope.beyond)} {scope.beyond.length === 1 ? 'is' : 'are'} further out than
             the scope draws, held on the edge
           </span>
         )}
@@ -230,20 +234,20 @@ export function Scope({
  */
 function Mark({
   drone,
-  room,
+  scope,
   phase,
   selected,
   onSelect,
   below,
 }: {
   drone: DroneState
-  room: RoomExtent
+  scope: ScopeWindow
   phase: DroneVitals['phase'] | undefined
   selected: boolean
   onSelect: ((droneId: string) => void) | undefined
   below: boolean
 }) {
-  const at = room.percentOf(drone)
+  const at = scope.percentOf(drone)
   const airborne = drone.status === 'Flying'
 
   const dot = (
@@ -342,18 +346,18 @@ function Mark({
 }
 
 /**
- * The square of room the scope is drawing: how big, and where its middle is.
+ * The square the scope is drawing: how big, and where its middle is.
  *
  * Both are chosen once and then held. `Scope` keeps the last one in a ref and hands it back
  * on the next Fleet State, which is what stops the picture drifting under the Drones.
  */
-export interface ScopeWindow {
+export interface WindowChoice {
   readonly sideM: number
   readonly centreEastM: number
   readonly centreNorthM: number
 }
 
-export interface RoomExtent {
+export interface ScopeWindow {
   readonly westM: number
   readonly eastM: number
   readonly southM: number
@@ -362,7 +366,7 @@ export interface RoomExtent {
   readonly heightM: number
   readonly aspectRatio: number
   /** What was chosen, to be handed back on the next render so it can be kept. */
-  readonly window: ScopeWindow
+  readonly choice: WindowChoice
   /**
    * The Drones the largest window could not reach, drawn on its edge rather than dropped.
    * Empty at every rung below the last, because the window grows to hold them instead.
@@ -392,7 +396,7 @@ export interface RoomExtent {
 export const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
 
 /** True when every Drone is inside the window, edges included. */
-function holds(placed: readonly DroneState[], within: ScopeWindow): boolean {
+function holds(placed: readonly DroneState[], within: WindowChoice): boolean {
   const halfM = within.sideM / 2
   return placed.every((drone) => {
     const position = drone.telemetry!.position!
@@ -432,7 +436,7 @@ function midpointOf(values: readonly number[]): number {
  * **The side never shrinks**, for the reason it never did: a Drone hovering on a rung
  * boundary would otherwise flip it between two sizes.
  */
-function chooseWindow(placed: readonly DroneState[], held: ScopeWindow | undefined): ScopeWindow {
+function chooseWindow(placed: readonly DroneState[], held: WindowChoice | undefined): WindowChoice {
   if (held && holds(placed, held)) return held
 
   const positions = placed.map((drone) => drone.telemetry!.position!)
@@ -444,7 +448,7 @@ function chooseWindow(placed: readonly DroneState[], held: ScopeWindow | undefin
    * that fitted before the snap — so each rung is tested after its own snap, rather than
    * picked from the raw reach and hoped for.
    */
-  const snapped = (sideM: number): ScopeWindow => {
+  const snapped = (sideM: number): WindowChoice => {
     const stepM = gridStepM(sideM)
     return {
       sideM,
@@ -464,7 +468,7 @@ function chooseWindow(placed: readonly DroneState[], held: ScopeWindow | undefin
 }
 
 /**
- * The window the scope draws in: a fixed square of room, centred on the Drones inside it.
+ * The window the scope draws in: a fixed square, centred on the Drones inside it.
  *
  * Exported for its own test. Three properties matter, and all three were once absent.
  *
@@ -488,7 +492,7 @@ function chooseWindow(placed: readonly DroneState[], held: ScopeWindow | undefin
  * `docs/adr/0014-a-fixed-scope-window.md`, which exists because without it this reads as the
  * flight area ADR-0012 deferred.
  */
-export function roomExtent(placed: readonly DroneState[], held?: ScopeWindow): RoomExtent {
+export function scopeWindow(placed: readonly DroneState[], held?: WindowChoice): ScopeWindow {
   const chosen = chooseWindow(placed, held)
   const halfM = chosen.sideM / 2
 
@@ -526,7 +530,7 @@ export function roomExtent(placed: readonly DroneState[], held?: ScopeWindow): R
     widthM: chosen.sideM,
     heightM: chosen.sideM,
     aspectRatio: 1,
-    window: chosen,
+    choice: chosen,
     beyond,
     project,
     projectOf,

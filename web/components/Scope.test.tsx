@@ -2,19 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
 import type { DroneVitals } from '@/lib/vitals'
-import { Scope, WINDOW_SIDES_M, cellsAcross, gridStepM, roomExtent } from './Scope'
+import { Scope, WINDOW_SIDES_M, cellsAcross, gridStepM, scopeWindow } from './Scope'
 
 /**
- * Where the Drones are, looking down on the room.
+ * Where the Drones are, looking down.
  *
  * The scope answers two questions and only two: *which one is that*, and *are two of them
  * about to meet*. Both are questions about distance, so the thing worth testing hardest is
- * that a distance on screen means a distance in the room — which is exactly what the
+ * that a distance on screen means a distance between two Drones — which is exactly what the
  * original did not do. It normalised east and north independently and then forced the
  * result into a 4:3 box, so a metre north and a metre east were different lengths.
  *
  * jsdom has no layout engine, so none of this is checked by looking. It is checked on the
- * projection itself, which is why `roomExtent` is exported.
+ * projection itself, which is why `scopeWindow` is exported.
  */
 
 const at = (name: string, eastM: number, northM: number, airborne = true) =>
@@ -53,7 +53,7 @@ const verticalRules = (container: HTMLElement) =>
 const markPositions = () =>
   screen.getAllByRole('button').map((mark) => `${mark.style.left} ${mark.style.top}`)
 
-describe('the room the scope draws', () => {
+describe('the window the scope draws', () => {
   /*
    * The bug, stated as arithmetic.
    *
@@ -63,7 +63,7 @@ describe('the room the scope draws', () => {
    * way round they were standing.
    */
   it('gives a metre the same length whichever way it is measured', () => {
-    const wide = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 7, 2)])
+    const wide = scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 7, 2)])
 
     // One unit of the viewBox is one metre, on both axes, so there is nothing to compare —
     // the projection cannot be anisotropic because it does not scale at all.
@@ -77,7 +77,7 @@ describe('the room the scope draws', () => {
    * in. A wide shallow strip of Drones drew a wide shallow box over a grid of metres.
    */
   it('draws a square window whatever shape the Fleet is standing in', () => {
-    const wide = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 7, 2)])
+    const wide = scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 7, 2)])
 
     expect(wide.widthM).toBe(wide.heightM)
     expect(wide.aspectRatio).toBe(1)
@@ -85,11 +85,11 @@ describe('the room the scope draws', () => {
 
   it('takes the smallest rung that holds the Fleet, sized by its spread and not its distance away', () => {
     // 3 m of spread fits the smallest rung, wherever in the room it happens to be.
-    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 3, 1)]).widthM).toBe(8)
-    expect(roomExtent([at('Drone 1', 40, 40), at('Drone 2', 43, 41)]).widthM).toBe(8)
+    expect(scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 3, 1)]).widthM).toBe(8)
+    expect(scopeWindow([at('Drone 1', 40, 40), at('Drone 2', 43, 41)]).widthM).toBe(8)
 
     // 14 m of spread does not: 8 and 12 are both too small, so 16 is the rung.
-    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 14, 0)]).widthM).toBe(16)
+    expect(scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 14, 0)]).widthM).toBe(16)
   })
 
   /*
@@ -97,12 +97,12 @@ describe('the room the scope draws', () => {
    * corner into a corner of the frame, with half the picture empty.
    */
   it('centres on the middle of the Fleet, not on the setup point', () => {
-    const room = roomExtent([at('Drone 1', 10, 4), at('Drone 2', 14, 8)])
+    const scope = scopeWindow([at('Drone 1', 10, 4), at('Drone 2', 14, 8)])
 
-    expect(room.window.centreEastM).toBe(12)
-    expect(room.window.centreNorthM).toBe(6)
-    expect(room.westM).toBe(8)
-    expect(room.eastM).toBe(16)
+    expect(scope.choice.centreEastM).toBe(12)
+    expect(scope.choice.centreNorthM).toBe(6)
+    expect(scope.westM).toBe(8)
+    expect(scope.eastM).toBe(16)
   })
 
   /*
@@ -111,11 +111,11 @@ describe('the room the scope draws', () => {
    */
   it('snaps the centre to a whole cell', () => {
     // Midpoint of 0 and 3.4 is 1.7, which is not a multiple of the 0.5 m cell. 1.5 is.
-    const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 3.4, 0)])
+    const scope = scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 3.4, 0)])
 
-    expect(room.window.centreEastM).toBe(1.5)
+    expect(scope.choice.centreEastM).toBe(1.5)
     // And so the frame's own edge lands on a cell boundary too.
-    expect(Number.isInteger(room.westM / gridStepM(room.widthM))).toBe(true)
+    expect(Number.isInteger(scope.westM / gridStepM(scope.widthM))).toBe(true)
   })
 
   /*
@@ -125,9 +125,9 @@ describe('the room the scope draws', () => {
   it('keeps the window exactly where it is while the Drones move inside it', () => {
     const held = { sideM: 8, centreEastM: 2, centreNorthM: 0 }
 
-    expect(roomExtent([at('Drone 1', 1, 1), at('Drone 2', 3, -1)], held).window).toEqual(held)
+    expect(scopeWindow([at('Drone 1', 1, 1), at('Drone 2', 3, -1)], held).choice).toEqual(held)
     // Same Drones, moved: still the same window, not re-centred on where they went.
-    expect(roomExtent([at('Drone 1', 4, 2), at('Drone 2', 5, 3)], held).window).toEqual(held)
+    expect(scopeWindow([at('Drone 1', 4, 2), at('Drone 2', 5, 3)], held).choice).toEqual(held)
   })
 
   /*
@@ -138,10 +138,10 @@ describe('the room the scope draws', () => {
     const held = { sideM: 16, centreEastM: 0, centreNorthM: 0 }
 
     // Everything would fit in 8 m now. The window stays where the Teacher last saw it.
-    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 1, 1)], held).widthM).toBe(16)
+    expect(scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 1, 1)], held).widthM).toBe(16)
 
     // A Drone leaves it, so it is reconsidered — and still may not come back down a rung.
-    expect(roomExtent([at('Drone 1', 0, 0), at('Drone 2', 20, 0)], held).widthM).toBe(24)
+    expect(scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 20, 0)], held).widthM).toBe(24)
   })
 
   /*
@@ -154,42 +154,42 @@ describe('the room the scope draws', () => {
     // this can draw".
     const west = at('Drone 1', 0, 0)
     const east = at('Drone 2', 40, 0)
-    const room = roomExtent([west, east])
+    const scope = scopeWindow([west, east])
 
-    expect(room.widthM).toBe(32)
-    expect(room.percentOf(west).xPercent).toBe(0)
-    expect(room.percentOf(east).xPercent).toBe(100)
-    expect(room.percentOf(east).yPercent).toBe(50)
-    expect(room.beyond.map((drone) => drone.name)).toEqual(['Drone 1', 'Drone 2'])
+    expect(scope.widthM).toBe(32)
+    expect(scope.percentOf(west).xPercent).toBe(0)
+    expect(scope.percentOf(east).xPercent).toBe(100)
+    expect(scope.percentOf(east).yPercent).toBe(50)
+    expect(scope.beyond.map((drone) => drone.name)).toEqual(['Drone 1', 'Drone 2'])
   })
 
   it('holds nothing on the edge while the window can still grow to reach it', () => {
-    const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 11, 0)])
+    const scope = scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 11, 0)])
 
-    expect(room.widthM).toBe(12)
-    expect(room.beyond).toEqual([])
+    expect(scope.widthM).toBe(12)
+    expect(scope.beyond).toEqual([])
   })
 
   it('puts north at the top, because the y axis of an image grows the other way', () => {
-    const room = roomExtent([at('Drone 1', 0, 0), at('Drone 2', 2, 4)])
-    expect(room.project(0, 4).y).toBeLessThan(room.project(0, 0).y)
+    const scope = scopeWindow([at('Drone 1', 0, 0), at('Drone 2', 2, 4)])
+    expect(scope.project(0, 4).y).toBeLessThan(scope.project(0, 0).y)
   })
 
   it('takes the smallest window for one Drone, and for none', () => {
-    expect(roomExtent([]).widthM).toBe(8)
-    expect(roomExtent([]).beyond).toEqual([])
-    expect(roomExtent([at('Drone 1', 0, 0)]).widthM).toBe(8)
+    expect(scopeWindow([]).widthM).toBe(8)
+    expect(scopeWindow([]).beyond).toEqual([])
+    expect(scopeWindow([at('Drone 1', 0, 0)]).widthM).toBe(8)
   })
 
   it('changes rung exactly at the boundary, and not before it', () => {
     // 8 m of spread is the exact width of the smallest window; a millimetre more is not.
-    expect(roomExtent([at('Drone 1', -4, 0), at('Drone 2', 4, 0)]).widthM).toBe(8)
-    expect(roomExtent([at('Drone 1', -4.001, 0), at('Drone 2', 4.001, 0)]).widthM).toBe(12)
+    expect(scopeWindow([at('Drone 1', -4, 0), at('Drone 2', 4, 0)]).widthM).toBe(8)
+    expect(scopeWindow([at('Drone 1', -4.001, 0), at('Drone 2', 4.001, 0)]).widthM).toBe(12)
 
     // The same at the last rung, where there is nothing above to grow into.
-    expect(roomExtent([at('Drone 1', -16, 0), at('Drone 2', 16, 0)]).beyond).toEqual([])
+    expect(scopeWindow([at('Drone 1', -16, 0), at('Drone 2', 16, 0)]).beyond).toEqual([])
     expect(
-      roomExtent([at('Drone 1', -16.001, 0), at('Drone 2', 16.001, 0)]).beyond,
+      scopeWindow([at('Drone 1', -16.001, 0), at('Drone 2', 16.001, 0)]).beyond,
     ).toHaveLength(2)
   })
 })

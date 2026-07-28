@@ -47,7 +47,7 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
  * line without reading the rest.
  */
 export function ControlScreen() {
-  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor } =
+  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
     useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
@@ -159,6 +159,11 @@ export function ControlScreen() {
                   })
                 }
               }}
+              onReleaseStop={
+                scenarios
+                  ? () => scenarios.resetEmergencyStop(entry.droneId)
+                  : null
+              }
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
             />
@@ -227,6 +232,7 @@ function FlightStrip({
   acknowledgedAt,
   now,
   command,
+  onReleaseStop,
   tracked,
   exercise,
 }: {
@@ -238,6 +244,8 @@ function FlightStrip({
   acknowledgedAt: (droneId: string, alert: VitalsAlert) => number | null
   now: number
   command: (droneId: string, kind: CommandKind) => void
+  /** Clear a latched stop on a simulated Fleet; null when release is not available here. */
+  onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
   /** What it is meant to be doing. Shown beside what it is doing; nothing compares them. */
   exercise: string | null
@@ -336,7 +344,12 @@ function FlightStrip({
           <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
         )}
 
-        <CommandRow vitals={vitals} command={command} tracked={tracked} />
+        <CommandRow
+          vitals={vitals}
+          command={command}
+          onReleaseStop={onReleaseStop}
+          tracked={tracked}
+        />
 
         {vitals.alerts.length > 0 && (
           <ul className="m-0 flex list-none flex-col gap-1 p-0">
@@ -383,13 +396,16 @@ function FlightStrip({
 function CommandRow({
   vitals,
   command,
+  onReleaseStop,
   tracked,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void
+  onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
 }) {
   const grounded = !vitals.airborne
+  const stopHeld = vitals.phase === 'emergency'
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -409,12 +425,37 @@ function CommandRow({
       >
         Hold
       </button>
-      <GuardedButton
-        label="Stop — hold"
-        confirmLabel="Press again to stop"
-        onConfirm={() => command(vitals.droneId, 'emergency-stop')}
-        className="ml-auto"
-      />
+      {stopHeld ? (
+        onReleaseStop ? (
+          <button
+            type="button"
+            onClick={onReleaseStop}
+            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+          >
+            Release stop
+          </button>
+        ) : (
+          <span className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled
+              className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
+            >
+              Release stop
+            </button>
+            <span className="text-value text-ink-muted">
+              Stop is held — this Fleet cannot release it from here
+            </span>
+          </span>
+        )
+      ) : (
+        <GuardedButton
+          label="Stop immediately"
+          confirmLabel="Press again to stop"
+          onConfirm={() => command(vitals.droneId, 'emergency-stop')}
+          className="ml-auto"
+        />
+      )}
       {tracked && <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>}
     </div>
   )

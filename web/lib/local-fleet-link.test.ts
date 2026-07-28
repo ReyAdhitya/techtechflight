@@ -111,6 +111,25 @@ describe('a Fleet with no ground station behind it', () => {
     link.stop()
   })
 
+  it('releases a latched emergency stop from the scenario controls', () => {
+    link.start()
+    clock.advance(1_000)
+
+    link.send({
+      id: 'stop-1',
+      droneId: 'ttf-0001',
+      kind: 'emergency-stop',
+      issuedAt: clock.now(),
+    })
+    clock.advance(1_000)
+    expect(link.snapshot.state?.drones[0]?.telemetry?.emergencyStopTriggered).toBe(true)
+
+    link.scenarios.resetEmergencyStop('ttf-0001')
+    clock.advance(1_000)
+    expect(link.snapshot.state?.drones[0]?.telemetry?.emergencyStopTriggered).toBe(false)
+    link.stop()
+  })
+
   /**
    * The one that matters.
    *

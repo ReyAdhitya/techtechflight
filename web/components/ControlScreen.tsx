@@ -22,7 +22,6 @@ import {
   formatEndurance,
   formatSeparation,
   formatVerticalMovement,
-  PHASE_PRESENTATION,
   SEVERITY_PRESENTATION,
 } from '@/lib/vitals-presentation'
 import { formatAge } from '@/lib/age'
@@ -123,13 +122,13 @@ export function ControlScreen() {
          * response slid left — on exactly the strip something was happening to.
          *
          * The columns therefore live here, on the list, and each strip takes them by
-         * subgrid. Below the breakpoint there is not room for six columns and the strip
+         * subgrid. Below the breakpoint there is not room for five columns and the strip
          * falls back to wrapping, where alignment is not what a phone is doing anyway.
          */}
         <ul
           className={cn(
             'm-0 flex list-none flex-col gap-2 p-0',
-            'min-[60rem]:grid min-[60rem]:grid-cols-[auto_auto_auto_auto_1fr_auto]',
+            'min-[60rem]:grid min-[60rem]:grid-cols-[auto_auto_auto_1fr_auto]',
           )}
         >
           {strips.map((entry) => (
@@ -242,7 +241,6 @@ function FlightStrip({
   /** What it is meant to be doing. Shown beside what it is doing; nothing compares them. */
   exercise: string | null
 }) {
-  const phase = PHASE_PRESENTATION[vitals.phase]
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
 
@@ -263,7 +261,7 @@ function FlightStrip({
       )}
     >
       {/*
-       * `contents` above the breakpoint: the six cells become items of the strip's
+       * `contents` above the breakpoint: the five cells become items of the strip's
        * subgrid directly, so they land in the list's columns instead of in a box of
        * their own. Below it, the row wraps as before.
        */}
@@ -282,12 +280,13 @@ function FlightStrip({
           {vitals.callsign}
         </Link>
         <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
-        <span className="text-value text-ink">{phase.label}</span>
         {/*
-         * Height, and empty when the Drone is on the ground — the phase word to the left
-         * already carries that fact, and this slot echoing it said "On the ground" twice
-         * in the same row. The cell still renders, so it holds its column and the strips
-         * stay aligned (docs/DESIGN.md §1.1).
+         * The height, and no phase word beside it.
+         *
+         * The strip read "Level · 2.6 m", which is the same fact twice: a Drone holding
+         * 2.6 m is what "Level" means. The height carries it, and carries the number the
+         * word could not. The movement — arrow and rate — stays, because that is the answer
+         * to "is it going up or down", which one height cannot give.
          */}
         <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
         <span className="tnum text-value text-ink-subtle">
@@ -304,7 +303,7 @@ function FlightStrip({
 
       {/*
        * Everything below the fixed top row spans the whole strip rather than a column.
-       * The row above lays its six cells into the shared columns by subgrid; these lines —
+       * The row above lays its five cells into the shared columns by subgrid; these lines —
        * Exercise, separation, Commands, Alerts — are full-width prose and controls, so
        * they take the whole width beneath it and keep their own vertical rhythm.
        */}

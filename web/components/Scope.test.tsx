@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
 import type { DroneVitals } from '@/lib/vitals'
-import { Scope, gridStepM, roomExtent } from './Scope'
+import { Scope, WINDOW_SIDES_M, cellsAcross, gridStepM, roomExtent } from './Scope'
 
 /**
  * Where the Drones are, looking down on the room.
@@ -269,12 +269,16 @@ describe('the grid the scope draws', () => {
    * The step cannot stay at half a metre for every window — at 32 m that is 64 rules an axis
    * and the grid becomes a mesh — so it is tied to the window instead. The band is what keeps
    * it countable at both ends of the ladder.
+   *
+   * The ladder is iterated rather than copied. Written out here, this would go on passing
+   * over the five rungs it had been told about while a sixth quietly broke the rule. The two
+   * numbers are written out on purpose: they are the rule, and a test that read them from the
+   * code it is checking would assert nothing.
    */
   it('keeps cells across the window between 16 and 24, at every rung', () => {
-    for (const side of [8, 12, 16, 24, 32]) {
-      const cells = side / gridStepM(side)
-      expect(cells, `${side} m window`).toBeGreaterThanOrEqual(16)
-      expect(cells, `${side} m window`).toBeLessThanOrEqual(24)
+    for (const sideM of WINDOW_SIDES_M) {
+      expect(cellsAcross(sideM), `${sideM} m window`).toBeGreaterThanOrEqual(16)
+      expect(cellsAcross(sideM), `${sideM} m window`).toBeLessThanOrEqual(24)
     }
   })
 })

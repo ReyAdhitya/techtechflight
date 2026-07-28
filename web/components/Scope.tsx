@@ -379,8 +379,11 @@ export interface RoomExtent {
  *
  * A ladder rather than a fitted size, because a window that fits is a window that moves.
  * Five rungs cover a corner of a classroom up to a sports hall.
+ *
+ * Exported so the test iterates the ladder itself. A copy of it in the test would go on
+ * passing over the five rungs it had been told about while a sixth broke the rule.
  */
-const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
+export const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
 
 /** True when every Drone is inside the window, edges included. */
 function holds(placed: readonly DroneState[], within: ScopeWindow): boolean {

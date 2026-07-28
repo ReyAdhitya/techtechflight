@@ -111,7 +111,9 @@ describe('the strip anatomy is fixed across strips, not per row', () => {
     settle()
 
     const list = stripFor('Drone 1').parentElement as HTMLElement
-    expect(list.className).toMatch(/grid-cols-\[/)
+    // Freespace is response (last column), not charge — otherwise charge stretches and
+    // leaves a cavern before "Response …".
+    expect(list.className).toMatch(/grid-cols-\[auto_auto_auto_auto_1fr\]/)
 
     for (const name of ['Drone 1', 'Drone 6']) {
       expect(stripFor(name).className).toContain('grid-cols-subgrid')

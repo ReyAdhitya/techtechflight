@@ -49,7 +49,7 @@ export function HistorySections() {
     return (
       <section className="flex flex-col gap-2">
         <h2 className="m-0 font-display text-heading font-medium">No history yet</h2>
-        <p className="m-0 mt-2 max-w-[52ch] text-body text-ink-muted">
+        <p className="m-0 mt-2 text-body text-ink-muted">
           This ground station has not sent a record of the recent past. The board shows
           what is true now; a timeline needs a ground station that has been running long
           enough to have watched something happen.

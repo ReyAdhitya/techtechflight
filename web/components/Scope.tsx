@@ -573,8 +573,19 @@ function namesOf(drones: readonly DroneState[]): string {
 /** Cell sizes the grid may use, in metres, smallest first. */
 const GRID_STEPS_M = [0.5, 1, 2] as const
 
-/** The most cells a Teacher should have to count across the window. */
+/**
+ * The band the cell count has to stay inside, across the window.
+ *
+ * Both ends matter. Above the ceiling the grid becomes a mesh; below the floor the cells are
+ * too coarse to judge a distance against, which is the only reason the grid is drawn.
+ */
+const MIN_CELLS_ACROSS = 16
 const MAX_CELLS_ACROSS = 24
+
+/** Cells across the window, at the step the window chose. The rule the ladder must keep. */
+export function cellsAcross(windowSideM: number): number {
+  return windowSideM / gridStepM(windowSideM)
+}
 
 /**
  * Metres per grid cell, chosen from the window. Never from the Drones.
@@ -592,18 +603,26 @@ const MAX_CELLS_ACROSS = 24
  * against. It is a property of the display, not a claim about the room.
  *
  * It cannot stay at half a metre for every window — at 32 m that is 64 rules an axis and the
- * grid becomes a mesh — so the step is the smallest one that keeps the count at or under
- * `MAX_CELLS_ACROSS`. Because the window is a rung of `WINDOW_SIDES_M` and nothing else, the
- * step is exactly as stable as the window is, which is to say it changes rarely and visibly.
+ * grid becomes a mesh — so the step is the smallest one landing inside the band. Because the
+ * window is a rung of `WINDOW_SIDES_M` and nothing else, the step is exactly as stable as the
+ * window is, which is to say it changes rarely and visibly.
  *
- * Exported so the caption can state it. Hard-coding `0.5` there would lie the first time the
- * window grew.
+ * The table above is what today's ladder and today's steps happen to produce. It is not the
+ * rule. **The rule is the band**, and it is asserted over the exported ladder in the test, so
+ * a rung added later cannot quietly fall outside it.
  */
 export function gridStepM(windowSideM: number): number {
-  return (
-    GRID_STEPS_M.find((step) => windowSideM / step <= MAX_CELLS_ACROSS) ??
-    GRID_STEPS_M[GRID_STEPS_M.length - 1]!
-  )
+  const inBand = GRID_STEPS_M.find((step) => {
+    const cells = windowSideM / step
+    return cells >= MIN_CELLS_ACROSS && cells <= MAX_CELLS_ACROSS
+  })
+  /*
+   * A rung no step can serve is a ladder that has drifted from its steps — a 6 m window, say,
+   * is 12 cells at the finest step and 3 at the coarsest. Draw the finest rather than the
+   * coarsest, because a grid that is too dense still reads and a grid of three cells does not,
+   * and leave the test over the ladder to be the thing that says the pair no longer agree.
+   */
+  return inBand ?? GRID_STEPS_M[0]!
 }
 
 /**

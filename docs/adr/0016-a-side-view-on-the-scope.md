@@ -110,7 +110,8 @@ been. The top-down keeps both; the side view draws marks, names and heights only
 **Persisting the choice.** Top-down on every load. It answers the more common question, and a
 Teacher who left it on Side last Thursday should not find it there with a class walking in.
 
-**Any third view.**
+**Any third view.** Superseded by [ADR-0017](./0017-a-front-view-on-the-scope.md) — Front
+reuses this ADR's elevation rules against the other floor axis.
 
 ## When this ADR is wrong
 

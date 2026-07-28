@@ -9,6 +9,38 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 `ScopeWindow` is the projection; `WindowChoice` is the decision
+
+- **Decision:** Rename `RoomExtent` → `ScopeWindow` and `roomExtent()` → `scopeWindow()`, and
+  rename the small held record that was already called `ScopeWindow` to `WindowChoice`, on
+  the member `.choice`.
+- **Reason:** The review asked for `scopeWindow` and noted the name was already taken by the
+  held record, so something had to move. The projection object is what every caller touches
+  and what the ADR is about, so it gets the honest name; the held record is a decision — how
+  big, and where the middle is — and `WindowChoice` says that.
+- **Alternatives considered:** `ScopeProjection` for the big one, leaving `ScopeWindow` on
+  the small one (rejected: the review asked for `scopeWindow` specifically, and a projection
+  is what the object *does* rather than what it *is*); `HeldWindow` for the small one
+  (rejected: it is only "held" from the component's point of view — `chooseWindow` returns
+  one before anything holds it).
+- **Note:** No user-facing string changed except the `aria-label`, which is finding 4 of the
+  same review and landed in its own commit.
+
+## 2026-07-28 The two ladder walks in `Scope.tsx` stay separate
+
+- **Decision:** Do not fold `chooseWindow`'s rung walk and `gridStepM`'s step walk into one
+  "first that fits, else the fallback" helper, though the review noted the shape twice.
+- **Reason:** They stopped being the same shape once the cell floor landed. `chooseWindow`
+  skips rungs below the held side, returns a derived `WindowChoice` rather than the rung, and
+  falls back to the **last** rung; `gridStepM` skips nothing, returns the step, and falls back
+  to the **first**. A shared helper would need a skip predicate, a mapper and a fallback
+  selector — three parameters to save two lines each — and it would hide that the two
+  fallbacks point in opposite directions, which is the one interesting thing about them.
+- **Note:** The cells-across arithmetic *was* folded, into the exported `cellsAcross()`, which
+  is what the ladder test now asserts on. `gridStepM` cannot use it without recursing, and
+  `gridLines` counts rules over an arbitrary span rather than cells across the window, so
+  neither is the same calculation.
+
 ## 2026-07-27 The scope's window is reconsidered only when a Drone leaves it
 
 - **Decision:** Keep the held window — size *and* centre — untouched for as long as it

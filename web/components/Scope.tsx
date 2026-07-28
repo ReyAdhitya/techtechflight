@@ -186,10 +186,35 @@ export function Scope({
         <button
           ref={exitFullScreenRef}
           type="button"
+          aria-label={expanded ? 'Exit full screen' : 'Full screen'}
           onClick={() => setExpanded((open) => !open)}
-          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-pill border border-hairline bg-transparent text-ink hover:border-ink"
         >
-          {expanded ? 'Exit full screen' : 'Full screen'}
+          {/*
+           * Icon only — owner override of DESIGN §1.2 for this control. View toggles stay
+           * words. aria-label carries Full screen / Exit full screen for §11.3.
+           */}
+          {expanded ? (
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M6 2v4H2M12 2v4h4M6 16v-4H2M12 16v-4h4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path
+                d="M2 6V2h4M12 2h4v4M16 12v4h-4M6 16H2v-4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
         </button>
       </div>
 

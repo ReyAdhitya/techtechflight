@@ -319,23 +319,23 @@ describe('what the scope shows', () => {
     ).toBeInTheDocument()
   })
 
-  it('states the size of a cell, so the picture can be read as a distance', () => {
-    // Nothing further than 3 m out, so the smallest window and its half-metre cells.
+  /*
+   * The caption used to state the cell size. It read as a claim about what a cell measured on
+   * the glass, and every monitor is a different size, so on screen it could never be true.
+   *
+   * The grid itself is untouched — the tests above still pin the window, the snapping and the
+   * 16-to-24 band. Only the sentence about it went.
+   */
+  it('claims no size for the grid it draws', () => {
     render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 3, 1)]} />)
 
-    expect(screen.getByText('Grid: 0.5 m')).toBeInTheDocument()
+    expect(screen.queryByText(/Grid:/)).not.toBeInTheDocument()
   })
 
-  /*
-   * The caption has to read the step off the window. Hard-coded, it would go on saying
-   * "0.5 m" over metre cells the first time a Drone pushed the window up a rung — a scale
-   * reference that lies is worse than none.
-   */
-  it('says the cell size the grid is actually drawn on, not the default one', () => {
-    // 14 m of spread takes the 16 m window, where half-metre cells would be 32 across.
-    render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 14, 0)]} />)
+  it('keeps the keys to the symbols, which claim nothing about size', () => {
+    render(<Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 3, 1)]} />)
 
-    expect(screen.getByText('Grid: 1 m')).toBeInTheDocument()
+    expect(screen.getByText('Filled = flying')).toBeInTheDocument()
   })
 
   it('names the Drones it had to hold on the edge, rather than dropping them silently', () => {

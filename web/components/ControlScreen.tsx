@@ -18,6 +18,7 @@ import { alertQueue, compareStrips, type DroneVitals, type VitalsAlert } from '@
 import type { TrackedCommand } from '@/lib/command-tracker'
 import { GuardedButton } from './ui/GuardedButton'
 import {
+  formatCoordinates,
   formatEndurance,
   formatSeparation,
   formatVerticalMovement,
@@ -243,6 +244,7 @@ function FlightStrip({
 }) {
   const phase = PHASE_PRESENTATION[vitals.phase]
   const separation = formatSeparation(vitals)
+  const coordinates = formatCoordinates(vitals)
 
   return (
     <li
@@ -307,6 +309,16 @@ function FlightStrip({
        * they take the whole width beneath it and keep their own vertical rhythm.
        */}
       <div className="flex flex-col gap-2 min-[60rem]:col-span-full">
+        {/*
+         * On its own line, never in the head row above.
+         *
+         * §4.4's whole argument is that the eye learns fixed positions. Threading three
+         * numbers into the head row would push charge and response age sideways and break
+         * the scan path every Teacher has already learned, for a value they read far less
+         * often than either.
+         */}
+        {coordinates && <p className="m-0 tnum text-value text-ink-subtle">{coordinates}</p>}
+
         {exercise && (
           // Intent beside behaviour. B7 was dropped, so the Teacher makes the comparison —
           // an Exercise does not declare which flight phase it expects, and inventing one

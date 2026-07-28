@@ -1,3 +1,4 @@
+import type { LocalPosition } from '@techtechflight/contract'
 import type { AlertSeverity, DroneVitals, FlightPhase } from './vitals'
 
 /**
@@ -47,6 +48,57 @@ export function formatVerticalMovement(vitals: DroneVitals): string | null {
   if (Math.abs(vitals.verticalRateMps) < 0.05) return `${height} · steady`
   const arrow = vitals.verticalRateMps > 0 ? '↑' : '↓'
   return `${height} · ${arrow} ${Math.abs(vitals.verticalRateMps).toFixed(1)} m/s`
+}
+
+/**
+ * Where a Drone is, as three numbers a Teacher can read out loud.
+ *
+ * `null` when the Drone has said nothing about its position. The caller renders no line at
+ * all in that case rather than a row of dashes — a coordinate group full of placeholders
+ * reads as a measurement that failed, when the truth is that none was offered.
+ *
+ * Each axis carries its letter **and** its direction, so `X`, `Y` and `Z` are learnable
+ * without being the only key to what they mean. A Teacher who has never been told which is
+ * which can still read `2.4 m E` and act on it.
+ *
+ * Two rules the format exists to keep:
+ *
+ * - **A height that was never reported is said in words.** `Z not reported` and never `0.0`.
+ *   An airframe with no barometer and one sitting on the floor are different facts, and
+ *   `docs/DESIGN.md` §11.1 requires them to be drawn differently. A Drone that genuinely
+ *   measures zero shows `Z 0.0 m`, which is a reading.
+ * - **A direction is only claimed where there is one.** At exactly zero the letter is
+ *   dropped — 0 m east and 0 m west are the same place, and picking one would be noise
+ *   dressed as precision.
+ *
+ * One decimal, because `simulated-telemetry-source.ts` rounds to two and a third digit would
+ * be precision the Telemetry has not got.
+ */
+export function formatCoordinates(reading: {
+  /** `DroneVitals` says `null` where `Telemetry` says nothing at all; both mean the same. */
+  readonly position?: LocalPosition | null
+  readonly altitudeM?: number | null
+}): string | null {
+  const position = reading.position
+  if (position === null || position === undefined) return null
+
+  const axis = (metres: number, positive: string, negative: string) => {
+    const magnitude = Math.abs(metres).toFixed(1)
+    if (Math.abs(metres) < 0.05) return `${magnitude} m`
+    return `${magnitude} m ${metres > 0 ? positive : negative}`
+  }
+
+  const altitudeM = reading.altitudeM
+  const height =
+    altitudeM === null || altitudeM === undefined
+      ? 'Z not reported'
+      : `Z ${altitudeM.toFixed(1)} m`
+
+  return [
+    `X ${axis(position.eastM, 'E', 'W')}`,
+    `Y ${axis(position.northM, 'N', 'S')}`,
+    height,
+  ].join(' · ')
 }
 
 /**

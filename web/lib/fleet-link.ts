@@ -66,6 +66,12 @@ export interface ScenarioControls {
   takeOff(droneId: string): void
   setBattery(droneId: string, fraction: number): void
   plugIn(droneId: string): void
+  /**
+   * Clear a latched emergency stop. Counterpart to the Stop command on a simulated Fleet —
+   * not inventing a fault (C9), so Control may offer **Release stop** when the latch is set.
+   * Absent on a hardware Fleet (`scenarios` is null there).
+   */
+  resetEmergencyStop(droneId: string): void
 }
 
 export interface FleetLink {

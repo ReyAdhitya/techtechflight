@@ -7,6 +7,13 @@ would notice.
 
 ### Changed
 
+- **"End the lesson" is a primary control rather than a ghost button.** It carried a hairline
+  border and a transparent fill, for the one control a Teacher has to find across a room at
+  the moment a class is packing up. It now uses the filled treatment "Start the lesson"
+  already had, character for character — the two are symmetrical halves of one lifecycle. Not
+  a Status colour: `design.md` §9 reserves colour for exception, and a lesson ending on time
+  is the normal path. A test now weighs the pair against each other, since they live in
+  different files with separate copies of the class string, which is how they drifted apart.
 - **The scope writes each Drone's height under its name, in place of the phase word.**
   *"Level"* said the Drone was holding its height without saying what height; the number is
   the thing a Teacher can act on, and the phase is still on the flight strip in words. An

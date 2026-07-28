@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
 import { Scope, WINDOW_SIDES_M, cellsAcross, gridStepM, scopeWindow } from './Scope'
 
@@ -409,9 +409,143 @@ describe('what the scope shows', () => {
     expect(screen.getByRole('button', { name: /Drone 2/ })).toBeInTheDocument()
   })
 
-  it('offers no control at all when there is nothing to select', () => {
+  it('offers no control on a mark when there is nothing to select', () => {
     render(<Scope drones={[at('Drone 1', 0, 0)]} />)
 
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Drone 1/ })).not.toBeInTheDocument()
+    // The view toggle is a control whatever happens; it is not a mark.
+    expect(screen.getByRole('button', { name: 'Top-down' })).toBeInTheDocument()
+  })
+})
+
+/**
+ * The side view, and the one thing it must not do.
+ *
+ * The scope answers *which one is that* and *are two about to meet*, in plan. It cannot
+ * answer **are those two at the same height** — two marks a hand's width apart on the
+ * top-down may be three metres apart vertically and in no danger at all.
+ *
+ * The hazard is the same one `scopeWindow` was written against: a vertical axis stretched to
+ * fill the box would make two Drones look well separated when they are not. So the box takes
+ * the shape of what it draws, and a metre up is the same length as a metre across.
+ */
+const showSide = () => fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+
+const box = (container: HTMLElement) =>
+  container.querySelector('[style*="aspect-ratio"]') as HTMLElement
+
+describe('the side view', () => {
+  it('starts on the top-down, and does not remember being left on the side', () => {
+    const drones = [atHeight('Drone 1', 0, 0, 1)]
+    const first = render(<Scope drones={drones} />)
+
+    expect(screen.getByRole('button', { name: 'Top-down' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    showSide()
+    expect(screen.getByRole('button', { name: 'Side' })).toHaveAttribute('aria-pressed', 'true')
+
+    // A Teacher who left it on Side should not find it there with a class walking in.
+    first.unmount()
+    render(<Scope drones={drones} />)
+    expect(screen.getByRole('button', { name: 'Top-down' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  /*
+   * The acceptance item, and the reason the box reshapes rather than staying square: equal
+   * scale on both axes comes from the viewBox and the box agreeing about their proportions.
+   */
+  it('gives a metre up the same length as a metre across', () => {
+    const { container } = render(<Scope drones={[atHeight('Drone 1', 0, 0, 1.5)]} />)
+    showSide()
+
+    // 8 m window, and 1.5 m of altitude takes the 2 m rung.
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 2')
+    expect(box(container).style.aspectRatio).toBe('8 / 2')
+  })
+
+  it('takes the smallest ceiling that holds every Drone, and never gives it back', () => {
+    const { container, rerender } = render(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
+    showSide()
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 2')
+
+    rerender(<Scope drones={[atHeight('Drone 1', 0, 0, 3)]} />)
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 4')
+
+    // Back down again: the ceiling holds, exactly as the window does.
+    rerender(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
+    expect(container.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 8 4')
+  })
+
+  it('puts a Drone on the ground line when it reports being on the ground', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, 0)]} onSelect={() => {}} />)
+    showSide()
+
+    expect(screen.getByRole('button', { name: /Drone 1/ }).style.top).toBe('100%')
+  })
+
+  /*
+   * The distinction that matters most here. Putting a Drone with no barometer on the ground
+   * line would state it is landed, when the truth is that it cannot say.
+   */
+  it('leaves out a Drone that cannot report a height, and names it', () => {
+    render(
+      <Scope
+        drones={[atHeight('Drone 1', 0, 0, 1), atHeight('Drone 2', 2, 0, undefined)]}
+        onSelect={() => {}}
+      />,
+    )
+    showSide()
+
+    expect(screen.queryByRole('button', { name: /Drone 2/ })).not.toBeInTheDocument()
+    expect(
+      screen.getByText('Drone 2 does not report a height', { selector: 'span' }),
+    ).toBeInTheDocument()
+    // And it is still on the top-down, where height is not what is being drawn.
+    fireEvent.click(screen.getByRole('button', { name: 'Top-down' }))
+    expect(screen.getByRole('button', { name: /Drone 2/ })).toBeInTheDocument()
+  })
+
+  /*
+   * Swapping between the two only tells a Teacher anything if they agree about left-to-right.
+   * Both read the same window, so a Drone does not jump sideways when the view changes.
+   */
+  it('places a Drone at the same horizontal position as the top-down does', () => {
+    render(<Scope drones={[atHeight('Drone 1', 3, 1, 1)]} onSelect={() => {}} />)
+
+    const across = screen.getByRole('button', { name: /Drone 1/ }).style.left
+    showSide()
+
+    expect(screen.getByRole('button', { name: /Drone 1/ }).style.left).toBe(across)
+  })
+
+  /*
+   * Out of scope, and recorded here so it reads as a decision. Both lines encode a horizontal
+   * distance; how that reads against a difference in height is a separate question, and a
+   * line between two marks in the side view would look like it had been answered.
+   */
+  it('draws no conflict or link line from the side', () => {
+    const linked = (name: string, eastM: number) =>
+      aDroneState({
+        id: name.toLowerCase().replace(' ', '-'),
+        name,
+        status: 'Flying',
+        telemetry: aTelemetry({
+          airborne: true,
+          position: { eastM, northM: 0 },
+          altitudeM: 1,
+          linkGroupId: 'formation',
+        }),
+      })
+
+    const { container } = render(<Scope drones={[linked('Drone 1', 0), linked('Drone 2', 2)]} />)
+    expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(1)
+
+    showSide()
+    expect(container.querySelectorAll('line.stroke-status-not-ready').length).toBe(0)
   })
 })

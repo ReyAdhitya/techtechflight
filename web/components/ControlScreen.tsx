@@ -123,13 +123,15 @@ export function ControlScreen() {
          * response slid left — on exactly the strip something was happening to.
          *
          * The columns therefore live here, on the list, and each strip takes them by
-         * subgrid. Below the breakpoint there is not room for five columns and the strip
-         * falls back to wrapping, where alignment is not what a phone is doing anyway.
+         * subgrid. Freespace is the **response** column (`1fr`), not charge — charge
+         * stays snug after height so the eye does not cross a cavern to find Response.
+         * Below the breakpoint there is not room for five columns and the strip falls
+         * back to wrapping, where alignment is not what a phone is doing anyway.
          */}
         <ul
           className={cn(
             'm-0 flex list-none flex-col gap-2 p-0',
-            'min-[60rem]:grid min-[60rem]:grid-cols-[auto_auto_auto_1fr_auto]',
+            'min-[60rem]:grid min-[60rem]:grid-cols-[auto_auto_auto_auto_1fr]',
           )}
         >
           {strips.map((entry) => (
@@ -257,10 +259,10 @@ function FlightStrip({
     <li
       onClick={onSelect}
       className={cn(
-        'flex flex-col gap-2 rounded-surface border-l-2 bg-surface-1 p-3',
+        'flex flex-col gap-1.5 rounded-surface border-l-2 bg-surface-1 p-3',
         // The strip keeps its own box — rail, ground, selection outline — and takes the
         // list's columns rather than inventing its own.
-        'min-[60rem]:col-span-full min-[60rem]:grid min-[60rem]:grid-cols-subgrid min-[60rem]:items-center min-[60rem]:gap-x-6 min-[60rem]:gap-y-2',
+        'min-[60rem]:col-span-full min-[60rem]:grid min-[60rem]:grid-cols-subgrid min-[60rem]:items-center min-[60rem]:gap-x-6 min-[60rem]:gap-y-1.5',
         vitals.alerts[0]
           ? SEVERITY_PRESENTATION[vitals.alerts[0].severity].className
           : 'border-hairline',
@@ -303,7 +305,7 @@ function FlightStrip({
             ? 'Charge not reported'
             : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
         </span>
-        <span className="tnum ml-auto text-value text-ink-muted">
+        <span className="tnum ml-auto text-right text-value text-ink-muted min-[60rem]:ml-0">
           {vitals.responseAgeMs === null
             ? 'No response yet'
             : `Response ${formatAge(vitals.responseAgeMs)}`}
@@ -316,7 +318,7 @@ function FlightStrip({
        * Exercise, separation, Commands, Alerts — are full-width prose and controls, so
        * they take the whole width beneath it and keep their own vertical rhythm.
        */}
-      <div className="flex flex-col gap-2 min-[60rem]:col-span-full">
+      <div className="flex flex-col gap-1.5 min-[60rem]:col-span-full">
         {/*
          * On its own line, never in the head row above.
          *
@@ -408,7 +410,7 @@ function CommandRow({
   const stopHeld = vitals.phase === 'emergency'
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 min-[60rem]:flex-nowrap">
       <button
         type="button"
         disabled={grounded}

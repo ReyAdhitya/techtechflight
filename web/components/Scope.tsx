@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { DroneState } from '@techtechflight/contract'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { cn } from '@/lib/utils'
@@ -57,6 +57,16 @@ export function Scope({
    */
   const held = useRef<WindowChoice | undefined>(undefined)
 
+  /*
+   * Which of the two pictures is showing. Not persisted, on purpose: top-down answers the
+   * more common question, and a Teacher who left it on Side last Thursday should not find it
+   * there with a class walking in.
+   */
+  const [view, setView] = useState<ScopeView>('top-down')
+
+  /* The side view's ceiling, held under the same rule as the window: it grows, never shrinks. */
+  const heldCeilingM = useRef(0)
+
   const placed = drones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
   )
@@ -73,6 +83,25 @@ export function Scope({
   held.current = scope.choice
   const stepM = gridStepM(scope.widthM)
   const conflicts = conflictPairs(placed, vitals)
+
+  const ceilingM = chooseCeiling(placed, heldCeilingM.current)
+  heldCeilingM.current = ceilingM
+
+  /*
+   * A Drone that cannot measure its height has no place in a picture whose vertical axis is
+   * height. Drawing it on the ground line would state it is landed, when the truth is that it
+   * cannot say — so it is left out and named, exactly as a Drone beyond the window is.
+   */
+  const heightless = placed.filter((drone) => drone.telemetry?.altitudeM === undefined)
+  const drawn = view === 'side' ? placed.filter((drone) => !heightless.includes(drone)) : placed
+
+  /** Where a mark sits in whichever view is showing, as a percentage of the box. */
+  const at = (drone: DroneState) => {
+    const { xPercent } = scope.percentOf(drone)
+    if (view === 'top-down') return scope.percentOf(drone)
+    const altitudeM = Math.min(ceilingM, Math.max(0, drone.telemetry!.altitudeM!))
+    return { xPercent, yPercent: (1 - altitudeM / ceilingM) * 100 }
+  }
 
   const groups = new Map<string, DroneState[]>()
   for (const drone of placed) {
@@ -95,20 +124,49 @@ export function Scope({
      */
     <figure className="mx-auto my-0 flex w-full max-w-[37.5rem] flex-col gap-3">
       {/*
-       * Square, always. `meet` then has nothing to letterbox, the percentage positions of
-       * the Drones above line up exactly with the metres below, and a metre across is the
-       * same length as a metre down — which is what makes the cells square.
+       * Words, not icons. docs/DESIGN.md §1.2 refuses instruments a Teacher has to learn, and
+       * a pair of tiny glyphs for "from above" and "from the side" is exactly that. Real
+       * buttons, so the pair is reachable from a keyboard (§11.3).
+       */}
+      <div className="flex flex-wrap gap-2" role="group" aria-label="How to draw the Drones">
+        {(['top-down', 'side'] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setView(option)}
+            aria-pressed={view === option}
+            className={cn(
+              'min-h-11 cursor-pointer rounded-pill px-4 py-1.5 text-value',
+              view === option
+                ? 'border-0 bg-ink font-medium text-canvas'
+                : 'border border-hairline bg-transparent text-ink hover:border-ink',
+            )}
+          >
+            {VIEW_LABEL[option]}
+          </button>
+        ))}
+      </div>
+
+      {/*
+       * The box takes the shape of what it is drawing, so a metre up is the same length as a
+       * metre across in both views. Top-down that is square; from the side it is the window
+       * by the ceiling — a 12 m window under a 3 m ceiling is a 4:1 letterbox, which is what
+       * a room of that shape actually looks like from the side.
        *
-       * Inline rather than `aspect-square` so the invariant is assertable: the suite is
-       * jsdom, which has no layout engine and cannot see a wrong aspect ratio, but it can
-       * read an inline style (CLAUDE.md).
+       * Inline rather than a class so the invariant is assertable: the suite is jsdom, which
+       * has no layout engine and cannot see a wrong aspect ratio, but it can read an inline
+       * style (CLAUDE.md).
        */}
       <div
         className="relative w-full rounded-surface border border-hairline bg-canvas"
-        style={{ aspectRatio: '1' }}
+        style={{ aspectRatio: view === 'side' ? `${scope.widthM} / ${ceilingM}` : '1' }}
       >
         <svg
-          viewBox={`0 0 ${scope.widthM} ${scope.heightM}`}
+          viewBox={
+            view === 'side'
+              ? `0 0 ${scope.widthM} ${ceilingM}`
+              : `0 0 ${scope.widthM} ${scope.heightM}`
+          }
           preserveAspectRatio="xMidYMid meet"
           className="absolute inset-0 h-full w-full"
           role="img"
@@ -118,7 +176,11 @@ export function Scope({
            * walls drawn and reads it correctly; a Teacher on a screen reader was being told
            * the opposite, which makes it an accessibility defect rather than a wording one.
            */
-          aria-label={`Where ${placed.length} Drones are, looking down`}
+          aria-label={
+            view === 'side'
+              ? `How high ${drawn.length} Drones are, seen from the side`
+              : `Where ${placed.length} Drones are, looking down`
+          }
         >
           {/* A fixed grid, so a distance on screen can be read as a distance in metres. */}
           {gridLines(scope.westM, scope.eastM, stepM).map((metre) => (
@@ -132,20 +194,50 @@ export function Scope({
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          {gridLines(scope.southM, scope.northM, stepM).map((metre) => (
+          {(view === 'side'
+            ? gridLines(0, ceilingM, stepM).map((metre) => ceilingM - metre)
+            : gridLines(scope.southM, scope.northM, stepM).map(
+                (metre) => scope.project(0, metre).y,
+              )
+          ).map((y) => (
             <line
-              key={`h${metre}`}
+              key={`h${y}`}
               x1="0"
               x2={scope.widthM}
-              y1={scope.project(0, metre).y}
-              y2={scope.project(0, metre).y}
+              y1={y}
+              y2={y}
               className="stroke-hairline"
               vectorEffect="non-scaling-stroke"
             />
           ))}
 
-          {/* Linked Drones first, so the tie sits under the Drones it joins. */}
-          {[...groups.values()].map((members) =>
+          {/*
+           * The ground, and only the ground.
+           *
+           * Zero is where this Drone took off from, which is reported rather than assumed, so
+           * drawing it claims nothing ADR-0012 defers. Nothing is drawn at the top or the
+           * sides, because a ceiling and walls would be exactly that claim.
+           */}
+          {view === 'side' && (
+            <line
+              x1="0"
+              x2={scope.widthM}
+              y1={ceilingM}
+              y2={ceilingM}
+              className="stroke-ink-muted"
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+
+          {/*
+           * Ties and conflicts are top-down only, and deliberately.
+           *
+           * Both encode a horizontal distance the rangefinder reports. How that reads against
+           * a difference in height is a separate question nobody has answered, and a line
+           * between two marks in the side view would look like it had answered it.
+           */}
+          {view === 'top-down' && [...groups.values()].map((members) =>
             members.slice(1).map((drone, index) => {
               const from = scope.projectOf(members[index]!)
               const to = scope.projectOf(drone)
@@ -170,7 +262,7 @@ export function Scope({
            * the dashed tie between Drones that are linked on purpose. Two aircraft joined
            * by a line here is the one thing on this map that means act now.
            */}
-          {conflicts.map((pair) => {
+          {view === 'top-down' && conflicts.map((pair) => {
             const from = scope.project(pair.from.eastM, pair.from.northM)
             const to = scope.project(pair.to.eastM, pair.to.northM)
             return (
@@ -188,11 +280,11 @@ export function Scope({
           })}
         </svg>
 
-        {placed.map((drone, index) => (
+        {drawn.map((drone, index) => (
           <Mark
             key={drone.id}
             drone={drone}
-            scope={scope}
+            at={at(drone)}
             altitudeM={drone.telemetry?.altitudeM}
             selected={selected === drone.id}
             onSelect={onSelect}
@@ -217,7 +309,16 @@ export function Scope({
         <span>Filled = flying</span>
         {groups.size > 0 && <span>Dashed = linked as one group</span>}
         {conflicts.length > 0 && <span>Solid = too close</span>}
-        {scope.beyond.length > 0 && (
+        {view === 'side' && heightless.length > 0 && (
+          /*
+           * Not drawn on the ground line, which would state they are landed when the truth is
+           * that they cannot say. Named instead, the same way a Drone beyond the window is.
+           */
+          <span>
+            {namesOf(heightless)} {heightless.length === 1 ? 'does' : 'do'} not report a height
+          </span>
+        )}
+        {view === 'top-down' && scope.beyond.length > 0 && (
           <span>
             {namesOf(scope.beyond)} {scope.beyond.length === 1 ? 'is' : 'are'} further out than
             the scope draws, held on the edge
@@ -239,14 +340,15 @@ export function Scope({
  */
 function Mark({
   drone,
-  scope,
+  at,
   altitudeM,
   selected,
   onSelect,
   below,
 }: {
   drone: DroneState
-  scope: ScopeWindow
+  /** Where this mark sits in whichever view is showing, as a percentage of the box. */
+  at: { xPercent: number; yPercent: number }
   /**
    * Height above this Drone's own take-off point.
    *
@@ -260,7 +362,6 @@ function Mark({
   onSelect: ((droneId: string) => void) | undefined
   below: boolean
 }) {
-  const at = scope.percentOf(drone)
   const airborne = drone.status === 'Flying'
 
   const dot = (
@@ -406,6 +507,42 @@ export interface ScopeWindow {
  * passing over the five rungs it had been told about while a sixth broke the rule.
  */
 export const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
+
+/** Which picture the scope is drawing. */
+export type ScopeView = 'top-down' | 'side'
+
+/** Said in words, because §1.2 refuses an instrument a Teacher has to learn. */
+const VIEW_LABEL: Readonly<Record<ScopeView, string>> = {
+  'top-down': 'Top-down',
+  side: 'Side',
+}
+
+/**
+ * The heights the side view may draw to, in metres, smallest first.
+ *
+ * Its own ladder rather than the window's, because a classroom's useful heights and its
+ * useful widths are not the same numbers: six Drones spread over 8 m rarely go above 2 m.
+ */
+export const CEILINGS_M = [2, 4, 8] as const
+
+/**
+ * How high the side view draws, chosen the same way as the window and held the same way.
+ *
+ * Grows when a Drone climbs past it, never shrinks while the scope is mounted. A Drone
+ * hovering on a rung boundary would otherwise flip the whole picture's scale every tick,
+ * which is the drifting grid ADR-0014 exists to prevent, on the other axis.
+ *
+ * A Drone that cannot measure its height is not counted: it says nothing about how high the
+ * picture needs to be, and it is not drawn at all.
+ */
+function chooseCeiling(placed: readonly DroneState[], heldM: number): number {
+  const highestM = placed.reduce((top, drone) => {
+    const altitudeM = drone.telemetry?.altitudeM
+    return altitudeM === undefined ? top : Math.max(top, altitudeM)
+  }, 0)
+  const fits = CEILINGS_M.find((ceilingM) => ceilingM >= highestM)
+  return Math.max(heldM, fits ?? CEILINGS_M[CEILINGS_M.length - 1]!)
+}
 
 /** True when every Drone is inside the window, edges included. */
 function holds(placed: readonly DroneState[], within: WindowChoice): boolean {

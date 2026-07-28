@@ -28,13 +28,20 @@ describe('MavlinkTelemetrySource', () => {
     expect(isCommandable(mavlink)).toBe(false)
   })
 
-  it('emits nothing until battery is known', () => {
+  it('emits an estimated pack when a craft heartbeats without charge', () => {
+    // Older ArduPilot SITL reports batteryRemaining=-1 and voltage=0. Silence would read
+    // as Offline for a craft that is clearly in contact.
     const { mavlink, observations } = source()
 
     mavlink.ingest(FRAME_HEARTBEAT_ARMED)
-    mavlink.ingest(FRAME_LOCAL_POSITION)
 
-    expect(observations).toHaveLength(0)
+    expect(observations).toHaveLength(1)
+    expect(observations[0]!.telemetry).toMatchObject({
+      batteryFraction: 1,
+      batteryIsEstimate: true,
+      airborne: true,
+      fault: null,
+    })
   })
 
   it('maps SYS_STATUS and LOCAL_POSITION_NED onto a Telemetry reading', () => {

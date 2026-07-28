@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DroneState } from '@techtechflight/contract'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { cn } from '@/lib/utils'
@@ -63,6 +63,24 @@ export function Scope({
    * there with a class walking in.
    */
   const [view, setView] = useState<ScopeView>('top-down')
+
+  /*
+   * Opt-in spend of the viewport on the picture. ADR-0014 caps the scope so strips stay in
+   * reach; fullscreen is temporary and never remembered across loads. Overlay rather than
+   * browser Fullscreen API — classroom projectors and tablets are unreliable with the latter.
+   */
+  const [expanded, setExpanded] = useState(false)
+  const exitFullScreenRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!expanded) return
+    exitFullScreenRef.current?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpanded(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [expanded])
 
   /* Elevation ceiling, held under the same rule as the window: it grows, never shrinks. */
   const heldCeilingM = useRef(0)
@@ -130,29 +148,49 @@ export function Scope({
      * In rem, so the cap follows the display scale like everything else does — LARGE FORMAT
      * grows the scope with the type rather than stranding it at a fixed size (ADR-0008).
      */
-    <figure className="mx-auto my-0 flex w-full max-w-[37.5rem] flex-col gap-3">
+    <figure
+      className={cn(
+        'flex flex-col gap-3',
+        expanded
+          ? 'fixed inset-0 z-50 m-0 max-h-none max-w-none overflow-auto rounded-none bg-canvas p-4'
+          : 'mx-auto my-0 w-full max-w-[37.5rem]',
+      )}
+      {...(expanded
+        ? { role: 'dialog' as const, 'aria-label': 'Scope full screen', 'aria-modal': true }
+        : {})}
+    >
       {/*
        * Words, not icons. docs/DESIGN.md §1.2 refuses instruments a Teacher has to learn, and
        * tiny glyphs for three viewpoints are exactly that. Real buttons, so the set is
        * reachable from a keyboard (§11.3).
        */}
-      <div className="flex flex-wrap gap-2" role="group" aria-label="How to draw the Drones">
-        {SCOPE_VIEWS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => setView(option)}
-            aria-pressed={view === option}
-            className={cn(
-              'min-h-11 cursor-pointer rounded-pill px-4 py-1.5 text-value',
-              view === option
-                ? 'border-0 bg-ink font-medium text-canvas'
-                : 'border border-hairline bg-transparent text-ink hover:border-ink',
-            )}
-          >
-            {VIEW_LABEL[option]}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="How to draw the Drones">
+          {SCOPE_VIEWS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setView(option)}
+              aria-pressed={view === option}
+              className={cn(
+                'min-h-11 cursor-pointer rounded-pill px-4 py-1.5 text-value',
+                view === option
+                  ? 'border-0 bg-ink font-medium text-canvas'
+                  : 'border border-hairline bg-transparent text-ink hover:border-ink',
+              )}
+            >
+              {VIEW_LABEL[option]}
+            </button>
+          ))}
+        </div>
+        <button
+          ref={exitFullScreenRef}
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+        >
+          {expanded ? 'Exit full screen' : 'Full screen'}
+        </button>
       </div>
 
       {/*
@@ -163,9 +201,15 @@ export function Scope({
        * Inline rather than a class so the invariant is assertable: the suite is jsdom, which
        * has no layout engine and cannot see a wrong aspect ratio, but it can read an inline
        * style (CLAUDE.md).
+       *
+       * Full screen lifts the 37.5rem cap but keeps the aspect ratio — the picture grows with
+       * the viewport without stretching a metre up differently from a metre across.
        */}
       <div
-        className="relative w-full rounded-surface border border-hairline bg-canvas"
+        className={cn(
+          'relative w-full rounded-surface border border-hairline bg-canvas',
+          expanded && 'mx-auto max-h-[min(100%,calc(100vh-8rem))] max-w-[min(100%,90vh)]',
+        )}
         style={{ aspectRatio: elevation ? `${scope.widthM} / ${ceilingM}` : '1' }}
       >
         <svg

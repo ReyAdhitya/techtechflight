@@ -664,3 +664,30 @@ describe('the scope caption', () => {
     expect(screen.getByText('Filled = flying')).toBeInTheDocument()
   })
 })
+
+describe('full screen on the scope', () => {
+  it('expands into an overlay and restores on Exit or Escape', () => {
+    render(<Scope drones={[atHeight('Drone 1', 0, 0, 1)]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
+    expect(screen.getByRole('dialog', { name: 'Scope full screen' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Exit full screen' })).toBeInTheDocument()
+
+    // View toggle still works inside the overlay.
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(screen.getByRole('button', { name: 'Side' })).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('dialog', { name: 'Scope full screen' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Full screen' })).toBeInTheDocument()
+  })
+
+  it('does not remember being left expanded', () => {
+    const drones = [atHeight('Drone 1', 0, 0, 1)]
+    const first = render(<Scope drones={drones} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
+    first.unmount()
+    render(<Scope drones={drones} />)
+    expect(screen.queryByRole('dialog', { name: 'Scope full screen' })).not.toBeInTheDocument()
+  })
+})

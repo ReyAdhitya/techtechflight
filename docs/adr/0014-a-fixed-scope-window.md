@@ -4,8 +4,10 @@ The scope draws in a square window of a fixed size, centred on the middle of the
 size is the smallest rung of `[8, 12, 16, 24, 32]` metres that holds every placed Drone; the
 centre is snapped to a multiple of the grid cell. Both are held while the board is open and
 **reconsidered only when a Drone has actually left the window** — the size may then grow and
-never shrink. Grid cells are half a metre at the first two rungs, and the caption states
-which. The whole picture is capped at 600 px and centred in its column.
+never shrink. Grid cells are half a metre at the first two rungs (`gridStepM()` widens the
+step on larger windows so the mesh does not take over). There is **no live `Grid:` caption**
+— issue #18 removed it because it read as a claim about what a cell measured on the glass.
+The whole picture is capped at 600 px and centred in its column.
 
 **The window is a property of the display, not a claim about the room.** It says *"this is
 how much space is being drawn"*, never *"this is where the Drones may fly"*. Nothing is drawn
@@ -98,21 +100,19 @@ Drones.
 The origin has no special claim here. It is where somebody happened to stand when the Fleet
 was switched on; it is not the middle of the lesson.
 
-## Why the caption gives the cell and not the window
+## Why there is no grid caption
 
 The old caption printed the window's size, which was meaningful when the window was the Fleet's
 extent. It is not meaningful now: with a window chosen by the display, `12 m × 12 m` describes
 the picture rather than the room, and reads as a claim about the space.
 
-One cell is the thing a Teacher can hold two Drones up against, which is the scale reference
-`docs/DESIGN.md` §4.3 already asks for. Half a metre at the default window was chosen by the
-product owner from a rendered comparison on 2026-07-27; on a laptop it draws at roughly a
-centimetre a cell.
-
-The step cannot stay at half a metre at every rung — at 32 m that is 64 rules an axis and the
-grid becomes a mesh — so it is a function of the window that keeps cells across between 16 and
-24. **The caption must read `gridStepM()` and never a literal**, or it will go on claiming
-half-metre cells the first time the window grows, which is a scale reference that lies.
+Replacing that with `Grid: 0.5 m` (from `gridStepM()`) was the first fix this ADR proposed —
+one cell is the quantity a Teacher can hold two Drones up against. In practice the caption
+still read as a claim about what a cell measured **on the glass**, which is exactly the lie
+a scale reference must not tell. Issue #18 removed the caption; altitude on each mark carries
+the readable quantity instead. `gridStepM()` still chooses the rules the grid draws — half a
+metre at the first two rungs, widening later so cells across stay between 16 and 24 — but it
+is not printed.
 
 ## Considered options
 

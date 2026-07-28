@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen, within } from '@testing-library/react'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
+import { PHASE_PRESENTATION } from '@/lib/vitals-presentation'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 
@@ -49,7 +50,16 @@ const occurrences = (text: string, phrase: string) =>
   text.split(phrase).length - 1
 
 describe('a grounded flight strip', () => {
-  it('says "On the ground" once, not once for the phase and again for the height', () => {
+  /*
+   * The original defect here was "On the ground" printed twice in one row — once as the phase
+   * word and once in the height cell beside it. It was fixed by silencing the height cell.
+   *
+   * The word has now gone entirely: a Drone holding 2.6 m is what "Level" *means*, so the
+   * strip was saying the same fact twice again, in a subtler way. The height carries it, and
+   * carries the number the word could not. That makes this test the reverse of what it was —
+   * the phase word must appear **nowhere**, and the height must appear instead of it.
+   */
+  it('says nothing about a phase, in a row where the height says it better', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
@@ -60,14 +70,15 @@ describe('a grounded flight strip', () => {
     // Every Drone the simulator ships starts on the ground.
     for (const name of ['Drone 1', 'Drone 2', 'Drone 3', 'Drone 4', 'Drone 5', 'Drone 6']) {
       const strip = stripFor(name)
-      expect(
-        occurrences(strip.textContent ?? '', 'On the ground'),
-        `${name} says it more than once`,
-      ).toBe(1)
+      const text = strip.textContent ?? ''
+      // Not just this one word: no phase label at all, whichever phase a Drone is in.
+      for (const { label } of Object.values(PHASE_PRESENTATION)) {
+        expect(occurrences(text, label), `${name} still carries "${label}"`).toBe(0)
+      }
     }
   })
 
-  it('still carries the phase, the charge and the response age', () => {
+  it('says where a grounded Drone is, rather than leaving the row silent', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
@@ -77,7 +88,8 @@ describe('a grounded flight strip', () => {
 
     const strip = stripFor('Drone 1')
     const text = strip.textContent ?? ''
-    expect(text).toContain('On the ground') // phase
+    expect(text).toContain('0.0 m') // height, where the phase word used to be
+    expect(text).not.toMatch(/steady|↑|↓/) // and no movement, because there is none
     expect(text).toMatch(/\d+%/) // charge
     expect(text).toMatch(/Response|No response/) // response age
   })

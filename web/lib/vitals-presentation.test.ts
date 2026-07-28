@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { DroneVitals } from './vitals'
-import { formatCoordinates, formatVerticalMovement } from './vitals-presentation'
+import {
+  formatCoordinates,
+  formatVerticalMovement,
+  PHASE_PRESENTATION,
+} from './vitals-presentation'
 
 /**
  * Height with its direction, and nothing at all when there is no height to give.
@@ -31,11 +35,51 @@ const aVitals = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
 })
 
 describe('height on the flight strip', () => {
-  it('gives nothing for a Drone on the ground, so the phase word is not echoed', () => {
+  /*
+   * This gave nothing at all until the phase word was dropped from the strip. The word was
+   * carrying "On the ground", so a second cell saying it too printed the fact twice — and
+   * with the word gone, silence here would leave the strip saying nothing about where a
+   * grounded Drone is.
+   */
+  it('gives a grounded Drone its height, with no movement attached to it', () => {
     // Read from the airframe, not the phase: a latched emergency stop is `emergency`
     // whether the Drone is on a desk or falling, so only `airborne` answers this.
-    expect(formatVerticalMovement(aVitals({ airborne: false, phase: 'on-ground' }))).toBeNull()
-    expect(formatVerticalMovement(aVitals({ airborne: false, phase: 'emergency' }))).toBeNull()
+    expect(
+      formatVerticalMovement(aVitals({ airborne: false, phase: 'on-ground', altitudeM: 0 })),
+    ).toBe('0.0 m')
+    expect(
+      formatVerticalMovement(aVitals({ airborne: false, phase: 'emergency', altitudeM: 0 })),
+    ).toBe('0.0 m')
+  })
+
+  /* "steady" is a measurement of stillness, and a Drone on the floor is not holding a height. */
+  it('does not call a grounded Drone steady, however still it is', () => {
+    const grounded = aVitals({ airborne: false, altitudeM: 0, verticalRateMps: 0 })
+
+    expect(formatVerticalMovement(grounded)).not.toMatch(/steady|↑|↓/)
+  })
+
+  /*
+   * The acceptance item for dropping the phase word: what the strip needs from a climbing
+   * Drone is the rate, which is the answer to "is it going up or down". The word "Climbing"
+   * only repeated what an upward arrow beside a rising number already says.
+   */
+  it('gives a climbing Drone its rate, and never the word for it', () => {
+    const climbing = formatVerticalMovement(
+      aVitals({ airborne: true, phase: 'climbing', altitudeM: 2.6, verticalRateMps: 0.8 }),
+    )
+
+    expect(climbing).toBe('2.6 m · ↑ 0.8 m/s')
+    for (const { label } of Object.values(PHASE_PRESENTATION)) {
+      expect(climbing, label).not.toContain(label)
+    }
+  })
+
+  /* The one absence that survives: no barometer is not the same fact as measuring zero. */
+  it('still says so in words when a grounded Drone cannot measure its height', () => {
+    expect(
+      formatVerticalMovement(aVitals({ airborne: false, altitudeM: null })),
+    ).toBe('Height not reported')
   })
 
   it('says the height plainly when the Drone is holding level', () => {

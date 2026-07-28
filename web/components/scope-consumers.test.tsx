@@ -19,9 +19,10 @@ import { HistorySections } from './HistoryScreen'
  * props cannot break a consumer silently, not a second suite for either screen.
  *
  * The two consumers differ in one way that matters, and it is why both are here rather than
- * one: the Flight Control Center passes `vitals` and Reports does not. The `vitals?` prop is
- * optional precisely so the timeline can ask for the plain "where is everything" picture,
- * and a change that quietly starts depending on it would break only the screen not covered.
+ * one: the Flight Control Center passes `vitals` and Reports does not. Everything a mark is
+ * labelled with comes off `DroneState` for exactly that reason, and a change that quietly
+ * started sourcing a label from `vitals` would leave Reports a field of anonymous dots with
+ * nothing to catch it.
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
@@ -78,9 +79,15 @@ describe('Reports, which renders the scope without vitals', () => {
     expect(screen.getByRole('img', { name: /Drones are, looking down/ })).toBeInTheDocument()
   })
 
-  it('draws no phase under a mark, because it was given none', () => {
+  /*
+   * The Drone Name and the height come off `DroneState`, not off Vitals, so a screen with no
+   * Vitals to give still gets a labelled picture. Sourcing either from `vitals` would leave
+   * this screen a field of anonymous dots and nothing would have caught it.
+   */
+  it('labels its marks even though it has no vitals to give', () => {
     show(<HistorySections />)
 
-    expect(screen.queryByText('On the ground')).not.toBeInTheDocument()
+    expect(screen.getAllByText(/^Drone \d$/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/^-?\d+\.\d m$/).length).toBeGreaterThan(0)
   })
 })

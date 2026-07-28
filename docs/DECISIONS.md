@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Unknown SITL battery is an estimate, not silence
+
+- **Decision:** If a craft is heartbeating but `batteryRemaining` / voltage are absent or
+  sentinel (`-1` / `0`), emit Telemetry with `batteryFraction: 1` and `batteryIsEstimate:
+  true` rather than withholding the observation.
+- **Reason:** Older ArduPilot SITL (e.g. dronekit ArduCopter 3.3) never fills charge; silence
+  made Drone 1 read Offline while UDP was live. Contact without a measured cell is still
+  contact.
+- **Note:** Match decoded messages by registry `clazz`, not `instanceof` — SITL traffic and
+  recorded fixtures both need it. Still no `CommandableSource` (ADR-0011).
+
 ## 2026-07-28 MAVLink lives in `fleet-adapters/`, opted in by env
 
 - **Decision:** Put the MAVLink `TelemetrySource` in a new `fleet-adapters/` workspace, and

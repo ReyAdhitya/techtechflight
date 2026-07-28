@@ -7,6 +7,10 @@ would notice.
 
 ### Fixed
 
+- **MAVLink adapter stays live when SITL omits battery.** Match frames by registry class
+  (not `instanceof`), and when HEARTBEAT is present but charge is unknown emit
+  `batteryFraction: 1` with `batteryIsEstimate: true` so the strip shows contact instead of
+  Offline. Verified end-to-end against ArduCopter 3.3 SITL in WSL (UDP 14550).
 - **Living docs match the merged board-corrections stack.** CI is acknowledged (no lint
   remains true); the logbook header no longer claims Settings export; ADR-0014 no longer
   requires a live `Grid:` caption; DESIGN.md strip anatomy is five head-row cells.

@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Release stop clears the latch; it is not a Scenario
+
+- **Decision:** After `emergency` phase, replace **Stop immediately** with **Release stop**
+  calling `ScenarioControls.resetEmergencyStop` on a simulated Fleet. On hardware
+  (`scenarios === null`), keep the control present but disabled with a reason in words.
+- **Reason:** A stale Stop CTA after the motors are cut reads as failure. The physical
+  counterpart is walking over to release the cut-out — not inventing a fault (C9).
+- **Note:** Do not add a `CommandKind` for release (ADR-0011 / no hardware command path).
+  Confirm-on-first-press for armed Stop stays.
+
 ## 2026-07-28 Control strips follow boardOrder; Attention carries urgency
 
 - **Decision:** Drop `compareStrips` from Control's Every Drone list. Strips use the same

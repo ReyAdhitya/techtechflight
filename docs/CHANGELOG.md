@@ -7,6 +7,9 @@ would notice.
 
 ### Fixed
 
+- **Stop immediately, then Release stop when latched.** Control strips no longer say
+  "Stop — hold"; after Telemetry shows the emergency latch the control becomes **Release
+  stop** on the simulator (or present-and-unavailable on a Fleet that cannot release).
 - **Control Every Drone strips stay in board order.** Stopped worst-first `compareStrips`
   reshuffling when alerts appear or clear; urgency remains on the Attention bar only.
   DESIGN.md and deliberate position #1 updated so the next reader does not put it back.

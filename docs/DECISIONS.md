@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-28 Register residual is a closed list, not a second sweep
+
+- **Decision:** Finish #13 from the Planner's residual table only — Lesson, Maintenance,
+  logbook meanings, Drone cluster, two warm leftovers. Do not re-inventory the whole board.
+- **Reason:** Most of W5 already shipped in #22; a second full sweep would re-touch settled
+  copy and collide with taste calls (showcase) that Planner parked elsewhere (#23 / owner).
+- **Note:** The first miss was a harvest that opened `/drone` without `?id=`. Acceptance is
+  grep for the listed "before" strings, not another DOM crawl.
+
 ## 2026-07-28 `ScopeWindow` is the projection; `WindowChoice` is the decision
 
 - **Decision:** Rename `RoomExtent` → `ScopeWindow` and `roomExtent()` → `scopeWindow()`, and

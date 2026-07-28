@@ -54,6 +54,17 @@ would notice.
 
 ### Changed
 
+- **The whole board speaks in a professional register.** *"3 things need you"* is now *"3
+  items require action"*; *"5 of 6 ready to hand out"* is *"5 of 6 serviceable"*; *"Nobody has
+  a Drone yet. Hand them out from the Lesson screen."* is *"No Drone is assigned. Assignments
+  are made on the Lesson screen."* `CONTEXT.md`'s education-first rule is superseded and says
+  so — see [ADR-0015](./adr/0015-a-professional-register.md), which landed before any string
+  moved. **What did not change:** every Alert still says what to *do* (§1.2 — the register
+  changes the vocabulary, never the grammar of an order), severity is still `Now · Soon ·
+  Later`, the classroom nouns are still Teacher, Student, Lesson and Exercise, and the five
+  `Status` strings are untouched because they are the type, the wire format and the display
+  text at once. The language is English throughout, as it always was; the register moved, not
+  the language.
 - **The flight strip no longer names a phase.** It read `Level · 2.6 m`, which is the same
   fact twice: a Drone holding 2.6 m is what *Level* means, and the height carries the number
   the word could not. The direction stays — an arrow and a rate answer *is it going up or

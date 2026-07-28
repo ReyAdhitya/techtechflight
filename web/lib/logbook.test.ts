@@ -4,12 +4,14 @@ import {
   alreadyTallied,
   assignStudent,
   clearLogbook,
+  LOGBOOK_KEY,
+  SERVICE_PRESENTATION,
+  serviceStateOf,
+  setServiceState,
   currentExercise,
   endLesson,
   persistedTally,
-  RECORDS_WARN_BYTES,
   readLogbook,
-  recordsAreHeavy,
   recordCommand,
   rememberStudent,
   runningLesson,
@@ -322,26 +324,36 @@ describe('the Exercise a Lesson is on', () => {
   })
 })
 
-/**
- * Before the browser refuses.
- *
- * Everything a Teacher writes lives in one browser, and the failure that matters is the
- * quiet one: a save throws, the board keeps working perfectly, and the record of the last
- * three weeks is simply not there.
- */
-describe('records getting heavy', () => {
-  it('says nothing while there is plenty of room', () => {
-    startLesson('Year 8', 5, 6, 1_000)
 
-    expect(recordsAreHeavy(readLogbook())).toBe(false)
+/**
+ * The service label is copy; the service key is a contract.
+ *
+ * `'watch'` is written into a Teacher's browser and read back out of it. The label above it
+ * moved from "Keep an eye on it" to "Under observation" on 2026-07-28, and the temptation
+ * that comes with a rename like that is to make the key match the words — which would
+ * silently invalidate every service decision stored on every laptop, with no migration and
+ * no error to say so. This test exists to make that failure loud instead.
+ */
+describe('the service state a Teacher recorded', () => {
+  it('is stored under the key the words no longer match', () => {
+    setServiceState('ttf-0001', 'watch', 'Motor 3 was uneven last lesson', 1_000)
+
+    const stored = window.localStorage.getItem(LOGBOOK_KEY)
+    expect(stored).toContain('"watch"')
+    expect(serviceStateOf(readLogbook(), 'ttf-0001')).toBe('watch')
   })
 
-  it('says so before the browser starts refusing', () => {
-    const heavy = {
-      ...readLogbook(),
-      notes: { 'ttf-0001': { text: 'x'.repeat(RECORDS_WARN_BYTES + 1), updatedAt: 1 } },
-    }
-
-    expect(recordsAreHeavy(heavy)).toBe(true)
+  /*
+   * The rename that would do the damage is `watch` -> `under-observation`, to make the key
+   * match the new words. These three are the values that go to disk, so a rename fails here
+   * rather than on a Teacher's laptop halfway through term.
+   */
+  it('keys its labels on the stored values, never on the words', () => {
+    expect(Object.keys(SERVICE_PRESENTATION).sort()).toEqual([
+      'in-service',
+      'out-of-service',
+      'watch',
+    ])
+    expect(SERVICE_PRESENTATION.watch.label).toBe('Under observation')
   })
 })

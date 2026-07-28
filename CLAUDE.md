@@ -44,14 +44,16 @@ tokens (`--background`, `--card`) and a semantic layer over them (`--color-canva
 or a wrong aspect ratio passes green. Two defences: assert on the stylesheet directly when
 the invariant is a layout one (see `SiteHeader.test.tsx`, and `vercel-routing.test.ts` for
 the same idea applied to config), and **look at a screenshot** before believing a visual
-fix. `scripts/shot.mjs` builds and photographs a route.
+fix. `scripts/shot.mjs <label> <route> <width> [height]` photographs a route — it serves
+`web/out`, so **build first**; it does not build for you. Omit `height` for the whole page.
+Shots land in `scripts/shots/`, which is gitignored.
 
 **`--text-value` is deliberately the same size as `--text-body`.** Data is not small print
 here. And every size is `rem` — a `px` font-size on this surface is a defect (ADR-0008).
 
-**`NOTES.md` lists six deliberate positions that look like bugs.** Tiles never reorder,
-counts render at zero, elevation is lightness only, the amber/coral hue split. Argue with
-them in an ADR or leave them alone.
+**`docs/DELIBERATE-POSITIONS.md` lists six positions that look like bugs.** Tiles never
+reorder, counts render at zero, elevation is lightness only, the amber/coral hue split.
+Argue with them in an ADR or leave them alone.
 
 **Windows:** `next build` fails with `EBUSY: rmdir 'web/out'` if any shell has that
 directory as its working directory. Git Bash rewrites a bare `/route` argument into a

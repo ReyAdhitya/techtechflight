@@ -43,7 +43,7 @@ describe('a Lesson that has finished', () => {
   it('says so when none have', () => {
     render(<LessonReports />)
 
-    expect(screen.getByText(/None finished yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/No Lesson has been completed/i)).toBeInTheDocument()
   })
 
   it('names it, and when it ran', () => {

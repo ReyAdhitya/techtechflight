@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 import { ScenarioPanel } from './ScenarioPanel'
@@ -33,7 +34,7 @@ afterEach(() => {
 describe('the demonstration panel', () => {
   it('offers the world misbehaving, on a simulated Fleet', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ScenarioPanel />
       </FleetProvider>,
     )
@@ -45,7 +46,7 @@ describe('the demonstration panel', () => {
 
   it('says plainly that none of it is a Command', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ScenarioPanel />
       </FleetProvider>,
     )
@@ -58,7 +59,7 @@ describe('the demonstration panel', () => {
 describe('the Flight Control Center', () => {
   it('offers Commands', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
@@ -69,7 +70,7 @@ describe('the Flight Control Center', () => {
 
   it('offers no way to pretend something broke', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )

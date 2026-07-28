@@ -99,9 +99,20 @@ _Avoid_: feed, provider, backend, connection
 
 ### The lesson
 
-The vocabulary is education-first. Aviation words are kept only where they carry
-understanding a classroom word would lose — Telemetry, Alert, Flight Control Center — and
-are avoided everywhere else. A teacher is preparing a lesson, not planning a sortie.
+The **nouns** here are education-first, and stay that way: Lesson, Exercise, Teacher, Student
+are what a classroom actually contains, and they are not aviation's to rename.
+
+**The register is not.** Superseded on 2026-07-28 by
+[ADR-0015](./docs/adr/0015-a-professional-register.md): the board speaks in the register of
+aviation and risk management. It reads *"5 of 6 serviceable"* rather than *"5 of 6 ready to
+hand out"*, and *"Place on charge. Projected serviceable before the lesson."* rather than
+*"Put it on charge — it should come back before the lesson."*
+
+This was previously the opposite rule, and the change is a decision rather than a drift. What
+survives it: every Alert still says what to *do*, a value that cannot be known is still said
+in words rather than drawn as a zero, and severity is still spoken as time — `Now · Soon ·
+Later`. Those are usability, not warmth. The **language** is English throughout and always
+was; the register moved, not the language.
 
 **Lesson**:
 One period of teaching, from the check before it to the summary after it. The unit

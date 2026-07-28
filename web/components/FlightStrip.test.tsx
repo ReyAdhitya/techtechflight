@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
+import { PHASE_PRESENTATION } from '@/lib/vitals-presentation'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 
@@ -48,9 +50,18 @@ const occurrences = (text: string, phrase: string) =>
   text.split(phrase).length - 1
 
 describe('a grounded flight strip', () => {
-  it('says "On the ground" once, not once for the phase and again for the height', () => {
+  /*
+   * The original defect here was "On the ground" printed twice in one row — once as the phase
+   * word and once in the height cell beside it. It was fixed by silencing the height cell.
+   *
+   * The word has now gone entirely: a Drone holding 2.6 m is what "Level" *means*, so the
+   * strip was saying the same fact twice again, in a subtler way. The height carries it, and
+   * carries the number the word could not. That makes this test the reverse of what it was —
+   * the phase word must appear **nowhere**, and the height must appear instead of it.
+   */
+  it('says nothing about a phase, in a row where the height says it better', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
@@ -59,16 +70,17 @@ describe('a grounded flight strip', () => {
     // Every Drone the simulator ships starts on the ground.
     for (const name of ['Drone 1', 'Drone 2', 'Drone 3', 'Drone 4', 'Drone 5', 'Drone 6']) {
       const strip = stripFor(name)
-      expect(
-        occurrences(strip.textContent ?? '', 'On the ground'),
-        `${name} says it more than once`,
-      ).toBe(1)
+      const text = strip.textContent ?? ''
+      // Not just this one word: no phase label at all, whichever phase a Drone is in.
+      for (const { label } of Object.values(PHASE_PRESENTATION)) {
+        expect(occurrences(text, label), `${name} still carries "${label}"`).toBe(0)
+      }
     }
   })
 
-  it('still carries the phase, the charge and the response age', () => {
+  it('says where a grounded Drone is, rather than leaving the row silent', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
@@ -76,7 +88,8 @@ describe('a grounded flight strip', () => {
 
     const strip = stripFor('Drone 1')
     const text = strip.textContent ?? ''
-    expect(text).toContain('On the ground') // phase
+    expect(text).toContain('0.0 m') // height, where the phase word used to be
+    expect(text).not.toMatch(/steady|↑|↓/) // and no movement, because there is none
     expect(text).toMatch(/\d+%/) // charge
     expect(text).toMatch(/Response|No response/) // response age
   })
@@ -91,7 +104,7 @@ describe('the strip anatomy is fixed across strips, not per row', () => {
    */
   it('lays the strips out on a shared grid the strips inherit', () => {
     render(
-      <FleetProvider>
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
@@ -103,5 +116,72 @@ describe('the strip anatomy is fixed across strips, not per row', () => {
     for (const name of ['Drone 1', 'Drone 6']) {
       expect(stripFor(name).className).toContain('grid-cols-subgrid')
     }
+  })
+})
+
+/**
+ * The coordinate line, and the tap target beneath it.
+ *
+ * §4.4 records a bug found and fixed once already: a strip wraps its Alerts onto following
+ * lines, and those lines paint over an expanded hit area, leaving the bottom half of a
+ * Command unclickable on a tablet. **Adding a line to every strip is the change most likely
+ * to bring that back**, so the Commands are hit-tested here rather than read off the CSS.
+ */
+describe('the coordinate group on every strip', () => {
+  const stripsOnScreen = () => {
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+  }
+
+  it('is on its own line, not threaded into the head row', () => {
+    stripsOnScreen()
+
+    const strip = stripFor('Drone 1')
+    const line = [...strip.querySelectorAll('p')].find((p) => /^X /.test(p.textContent ?? ''))
+    expect(line, 'no coordinate line on the strip').toBeTruthy()
+
+    /*
+     * The head row is the element carrying the six subgrid cells. The coordinate line must
+     * not be inside it — that is the whole point of putting it below, and it is the one
+     * thing a careless edit would undo while still looking right in a screenshot.
+     */
+    const headRow = screen.getByRole('link', { name: 'Drone 1' }).parentElement
+    expect(headRow).toBeTruthy()
+    expect(headRow!.contains(line!)).toBe(false)
+  })
+
+  it('appears on every strip rather than only the selected one', () => {
+    stripsOnScreen()
+
+    for (const name of ['Drone 1', 'Drone 2', 'Drone 3', 'Drone 4', 'Drone 5', 'Drone 6']) {
+      expect(stripFor(name).textContent, name).toMatch(/X \d+\.\d m/)
+    }
+  })
+
+  /*
+   * The §4.4 bug is a Command painted over by a line beneath it, and jsdom has no layout
+   * engine, so it cannot see that happening — the real hit-test is done in a browser at
+   * 390 px and recorded on the issue. What is checkable here is the half that would make the
+   * overlap possible at all: the coordinate line is an ordinary block in the flow, and the
+   * Commands come after it in document order rather than sharing space with it.
+   *
+   * Land and Hold are correctly `disabled` on a grounded Drone — there is nothing to land —
+   * so this asserts they are present and ordered, not that they are pressable.
+   */
+  it('puts the Commands after the line it grew, in the flow rather than over it', () => {
+    stripsOnScreen()
+
+    const strip = stripFor('Drone 1')
+    const line = [...strip.querySelectorAll('p')].find((p) => /^X /.test(p.textContent ?? ''))!
+    const land = within(strip).getByRole('button', { name: 'Land' })
+
+    expect(within(strip).getByRole('button', { name: 'Hold' })).toBeInTheDocument()
+    // DOCUMENT_POSITION_FOLLOWING: the Command comes after the new line, not beneath it.
+    expect(line.compareDocumentPosition(land) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(line.className).not.toMatch(/absolute|fixed/)
   })
 })

@@ -103,9 +103,9 @@ export function WhatNeedsDoing() {
               {/* What to actually do, rather than a restatement of the Status. */}
               <p className="m-0 text-value text-ink">
                 {drone.status === 'Not Ready'
-                  ? 'Put it on charge. It should be back before the lesson.'
+                  ? 'Place on charge. Projected serviceable before the lesson.'
                   : (faultReason(drone.telemetry) ??
-                    'Take it out of service until someone has looked at it.')}
+                    'Withdraw from service. Pending inspection.')}
               </p>
             </li>
           ))}

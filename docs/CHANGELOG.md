@@ -7,6 +7,16 @@ would notice.
 
 ### Fixed
 
+- **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the
+  GuardedButton / C8 press-and-hold path for classroom speed.
+- **No more "Stop — done" beside Release stop.** Emergency-stop receipt clears when the latch
+  is on Telemetry; Release stop + the critical alert are the lasting signal. Land/Hold still
+  get sent/waiting/done.
+- **Reports print is a readable paper document in dark theme.** Print forces light colour
+  tokens (dark `text-ink` was invisible on white), breaks only on Lesson cards, stamps
+  printed-at on the sheet, and tells Teachers to turn off browser Headers and footers so
+  the URL and clock do not appear. Print button sets a clean document title before
+  `window.print()`.
 - **Every Drone strip freespace is the response column (#41).** Head grid is
   `auto_auto_auto_auto_1fr` so charge stays snug after height; Response flush right. Quiet
   strip vertical gap tightened; Land/Hold left, Stop/Release still `ml-auto` (not merged).
@@ -36,6 +46,9 @@ would notice.
 
 ### Added
 
+- **Full-screen Scope keeps Commands for the selected mark.** Overlay covers Every Drone
+  strips; picking a mark docks Land / Hold / Stop (same row as the strip) at the bottom
+  until Cleared or deselected.
 - **AED-style training scenarios in Settings.** Named Run/Reset drills (T1–T8, T11–T12) that
   drive the simulated Fleet so every Teacher surface can be exercised without a real aircraft.
   C9: Settings only, never on strips. Catalog and coverage map in

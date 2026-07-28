@@ -83,7 +83,12 @@ export class CommandTracker {
       if (tracked.stage === 'refused' || tracked.stage === 'done') continue
 
       if (satisfied(tracked.command.kind, entry)) {
-        this.#latest.set(entry.droneId, { ...tracked, stage: 'done' })
+        // Latch UI + alert are the lasting signal for a cut; keep "done" out of the strip.
+        if (tracked.command.kind === 'emergency-stop') {
+          this.#latest.delete(entry.droneId)
+        } else {
+          this.#latest.set(entry.droneId, { ...tracked, stage: 'done' })
+        }
         continue
       }
 

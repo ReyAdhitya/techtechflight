@@ -114,7 +114,7 @@ describe('the other Commands', () => {
     expect(tracker.latestFor('ttf-0001')?.stage).toBe('done')
   })
 
-  it('counts an emergency stop as done only once it is latched', () => {
+  it('forgets an emergency stop once the latch is on Telemetry', () => {
     tracker.issue(asked('emergency-stop'))
 
     tracker.observe([flying({ airborne: false, phase: 'on-ground' })], 2_000)
@@ -122,6 +122,7 @@ describe('the other Commands', () => {
     expect(tracker.latestFor('ttf-0001')?.stage).toBe('sent')
 
     tracker.observe([flying({ airborne: false, phase: 'emergency' })], 3_000)
-    expect(tracker.latestFor('ttf-0001')?.stage).toBe('done')
+    // Latch UI + alert are the lasting signal; a stuck "Stop — done" is noise.
+    expect(tracker.latestFor('ttf-0001')).toBeNull()
   })
 })

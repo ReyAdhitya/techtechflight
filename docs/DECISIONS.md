@@ -9,6 +9,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 QR on camera is a landing target (display-first)
+
+- **Decision:** Camera QR means **where to land**, not inventory. Decode via a small
+  `QrDecoder` seam (jsQR). Payloads `ttf-land:<id>` or `ttf-land:<id>;east=<m>;north=<m>`
+  map into the classroom frame; other codes stay quiet. Result is shown on `CameraPane`
+  only — never written into Telemetry. Sim may offer an explicit **Place at landing pad
+  (demo)** that calls `ScenarioControls.setPosition`; hardware (`scenarios === null`) never
+  gets that control (C9). No auto pose write.
+- **Reason:** Owner clarification on #51 — landing targeting. Silent Telemetry overwrite on
+  a live airframe would be dangerous and out of scope.
+- **Note:** Sim feed scans a static fixture (`/qr/landing-pad-a.png`) when school stream
+  pixels are not the picture source. YOLO (#49) and Trainer DB (#48) untouched.
+
 ## 2026-07-29 School camera streams are an env/IT map + native `<video>`
 
 - **Decision:** `droneId → http(s) URL` lives outside Telemetry

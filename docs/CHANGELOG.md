@@ -7,6 +7,11 @@ would notice.
 
 ### Added
 
+- **QR landing targets on the camera surface (#51).** When the simulated feed has a picture,
+  the board decodes landing-pad QR codes (`ttf-land:…`) and shows where to land. Display-only
+  by default — never written into Telemetry. Sim may offer an explicit **Place at landing pad
+  (demo)** ScenarioControl; hardware never does. Uses a static fixture until school stream
+  pixels land (#50).
 - **School camera stream map (#50).** `droneId → http(s) URL` via optional
   `NEXT_PUBLIC_CAMERA_STREAM_MAP` (and localStorage when set). When hardware Telemetry says
   `camera.streaming` and the Drone is mapped, `CameraPane` plays a native `<video>` from

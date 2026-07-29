@@ -727,13 +727,13 @@ describe('full screen on the scope', () => {
         drones={[atHeight('Drone 1', 0, 0, 1), atHeight('Drone 2', 3, 1, 1)]}
         selected="drone-1"
         onSelect={() => {}}
-        selectedPanel={<div>Land Hold Stop for selected</div>}
+        selectedPanel={<div>Land Hover Stop for selected</div>}
       />,
     )
 
-    expect(screen.queryByText('Land Hold Stop for selected')).not.toBeInTheDocument()
+    expect(screen.queryByText('Land Hover Stop for selected')).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
-    expect(screen.getByText('Land Hold Stop for selected')).toBeInTheDocument()
+    expect(screen.getByText('Land Hover Stop for selected')).toBeInTheDocument()
   })
 })

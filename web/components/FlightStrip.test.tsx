@@ -171,7 +171,7 @@ describe('the coordinate group on every strip', () => {
    * overlap possible at all: the coordinate line is an ordinary block in the flow, and the
    * Commands come after it in document order rather than sharing space with it.
    *
-   * Land and Hold are correctly `disabled` on a grounded Drone — there is nothing to land —
+   * Land and Hover are correctly `disabled` on a grounded Drone — there is nothing to land —
    * so this asserts they are present and ordered, not that they are pressable.
    */
   it('puts the Commands after the line it grew, in the flow rather than over it', () => {
@@ -181,7 +181,7 @@ describe('the coordinate group on every strip', () => {
     const line = [...strip.querySelectorAll('p')].find((p) => /^X /.test(p.textContent ?? ''))!
     const land = within(strip).getByRole('button', { name: 'Land' })
 
-    expect(within(strip).getByRole('button', { name: 'Hold' })).toBeInTheDocument()
+    expect(within(strip).getByRole('button', { name: 'Hover' })).toBeInTheDocument()
     // DOCUMENT_POSITION_FOLLOWING: the Command comes after the new line, not beneath it.
     expect(line.compareDocumentPosition(land) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(line.className).not.toMatch(/absolute|fixed/)

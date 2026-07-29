@@ -50,7 +50,7 @@ export function Scope({
   onSelect?: ((droneId: string) => void) | undefined
   /**
    * Controls for the selected Drone while the scope is full screen. The overlay covers the
-   * strip list, so Land/Hold/Stop have to live here or they are unreachable. Ignored when
+   * strip list, so Land/Hover/Stop have to live here or they are unreachable. Ignored when
    * collapsed or when nothing is selected — Reports never passes one.
    */
   selectedPanel?: ReactNode

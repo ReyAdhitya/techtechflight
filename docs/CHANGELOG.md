@@ -5,6 +5,12 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **Front/Side Scope labels no longer double-print when marks stack (#86).** Coincident
+  elevation piles stack names vertically in rem above the mark; the drawing box clips so
+  “Filled = flying” stays in the footer only.
+
 ### Added
 
 - **Settings Classroom setup — Sim vs Radio (#88).** Plain-language path picker on Settings.

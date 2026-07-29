@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+  SCOPE_LABEL_ELEVATION_NUDGE_STEP_REM,
   SCOPE_LABEL_NUDGE_STEP_REM,
+  SCOPE_LABEL_STACK_STEP_REM,
   scopeLabelPlacements,
   type ScopeLabelMark,
 } from './scope-label-placement'
 
 /**
- * Scope label placement (#61) — names above marks, horizontal stagger when packed.
+ * Scope label placement (#61 / #86) — names above marks; elevation piles stack.
  */
 
 const mark = (id: string, xPercent: number, yPercent = 50): ScopeLabelMark => ({
@@ -20,6 +22,7 @@ describe('scopeLabelPlacements on top-down', () => {
     expect(scopeLabelPlacements([mark('a', 40)], 'top-down').get('a')).toEqual({
       vertical: 'above',
       nudgeXRem: 0,
+      nudgeYRem: 0,
     })
   })
 
@@ -29,6 +32,7 @@ describe('scopeLabelPlacements on top-down', () => {
 
     for (const m of row) {
       expect(placements.get(m.id)?.vertical).toBe('above')
+      expect(placements.get(m.id)?.nudgeYRem).toBe(0)
     }
   })
 
@@ -40,10 +44,12 @@ describe('scopeLabelPlacements on top-down', () => {
     expect(placements.get('left')).toEqual({
       vertical: 'above',
       nudgeXRem: -SCOPE_LABEL_NUDGE_STEP_REM / 2,
+      nudgeYRem: 0,
     })
     expect(placements.get('right')).toEqual({
       vertical: 'above',
       nudgeXRem: SCOPE_LABEL_NUDGE_STEP_REM / 2,
+      nudgeYRem: 0,
     })
   })
 
@@ -51,8 +57,8 @@ describe('scopeLabelPlacements on top-down', () => {
     const spaced = [mark('west', 20), mark('east', 80)]
     const placements = scopeLabelPlacements(spaced, 'top-down')
 
-    expect(placements.get('west')).toEqual({ vertical: 'above', nudgeXRem: 0 })
-    expect(placements.get('east')).toEqual({ vertical: 'above', nudgeXRem: 0 })
+    expect(placements.get('west')).toEqual({ vertical: 'above', nudgeXRem: 0, nudgeYRem: 0 })
+    expect(placements.get('east')).toEqual({ vertical: 'above', nudgeXRem: 0, nudgeYRem: 0 })
   })
 })
 
@@ -62,16 +68,41 @@ describe('scopeLabelPlacements on elevation', () => {
     const low = mark('low', 60, 80)
     const placements = scopeLabelPlacements([high, low], 'elevation')
 
-    expect(placements.get('high')).toEqual({ vertical: 'below', nudgeXRem: 0 })
-    expect(placements.get('low')).toEqual({ vertical: 'above', nudgeXRem: 0 })
+    expect(placements.get('high')).toEqual({ vertical: 'below', nudgeXRem: 0, nudgeYRem: 0 })
+    expect(placements.get('low')).toEqual({ vertical: 'above', nudgeXRem: 0, nudgeYRem: 0 })
   })
 
-  it('staggers a packed pair that share a height', () => {
+  it('staggers a packed pair that share a height but not the same column', () => {
     const pair = [mark('a', 40, 90), mark('b', 48, 90)]
     const placements = scopeLabelPlacements(pair, 'elevation')
 
     expect(placements.get('a')?.vertical).toBe('above')
     expect(placements.get('b')?.vertical).toBe('above')
     expect(placements.get('a')?.nudgeXRem).not.toBe(placements.get('b')?.nudgeXRem)
+    expect(Math.abs(placements.get('a')!.nudgeXRem - placements.get('b')!.nudgeXRem)).toBe(
+      SCOPE_LABEL_ELEVATION_NUDGE_STEP_REM,
+    )
+  })
+
+  it('stacks coincident Front piles vertically so names do not print on top of each other', () => {
+    const pile = [mark('a', 50, 100), mark('b', 50.5, 100), mark('c', 51, 99.5)]
+    const placements = scopeLabelPlacements(pile, 'elevation')
+
+    expect(placements.get('a')?.vertical).toBe('above')
+    expect(placements.get('b')?.vertical).toBe('above')
+    expect(placements.get('c')?.vertical).toBe('above')
+    expect(placements.get('a')?.nudgeYRem).toBe(0)
+    expect(placements.get('b')?.nudgeYRem).toBe(SCOPE_LABEL_STACK_STEP_REM)
+    expect(placements.get('c')?.nudgeYRem).toBe(SCOPE_LABEL_STACK_STEP_REM * 2)
+    expect(placements.get('a')?.nudgeXRem).toBe(0)
+  })
+
+  it('never flips a grounded pile below the mark into the footer', () => {
+    const grounded = [mark('g1', 40, 100), mark('g2', 40, 100)]
+    const placements = scopeLabelPlacements(grounded, 'elevation')
+
+    for (const id of ['g1', 'g2']) {
+      expect(placements.get(id)?.vertical).toBe('above')
+    }
   })
 })

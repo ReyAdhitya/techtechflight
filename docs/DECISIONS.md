@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Scope names stay above marks; close ones nudge sideways
+
+- **Decision:** Top-down Scope labels are always **above** the mark. When marks sit within
+  ~14% of the window of each other, names get a horizontal rem stagger (cluster fan-out)
+  instead of the old above/below alternation. Elevation keeps “toward the middle of the
+  box” vertically, with the same horizontal stagger. Names are never omitted.
+- **Reason:** Owner #61 — put the name above the drone, one-by-one; do not let them crash
+  into each other. Alternating below contradicted “above” and still collided when a row
+  closed up.
+- **Note:** Logic in `scopeLabelPlacements`; Mark keeps the geometric point fixed and only
+  offsets the label. Scope geometry / ADR-0014 window unchanged.
+
 ## 2026-07-29 Camera slide opens from Control (Settings map stays setup)
 
 - **Decision:** Control strips (and the scope selection dock) offer a **Camera** control that

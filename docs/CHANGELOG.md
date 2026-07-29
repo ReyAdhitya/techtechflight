@@ -11,6 +11,12 @@ would notice.
   elevation piles stack names vertically in rem above the mark; the drawing box clips so
   “Filled = flying” stays in the footer only.
 
+### Changed
+
+- **Every classroom sim Drone has a camera fitted (#91).** Default simulator no longer
+  leaves odd-index craft without `camera` on Telemetry — Teachers never see “No camera
+  fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.
+
 ### Added
 
 - **Settings Classroom setup — Sim vs Radio (#88).** Plain-language path picker on Settings.

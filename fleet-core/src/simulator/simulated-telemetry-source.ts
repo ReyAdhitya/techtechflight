@@ -61,14 +61,13 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
           charging: false,
 
           /*
-           * Capabilities differ across a real classroom set — schools buy in batches and
-           * batches differ. Varying them here is what keeps the board honest about the
-           * difference between "no sensor" and "sensor sees nothing": if every simulated
-           * Drone had every sensor, the one case the display has to get right would never
-           * appear in a demonstration.
+           * Rangefinder / auto-land still vary across the set — schools buy in batches.
+           * Cameras do not: every classroom sim craft is fitted so Teachers never hit
+           * “No camera fitted” on Drone 2/4/6 in the default Fleet (#91). Hardware can
+           * still omit `camera` on Telemetry.
            */
           hasRangefinder: index % 3 !== 2,
-          hasCamera: index % 2 === 0,
+          hasCamera: true,
           canAutoLand: index % 4 !== 3,
 
           // Parked in a row on the bench, a metre apart, the way a set is laid out.

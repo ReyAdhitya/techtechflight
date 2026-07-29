@@ -72,6 +72,11 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 object). `CameraPane` uses native `<video>` for mapped hardware streams; sim ignores the map.
 Sanitize to absolute http(s) only — no `javascript:` / credentials.
 
+**Camera QR is a landing target, not a scanner.** Only `ttf-land:…` payloads count; they
+answer where to land and stay display-only unless a Teacher presses sim **Place at landing
+pad (demo)**. Do not write QR into Telemetry. On the sim feed the scanner reads
+`/qr/landing-pad-a.png`.
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

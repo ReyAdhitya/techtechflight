@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
+
+- **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`
+  (`web/lib/yolo-onnx-detector.ts`). Weights at `/models/yolov8n.onnx` (gitignored; fetch
+  script). Wasm from jsDelivr. Sim Start camera uses **getUserMedia** when allowed so the
+  model has real pixels; CSS sim + demo detector if denied / jsdom / load failure. UI says
+  **YOLOv8n**, never claims YOLOv12 until those weights are wired.
+- **Reason:** Owner wants person/object detection on the board (#69). YOLOv8n is the
+  practical classroom-sized ONNX; napkin “YOLOv12” waits on a publishable browser export.
+- **Note:** Detections stay app-side — never on Telemetry. Swap path: drop a newer ONNX in
+  `public/models/` and point `MODEL_URL`.
+
 ## 2026-07-29 Teacher find-path is this laptop’s Logbook screens
 
 - **Decision:** Canonical Trainer data lives in this browser Logbook on the classroom
@@ -99,8 +111,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner path is live feed → AI (YOLOv12), but the sim feed is CSS pixels and
   weights are not in the repo. Ship the overlay loop + swap point first (#49); do not claim
   a model family that is not loaded.
-- **Follow-up:** Wire ONNX Runtime Web or TF.js + real YOLOv12 weights when school pixels
-  exist (#50) or a weight artifact is pinned. Then rename `displayName` / drop `demo: true`.
+- **Follow-up:** Swap to a newer COCO ONNX (napkin “YOLOv12”) by dropping weights in
+  `web/public/models/` and pointing `MODEL_URL` — the board path is already ONNX (#69).
+  School-stream pixels can feed the same detector when the map supplies a `<video>`.
+  Then rename `displayName` / drop `demo: true` on that path.
 - **Alternatives considered:** Bundling a tiny real model now (no useful pixels on the CSS
   feed); putting detections on Telemetry (REQUIREMENTS forbid stream URL; same injection
   class for payload bloat).

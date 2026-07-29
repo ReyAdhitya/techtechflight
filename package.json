@@ -16,6 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "audit:devices": "node scripts/audit-devices.mjs",
+    "fetch:yolo": "node scripts/fetch-yolo-model.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p fleet-core/tsconfig.json && tsc --noEmit -p fleet-adapters/tsconfig.json && tsc --noEmit -p web/tsconfig.json"
   },
   "devDependencies": {

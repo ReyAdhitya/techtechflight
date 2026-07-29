@@ -30,3 +30,7 @@ scripts/shots/
 /lessons/
 /learning-records/
 /reference/
+
+# Large ONNX weights — fetch via scripts/fetch-yolo-model.mjs
+web/public/models/*.onnx
+

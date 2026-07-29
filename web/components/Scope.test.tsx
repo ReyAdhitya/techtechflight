@@ -403,6 +403,31 @@ describe('what the scope shows', () => {
   })
 
   /*
+   * #61 — owner: name above the mark, one-by-one, do not crash into each other.
+   *
+   * The old top-down alternation put every other name *below* the mark. That is gone:
+   * every label carries `data-label-vertical="above"`, and a packed classroom row gets
+   * distinct horizontal nudges so neighbours do not share one unreadable spot. jsdom
+   * cannot measure overlap; the attributes are the seam (CLAUDE.md).
+   */
+  it('keeps every crowded-row name above its mark, with a horizontal stagger — never anonymous dots', () => {
+    const row = [0, 1, 2, 3, 4, 5].map((eastM) => at(`Drone ${eastM + 1}`, eastM, 0))
+    render(<Scope drones={row} />)
+
+    const nudges = new Set<string>()
+    for (const drone of row) {
+      const name = screen.getByText(drone.name)
+      const label = name.parentElement
+      expect(label).not.toBeNull()
+      expect(label).toHaveAttribute('data-label-vertical', 'above')
+      expect(label?.className).toContain('bottom-full')
+      expect(label?.className).not.toContain('top-full')
+      nudges.add(label!.getAttribute('data-label-nudge') ?? '')
+    }
+    expect(nudges.size).toBeGreaterThan(1)
+  })
+
+  /*
    * §11.3 of docs/DESIGN.md: every screen and every Drone reachable by keyboard. A mark
    * used to be a `<g>` with an onClick — a mouse-only control with no focus, no role and
    * no name, so the linked selection the scope exists for was unreachable without a

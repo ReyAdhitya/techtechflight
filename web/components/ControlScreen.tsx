@@ -27,6 +27,7 @@ import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
+import { CameraSlide } from './CameraSlide'
 import { LessonStrip } from './LessonStrip'
 import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
@@ -53,6 +54,8 @@ export function ControlScreen() {
   // Which Drone the Teacher is looking at. Choosing a mark on the scope lights its strip
   // and the reverse, because "which one is that" is the question the scope exists for.
   const [selected, setSelected] = useState<string | null>(null)
+  // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
+  const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
 
   const lesson = runningLesson(book)
   const state = snapshot.state
@@ -71,6 +74,10 @@ export function ControlScreen() {
   // made this list dizzying. `FleetState.drones` (and thus `vitals`) are already that order.
   const strips = vitals
   const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
+  const cameraDrone =
+    cameraDroneId === null
+      ? null
+      : (state.drones.find((drone) => drone.id === cameraDroneId) ?? null)
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
     command(droneId, kind)
@@ -128,6 +135,7 @@ export function ControlScreen() {
                 }
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
+                onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
               />
             ) : null
           }
@@ -188,10 +196,21 @@ export function ControlScreen() {
               }
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
+              onOpenCamera={() => setCameraDroneId(entry.droneId)}
             />
           ))}
         </ul>
       </section>
+
+      {cameraDrone && (
+        <CameraSlide
+          droneId={cameraDrone.id}
+          droneName={cameraDrone.name}
+          camera={cameraDrone.telemetry?.camera}
+          scenarios={scenarios}
+          onClose={() => setCameraDroneId(null)}
+        />
+      )}
     </main>
   )
 }
@@ -209,6 +228,7 @@ function ScopeSelectedDock({
   onReleaseStop,
   tracked,
   onClear,
+  onOpenCamera,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -216,6 +236,7 @@ function ScopeSelectedDock({
   onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
   onClear: () => void
+  onOpenCamera: () => void
 }) {
   return (
     <div
@@ -234,13 +255,22 @@ function ScopeSelectedDock({
               : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
-        >
-          Clear
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onOpenCamera}
+            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          >
+            Camera
+          </button>
+          <button
+            type="button"
+            onClick={onClear}
+            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+          >
+            Clear
+          </button>
+        </div>
       </div>
       <CommandRow
         vitals={vitals}
@@ -313,6 +343,7 @@ function FlightStrip({
   onReleaseStop,
   tracked,
   exercise,
+  onOpenCamera,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -327,6 +358,8 @@ function FlightStrip({
   tracked: TrackedCommand | null
   /** What it is meant to be doing. Shown beside what it is doing; nothing compares them. */
   exercise: string | null
+  /** Opens the camera slide — watch only, not a Command (C9). */
+  onOpenCamera: () => void
 }) {
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
@@ -421,6 +454,23 @@ function FlightStrip({
           // "go and speak to Priya" is more use than "go and look at Drone 3".
           <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
         )}
+
+        {/*
+         * Camera is watch chrome beside the strip, not a Command. Kept out of CommandRow
+         * so Land / Hover / Stop stay the only things that ask an aircraft to act (C9).
+         */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onOpenCamera()
+            }}
+            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+          >
+            Camera
+          </button>
+        </div>
 
         <CommandRow
           vitals={vitals}

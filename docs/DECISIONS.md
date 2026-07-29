@@ -9,7 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
-<<<<<<< HEAD
+## 2026-07-29 Control command Hold is labelled Hover
+
+- **Decision:** Teacher-facing strip/dock label and C4 receipt word is **Hover**. Command
+  kind remains `hold` on the wire.
+- **Reason:** Owner notes (#52 / epic #47) — “stay hover immediately”.
+- **Note:** Do not rename `CommandKind` without a separate contract pass.
+
 ## 2026-07-29 Lesson/Student Logbook is this browser; Vercel is a separate preview
 
 - **Decision:** Teacher-facing copy on Lesson and Students states that records stay in
@@ -19,14 +25,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner confusion (#68) — boss uses localhost for real lessons; Vercel is so
   they can preview online. Data must not be assumed to follow between the two.
 - **Note:** Export/Import stay withdrawn. Cloud sync is out of scope.
-=======
-## 2026-07-29 Control command Hold is labelled Hover
-
-- **Decision:** Teacher-facing strip/dock label and C4 receipt word is **Hover**. Command
-  kind remains `hold` on the wire.
-- **Reason:** Owner notes (#52 / epic #47) — “stay hover immediately”.
-- **Note:** Do not rename `CommandKind` without a separate contract pass.
->>>>>>> 1f5fce1 (fix: rename Control Hold label to Hover)
 
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 

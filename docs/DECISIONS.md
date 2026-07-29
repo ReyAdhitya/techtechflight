@@ -9,6 +9,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Trainer DB is 3NF-shaped Logbook relations, not the napkin
+
+- **Decision:** Browser Logbook gains `roster` (Student: studentId + name), `trainerDrones`
+  (droneId, model, createdDate), `trainerLessons`, `lessonDrones`, and `lessonAssignments`
+  (lessonId + droneId → studentId). Live `students` stores studentId after write; `studentOf`
+  always returns the name for strips (D5). LessonRecord.assignments still captures **names**
+  at start (G6). Legacy name-only `roll` / `students` load unchanged; migrate forward on write
+  only. Napkin example IDs and nested `drones[]` are illustration — Lesson↔Drone is a
+  relation, not a forever belongs-To.
+- **Reason:** Owner photo + #48 — classroom identity needs proper related records in the
+  browser (ADR-0005); Telemetry must not carry trainer rows.
+- **Note:** Minimal Students / Settings / Lesson-prep UI. Control layout untouched. YOLO,
+  stream map, and QR stay other tickets.
+
 ## 2026-07-29 Control command Hold is labelled Hover
 
 - **Decision:** Teacher-facing strip/dock label and C4 receipt word is **Hover**. Command

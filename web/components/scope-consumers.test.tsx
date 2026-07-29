@@ -59,7 +59,7 @@ describe('the Flight Control Center, with a Fleet that is reporting where it is'
     expect(marks.length).toBeGreaterThan(0)
   })
 
-  it('offers Land Hold Stop in full screen when a mark is selected', () => {
+  it('offers Land Hover Stop in full screen when a mark is selected', () => {
     show(<ControlScreen />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
@@ -69,7 +69,7 @@ describe('the Flight Control Center, with a Fleet that is reporting where it is'
 
     const dock = within(dialog).getByRole('region', { name: /Controls for Drone/ })
     expect(within(dock).getByRole('button', { name: 'Land' })).toBeInTheDocument()
-    expect(within(dock).getByRole('button', { name: 'Hold' })).toBeInTheDocument()
+    expect(within(dock).getByRole('button', { name: 'Hover' })).toBeInTheDocument()
     expect(within(dock).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
   })
 

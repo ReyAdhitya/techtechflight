@@ -8,8 +8,8 @@ would notice.
 ### Added
 
 - **Camera slide from Control (#59).** Every Drone strip (and the scope dock / Fleet detail)
-  opens a slide hosting `CameraPane` — watch the feed without leaving the teaching surface.
-  Settings stream map stays for URL setup. Not a Command (C9).
+  opens a dialog hosting `CameraPane` — watch the feed without leaving the teaching surface.
+  Settings stream map stays for URL setup. Not a Command (C9). (Layout: see #67.)
 - **Trainer DB in the browser Logbook (#48).** Students carry `studentId` + name; trainer
   Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
   (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on
@@ -39,6 +39,9 @@ would notice.
 
 ### Fixed
 
+- **Camera from Control is a large centered popup (#67).** Opening Camera no longer uses a
+  narrow right rail — centered dialog at `min(42rem, 92vw)`, still Close / Escape, still
+  reuses `CameraPane`. Not a Command (C9).
 - **Lesson and Student IDs are system-generated (#58).** Teachers type names only; the board
   assigns `L-…` / `S-…`. Fleet Drones stay pick-by-existing-id. Strips still show names.
 - **Scope Drone names stay above each mark without colliding (#61).** Top-down no longer

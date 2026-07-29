@@ -9,6 +9,8 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+---
+
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 
 - **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`
@@ -20,6 +22,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   practical classroom-sized ONNX; napkin “YOLOv12” waits on a publishable browser export.
 - **Note:** Detections stay app-side — never on Telemetry. Swap path: drop a newer ONNX in
   `public/models/` and point `MODEL_URL`.
+
+## 2026-07-29 Camera from Control is a large centered popup
+
+- **Decision:** `CameraSlide` (kept name) is a **centered** Radix Dialog at
+  `w-[min(42rem,92vw)]`, not a right-hand rail. Still hosts `CameraPane`; Escape / Close
+  dismiss. Larger than `DroneDetailDialog` (`32rem`) on purpose — the feed needs room.
+- **Reason:** Owner screenshot — right rail felt small/wrong (#67).
+- **Note:** Land / Hover / Stop stay on the strip; Camera remains outside `CommandRow` (C9).
 
 ## 2026-07-29 Lesson and Student IDs are assigned by the board
 
@@ -45,11 +55,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 ## 2026-07-29 Camera slide opens from Control (Settings map stays setup)
 
 - **Decision:** Control strips (and the scope selection dock) offer a **Camera** control that
-  opens a right-hand Radix Dialog slide hosting the existing `CameraPane`. Fleet detail
-  offers the same entry. Settings **School camera streams** map stays for URL configuration.
-  Camera is not a Command — kept outside `CommandRow` (C9). Escape / Close dismisses.
+  opens a Radix Dialog hosting the existing `CameraPane`. Fleet detail offers the same
+  entry. Settings **School camera streams** map stays for URL configuration. Camera is not
+  a Command — kept outside `CommandRow` (C9). Escape / Close dismisses.
 - **Reason:** Owner — Settings is setup; teaching wants click → camera on Control (#59).
-- **Note:** No Telemetry URL. Sim Start/Stop remain ScenarioControls inside the pane.
+- **Note:** Layout superseded by the centered-popup decision above (#67). No Telemetry URL.
+  Sim Start/Stop remain ScenarioControls inside the pane.
 
 ## 2026-07-29 QR on camera is a landing target (display-first)
 

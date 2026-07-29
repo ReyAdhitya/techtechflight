@@ -71,8 +71,8 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 (`techtechflight:camera-stream-map`) or build seed `NEXT_PUBLIC_CAMERA_STREAM_MAP` (JSON
 object). `CameraPane` uses native `<video>` for mapped hardware streams; sim ignores the map.
 Sanitize to absolute http(s) only — no `javascript:` / credentials. Teaching entry is the
-Control/Fleet **Camera** slide (`CameraSlide`) — Settings map is setup only. Camera on a
-strip is not a Command (C9).
+Control/Fleet **Camera** opens a large centered `CameraSlide` popup (`min(42rem, 92vw)`),
+not a right rail — Settings map is setup only. Camera on a strip is not a Command (C9).
 
 **YOLOv8n weights are not in git.** Run `node scripts/fetch-yolo-model.mjs` (or
 `npm run fetch:yolo`) so `web/public/models/yolov8n.onnx` exists (~12 MB). Without it the

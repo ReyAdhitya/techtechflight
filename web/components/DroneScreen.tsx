@@ -19,6 +19,7 @@ import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { faultReason } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { BatteryChart } from './BatteryChart'
+import { CameraPane } from './CameraPane'
 import { EventTimeline } from './EventTimeline'
 import { useFleet } from './FleetProvider'
 import {
@@ -39,7 +40,7 @@ import { StatusBadge } from './StatusBadge'
  * and the Drone's own history sit on one screen rather than in two places.
  */
 export function DroneScreen() {
-  const { snapshot, now, demo } = useFleet()
+  const { snapshot, now, demo, scenarios } = useFleet()
   const droneId = useSearchParams().get('id')
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
@@ -149,6 +150,13 @@ export function DroneScreen() {
           <InstrumentPanel label="Height and landing">
             <AltitudeAndLanding telemetry={telemetry} />
           </InstrumentPanel>
+
+          <CameraPane
+            droneId={drone.id}
+            droneName={drone.name}
+            camera={telemetry.camera}
+            scenarios={scenarios}
+          />
 
           {telemetry.orientation && (
             <InstrumentPanel label="How it is sitting">

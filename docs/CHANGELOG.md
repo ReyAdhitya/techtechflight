@@ -5,6 +5,13 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **Camera pane on Drone detail (#45).** Teachers see a per-aircraft camera surface driven
+  by Telemetry `camera.streaming` only — no URL on the wire. Simulated Fleet gets a labeled
+  demo feed plus Start/Stop via ScenarioControls (not Commands). Hardware Fleets show state
+  without inventing a Start.
+
 ### Fixed
 
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the

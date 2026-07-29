@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { isCommandable, type DroneCommand, type TelemetrySource } from './index.ts'
+import {
+  isCommandable,
+  type CameraState,
+  type DroneCommand,
+  type TelemetrySource,
+} from './index.ts'
 
 /**
  * The seam that decides whether a Command can reach a Fleet at all.
@@ -34,5 +39,13 @@ describe('a Telemetry Source that accepts Commands', () => {
     const impostor = { ...reporting, command: 'land' } as unknown as TelemetrySource
 
     expect(isCommandable(impostor)).toBe(false)
+  })
+})
+
+describe('camera on Telemetry', () => {
+  it('carries only whether it is streaming — never a URL', () => {
+    const camera: CameraState = { streaming: false }
+    expect(Object.keys(camera)).toEqual(['streaming'])
+    expect('url' in camera).toBe(false)
   })
 })

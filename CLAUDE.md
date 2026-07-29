@@ -71,6 +71,11 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 the machine running the board (classroom = localhost). Vercel is a preview origin with its
 own empty storage — data does not sync. Do not invent a server DB (ADR-0005, #68).
 
+**Camera stream URLs are never Telemetry.** Map is build seed `NEXT_PUBLIC_CAMERA_STREAM_MAP`
+(JSON object) or localStorage `techtechflight:camera-stream-map` when already set — no
+Teacher Settings form (#50). `CameraPane` uses native `<video>` for mapped hardware streams;
+sim ignores the map. Sanitize to absolute http(s) only — no `javascript:` / credentials.
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

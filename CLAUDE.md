@@ -67,6 +67,10 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 `TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
 `CommandableSource` — monitoring only (ADR-0011).
 
+**Lesson/Student Logbook is this browser, not Vercel.** Records live in `localStorage` on
+the machine running the board (classroom = localhost). Vercel is a preview origin with its
+own empty storage — data does not sync. Do not invent a server DB (ADR-0005, #68).
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

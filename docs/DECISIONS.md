@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Lesson/Student Logbook is this browser; Vercel is a separate preview
+
+- **Decision:** Teacher-facing copy on Lesson and Students states that records stay in
+  **this browser on this laptop**. Localhost (classroom) is the working store. Vercel is
+  preview-only — a different origin with its own empty `localStorage` Logbook. No server
+  Postgres; ADR-0005 stands.
+- **Reason:** Owner confusion (#68) — boss uses localhost for real lessons; Vercel is so
+  they can preview online. Data must not be assumed to follow between the two.
+- **Note:** Export/Import stay withdrawn. Cloud sync is out of scope.
+
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 
 - **Decision:** Drone detail mounts `CameraPane`. Telemetry stays `camera?: { streaming }`.

@@ -11,6 +11,10 @@ would notice.
   Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
   (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on
   write. Minimal UI on Students, Settings, and Lesson prep — not a Control redesign.
+- **Object-detection overlay on the simulated camera feed (#49).** While the sim feed is
+  streaming, `CameraPane` draws bounding boxes from a pluggable `ObjectDetector`. Default
+  is a labeled demo detector (not YOLOv12 — weights not loaded). Hardware streaming and
+  idle/no-camera still show no overlay. Telemetry unchanged: `camera.streaming` only.
 - **Camera pane on Drone detail (#45).** Teachers see a per-aircraft camera surface driven
   by Telemetry `camera.streaming` only — no URL on the wire. Simulated Fleet gets a labeled
   demo feed plus Start/Stop via ScenarioControls (not Commands). Hardware Fleets show state

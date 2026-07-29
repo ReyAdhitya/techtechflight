@@ -9,6 +9,22 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Camera object detection is a pluggable app-side detector (demo first)
+
+- **Decision:** `CameraPane` runs an `ObjectDetector` overlay only while the **simulated**
+  feed is streaming. Interface lives in `web/lib/object-detection.ts`. This PR ships a
+  **deterministic demo detector** (honest UI: "Demo detector (not a loaded model)") — not
+  YOLOv12. Telemetry stays `camera?: { streaming }` only; no boxes / URL on the wire.
+  Detector failure → empty overlay, pane stays up.
+- **Reason:** Owner path is live feed → AI (YOLOv12), but the sim feed is CSS pixels and
+  weights are not in the repo. Ship the overlay loop + swap point first (#49); do not claim
+  a model family that is not loaded.
+- **Follow-up:** Wire ONNX Runtime Web or TF.js + real YOLOv12 weights when school pixels
+  exist (#50) or a weight artifact is pinned. Then rename `displayName` / drop `demo: true`.
+- **Alternatives considered:** Bundling a tiny real model now (no useful pixels on the CSS
+  feed); putting detections on Telemetry (REQUIREMENTS forbid stream URL; same injection
+  class for payload bloat).
+
 ## 2026-07-29 Trainer DB is 3NF-shaped Logbook relations, not the napkin
 
 - **Decision:** Browser Logbook gains `roster` (Student: studentId + name), `trainerDrones`
@@ -38,7 +54,8 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner Phase 1 — open one Drone and see its camera; YOLO/QR/DB later. REQUIREMENTS
   forbid a stream URL in Telemetry.
 - **Note:** School WebRTC/HLS map is Settings/env later, still not from Telemetry. Even-index
-  classroom craft already have `hasCamera` in the simulator.
+  classroom craft already have `hasCamera` in the simulator. Overlay detection is #49 —
+  still not on the Telemetry wire.
 
 ## 2026-07-28 Stop is a single press (owner overrides C8 hold)
 

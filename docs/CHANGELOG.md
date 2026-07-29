@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Settings Classroom setup — Sim vs Radio (#88).** Plain-language path picker on Settings.
+  Simulator (default, Commands) vs Radio/MAVLink (monitoring only, ADR-0011). Preference in
+  `ground-station/classroom-source.json`; restart the launcher to apply. No hardware
+  `CommandableSource`.
 - **Windows classroom launcher (#75).** Double-click `Start TechTech Flight.bat` installs if
   needed, builds the board once when missing, starts the ground station on :4321, and opens
   the board. Unreachable banner tells Teachers to run that file. Default Fleet is the

@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Settings Classroom setup is Sim vs Radio (no hardware Commands)
+
+- **Decision:** Settings **Classroom setup** lets the boss prefer **Simulator** (default,
+  Commands work) or **Radio (MAVLink)** without editing `.env`. Preference lives in
+  `ground-station/classroom-source.json` (gitignored); `GET`/`PUT` `/api/classroom-setup` on
+  the ground station. Changing path requires restarting the ground-station window (launcher).
+  `TELEMETRY_SOURCE` still overrides for developers. Radio remains **monitoring only** —
+  no hardware `CommandableSource` (ADR-0011).
+- **Reason:** Owner #76 / #88 — zero-coding Sim vs Radio copy + status after #75 launcher.
+- **Note:** Vercel demonstration Fleet explains itself; Radio needs :4321 on the laptop.
+
 ## 2026-07-29 Classroom start is a Windows double-click launcher
 
 - **Decision:** Boss/Teacher starts the ground station with **`Start TechTech Flight.bat`**
@@ -19,7 +30,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   CommandableSource.
 - **Reason:** Owner #75 — “cara nyalain localhost 4321” must not require npm/IDE.
 - **Note:** Unreachable banner points at the `.bat`. Vercel preview needs no :4321
-  (`NEXT_PUBLIC_DEMO_ONLY`). Settings Sim vs Radio UI is a follow-up.
+  (`NEXT_PUBLIC_DEMO_ONLY`).
 
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 

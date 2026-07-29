@@ -4,6 +4,11 @@ import { extname, join, normalize, resolve } from 'node:path'
 import { WebSocketServer } from 'ws'
 import type { ClientMessage, ServerMessage } from '@techtechflight/contract'
 import type { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
+import {
+  readPreferredClassroomSource,
+  writePreferredClassroomSource,
+  type ClassroomTelemetrySource,
+} from './classroom-source.ts'
 
 export interface FleetServerOptions {
   readonly station: GroundStation
@@ -21,6 +26,11 @@ export interface FleetServerOptions {
    * rest of the product follows.
    */
   readonly history?: FleetHistoryRecorder
+  /**
+   * Which Telemetry Source this process opened. Settings reads it for Classroom setup.
+   * Defaults to simulator when omitted (tests).
+   */
+  readonly activeSource?: ClassroomTelemetrySource
 }
 
 export interface FleetServer {
@@ -37,9 +47,11 @@ export interface FleetServer {
  */
 export async function startFleetServer(options: FleetServerOptions): Promise<FleetServer> {
   const { station, boardDir, history } = options
+  const activeSource: ClassroomTelemetrySource = options.activeSource ?? 'simulator'
   const requestedPort = options.port ?? 4321
 
   const http = createServer((request, response) => {
+    if (tryClassroomSetup(request, response, activeSource)) return
     void serveStatic(request, response, boardDir)
   })
   const sockets = new WebSocketServer({ server: http, path: '/fleet' })
@@ -109,6 +121,88 @@ function send(socket: { readyState: number; send(data: string): void }, message:
   const OPEN = 1
   if (socket.readyState !== OPEN) return
   socket.send(JSON.stringify(message))
+}
+
+/**
+ * Classroom setup for Settings — Sim vs Radio without editing `.env`.
+ *
+ * GET reports active + preferred source. PUT writes the preference file; the running
+ * process does not hot-swap (restart required). CORS open so Next on :3000 can call :4321.
+ */
+function tryClassroomSetup(
+  request: IncomingMessage,
+  response: ServerResponse,
+  activeSource: ClassroomTelemetrySource,
+): boolean {
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  if (url.pathname !== '/api/classroom-setup') return false
+
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, PUT, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+  }
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, cors).end()
+    return true
+  }
+
+  if (request.method === 'GET') {
+    const preferred = readPreferredClassroomSource()
+    const body = {
+      active: activeSource,
+      preferred,
+      restartRequired: preferred !== activeSource,
+      commands: activeSource === 'simulator' ? 'available' : 'monitoring-only',
+    }
+    response
+      .writeHead(200, { ...cors, 'content-type': 'application/json; charset=utf-8' })
+      .end(JSON.stringify(body))
+    return true
+  }
+
+  if (request.method === 'PUT') {
+    void readRequestBody(request).then((raw) => {
+      let source: ClassroomTelemetrySource | null = null
+      try {
+        const parsed = JSON.parse(raw) as { source?: unknown }
+        if (parsed.source === 'simulator' || parsed.source === 'mavlink') source = parsed.source
+      } catch {
+        /* fall through */
+      }
+      if (!source) {
+        response
+          .writeHead(400, { ...cors, 'content-type': 'application/json; charset=utf-8' })
+          .end(JSON.stringify({ error: 'source must be simulator or mavlink' }))
+        return
+      }
+      writePreferredClassroomSource(source)
+      response
+        .writeHead(200, { ...cors, 'content-type': 'application/json; charset=utf-8' })
+        .end(
+          JSON.stringify({
+            preferred: source,
+            active: activeSource,
+            restartRequired: source !== activeSource,
+            commands: activeSource === 'simulator' ? 'available' : 'monitoring-only',
+          }),
+        )
+    })
+    return true
+  }
+
+  response.writeHead(405, cors).end('Method not allowed')
+  return true
+}
+
+function readRequestBody(request: IncomingMessage): Promise<string> {
+  return new Promise((done, fail) => {
+    const chunks: Buffer[] = []
+    request.on('data', (chunk: Buffer) => chunks.push(chunk))
+    request.on('end', () => done(Buffer.concat(chunks).toString('utf8')))
+    request.on('error', fail)
+  })
 }
 
 const MIME_TYPES: Readonly<Record<string, string>> = {

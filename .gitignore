@@ -34,3 +34,6 @@ scripts/shots/
 # Large ONNX weights — fetch via scripts/fetch-yolo-model.mjs
 web/public/models/*.onnx
 
+# Boss Classroom setup preference (Settings Sim vs Radio) — local laptop only
+ground-station/classroom-source.json
+

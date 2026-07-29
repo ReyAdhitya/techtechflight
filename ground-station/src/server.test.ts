@@ -248,3 +248,31 @@ describe('serving the board', () => {
     expect(await response.text()).toContain('the Fleet')
   })
 })
+
+describe('Classroom setup HTTP', () => {
+  it('reports the active Simulator path', async () => {
+    const setup = await startFleetServer({ station, port: 0, activeSource: 'simulator' })
+    try {
+      const response = await fetch(`http://localhost:${setup.port}/api/classroom-setup`)
+      expect(response.status).toBe(200)
+      const body = (await response.json()) as { active: string; commands: string }
+      expect(body.active).toBe('simulator')
+      expect(body.commands).toBe('available')
+    } finally {
+      await setup.close()
+    }
+  })
+
+  it('reports Radio as monitoring-only', async () => {
+    const setup = await startFleetServer({ station, port: 0, activeSource: 'mavlink' })
+    try {
+      const body = (await (
+        await fetch(`http://localhost:${setup.port}/api/classroom-setup`)
+      ).json()) as { active: string; commands: string }
+      expect(body.active).toBe('mavlink')
+      expect(body.commands).toBe('monitoring-only')
+    } finally {
+      await setup.close()
+    }
+  })
+})

@@ -40,6 +40,14 @@ afterEach(() => {
 })
 
 describe('starting a lesson with nothing filled in', () => {
+  it('says Lesson records live in this browser, not on Vercel', () => {
+    screenUnderTest()
+    settle()
+
+    expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
+    expect(screen.getByRole('note')).toHaveTextContent(/not saved on Vercel/)
+  })
+
   it('offers to start at all', () => {
     screenUnderTest()
     settle()

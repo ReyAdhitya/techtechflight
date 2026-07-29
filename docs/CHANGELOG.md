@@ -12,6 +12,12 @@ would notice.
   demo feed plus Start/Stop via ScenarioControls (not Commands). Hardware Fleets show state
   without inventing a Start.
 
+### Changed
+
+- **Lesson and Students say where records live (#68).** Plain note: the Logbook stays in
+  this browser on this laptop; Vercel is a separate preview with its own empty storage — not
+  a shared school database.
+
 ### Fixed
 
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the

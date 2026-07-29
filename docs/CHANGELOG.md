@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Object-detection overlay on the simulated camera feed (#49).** While the sim feed is
+  streaming, `CameraPane` draws bounding boxes from a pluggable `ObjectDetector`. Default
+  is a labeled demo detector (not YOLOv12 — weights not loaded). Hardware streaming and
+  idle/no-camera still show no overlay. Telemetry unchanged: `camera.streaming` only.
 - **Trainer DB in the browser Logbook (#48).** Students carry `studentId` + name; trainer
   Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
   (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on

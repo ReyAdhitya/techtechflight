@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Camera slide from Control (#59).** Every Drone strip (and the scope dock / Fleet detail)
+  opens a slide hosting `CameraPane` — watch the feed without leaving the teaching surface.
+  Settings stream map stays for URL setup. Not a Command (C9).
 - **Trainer DB in the browser Logbook (#48).** Students carry `studentId` + name; trainer
   Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
   (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on

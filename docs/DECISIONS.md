@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Camera slide opens from Control (Settings map stays setup)
+
+- **Decision:** Control strips (and the scope selection dock) offer a **Camera** control that
+  opens a right-hand Radix Dialog slide hosting the existing `CameraPane`. Fleet detail
+  offers the same entry. Settings **School camera streams** map stays for URL configuration.
+  Camera is not a Command — kept outside `CommandRow` (C9). Escape / Close dismisses.
+- **Reason:** Owner — Settings is setup; teaching wants click → camera on Control (#59).
+- **Note:** No Telemetry URL. Sim Start/Stop remain ScenarioControls inside the pane.
+
 ## 2026-07-29 QR on camera is a landing target (display-first)
 
 - **Decision:** Camera QR means **where to land**, not inventory. Decode via a small

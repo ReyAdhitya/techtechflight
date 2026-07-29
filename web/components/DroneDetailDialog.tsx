@@ -20,6 +20,8 @@ export interface DroneDetailDialogProps {
   readonly drone: DroneState | null
   readonly ageMs: number | null
   readonly onClose: () => void
+  /** Opens the camera slide — watch only; omitted when the host has no slide. */
+  readonly onOpenCamera?: () => void
 }
 
 /**
@@ -29,7 +31,12 @@ export interface DroneDetailDialogProps {
  * Radix Dialog handles focus trapping and Escape, so closing and returning to the Fleet
  * is immediate and never leaves anyone stuck in a sub-screen.
  */
-export function DroneDetailDialog({ drone, ageMs, onClose }: DroneDetailDialogProps) {
+export function DroneDetailDialog({
+  drone,
+  ageMs,
+  onClose,
+  onOpenCamera,
+}: DroneDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const descriptionId = useId()
 
@@ -175,11 +182,16 @@ export function DroneDetailDialog({ drone, ageMs, onClose }: DroneDetailDialogPr
             </p>
           )}
 
-          <Dialog.Close asChild>
-            <Button variant="primary" className="self-start">
-              Back to the Fleet
-            </Button>
-          </Dialog.Close>
+          <div className="flex flex-wrap gap-2 self-start">
+            {onOpenCamera && (
+              <Button type="button" variant="quiet" onClick={onOpenCamera}>
+                Camera
+              </Button>
+            )}
+            <Dialog.Close asChild>
+              <Button variant="primary">Back to the Fleet</Button>
+            </Dialog.Close>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

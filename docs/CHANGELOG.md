@@ -14,6 +14,9 @@ would notice.
 
 ### Fixed
 
+- **Lesson exercise hint is "Stay still in the air" (#60).** Placeholder / DESIGN wireframe
+  no longer say "Hover and hold", which read like the Control command. Control strip and
+  kind `hold` unchanged.
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the
   GuardedButton / C8 press-and-hold path for classroom speed. DESIGN §13.2 marked resolved
   so it no longer contradicts §4.5.

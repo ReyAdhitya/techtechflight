@@ -387,7 +387,7 @@ preparing a lesson.
 │ ...                                                        │
 ├────────────────────────────────────────────────────────────┤
 │ EXERCISES                                                  │
-│ 1. Hover and hold           5 min   [↑][↓][×]              │
+│ 1. Stay still in the air    5 min   [↑][↓][×]              │
 │ 2. Fly a square             10 min  [↑][↓][×]              │
 │ [ + Add an exercise ]                                      │
 ├────────────────────────────────────────────────────────────┤

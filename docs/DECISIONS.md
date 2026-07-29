@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Curriculum exercise copy is "Stay still in the air"
+
+- **Decision:** Lesson planner exercise placeholder (and DESIGN § wireframe example) is
+  **Stay still in the air**, not "Hover and hold" / "Hover practice".
+- **Reason:** Owner Phase 2 — the old chip read like Control’s hover/hold Command.
+  Curriculum task ≠ kind `hold`.
+- **Note:** Do not rename the Control strip label or wire `hold`. Teachers may still type
+  any exercise name; this is catalog/hint copy only.
+
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 
 - **Decision:** Drone detail mounts `CameraPane`. Telemetry stays `camera?: { streaming }`.

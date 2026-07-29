@@ -7,11 +7,14 @@ import type { ScenarioControls } from '@/lib/fleet-link'
 import { CameraPane } from './CameraPane'
 
 /**
- * A slide that hosts the existing CameraPane for one Drone.
+ * A large centered popup that hosts the existing CameraPane for one Drone.
  *
  * Teaching surface entry point — Teachers open this from Control (or Fleet), not
  * from Settings. Settings still owns the stream map. Telemetry never carries a
  * URL; Start/Stop stay ScenarioControls inside CameraPane (C9).
+ *
+ * Centered and wide on purpose (#67): a right-hand rail felt too small for the feed.
+ * Name stays `CameraSlide` for the call sites from #59.
  */
 export function CameraSlide({
   droneId,
@@ -36,9 +39,9 @@ export function CameraSlide({
         <Dialog.Content
           ref={contentRef}
           aria-labelledby={titleId}
-          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col gap-4 overflow-y-auto border-l border-hairline bg-canvas p-4 shadow-none min-[26rem]:p-6"
+          className="fixed left-1/2 top-1/2 z-50 flex w-[min(42rem,92vw)] max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-surface border border-hairline bg-canvas p-4 shadow-none min-[26rem]:p-6"
           /*
-           * Focus the sheet, not the first Camera control — Start would otherwise
+           * Focus the dialog, not the first Camera control — Start would otherwise
            * steal focus and Escape could feel like a Command cancel.
            */
           onOpenAutoFocus={(event) => {

@@ -15,6 +15,11 @@ would notice.
   streaming, `CameraPane` draws bounding boxes from a pluggable `ObjectDetector`. Default
   is a labeled demo detector (not YOLOv12 — weights not loaded). Hardware streaming and
   idle/no-camera still show no overlay. Telemetry unchanged: `camera.streaming` only.
+- **School camera stream map (#50).** Settings holds `droneId → http(s) URL` (localStorage),
+  optionally seeded by `NEXT_PUBLIC_CAMERA_STREAM_MAP`. When hardware Telemetry says
+  `camera.streaming` and the Drone is mapped, `CameraPane` plays a native `<video>` from
+  that map — never from Telemetry. Unmapped hardware keeps the honest notice; simulated
+  Fleets still use labeled demo pixels and ignore the map.
 - **Camera pane on Drone detail (#45).** Teachers see a per-aircraft camera surface driven
   by Telemetry `camera.streaming` only — no URL on the wire. Simulated Fleet gets a labeled
   demo feed plus Start/Stop via ScenarioControls (not Commands). Hardware Fleets show state

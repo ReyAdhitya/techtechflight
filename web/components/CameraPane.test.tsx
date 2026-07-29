@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
+import { clearStoredCameraStreamMap, writeCameraStreamMap } from '@/lib/camera-stream-map'
 import type { ObjectDetector } from '@/lib/object-detection'
 import { CameraPane } from './CameraPane'
 
@@ -10,7 +11,8 @@ import { CameraPane } from './CameraPane'
  *
  * Telemetry may only carry `{ streaming: boolean }`. Start / Stop are scenario
  * controls on a simulated Fleet — never Commands, never a URL on the wire.
- * Detection is app-side on the pane; tests inject a mock detector.
+ * Detection is app-side on the pane; hardware pictures come from the school
+ * stream map when one is configured.
  */
 
 const scenarios = (): ScenarioControls =>
@@ -46,6 +48,16 @@ const mockDetector = (overrides?: Partial<ObjectDetector>): ObjectDetector => ({
     },
   ]),
   ...overrides,
+})
+
+beforeEach(() => {
+  clearStoredCameraStreamMap()
+  vi.unstubAllEnvs()
+})
+
+afterEach(() => {
+  clearStoredCameraStreamMap()
+  vi.unstubAllEnvs()
 })
 
 describe('the camera pane on a Drone', () => {
@@ -99,6 +111,23 @@ describe('the camera pane on a Drone', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Stop camera' }))
     expect(controls.stopCamera).toHaveBeenCalledWith('ttf-0001')
+  })
+
+  it('ignores the school stream map on a simulated Fleet', () => {
+    writeCameraStreamMap({ 'ttf-0001': 'https://cam.school.example/1' })
+    render(
+      <CameraPane
+        droneId="ttf-0001"
+        droneName="Drone 1"
+        camera={{ streaming: true }}
+        scenarios={scenarios()}
+      />,
+    )
+
+    expect(
+      screen.getByRole('img', { name: 'Simulated camera feed for Drone 1' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText(/Live camera stream/)).not.toBeInTheDocument()
   })
 
   it('draws detections on the simulated feed while streaming', async () => {
@@ -158,7 +187,7 @@ describe('the camera pane on a Drone', () => {
     expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
   })
 
-  it('names streaming on hardware without pretending there is a picture or detections', () => {
+  it('names streaming on hardware without pretending there is a picture when unmapped', () => {
     render(
       <CameraPane
         droneId="ttf-0001"
@@ -173,6 +202,26 @@ describe('the camera pane on a Drone', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/does not carry a URL/)
     expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('list', { name: /detections/i })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/Live camera stream/)).not.toBeInTheDocument()
+  })
+
+  it('plays a mapped school stream on hardware when Telemetry says streaming', () => {
+    writeCameraStreamMap({ 'ttf-0001': 'https://cam.school.example/drone1' })
+    render(
+      <CameraPane
+        droneId="ttf-0001"
+        droneName="Drone 1"
+        camera={{ streaming: true }}
+        scenarios={null}
+      />,
+    )
+
+    const video = screen.getByLabelText('Live camera stream for Drone 1')
+    expect(video.tagName).toBe('VIDEO')
+    expect(video).toHaveAttribute('src', 'https://cam.school.example/drone1')
+    expect(screen.getByText(/School stream — from the stream map/)).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
   })
 
   it('never puts a stream URL on the Telemetry camera shape', () => {

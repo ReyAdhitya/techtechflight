@@ -1,6 +1,7 @@
 'use client'
 
 import { useFleet } from './FleetProvider'
+import { CameraStreamMapPanel } from './CameraStreamMapPanel'
 import { ScenarioPanel } from './ScenarioPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
@@ -58,6 +59,8 @@ export function SettingsScreen() {
       </Panel>
 
       <TrainerDronesPanel />
+
+      <CameraStreamMapPanel />
 
       <TrainingScenariosPanel />
 

@@ -1,8 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
+import {
+  readServerCameraStreamMap,
+  resolveCameraStreamMap,
+  streamUrlFor,
+  subscribeCameraStreamMap,
+} from '@/lib/camera-stream-map'
 import {
   demoDetector,
   type Detection,
@@ -16,10 +22,10 @@ import { InstrumentPanel } from './FlightInstruments'
  *
  * Telemetry may only say whether a camera is fitted and whether it is streaming
  * (`camera?: { streaming: boolean }`). A stream URL on that wire is an injection
- * surface (REQUIREMENTS) and must never appear here. On a simulated Fleet the
- * picture is an app-owned placeholder; Start / Stop go through ScenarioControls,
- * never as Commands (C9). Land / Hover / Stop stay on Control — this pane is watch
- * only.
+ * surface (REQUIREMENTS) and must never appear here. School stream addresses live
+ * in the Settings/env map (`camera-stream-map`). On a simulated Fleet the picture
+ * is an app-owned placeholder; Start / Stop go through ScenarioControls, never as
+ * Commands (C9). Land / Hover / Stop stay on Control — this pane is watch only.
  *
  * Object detection is app-side on this pane (pluggable `ObjectDetector`). It does
  * not travel on Telemetry. The default is a labeled demo detector — not YOLOv12
@@ -39,6 +45,12 @@ export function CameraPane({
   detector?: ObjectDetector
 }) {
   const simulated = scenarios !== null
+  const streamMap = useSyncExternalStore(
+    subscribeCameraStreamMap,
+    resolveCameraStreamMap,
+    readServerCameraStreamMap,
+  )
+  const mappedUrl = streamUrlFor(droneId, streamMap)
 
   if (camera === undefined) {
     return (
@@ -54,6 +66,8 @@ export function CameraPane({
         {camera.streaming ? (
           simulated ? (
             <SimulatedFeed droneId={droneId} droneName={droneName} detector={detector} />
+          ) : mappedUrl !== null ? (
+            <SchoolStream droneName={droneName} src={mappedUrl} />
           ) : (
             <HardwareStreamingNotice />
           )
@@ -120,11 +134,39 @@ function HardwareStreamingNotice() {
 }
 
 /**
+ * Live school feed from the Settings/env map — never from Telemetry.
+ *
+ * Native `<video>` only (no hls.js). Progressive HTTP(S) media works broadly;
+ * `.m3u8` HLS plays where the browser supports it natively (Safari). Muted +
+ * playsInline so autoplay policies do not block the first frame; Teachers can
+ * unmute from the controls.
+ */
+function SchoolStream({ droneName, src }: { droneName: string; src: string }) {
+  return (
+    <div className="overflow-hidden rounded-surface border border-hairline bg-ink">
+      <video
+        className="aspect-video w-full bg-ink"
+        src={src}
+        controls
+        playsInline
+        muted
+        autoPlay
+        aria-label={`Live camera stream for ${droneName}`}
+      />
+      <p className="m-0 border-t border-hairline bg-surface-1 px-3 py-2 text-value text-ink-subtle">
+        School stream — from the stream map, not Telemetry
+      </p>
+    </div>
+  )
+}
+
+/**
  * App-owned pixels while the simulator says the camera is on.
  *
  * Deliberately labeled and generated here — never from a Telemetry field — so a
  * demonstration cannot be mistaken for a live aircraft camera. CSS rather than
  * `<canvas>`: jsdom has no drawing surface, and the label is what makes the feed honest.
+ * The school stream map is ignored on purpose while ScenarioControls are present.
  *
  * Detection overlays sit as a sibling of the `role="img"` picture (not a child) so
  * assistive tech and tests can still find the list. Failures stay quiet.

@@ -9,6 +9,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+<<<<<<< HEAD
 ## 2026-07-29 Curriculum exercise copy is "Stay still in the air"
 
 - **Decision:** Lesson planner exercise placeholder (and DESIGN § wireframe example) is
@@ -93,6 +94,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner confusion (#68) — boss uses localhost for real lessons; Vercel is so
   they can preview online. Data must not be assumed to follow between the two.
 - **Note:** Export/Import stay withdrawn. Cloud sync is out of scope.
+=======
+## 2026-07-29 Scope names stay above marks; close ones nudge sideways
+
+- **Decision:** Top-down Scope labels are always **above** the mark. When marks sit within
+  ~14% of the window of each other, names get a horizontal rem stagger (cluster fan-out)
+  instead of the old above/below alternation. Elevation keeps “toward the middle of the
+  box” vertically, with the same horizontal stagger. Names are never omitted.
+- **Reason:** Owner #61 — put the name above the drone, one-by-one; do not let them crash
+  into each other. Alternating below contradicted “above” and still collided when a row
+  closed up.
+- **Note:** Logic in `scopeLabelPlacements`; Mark keeps the geometric point fixed and only
+  offsets the label. Scope geometry / ADR-0014 window unchanged.
+>>>>>>> 2292bf5 (fix: keep Scope Drone names above marks without colliding)
 
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 

@@ -38,6 +38,9 @@ would notice.
 
 ### Fixed
 
+- **Scope Drone names stay above each mark without colliding (#61).** Top-down no longer
+  alternates names below the mark; packed classroom rows get a horizontal rem stagger so
+  labels stay readable. Names are never dropped to anonymous dots.
 - **Lesson exercise hint is "Stay still in the air" (#60).** Placeholder / DESIGN wireframe
   no longer say "Hover and hold", which read like the Control command. Control strip and
   kind `hold` unchanged.

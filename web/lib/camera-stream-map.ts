@@ -2,10 +2,10 @@
  * School camera stream map: droneId → stream URL.
  *
  * Lives outside Telemetry on purpose (REQUIREMENTS). Telemetry may only say
- * `camera.streaming`; the picture address is school configuration — Settings
- * (localStorage) with an optional build-time seed from
- * `NEXT_PUBLIC_CAMERA_STREAM_MAP`. Values are sanitized to http(s) only so a
- * map entry cannot become a script injection surface.
+ * `camera.streaming`; the picture address is school/IT configuration — optional
+ * build-time seed `NEXT_PUBLIC_CAMERA_STREAM_MAP`, with localStorage override
+ * when present. There is no Teacher Settings form. Values are sanitized to
+ * http(s) only so a map entry cannot become a script injection surface.
  */
 
 export const CAMERA_STREAM_MAP_KEY = 'techtechflight:camera-stream-map'

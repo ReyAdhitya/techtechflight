@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
+
+- **Decision:** Drone detail mounts `CameraPane`. Telemetry stays `camera?: { streaming }`.
+  Simulated picture is app-owned canvas; Start/Stop are `ScenarioControls`, never Commands
+  (C9). Hardware (`scenarios === null`) shows idle/streaming copy only.
+- **Reason:** Owner Phase 1 — open one Drone and see its camera; YOLO/QR/DB later. REQUIREMENTS
+  forbid a stream URL in Telemetry.
+- **Note:** School WebRTC/HLS map is Settings/env later, still not from Telemetry. Even-index
+  classroom craft already have `hasCamera` in the simulator.
+
 ## 2026-07-28 Stop is a single press (owner overrides C8 hold)
 
 - **Decision:** Emergency **Stop** is an ordinary click — no `GuardedButton` hold, no

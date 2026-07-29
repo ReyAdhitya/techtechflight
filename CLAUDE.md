@@ -60,7 +60,8 @@ Argue with them in an ADR or leave them alone.
 
 **Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
 no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
-the Simulator; MAVLink radio is opt-in monitoring only (ADR-0011).
+the Simulator; Settings **Classroom setup** can prefer Radio (MAVLink) for the next launch
+(monitoring only, ADR-0011) — still no hardware `CommandableSource`.
 
 **Windows:** `next build` fails with `EBUSY: rmdir 'web/out'` if any shell has that
 directory as its working directory. Git Bash rewrites a bare `/route` argument into a

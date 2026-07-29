@@ -10,6 +10,10 @@ import {
   CLASSROOM_FLEET,
   SimulatedTelemetrySource,
 } from '@techtechflight/fleet-core/simulator'
+import {
+  resolveActiveClassroomSource,
+  type ClassroomTelemetrySource,
+} from './classroom-source.ts'
 import { startFleetServer } from './server.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -18,12 +22,14 @@ const boardDir = resolve(here, '../../web/out')
 const clock = new SystemClock()
 
 /*
- * The simulator stays the default. Point TELEMETRY_SOURCE=mavlink at ArduPilot SITL
- * (UDP 14550) — or later a radio — when reading real craft. That path is monitoring
- * only: the MAVLink adapter does not implement CommandableSource (ADR-0011).
+ * Simulator stays the default. Settings can prefer Radio (MAVLink) via
+ * classroom-source.json; TELEMETRY_SOURCE still overrides for developers.
+ * MAVLink is monitoring only — no CommandableSource (ADR-0011).
  */
+const activeSource: ClassroomTelemetrySource = resolveActiveClassroomSource()
+
 const simulator =
-  process.env['TELEMETRY_SOURCE'] === 'mavlink'
+  activeSource === 'mavlink'
     ? null
     : new SimulatedTelemetrySource({
         registrations: CLASSROOM_FLEET,
@@ -108,6 +114,7 @@ station.onFleetState((state) => history.observe(state))
 const server = await startFleetServer({
   station,
   history,
+  activeSource,
   port: Number(process.env['PORT'] ?? 4321),
   ...(existsSync(boardDir) ? { boardDir } : {}),
 })

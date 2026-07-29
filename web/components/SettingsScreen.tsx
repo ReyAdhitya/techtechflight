@@ -1,6 +1,7 @@
 'use client'
 
 import { useFleet } from './FleetProvider'
+import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
@@ -30,6 +31,8 @@ export function SettingsScreen() {
       className={cn(READING_FRAME, 'flex flex-col gap-8 p-4 min-[26rem]:p-8')}
     >
       <h1 className="m-0 font-display text-summary font-medium">Settings</h1>
+
+      <LogbookLocationNote />
 
       <Panel title="The ground station">
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">

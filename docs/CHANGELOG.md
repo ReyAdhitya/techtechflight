@@ -35,6 +35,9 @@ would notice.
 
 ### Changed
 
+- **Teachers get a find-path for Logbook data (#74).** Students / Settings / Lesson / Reports
+  note that records live on this laptop’s browser Logbook (not Vercel), and name where to
+  look for roster, trainer Drones, prep, and finished Lessons.
 - **Lesson and Students say where records live (#68).** Plain note: the Logbook stays in
   this browser on this laptop; Vercel is a separate preview with its own empty storage — not
   a shared school database.

@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import { FleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
+import { LogbookLocationNote } from './LogbookLocationNote'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -73,6 +74,10 @@ export function ReportsScreen() {
         open More settings and turn off Headers and footers so the page URL and clock do
         not appear on the sheet.
       </p>
+
+      <div className="print-hide">
+        <LogbookLocationNote />
+      </div>
 
       {/*
        * A printed page has no navigation and no context. It says what it is and when it

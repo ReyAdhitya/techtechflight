@@ -36,6 +36,10 @@ describe('the class', () => {
 
     expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
     expect(screen.getByRole('note')).toHaveTextContent(/not saved on Vercel/)
+    expect(screen.getByRole('note')).toHaveTextContent(/Students/)
+    expect(screen.getByRole('note')).toHaveTextContent(/Settings/)
+    expect(screen.getByRole('note')).toHaveTextContent(/Lesson/)
+    expect(screen.getByRole('note')).toHaveTextContent(/Reports/)
   })
 
   it('keeps names so a class is typed once', () => {

@@ -68,7 +68,7 @@ export function ConnectionBanner({ connection, demo = false }: ConnectionBannerP
       <span className="text-value text-ink-muted">
         {connecting
           ? 'Waiting for the first Fleet State.'
-          : 'What you see below is the last thing it told us. Trying to reconnect.'}
+          : 'What you see below is the last thing it told us. Trying to reconnect. On this laptop, double-click Start TechTech Flight.bat so port 4321 is running, then refresh.'}
       </span>
     </div>
   )

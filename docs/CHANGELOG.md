@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Windows classroom launcher (#75).** Double-click `Start TechTech Flight.bat` installs if
+  needed, builds the board once when missing, starts the ground station on :4321, and opens
+  the board. Unreachable banner tells Teachers to run that file. Default Fleet is the
+  Simulator; MAVLink radio remains opt-in monitoring-only (ADR-0011).
 - **YOLOv8n person/object detection on the camera (#69).** While the sim camera is on, the
   board prefers the laptop webcam and runs **YOLOv8n** (ONNX, COCO) in the browser — boxes
   for person, chair, bottle, etc. Falls back to the labeled demo detector if weights/wasm

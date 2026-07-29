@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Classroom start is a Windows double-click launcher
+
+- **Decision:** Boss/Teacher starts the ground station with **`Start TechTech Flight.bat`**
+  at the repo root (install if needed, build `web/out` once if missing, start
+  `ground-station` on **:4321**, open the board). No terminal typing for the normal path.
+  Default telemetry remains the **Simulator**. **MAVLink radio** stays opt-in via
+  `TELEMETRY_SOURCE=mavlink` and is **monitoring only** (ADR-0011) — not a zero-coding
+  CommandableSource.
+- **Reason:** Owner #75 — “cara nyalain localhost 4321” must not require npm/IDE.
+- **Note:** Unreachable banner points at the `.bat`. Vercel preview needs no :4321
+  (`NEXT_PUBLIC_DEMO_ONLY`). Settings Sim vs Radio UI is a follow-up.
+
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 
 - **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`

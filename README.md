@@ -29,6 +29,12 @@ before building anything twice.
 
 ## Running it
 
+**Classroom (Windows, no terminal):** double-click **`Start TechTech Flight.bat`**.
+That starts the ground station on **:4321** and opens the board. Default Fleet is the
+**Simulator**. Radio (MAVLink) is advanced / monitoring-only — see ADR-0011.
+
+**Developers:**
+
 ```bash
 npm install
 npm run dev:ground-station   # simulated Fleet + WebSocket on :4321

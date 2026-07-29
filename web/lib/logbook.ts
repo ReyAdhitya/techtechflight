@@ -252,6 +252,41 @@ export function legacyStudentIdFor(name: string): string {
 }
 
 /**
+ * Next `S-0001` / `L-0001` style id that is not already taken.
+ *
+ * Teachers never type these — the board assigns them on create (#58). Legacy `stu-…`
+ * and free-form ids from earlier Trainer UI stay valid and do not collide with the
+ * serial counter (only exact `PREFIX-digits` rows advance the sequence).
+ */
+export function allocateSerialId(
+  existing: readonly string[],
+  prefix: 'S' | 'L',
+): string {
+  const pattern = new RegExp(`^${prefix}-(\\d+)$`)
+  let highest = 0
+  for (const id of existing) {
+    const match = pattern.exec(id)
+    if (!match) continue
+    highest = Math.max(highest, Number(match[1]))
+  }
+  return `${prefix}-${String(highest + 1).padStart(4, '0')}`
+}
+
+export function allocateStudentId(book: Logbook): string {
+  return allocateSerialId(
+    book.roster.map((student) => student.studentId),
+    'S',
+  )
+}
+
+export function allocateLessonId(book: Logbook): string {
+  return allocateSerialId(
+    book.trainerLessons.map((lesson) => lesson.lessonId),
+    'L',
+  )
+}
+
+/**
  * Promote a name-only roll into roster rows, and rewrite live assignments to studentIds.
  *
  * Called on write, not on load — a Teacher who never opens Settings still keeps their
@@ -664,6 +699,23 @@ export function upsertStudent(studentId: string, name: string): void {
   save({ ...book, roster, roll: rollFromRoster(roster) })
 }
 
+/**
+ * Add a Student by name only — the board assigns `S-…`.
+ *
+ * Returns the studentId. A name already on the roster is left alone (same id), so Add is
+ * safe to press twice.
+ */
+export function registerStudent(name: string): string | null {
+  const trimmed = name.trim()
+  if (trimmed === '') return null
+  const book = migrateRosterForward(readLogbook())
+  const existing = studentByName(book, trimmed)
+  if (existing) return existing.studentId
+  const studentId = allocateStudentId(book)
+  upsertStudent(studentId, trimmed)
+  return studentId
+}
+
 export function removeStudent(studentId: string): void {
   const book = migrateRosterForward(readLogbook())
   const roster = book.roster.filter((student) => student.studentId !== studentId)
@@ -714,6 +766,20 @@ export function upsertTrainerLesson(lessonId: string, lessonName: string): void 
     { lessonId: id, lessonName: name },
   ].sort((a, b) => a.lessonName.localeCompare(b.lessonName))
   save({ ...book, trainerLessons })
+}
+
+/**
+ * Create a prepared Lesson by name only — the board assigns `L-…`.
+ *
+ * Returns the lessonId, or null when the name is empty.
+ */
+export function createTrainerLesson(lessonName: string): string | null {
+  const name = lessonName.trim()
+  if (name === '') return null
+  const book = migrateRosterForward(readLogbook())
+  const lessonId = allocateLessonId(book)
+  upsertTrainerLesson(lessonId, name)
+  return lessonId
 }
 
 export function removeTrainerLesson(lessonId: string): void {

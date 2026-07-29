@@ -46,15 +46,16 @@ describe('the class', () => {
     expect(screen.getByText('Ravi')).toBeInTheDocument()
   })
 
-  it('adds a Student with id and name', () => {
+  it('adds a Student by name and assigns an S- id', () => {
     show()
 
-    fireEvent.change(screen.getByLabelText(/^Student ID$/i), { target: { value: 'yr8-amara' } })
     fireEvent.change(screen.getByLabelText(/^Name$/i), { target: { value: 'Amara' } })
     fireEvent.click(screen.getByRole('button', { name: /^Add$/ }))
 
-    expect(readLogbook().roster).toEqual([{ studentId: 'yr8-amara', name: 'Amara' }])
+    expect(screen.queryByLabelText(/^Student ID$/i)).not.toBeInTheDocument()
+    expect(readLogbook().roster).toEqual([{ studentId: 'S-0001', name: 'Amara' }])
     expect(readLogbook().roll).toEqual(['Amara'])
+    expect(screen.getByText('S-0001')).toBeInTheDocument()
   })
 
   it('removes one', () => {

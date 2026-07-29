@@ -18,6 +18,7 @@ import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { AssignmentColumn } from './AssignmentColumn'
 import { ExerciseList } from './ExerciseList'
+import { LessonPrepPanel } from './LessonPrepPanel'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { LogbookLocationNote } from './LogbookLocationNote'
@@ -157,6 +158,8 @@ function PreFlight({
           {withheld.map((drone) => drone.name).join(', ')}.
         </p>
       )}
+
+      <LessonPrepPanel drones={drones} book={book} />
 
       <AssignmentColumn drones={drones} book={book} />
 

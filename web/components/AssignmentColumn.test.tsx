@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { aDroneState, aTelemetry } from '@techtechflight/contract/fixtures'
-import { clearLogbook, readLogbook, saveRoll } from '@/lib/logbook'
+import { clearLogbook, legacyStudentIdFor, readLogbook, saveRoll, studentOf } from '@/lib/logbook'
 import { AssignmentColumn } from './AssignmentColumn'
 
 /**
@@ -38,8 +38,11 @@ describe('assigning a class', () => {
     await user.type(screen.getByLabelText(/Who is flying Drone 1/i), 'Priya')
     await user.tab()
 
-    expect(readLogbook().students['ttf-0001']).toBe('Priya')
-    expect(readLogbook().roll).toContain('Priya')
+    const book = readLogbook()
+    expect(studentOf(book, 'ttf-0001')).toBe('Priya')
+    expect(book.students['ttf-0001']).toBe(legacyStudentIdFor('Priya'))
+    expect(book.roll).toContain('Priya')
+    expect(book.roster).toEqual([{ studentId: legacyStudentIdFor('Priya'), name: 'Priya' }])
   })
 
   it('completes from names already used, so a class is typed once', () => {

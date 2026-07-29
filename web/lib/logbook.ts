@@ -13,6 +13,10 @@ import type { DroneId, FleetEvent } from '@techtechflight/contract'
  * it. It is also the only option that keeps the board read-only, works in a school with
  * no internet, and needs no account. There is no export route: records stay in one
  * browser profile (Settings Export/Import/Clear were withdrawn).
+ *
+ * Trainer identity (Student / trainer Drone / prepared Lesson / LessonDrone /
+ * LessonAssignment) lives here too — 3NF-shaped relations in the same browser store
+ * (ADR-0005). Nothing about those rows rides the Telemetry socket.
  */
 
 export type ServiceState = 'in-service' | 'watch' | 'out-of-service'
@@ -123,6 +127,48 @@ export interface CommandRecord {
   readonly kind: string
 }
 
+/**
+ * A Student the Teacher has registered — identity plus the name said across the room.
+ *
+ * `studentId` is what Assignments join on. `name` is what strips and Alerts show (D5).
+ * Napkin example IDs are illustration only; Teachers choose their own.
+ */
+export interface StudentRecord {
+  readonly studentId: string
+  readonly name: string
+}
+
+/**
+ * Trainer inventory metadata for one airframe — not flight Telemetry.
+ *
+ * `droneId` aligns with the Fleet id when known. `model` and `createdDate` are what a
+ * Teacher writes down about the craft between Lessons; they never ride the socket.
+ */
+export interface TrainerDroneRecord {
+  readonly droneId: DroneId
+  readonly model: string
+  readonly createdDate: string
+}
+
+/** A prepared class / plan in the Trainer DB — distinct from a running LessonRecord. */
+export interface TrainerLessonRecord {
+  readonly lessonId: string
+  readonly lessonName: string
+}
+
+/** Which craft are in a prepared Lesson (many-to-many; not a forever belongs-To). */
+export interface LessonDroneRecord {
+  readonly lessonId: string
+  readonly droneId: DroneId
+}
+
+/** Who flies which craft in a prepared Lesson — keyed by studentId, not name. */
+export interface LessonAssignmentRecord {
+  readonly lessonId: string
+  readonly droneId: DroneId
+  readonly studentId: string
+}
+
 export interface Logbook {
   readonly notes: Readonly<Record<DroneId, DroneNote>>
   readonly service: Readonly<Record<DroneId, ServiceRecord>>
@@ -133,15 +179,28 @@ export interface Logbook {
    * A Drone reports what it is doing; it has no idea whose hands are on the controller.
    * Without this the Flight Control Center can say "Drone 3 is too close to Drone 1" and
    * the Teacher still has to work out who to call across a noisy room.
+   *
+   * Values are `studentId` once the roster has been written; legacy name-only values still
+   * load and `studentOf` resolves either shape to the name strips show.
    */
   readonly students: Readonly<Record<DroneId, string>>
   /**
    * The names in the class, kept between Lessons.
    *
-   * So a Teacher types a class once rather than every period. It is the only thing this
-   * product stores about a Student, deliberately — see DESIGN.md §7.1.
+   * Derived from `roster` on write. Legacy name-only rolls still load; the next write
+   * migrates them into Student records with ids.
    */
   readonly roll: readonly string[]
+  /** Registered Students — studentId + name. Empty until a write migrates a legacy roll. */
+  readonly roster: readonly StudentRecord[]
+  /** Trainer inventory rows — model and created date per Drone. */
+  readonly trainerDrones: readonly TrainerDroneRecord[]
+  /** Prepared Lessons in the Trainer DB (plans), not closed LessonRecords. */
+  readonly trainerLessons: readonly TrainerLessonRecord[]
+  /** Lesson ↔ Drone membership for a prepared Lesson. */
+  readonly lessonDrones: readonly LessonDroneRecord[]
+  /** Lesson ↔ Drone → Student for a prepared Lesson. */
+  readonly lessonAssignments: readonly LessonAssignmentRecord[]
 }
 
 /**
@@ -160,7 +219,86 @@ export function studentsFrom(stored: StoredLogbook): Readonly<Record<DroneId, st
   return stored.students ?? stored.pilots ?? {}
 }
 
-const EMPTY: Logbook = { notes: {}, service: {}, lessons: [], students: {}, roll: [] }
+const EMPTY: Logbook = {
+  notes: {},
+  service: {},
+  lessons: [],
+  students: {},
+  roll: [],
+  roster: [],
+  trainerDrones: [],
+  trainerLessons: [],
+  lessonDrones: [],
+  lessonAssignments: [],
+}
+
+function rollFromRoster(roster: readonly StudentRecord[]): readonly string[] {
+  return [...new Set(roster.map((student) => student.name))].sort((a, b) => a.localeCompare(b))
+}
+
+function slugForId(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 32)
+}
+
+/** Stable id for a legacy name so a migrate-on-write does not invent a new one every save. */
+export function legacyStudentIdFor(name: string): string {
+  const slug = slugForId(name)
+  return slug === '' ? 'stu-unnamed' : `stu-${slug}`
+}
+
+/**
+ * Promote a name-only roll into roster rows, and rewrite live assignments to studentIds.
+ *
+ * Called on write, not on load — a Teacher who never opens Settings still keeps their
+ * name-only file readable forever (#48).
+ */
+export function migrateRosterForward(book: Logbook): Logbook {
+  if (book.roster.length > 0) {
+    const roll = rollFromRoster(book.roster)
+    if (roll.length === book.roll.length && roll.every((name, i) => name === book.roll[i])) {
+      return book
+    }
+    return { ...book, roll }
+  }
+  if (book.roll.length === 0 && Object.keys(book.students).length === 0) return book
+
+  const names = new Set<string>([...book.roll, ...Object.values(book.students)])
+  const roster: StudentRecord[] = [...names]
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => ({ studentId: legacyStudentIdFor(name), name }))
+
+  const byName = new Map(roster.map((student) => [student.name, student.studentId]))
+  const students: Record<DroneId, string> = {}
+  for (const [droneId, value] of Object.entries(book.students)) {
+    const trimmed = value.trim()
+    if (trimmed === '') continue
+    students[droneId] = byName.get(trimmed) ?? trimmed
+  }
+
+  return { ...book, roster, students, roll: rollFromRoster(roster) }
+}
+
+export function studentRecordOf(book: Logbook, studentId: string): StudentRecord | null {
+  return book.roster.find((student) => student.studentId === studentId) ?? null
+}
+
+export function studentByName(book: Logbook, name: string): StudentRecord | null {
+  const trimmed = name.trim()
+  if (trimmed === '') return null
+  return book.roster.find((student) => student.name === trimmed) ?? null
+}
+
+/** Resolve a live assignment value (studentId or legacy name) to the name strips show. */
+export function displayNameForAssignment(book: Logbook, value: string): string {
+  return studentRecordOf(book, value)?.name ?? value
+}
 
 export const LOGBOOK_KEY = 'techtechflight:logbook'
 
@@ -213,6 +351,8 @@ function load(): Logbook {
     const raw = window.localStorage.getItem(LOGBOOK_KEY)
     if (!raw) return EMPTY
     const parsed = JSON.parse(raw) as StoredLogbook
+    const roster = parsed.roster ?? []
+    const roll = parsed.roll ?? (roster.length > 0 ? [...rollFromRoster(roster)] : [])
     return {
       notes: parsed.notes ?? {},
       service: parsed.service ?? {},
@@ -220,7 +360,14 @@ function load(): Logbook {
       // Absent on records written before the board tracked who was flying what, and
       // under the old name on records written before the glossary was applied.
       students: studentsFrom(parsed),
-      roll: parsed.roll ?? [],
+      roll,
+      // Trainer DB tables — absent on every record written before #48. Left empty on
+      // load; migrate forward on write rather than rewriting the Teacher's file quietly.
+      roster,
+      trainerDrones: parsed.trainerDrones ?? [],
+      trainerLessons: parsed.trainerLessons ?? [],
+      lessonDrones: parsed.lessonDrones ?? [],
+      lessonAssignments: parsed.lessonAssignments ?? [],
     }
   } catch {
     // A locked-down school browser can refuse storage, and a half-written record is
@@ -270,20 +417,43 @@ export function serviceStateOf(book: Logbook, droneId: DroneId): ServiceState {
 
 /** Hand a Drone to a Student, or take it back with an empty name. */
 export function assignStudent(droneId: DroneId, name: string): void {
-  const book = readLogbook()
+  let book = migrateRosterForward(readLogbook())
+  const trimmed = name.trim()
   const students = { ...book.students }
-  if (name.trim() === '') delete students[droneId]
-  else students[droneId] = name.trim()
-  save({ ...book, students })
+  if (trimmed === '') {
+    delete students[droneId]
+    save({ ...book, students })
+    return
+  }
+
+  let student = studentByName(book, trimmed) ?? studentRecordOf(book, trimmed)
+  if (!student) {
+    student = { studentId: legacyStudentIdFor(trimmed), name: trimmed }
+    const roster = [...book.roster, student].sort((a, b) => a.name.localeCompare(b.name))
+    book = { ...book, roster, roll: rollFromRoster(roster) }
+  }
+  students[droneId] = student.studentId
+  save({ ...book, students, roll: rollFromRoster(book.roster) })
 }
 
+/** The name strips and Alerts show — never the studentId. */
 export function studentOf(book: Logbook, droneId: DroneId): string | null {
-  return book.students[droneId] ?? null
+  const value = book.students[droneId]
+  if (value === undefined) return null
+  return displayNameForAssignment(book, value)
+}
+
+/** The studentId on a live assignment, when the value has been migrated. */
+export function studentIdOf(book: Logbook, droneId: DroneId): string | null {
+  const value = book.students[droneId]
+  if (value === undefined) return null
+  if (studentRecordOf(book, value)) return value
+  return studentByName(book, value)?.studentId ?? null
 }
 
 /** Everyone put down at the end of a lesson, so the next one starts clean. */
 export function clearStudents(): void {
-  save({ ...readLogbook(), students: {} })
+  save({ ...migrateRosterForward(readLogbook()), students: {} })
 }
 
 export function startLesson(
@@ -293,8 +463,15 @@ export function startLesson(
   at: number,
   exercises: readonly Exercise[] = [],
 ): string {
-  const book = readLogbook()
+  const book = migrateRosterForward(readLogbook())
   const id = `lesson-${at}`
+  // Names captured, not studentIds — a report read next term must stay readable after
+  // the roster has changed (G6).
+  const assignments: Record<DroneId, string> = {}
+  for (const droneId of Object.keys(book.students)) {
+    const name = studentOf(book, droneId)
+    if (name !== null) assignments[droneId] = name
+  }
   const lesson: LessonRecord = {
     id,
     label: label.trim() || 'Untitled lesson',
@@ -306,7 +483,7 @@ export function startLesson(
     exercises,
     // Captured as it begins. A Drone reassigned mid-lesson must not rewrite who was
     // flying it at the start, which is what the report is a record of.
-    assignments: { ...book.students },
+    assignments,
     commands: [],
   }
   save({ ...book, lessons: [lesson, ...book.lessons].slice(0, 100) })
@@ -438,19 +615,193 @@ export function runningLesson(book: Logbook): LessonRecord | null {
 
 /** The class, kept so it is typed once rather than every period. */
 export function saveRoll(names: readonly string[]): void {
-  const roll = [...new Set(names.map((name) => name.trim()).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b),
-  )
-  save({ ...readLogbook(), roll })
+  const book = migrateRosterForward(readLogbook())
+  const wanted = [...new Set(names.map((name) => name.trim()).filter(Boolean))]
+  const byName = new Map(book.roster.map((student) => [student.name, student]))
+  const roster: StudentRecord[] = wanted
+    .map((name) => byName.get(name) ?? { studentId: legacyStudentIdFor(name), name })
+    .sort((a, b) => a.name.localeCompare(b.name))
+
+  const keptIds = new Set(roster.map((student) => student.studentId))
+  const students: Record<DroneId, string> = {}
+  for (const [droneId, value] of Object.entries(book.students)) {
+    if (keptIds.has(value)) {
+      students[droneId] = value
+      continue
+    }
+    const match = roster.find((student) => student.name === value.trim())
+    if (match) students[droneId] = match.studentId
+  }
+
+  save({
+    ...book,
+    roster,
+    students,
+    roll: rollFromRoster(roster),
+    lessonAssignments: book.lessonAssignments.filter((row) => keptIds.has(row.studentId)),
+  })
 }
 
 /** Remember a name the Teacher has just used, so they never type it twice. */
 export function rememberStudent(name: string): void {
   const trimmed = name.trim()
   if (trimmed === '') return
-  const book = readLogbook()
-  if (book.roll.includes(trimmed)) return
+  const book = migrateRosterForward(readLogbook())
+  if (studentByName(book, trimmed)) return
   saveRoll([...book.roll, trimmed])
+}
+
+/** Register or update a Student by id. studentId must be unique. */
+export function upsertStudent(studentId: string, name: string): void {
+  const id = studentId.trim()
+  const trimmed = name.trim()
+  if (id === '' || trimmed === '') return
+  const book = migrateRosterForward(readLogbook())
+  const without = book.roster.filter((student) => student.studentId !== id)
+  const roster = [...without, { studentId: id, name: trimmed }].sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )
+  save({ ...book, roster, roll: rollFromRoster(roster) })
+}
+
+export function removeStudent(studentId: string): void {
+  const book = migrateRosterForward(readLogbook())
+  const roster = book.roster.filter((student) => student.studentId !== studentId)
+  const students: Record<DroneId, string> = {}
+  for (const [droneId, value] of Object.entries(book.students)) {
+    if (value !== studentId) students[droneId] = value
+  }
+  save({
+    ...book,
+    roster,
+    students,
+    roll: rollFromRoster(roster),
+    lessonAssignments: book.lessonAssignments.filter((row) => row.studentId !== studentId),
+  })
+}
+
+export function upsertTrainerDrone(droneId: DroneId, model: string, createdDate: string): void {
+  const book = migrateRosterForward(readLogbook())
+  const row: TrainerDroneRecord = {
+    droneId,
+    model: model.trim(),
+    createdDate: createdDate.trim(),
+  }
+  const trainerDrones = [
+    ...book.trainerDrones.filter((drone) => drone.droneId !== droneId),
+    row,
+  ].sort((a, b) => a.droneId.localeCompare(b.droneId))
+  save({ ...book, trainerDrones })
+}
+
+export function removeTrainerDrone(droneId: DroneId): void {
+  const book = migrateRosterForward(readLogbook())
+  save({
+    ...book,
+    trainerDrones: book.trainerDrones.filter((drone) => drone.droneId !== droneId),
+    lessonDrones: book.lessonDrones.filter((row) => row.droneId !== droneId),
+    lessonAssignments: book.lessonAssignments.filter((row) => row.droneId !== droneId),
+  })
+}
+
+export function upsertTrainerLesson(lessonId: string, lessonName: string): void {
+  const id = lessonId.trim()
+  const name = lessonName.trim()
+  if (id === '' || name === '') return
+  const book = migrateRosterForward(readLogbook())
+  const trainerLessons = [
+    ...book.trainerLessons.filter((lesson) => lesson.lessonId !== id),
+    { lessonId: id, lessonName: name },
+  ].sort((a, b) => a.lessonName.localeCompare(b.lessonName))
+  save({ ...book, trainerLessons })
+}
+
+export function removeTrainerLesson(lessonId: string): void {
+  const book = migrateRosterForward(readLogbook())
+  save({
+    ...book,
+    trainerLessons: book.trainerLessons.filter((lesson) => lesson.lessonId !== lessonId),
+    lessonDrones: book.lessonDrones.filter((row) => row.lessonId !== lessonId),
+    lessonAssignments: book.lessonAssignments.filter((row) => row.lessonId !== lessonId),
+  })
+}
+
+/** Attach a Drone to a prepared Lesson — membership only; not a permanent belongs-To. */
+export function attachDroneToLesson(lessonId: string, droneId: DroneId): void {
+  const book = migrateRosterForward(readLogbook())
+  if (book.lessonDrones.some((row) => row.lessonId === lessonId && row.droneId === droneId)) {
+    return
+  }
+  save({
+    ...book,
+    lessonDrones: [...book.lessonDrones, { lessonId, droneId }],
+  })
+}
+
+export function detachDroneFromLesson(lessonId: string, droneId: DroneId): void {
+  const book = migrateRosterForward(readLogbook())
+  save({
+    ...book,
+    lessonDrones: book.lessonDrones.filter(
+      (row) => !(row.lessonId === lessonId && row.droneId === droneId),
+    ),
+    lessonAssignments: book.lessonAssignments.filter(
+      (row) => !(row.lessonId === lessonId && row.droneId === droneId),
+    ),
+  })
+}
+
+/**
+ * Assign a Student to a Drone for one prepared Lesson.
+ *
+ * One Student cannot fly two Drones in the same Lesson; one Drone cannot have two Students.
+ */
+export function assignStudentToLessonDrone(
+  lessonId: string,
+  droneId: DroneId,
+  studentId: string,
+): void {
+  const book = migrateRosterForward(readLogbook())
+  if (!studentRecordOf(book, studentId)) return
+  if (!book.lessonDrones.some((row) => row.lessonId === lessonId && row.droneId === droneId)) {
+    // Membership first — Assignment without LessonDrone would be a dangling relation.
+    return
+  }
+  const lessonAssignments = book.lessonAssignments.filter(
+    (row) =>
+      !(row.lessonId === lessonId && row.droneId === droneId) &&
+      !(row.lessonId === lessonId && row.studentId === studentId),
+  )
+  save({
+    ...book,
+    lessonAssignments: [...lessonAssignments, { lessonId, droneId, studentId }],
+  })
+}
+
+export function clearLessonDroneAssignment(lessonId: string, droneId: DroneId): void {
+  const book = migrateRosterForward(readLogbook())
+  save({
+    ...book,
+    lessonAssignments: book.lessonAssignments.filter(
+      (row) => !(row.lessonId === lessonId && row.droneId === droneId),
+    ),
+  })
+}
+
+/**
+ * Copy a prepared Lesson's Assignments onto the live board, so Control strips show names.
+ *
+ * Empty-assignment Lessons stay empty (E7 / D9) — applying nothing clears nothing.
+ */
+export function applyLessonAssignments(lessonId: string): void {
+  const book = migrateRosterForward(readLogbook())
+  const rows = book.lessonAssignments.filter((row) => row.lessonId === lessonId)
+  if (rows.length === 0) return
+  const students: Record<DroneId, string> = { ...book.students }
+  for (const row of rows) {
+    students[row.droneId] = row.studentId
+  }
+  save({ ...book, students })
 }
 
 /** Note a Command against the running Lesson, for the report afterwards (C7). */

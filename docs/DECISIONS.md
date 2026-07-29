@@ -9,8 +9,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
----
-
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 
 - **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`
@@ -22,6 +20,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   practical classroom-sized ONNX; napkin “YOLOv12” waits on a publishable browser export.
 - **Note:** Detections stay app-side — never on Telemetry. Swap path: drop a newer ONNX in
   `public/models/` and point `MODEL_URL`.
+
+## 2026-07-29 School camera streams are env/IT only (no Settings panel)
+
+- **Decision:** Remove the Teacher **School camera streams** Settings UI. Stream URLs stay
+  outside Telemetry: optional `NEXT_PUBLIC_CAMERA_STREAM_MAP` deploy seed plus
+  `techtechflight:camera-stream-map` localStorage when already set (lib helpers remain for
+  CameraPane / tests). Simulated Fleets ignore the map. No Teacher form to edit the map.
+- **Reason:** Owner — that panel is not wanted on Settings (#66).
+- **Note:** Hardware `CameraPane` still plays a mapped http(s) `<video>` when Telemetry says
+  `streaming`. Unmapped hardware keeps the honest notice.
 
 ## 2026-07-29 Camera from Control is a large centered popup
 
@@ -56,11 +64,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 - **Decision:** Control strips (and the scope selection dock) offer a **Camera** control that
   opens a Radix Dialog hosting the existing `CameraPane`. Fleet detail offers the same
-  entry. Settings **School camera streams** map stays for URL configuration. Camera is not
-  a Command — kept outside `CommandRow` (C9). Escape / Close dismisses.
-- **Reason:** Owner — Settings is setup; teaching wants click → camera on Control (#59).
-- **Note:** Layout superseded by the centered-popup decision above (#67). No Telemetry URL.
-  Sim Start/Stop remain ScenarioControls inside the pane.
+  entry. Camera is not a Command — kept outside `CommandRow` (C9). Escape / Close dismisses.
+- **Reason:** Owner — teaching wants click → camera on Control (#59).
+- **Note:** Layout superseded by the centered-popup decision above (#67). Stream map is
+  env/IT only (#66) — not a Settings form. No Telemetry URL. Sim Start/Stop remain
+  ScenarioControls inside the pane.
 
 ## 2026-07-29 QR on camera is a landing target (display-first)
 
@@ -77,18 +85,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ## 2026-07-29 School camera streams are a Settings/env map + native `<video>`
 
-- **Decision:** `droneId → http(s) URL` lives in Settings (`techtechflight:camera-stream-map`
-  localStorage), seeded by optional `NEXT_PUBLIC_CAMERA_STREAM_MAP` JSON when storage is
-  absent. `CameraPane` plays a mapped URL with a native `<video controls playsInline muted
-  autoPlay>` when hardware Telemetry says `streaming` and a map entry exists. No hls.js —
-  progressive HTTP(S) broadly; Safari-native HLS (`.m3u8`) where the browser supports it.
-  Simulated Fleets keep labeled demo pixels and ignore the map. URLs sanitized to absolute
-  http(s) without credentials.
-- **Reason:** REQUIREMENTS forbid stream URLs in Telemetry (#50). Teachers need a configure
-  surface; school IT can still bake a seed at deploy. Native `<video>` avoids a decoder
-  dependency until a classroom proves Chromium HLS is required.
-- **Note:** Unmapped hardware streaming keeps the honest “needs a school stream map” notice.
-  No fake Start on hardware. WebRTC / hls.js remain follow-ups if schools need them.
+- **Decision:** `droneId → http(s) URL` lives outside Telemetry
+  (`techtechflight:camera-stream-map` localStorage), seeded by optional
+  `NEXT_PUBLIC_CAMERA_STREAM_MAP` JSON when storage is absent. `CameraPane` plays a mapped
+  URL with a native `<video controls playsInline muted autoPlay>` when hardware Telemetry
+  says `streaming` and a map entry exists. No hls.js — progressive HTTP(S) broadly;
+  Safari-native HLS (`.m3u8`) where the browser supports it. Simulated Fleets keep labeled
+  demo pixels and ignore the map. URLs sanitized to absolute http(s) without credentials.
+- **Reason:** REQUIREMENTS forbid stream URLs in Telemetry (#50). School IT can bake a seed
+  at deploy. Native `<video>` avoids a decoder dependency until a classroom proves Chromium
+  HLS is required.
+- **Note:** Teacher Settings form removed in #66 — map is env/IT only. Unmapped hardware
+  streaming keeps the honest “needs a school stream map” notice. No fake Start on hardware.
+  WebRTC / hls.js remain follow-ups if schools need them.
 
 ## 2026-07-29 Camera object detection is a pluggable app-side detector (demo first)
 

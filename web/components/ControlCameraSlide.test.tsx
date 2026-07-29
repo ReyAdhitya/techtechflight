@@ -97,7 +97,7 @@ describe('opening a camera popup from Control', () => {
     expect(within(strip).getByRole('button', { name: 'Camera' })).toBeInTheDocument()
   })
 
-  it('leaves the Settings stream map in place', () => {
+  it('does not put School camera streams on Settings', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SettingsScreen />
@@ -105,8 +105,8 @@ describe('opening a camera popup from Control', () => {
     )
     settle()
 
-    expect(screen.getByText('School camera streams')).toBeInTheDocument()
-    expect(screen.getByText(/NEXT_PUBLIC_CAMERA_STREAM_MAP/)).toBeInTheDocument()
+    expect(screen.queryByText('School camera streams')).not.toBeInTheDocument()
+    expect(screen.queryByText(/NEXT_PUBLIC_CAMERA_STREAM_MAP/)).not.toBeInTheDocument()
   })
 
   it('never puts a stream URL on the Telemetry camera shape', () => {

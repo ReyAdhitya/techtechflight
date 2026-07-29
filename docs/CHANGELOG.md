@@ -9,7 +9,7 @@ would notice.
 
 - **Camera slide from Control (#59).** Every Drone strip (and the scope dock / Fleet detail)
   opens a dialog hosting `CameraPane` — watch the feed without leaving the teaching surface.
-  Settings stream map stays for URL setup. Not a Command (C9). (Layout: see #67.)
+  Stream URLs stay env/IT configuration (#66). Not a Command (C9). (Layout: see #67.)
 - **Trainer DB in the browser Logbook (#48).** Students carry `studentId` + name; trainer
   Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
   (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on
@@ -22,11 +22,12 @@ would notice.
 - **Object-detection overlay on the simulated camera feed (#49).** Pluggable `ObjectDetector`
   on `CameraPane` (demo path kept as fallback). Hardware streaming and idle/no-camera still
   show no overlay. Telemetry unchanged: `camera.streaming` only.
-- **School camera stream map (#50).** Settings holds `droneId → http(s) URL` (localStorage),
-  optionally seeded by `NEXT_PUBLIC_CAMERA_STREAM_MAP`. When hardware Telemetry says
+- **School camera stream map (#50).** `droneId → http(s) URL` via optional
+  `NEXT_PUBLIC_CAMERA_STREAM_MAP` (and localStorage when set). When hardware Telemetry says
   `camera.streaming` and the Drone is mapped, `CameraPane` plays a native `<video>` from
   that map — never from Telemetry. Unmapped hardware keeps the honest notice; simulated
-  Fleets still use labeled demo pixels and ignore the map.
+  Fleets still use labeled demo pixels and ignore the map. Teacher Settings form removed in
+  #66.
 - **QR landing targets on the camera surface (#51).** When the simulated feed has a picture,
   the board decodes landing-pad QR codes (`ttf-land:…`) and shows where to land. Display-only
   by default — never written into Telemetry. Sim may offer an explicit **Place at landing pad
@@ -42,6 +43,9 @@ would notice.
 - **Camera from Control is a large centered popup (#67).** Opening Camera no longer uses a
   narrow right rail — centered dialog at `min(42rem, 92vw)`, still Close / Escape, still
   reuses `CameraPane`. Not a Command (C9).
+- **School camera streams panel removed from Settings (#66).** Teachers no longer edit
+  droneId → URL there. Optional `NEXT_PUBLIC_CAMERA_STREAM_MAP` seed and the map lib remain
+  for deploy/IT and `CameraPane` hardware playback. Simulated Fleet feed unchanged.
 - **Lesson and Student IDs are system-generated (#58).** Teachers type names only; the board
   assigns `L-…` / `S-…`. Fleet Drones stay pick-by-existing-id. Strips still show names.
 - **Scope Drone names stay above each mark without colliding (#61).** Top-down no longer

@@ -13,6 +13,7 @@ import {
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 import { useFleet } from './FleetProvider'
+import { LogbookLocationNote } from './LogbookLocationNote'
 import { StatusGlyph } from './StatusBadge'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -43,7 +44,10 @@ export function StudentsScreen() {
       tabIndex={-1}
       className={cn(READING_FRAME, 'flex flex-col gap-8 p-4 min-[26rem]:p-8')}
     >
-      <h1 className="m-0 font-display text-summary font-medium">Students</h1>
+      <div className="flex flex-col gap-2">
+        <h1 className="m-0 font-display text-summary font-medium">Students</h1>
+        <LogbookLocationNote />
+      </div>
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">

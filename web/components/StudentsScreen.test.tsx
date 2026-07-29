@@ -31,6 +31,13 @@ afterEach(() => {
 })
 
 describe('the class', () => {
+  it('says Student records live in this browser, not on Vercel', () => {
+    show()
+
+    expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
+    expect(screen.getByRole('note')).toHaveTextContent(/not saved on Vercel/)
+  })
+
   it('keeps names so a class is typed once', () => {
     saveRoll(['Priya', 'Ravi'])
     show()

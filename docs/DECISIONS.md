@@ -111,7 +111,9 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner path is live feed → AI (YOLOv12), but the sim feed is CSS pixels and
   weights are not in the repo. Ship the overlay loop + swap point first (#49); do not claim
   a model family that is not loaded.
-- **Follow-up:** Wire ONNX Runtime Web or TF.js + real YOLOv12 weights when school pixels
+- **Follow-up:** Swap to a newer COCO ONNX (napkin “YOLOv12”) by dropping weights in
+  `web/public/models/` and pointing `MODEL_URL` — the board path is already ONNX (#69).
+  School-stream pixels can feed the same detector when the map supplies a `<video>`.
   exist (#50) or a weight artifact is pinned. Then rename `displayName` / drop `demo: true`.
 - **Alternatives considered:** Bundling a tiny real model now (no useful pixels on the CSS
   feed); putting detections on Telemetry (REQUIREMENTS forbid stream URL; same injection

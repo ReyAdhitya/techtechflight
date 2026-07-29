@@ -7,15 +7,17 @@ import {
   assignStudentToLessonDrone,
   attachDroneToLesson,
   clearLessonDroneAssignment,
+  createTrainerLesson,
   detachDroneFromLesson,
-  upsertTrainerLesson,
   type Logbook,
 } from '@/lib/logbook'
 
 /**
- * Minimal prepared-Lesson editor: name a plan, attach Drones, assign Student→Drone by id.
+ * Minimal prepared-Lesson editor: name a plan, attach Fleet Drones, assign Student→Drone.
  *
- * Does not redesign Control. Empty application is a no-op so ad-hoc starts stay free (E7).
+ * Teachers type a **Lesson name** only — the board assigns `L-…` (#58). Drones are picked
+ * from the Fleet by existing id, never typed as a second key. Does not redesign Control.
+ * Empty application is a no-op so ad-hoc starts stay free (E7).
  */
 export function LessonPrepPanel({
   drones,
@@ -24,7 +26,6 @@ export function LessonPrepPanel({
   readonly drones: readonly DroneState[]
   readonly book: Logbook
 }) {
-  const [lessonId, setLessonId] = useState('')
   const [lessonName, setLessonName] = useState('')
   const [selectedId, setSelectedId] = useState(book.trainerLessons[0]?.lessonId ?? '')
 
@@ -43,20 +44,13 @@ export function LessonPrepPanel({
       <div className="flex flex-col gap-1">
         <h2 className="label m-0">Lesson plan</h2>
         <p className="m-0 text-value text-ink-subtle">
-          Prepare which craft are in a Lesson and who flies them. The same Fleet can serve
-          many periods — membership is per Lesson, not permanent.
+          Prepare which craft are in a Lesson and who flies them. Name the plan — the board
+          assigns its ID. The same Fleet can serve many periods — membership is per Lesson,
+          not permanent.
         </p>
       </div>
 
       <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1">
-          <span className="label">Lesson ID</span>
-          <input
-            value={lessonId}
-            onChange={(event) => setLessonId(event.target.value)}
-            className="min-h-11 w-36 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
-          />
-        </label>
         <label className="flex flex-col gap-1">
           <span className="label">Lesson name</span>
           <input
@@ -68,10 +62,11 @@ export function LessonPrepPanel({
         <button
           type="button"
           onClick={() => {
-            upsertTrainerLesson(lessonId, lessonName)
-            setSelectedId(lessonId.trim())
-            setLessonId('')
-            setLessonName('')
+            const id = createTrainerLesson(lessonName)
+            if (id) {
+              setSelectedId(id)
+              setLessonName('')
+            }
           }}
           className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
         >

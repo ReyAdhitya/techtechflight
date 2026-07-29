@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Teacher find-path is this laptop’s Logbook screens
+
+- **Decision:** Canonical Trainer data lives in this browser Logbook on the classroom
+  laptop. Teachers find it on: **Students** (roster), **Settings** (trainer Drones),
+  **Lesson** (prep / LessonDrone + LessonAssignment), **Reports** (finished Lesson records).
+  Control/Fleet strips show **names** only. Vercel is preview-only — not the school DB.
+- **Reason:** Owner #74 — “nanti Teachers nyari datanya gimana?” Answer is the board on
+  this laptop, not a cloud admin.
+- **Note:** No Export/Import restore here (ADR-0012). Pointer: issue #74.
+
 ## 2026-07-29 Camera opens from Control as a large centered dialog
 
 - **Decision:** Control strips (and the scope selection dock) offer a **Camera** control that

@@ -76,6 +76,13 @@ export interface ScenarioControls {
    * Absent on a hardware Fleet (`scenarios` is null there).
    */
   resetEmergencyStop(droneId: string): void
+  /**
+   * Toggle the simulated camera stream. Not a Command (C9) — Telemetry only carries
+   * `camera.streaming`, never a URL. Hardware Fleets leave `scenarios` null, so the
+   * Drone screen must not invent a Start that claims a real airframe.
+   */
+  startCamera(droneId: string): void
+  stopCamera(droneId: string): void
   link(droneIds: readonly string[], groupId?: string): void
   unlink(droneId: string): void
   /** Park the whole classroom set — clears training scenarios. */

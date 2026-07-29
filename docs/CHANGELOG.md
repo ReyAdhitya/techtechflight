@@ -5,6 +5,12 @@ would notice.
 
 ## Unreleased
 
+### Changed
+
+- **Teachers find Student / Lesson / Trainer data on this laptop (#74).** Roster on Students,
+  trainer Drones on Settings, prep/assignments on Lesson, history on Reports — same browser
+  Logbook. Vercel remains preview-only; not the school DB.
+
 ### Added
 
 - **Camera slide from Control (#59).** Every Drone strip (and the scope dock / Fleet detail)

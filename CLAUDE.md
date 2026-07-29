@@ -67,6 +67,11 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 `TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
 `CommandableSource` — monitoring only (ADR-0011).
 
+**Camera QR is a landing target, not a scanner.** Only `ttf-land:…` payloads count; they
+answer where to land and stay display-only unless a Teacher presses sim **Place at landing
+pad (demo)**. Do not write QR into Telemetry. Until #50 lands real stream pixels, the sim
+feed scans `/qr/landing-pad-a.png`.
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

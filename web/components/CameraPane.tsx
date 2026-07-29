@@ -1,9 +1,23 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
+import { createJsQrDecoder, type QrDecoder } from '@/lib/qr/decoder'
+import {
+  landingTargetPresentation,
+  type LandingTarget,
+} from '@/lib/qr/landing-target'
+import {
+  createUrlScanner,
+  type LandingTargetScanner,
+} from '@/lib/qr/scan-landing-target'
+import { SIM_LANDING_QR_URL } from '@/lib/qr/sim-fixture'
 import { cn } from '@/lib/utils'
 import { InstrumentPanel } from './FlightInstruments'
+
+/** One decoder for the board — avoid allocating jsQR options every render. */
+const defaultQrDecoder = createJsQrDecoder()
 
 /**
  * What this Drone's camera is doing, as a surface a Teacher can look at.
@@ -14,19 +28,39 @@ import { InstrumentPanel } from './FlightInstruments'
  * picture is an app-owned placeholder; Start / Stop go through ScenarioControls,
  * never as Commands (C9). Land / Hold / Stop stay on Control — this pane is watch
  * only.
+ *
+ * When there is a picture, QR codes are scanned for **landing targets** (where to
+ * land) — not as a generic recogniser, and never written into Telemetry. Sim may
+ * offer an explicit "Place at landing pad (demo)" ScenarioControl; hardware never
+ * does (#51).
  */
 export function CameraPane({
   droneId,
   droneName,
   camera,
   scenarios,
+  qrDecoder = defaultQrDecoder,
+  landingScanner,
 }: {
   droneId: string
   droneName: string
   camera: CameraState | undefined
   scenarios: ScenarioControls | null
+  /** Injected in tests; production uses jsQR. */
+  qrDecoder?: QrDecoder
+  /**
+   * Injected scanner for jsdom tests. When omitted: sim + streaming scans the
+   * static landing-pad fixture; no picture means no scanner.
+   */
+  landingScanner?: LandingTargetScanner | null
 }) {
   const simulated = scenarios !== null
+  const hasPicture = camera?.streaming === true && simulated
+  const landingTarget = useLandingTargetScan({
+    hasPicture,
+    qrDecoder,
+    landingScanner,
+  })
 
   if (camera === undefined) {
     return (
@@ -47,6 +81,14 @@ export function CameraPane({
           )
         ) : (
           <IdleSurface simulated={simulated} />
+        )}
+
+        {landingTarget && (
+          <LandingTargetReadout
+            droneId={droneId}
+            target={landingTarget}
+            scenarios={scenarios}
+          />
         )}
 
         {simulated && (
@@ -72,6 +114,90 @@ export function CameraPane({
         )}
       </div>
     </InstrumentPanel>
+  )
+}
+
+function useLandingTargetScan({
+  hasPicture,
+  qrDecoder,
+  landingScanner,
+}: {
+  hasPicture: boolean
+  qrDecoder: QrDecoder
+  landingScanner: LandingTargetScanner | null | undefined
+}): LandingTarget | null {
+  const [target, setTarget] = useState<LandingTarget | null>(null)
+
+  useEffect(() => {
+    // No picture → no scanner. Hardware streaming without a school map (#50) is
+    // not a picture; idle sim is not a picture. Do not invent a scan either way.
+    if (!hasPicture) {
+      setTarget(null)
+      return
+    }
+
+    const scanner =
+      landingScanner !== undefined
+        ? landingScanner
+        : createUrlScanner(SIM_LANDING_QR_URL, qrDecoder)
+
+    if (!scanner) {
+      setTarget(null)
+      return
+    }
+
+    let cancelled = false
+    void scanner.scan().then((found) => {
+      if (!cancelled) setTarget(found)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [hasPicture, qrDecoder, landingScanner])
+
+  return target
+}
+
+/**
+ * Decoded landing pad on the camera surface.
+ *
+ * Pose write is opt-in and sim-only: the Teacher presses a labeled demo control,
+ * which calls `ScenarioControls.setPosition`. Never auto-applied; never offered
+ * when `scenarios` is null (hardware).
+ */
+function LandingTargetReadout({
+  droneId,
+  target,
+  scenarios,
+}: {
+  droneId: string
+  target: LandingTarget
+  scenarios: ScenarioControls | null
+}) {
+  const { title, meaning } = landingTargetPresentation(target)
+
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-surface border border-hairline bg-surface-1 px-3 py-2"
+      role="status"
+      aria-label={title}
+    >
+      <p className="m-0 text-value text-ink">{title}</p>
+      <p className="m-0 text-value text-ink-subtle">{meaning}</p>
+      <p className="m-0 text-value text-ink-subtle">
+        Decoded from the camera picture — not written into Telemetry.
+      </p>
+      {scenarios && target.kind === 'pose' && (
+        <button
+          type="button"
+          onClick={() => scenarios.setPosition(droneId, target.eastM, target.northM)}
+          className="min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+        >
+          Place at landing pad (demo)
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -110,9 +236,9 @@ function HardwareStreamingNotice() {
 /**
  * App-owned pixels while the simulator says the camera is on.
  *
- * Deliberately labeled and generated here — never from a Telemetry field — so a
- * demonstration cannot be mistaken for a live aircraft camera. CSS rather than
- * `<canvas>`: jsdom has no drawing surface, and the label is what makes the feed honest.
+ * Includes the static landing-pad QR fixture so Teachers see the marker the
+ * scanner reads (#51 / blocked on real pixels from #50). Deliberately labeled —
+ * never from a Telemetry field.
  */
 function SimulatedFeed({ droneName }: { droneName: string }) {
   return (
@@ -126,6 +252,13 @@ function SimulatedFeed({ droneName }: { droneName: string }) {
           <span className="label text-canvas">Simulated feed</span>
           <span className="text-value text-canvas/80">{droneName}</span>
         </div>
+        <img
+          src={SIM_LANDING_QR_URL}
+          alt=""
+          width={128}
+          height={128}
+          className="pointer-events-none absolute bottom-4 right-4 size-28 rounded-surface bg-canvas p-1"
+        />
         <span className="text-value text-canvas/70">Not a live aircraft camera</span>
         {/*
          * A slow sweep so the pane looks alive without claiming frames from an airframe.

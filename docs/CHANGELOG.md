@@ -7,6 +7,11 @@ would notice.
 
 ### Added
 
+- **QR landing targets on the camera surface (#51).** When the simulated feed has a picture,
+  the board decodes landing-pad QR codes (`ttf-land:…`) and shows where to land. Display-only
+  by default — never written into Telemetry. Sim may offer an explicit **Place at landing pad
+  (demo)** ScenarioControl; hardware never does. Uses a static fixture until school stream
+  pixels land (#50).
 - **Camera pane on Drone detail (#45).** Teachers see a per-aircraft camera surface driven
   by Telemetry `camera.streaming` only — no URL on the wire. Simulated Fleet gets a labeled
   demo feed plus Start/Stop via ScenarioControls (not Commands). Hardware Fleets show state

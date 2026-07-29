@@ -38,6 +38,8 @@ would notice.
 
 ### Fixed
 
+- **Lesson and Student IDs are system-generated (#58).** Teachers type names only; the board
+  assigns `L-…` / `S-…`. Fleet Drones stay pick-by-existing-id. Strips still show names.
 - **Scope Drone names stay above each mark without colliding (#61).** Top-down no longer
   alternates names below the mark; packed classroom rows get a horizontal rem stagger so
   labels stay readable. Names are never dropped to anonymous dots.

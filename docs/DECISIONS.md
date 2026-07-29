@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Teachers find Student/Lesson data on this laptop’s board
+
+- **Decision:** Canonical Trainer DB stays the **browser Logbook on the classroom laptop**
+  (localhost / that origin). Vercel is preview-only for the boss — not where Teachers look up
+  class data. Teachers find records on the same board: **Students** (roster id+name),
+  **Settings** (trainer Drones), **Lesson** (prep + assignments), **Reports** (past Lesson
+  records). Strips show **name**; Logbook joins on **studentId**. 3NF shape unchanged (#48).
+- **Reason:** Owner — database is meant to be the laptop; no online school DB story. Need a
+  clear answer to “nyari datanya di mana?” (#74).
+- **Note:** Losing the browser profile loses the term’s plans (ADR-0012). Export/Import stays
+  a separate product call — not implied by this find-path.
+
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 
 - **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`

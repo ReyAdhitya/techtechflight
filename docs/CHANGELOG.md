@@ -18,6 +18,8 @@ would notice.
 
 ### Fixed
 
+- **Lesson and Student IDs are system-generated (#58).** Teachers type names only; the board
+  assigns `L-…` / `S-…`. Fleet Drones stay pick-by-existing-id. Strips still show names.
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the
   GuardedButton / C8 press-and-hold path for classroom speed. DESIGN §13.2 marked resolved
   so it no longer contradicts §4.5.

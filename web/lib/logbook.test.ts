@@ -2,11 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { FleetEvent, FleetEventKind } from '@techtechflight/contract'
 import {
   alreadyTallied,
+  allocateLessonId,
+  allocateSerialId,
+  allocateStudentId,
   applyLessonAssignments,
   assignStudent,
   assignStudentToLessonDrone,
   attachDroneToLesson,
   clearLogbook,
+  createTrainerLesson,
   legacyStudentIdFor,
   LOGBOOK_KEY,
   SERVICE_PRESENTATION,
@@ -17,6 +21,7 @@ import {
   persistedTally,
   readLogbook,
   recordCommand,
+  registerStudent,
   rememberStudent,
   runningLesson,
   saveRoll,
@@ -257,6 +262,25 @@ describe('Trainer DB — Student, Lesson, Drone', () => {
     expect(book.students['ttf-0001']).toBe('yr8-priya')
     expect(studentOf(book, 'ttf-0001')).toBe('Priya')
     expect(studentIdOf(book, 'ttf-0001')).toBe('yr8-priya')
+  })
+
+  it('assigns S- and L- ids so Teachers never invent primary keys', () => {
+    expect(allocateSerialId([], 'S')).toBe('S-0001')
+    expect(allocateSerialId(['S-0001', 'stu-legacy', 'S-0003'], 'S')).toBe('S-0004')
+    expect(allocateSerialId(['L-0009'], 'L')).toBe('L-0010')
+
+    expect(registerStudent('Amara')).toBe('S-0001')
+    expect(registerStudent('Bea')).toBe('S-0002')
+    expect(registerStudent('Amara')).toBe('S-0001')
+    expect(allocateStudentId(readLogbook())).toBe('S-0003')
+
+    expect(createTrainerLesson('Year 8 period 3')).toBe('L-0001')
+    expect(createTrainerLesson('Year 8 period 4')).toBe('L-0002')
+    expect(allocateLessonId(readLogbook())).toBe('L-0003')
+    expect(readLogbook().trainerLessons.map((lesson) => lesson.lessonId)).toEqual([
+      'L-0001',
+      'L-0002',
+    ])
   })
 
   it('keeps Lesson↔Drone many-to-many, not a forever belongs-To', () => {

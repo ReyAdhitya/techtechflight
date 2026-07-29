@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Lesson and Student IDs are assigned by the board
+
+- **Decision:** `registerStudent(name)` → `S-0001…`; `createTrainerLesson(name)` → `L-0001…`.
+  Create UIs expose name only; id is read-only after create. Drone attachment uses Fleet
+  `droneId` (no Teacher-typed second key).
+- **Reason:** Owner #58 — forcing Lesson/Student ID into a form is wrong.
+- **Note:** `upsertStudent` / `upsertTrainerLesson` remain for tests and migration; legacy
+  `stu-…` ids do not advance the serial counter.
+
 ## 2026-07-29 Trainer DB is 3NF-shaped Logbook relations, not the napkin
 
 - **Decision:** Browser Logbook gains `roster` (Student: studentId + name), `trainerDrones`

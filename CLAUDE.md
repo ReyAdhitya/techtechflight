@@ -67,6 +67,7 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 `TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
 `CommandableSource` — monitoring only (ADR-0011).
 
+<<<<<<< HEAD
 **Lesson/Student Logbook is this browser, not Vercel.** Records live in `localStorage` on
 the machine running the board (classroom = localhost). Vercel is a preview origin with its
 own empty storage — data does not sync. Do not invent a server DB (ADR-0005, #68).
@@ -75,6 +76,12 @@ own empty storage — data does not sync. Do not invent a server DB (ADR-0005, #
 (JSON object) or localStorage `techtechflight:camera-stream-map` when already set — no
 Teacher Settings form (#50). `CameraPane` uses native `<video>` for mapped hardware streams;
 sim ignores the map. Sanitize to absolute http(s) only — no `javascript:` / credentials.
+=======
+**Camera QR is a landing target, not a scanner.** Only `ttf-land:…` payloads count; they
+answer where to land and stay display-only unless a Teacher presses sim **Place at landing
+pad (demo)**. Do not write QR into Telemetry. Until #50 lands real stream pixels, the sim
+feed scans `/qr/landing-pad-a.png`.
+>>>>>>> a05e520 (feat: detect QR landing targets on the camera surface)
 
 ## Standing rule: save after every task
 

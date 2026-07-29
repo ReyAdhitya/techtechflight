@@ -67,6 +67,11 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 `TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
 `CommandableSource` — monitoring only (ADR-0011).
 
+**Camera stream URLs are never Telemetry.** Map is Settings localStorage
+(`techtechflight:camera-stream-map`) or build seed `NEXT_PUBLIC_CAMERA_STREAM_MAP` (JSON
+object). `CameraPane` uses native `<video>` for mapped hardware streams; sim ignores the map.
+Sanitize to absolute http(s) only — no `javascript:` / credentials.
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

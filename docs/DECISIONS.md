@@ -9,6 +9,21 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 School camera streams are a Settings/env map + native `<video>`
+
+- **Decision:** `droneId → http(s) URL` lives in Settings (`techtechflight:camera-stream-map`
+  localStorage), seeded by optional `NEXT_PUBLIC_CAMERA_STREAM_MAP` JSON when storage is
+  absent. `CameraPane` plays a mapped URL with a native `<video controls playsInline muted
+  autoPlay>` when hardware Telemetry says `streaming` and a map entry exists. No hls.js —
+  progressive HTTP(S) broadly; Safari-native HLS (`.m3u8`) where the browser supports it.
+  Simulated Fleets keep labeled demo pixels and ignore the map. URLs sanitized to absolute
+  http(s) without credentials.
+- **Reason:** REQUIREMENTS forbid stream URLs in Telemetry (#50). Teachers need a configure
+  surface; school IT can still bake a seed at deploy. Native `<video>` avoids a decoder
+  dependency until a classroom proves Chromium HLS is required.
+- **Note:** Unmapped hardware streaming keeps the honest “needs a school stream map” notice.
+  No fake Start on hardware. WebRTC / hls.js remain follow-ups if schools need them.
+
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 
 - **Decision:** Drone detail mounts `CameraPane`. Telemetry stays `camera?: { streaming }`.
@@ -16,7 +31,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   (C9). Hardware (`scenarios === null`) shows idle/streaming copy only.
 - **Reason:** Owner Phase 1 — open one Drone and see its camera; YOLO/QR/DB later. REQUIREMENTS
   forbid a stream URL in Telemetry.
-- **Note:** School WebRTC/HLS map is Settings/env later, still not from Telemetry. Even-index
+- **Note:** School stream map landed in #50 (Settings/env + native `<video>`). Even-index
   classroom craft already have `hasCamera` in the simulator.
 
 ## 2026-07-28 Stop is a single press (owner overrides C8 hold)

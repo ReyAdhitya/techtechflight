@@ -1,6 +1,7 @@
 'use client'
 
 import { useFleet } from './FleetProvider'
+import { CameraStreamMapPanel } from './CameraStreamMapPanel'
 import { ScenarioPanel } from './ScenarioPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
 import { cn } from '@/lib/utils'
@@ -55,6 +56,8 @@ export function SettingsScreen() {
           here, so both halves can never disagree about them.
         </p>
       </Panel>
+
+      <CameraStreamMapPanel />
 
       <TrainingScenariosPanel />
 

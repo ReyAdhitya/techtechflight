@@ -199,7 +199,7 @@ export function ControlScreen() {
 /**
  * Commands for the selected mark while the scope covers the strip list.
  *
- * Same Land / Hold / Stop as the strip — not a second command language. A Teacher who
+ * Same Land / Hover / Stop as the strip — not a second command language. A Teacher who
  * picked a mark in full screen still has to act without exiting.
  */
 function ScopeSelectedDock({
@@ -463,7 +463,7 @@ function FlightStrip({
 /**
  * What a Teacher can ask of this aircraft.
  *
- * Land and Hold are always here because they are what gets reached for. Every Command in
+ * Land and Hover are always here because they are what gets reached for. Every Command in
  * this row takes energy out of the Drone; there is nothing here that makes one do more
  * than it is already doing, which is what makes a mistaken press survivable.
  *
@@ -502,7 +502,7 @@ function CommandRow({
         onClick={() => command(vitals.droneId, 'hold')}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
-        Hold
+        Hover
       </button>
       {stopHeld ? (
         onReleaseStop ? (
@@ -546,7 +546,7 @@ function CommandRow({
 /**
  * Emergency stop already has lasting signals: Release stop (or the held reason) and the
  * critical alert. "Stop — done" next to those reads as a stuck second control — the owner
- * asked it gone. Land/Hold still get the C4 receipt line.
+ * asked it gone. Land/Hover still get the C4 receipt line.
  */
 function showCommandReceipt(
   tracked: TrackedCommand | null,
@@ -578,7 +578,7 @@ function describeCommand(tracked: TrackedCommand): string {
 
 const COMMAND_WORDS: Readonly<Record<CommandKind, string>> = {
   land: 'Land',
-  hold: 'Hold',
+  hold: 'Hover',
   'auto-land': 'Auto-land',
   'emergency-stop': 'Stop',
 }

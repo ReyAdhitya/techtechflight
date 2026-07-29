@@ -181,15 +181,6 @@ export function AltitudeAndLanding({ telemetry }: { telemetry: Telemetry }) {
         </span>
         {landing && <span className="text-value text-ink-subtle">{landing.meaning}</span>}
       </dd>
-
-      <dt className="label self-center">Camera</dt>
-      <dd className="m-0 text-value">
-        {telemetry.camera === undefined
-          ? 'No camera fitted'
-          : telemetry.camera.streaming
-            ? 'Streaming'
-            : 'Fitted, not streaming'}
-      </dd>
     </dl>
   )
 }

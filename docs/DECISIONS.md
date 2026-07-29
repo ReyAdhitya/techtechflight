@@ -9,6 +9,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+<<<<<<< HEAD
 ## 2026-07-29 Control command Hold is labelled Hover
 
 - **Decision:** Teacher-facing strip/dock label and C4 receipt word is **Hover**. Command
@@ -25,6 +26,21 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner confusion (#68) — boss uses localhost for real lessons; Vercel is so
   they can preview online. Data must not be assumed to follow between the two.
 - **Note:** Export/Import stay withdrawn. Cloud sync is out of scope.
+=======
+## 2026-07-29 Trainer DB is 3NF-shaped Logbook relations, not the napkin
+
+- **Decision:** Browser Logbook gains `roster` (Student: studentId + name), `trainerDrones`
+  (droneId, model, createdDate), `trainerLessons`, `lessonDrones`, and `lessonAssignments`
+  (lessonId + droneId → studentId). Live `students` stores studentId after write; `studentOf`
+  always returns the name for strips (D5). LessonRecord.assignments still captures **names**
+  at start (G6). Legacy name-only `roll` / `students` load unchanged; migrate forward on write
+  only. Napkin example IDs and nested `drones[]` are illustration — Lesson↔Drone is a
+  relation, not a forever belongs-To.
+- **Reason:** Owner photo + #48 — classroom identity needs proper related records in the
+  browser (ADR-0005); Telemetry must not carry trainer rows.
+- **Note:** Minimal Students / Settings / Lesson-prep UI. Control layout untouched. YOLO,
+  stream map, and QR stay other tickets.
+>>>>>>> e73567f (feat: minimal Trainer DB UI on Students, Settings, Lesson prep)
 
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 

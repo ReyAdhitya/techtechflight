@@ -2,8 +2,12 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { FleetEvent, FleetEventKind } from '@techtechflight/contract'
 import {
   alreadyTallied,
+  applyLessonAssignments,
   assignStudent,
+  assignStudentToLessonDrone,
+  attachDroneToLesson,
   clearLogbook,
+  legacyStudentIdFor,
   LOGBOOK_KEY,
   SERVICE_PRESENTATION,
   serviceStateOf,
@@ -17,10 +21,16 @@ import {
   runningLesson,
   saveRoll,
   startLesson,
+  studentIdOf,
+  studentOf,
   studentsFrom,
+  subscribeLogbook,
   talliedLessonCount,
   talliedWindows,
   tallyEvents,
+  upsertStudent,
+  upsertTrainerDrone,
+  upsertTrainerLesson,
 } from './logbook'
 
 /**
@@ -211,6 +221,10 @@ describe('the class list', () => {
     saveRoll(['Priya', 'Ravi'])
 
     expect(readLogbook().roll).toEqual(['Priya', 'Ravi'])
+    expect(readLogbook().roster).toEqual([
+      { studentId: legacyStudentIdFor('Priya'), name: 'Priya' },
+      { studentId: legacyStudentIdFor('Ravi'), name: 'Ravi' },
+    ])
   })
 
   it('holds each name once, however often it is offered', () => {
@@ -230,6 +244,96 @@ describe('the class list', () => {
     rememberStudent('Ravi')
 
     expect(readLogbook().roll).toEqual(['Ravi'])
+  })
+})
+
+describe('Trainer DB — Student, Lesson, Drone', () => {
+  it('registers a Student by id and shows the name on strips', () => {
+    upsertStudent('yr8-priya', 'Priya')
+    assignStudent('ttf-0001', 'Priya')
+
+    const book = readLogbook()
+    expect(book.roster).toEqual([{ studentId: 'yr8-priya', name: 'Priya' }])
+    expect(book.students['ttf-0001']).toBe('yr8-priya')
+    expect(studentOf(book, 'ttf-0001')).toBe('Priya')
+    expect(studentIdOf(book, 'ttf-0001')).toBe('yr8-priya')
+  })
+
+  it('keeps Lesson↔Drone many-to-many, not a forever belongs-To', () => {
+    upsertTrainerLesson('period-3', 'Year 8 period 3')
+    upsertTrainerLesson('period-4', 'Year 8 period 4')
+    attachDroneToLesson('period-3', 'ttf-0001')
+    attachDroneToLesson('period-4', 'ttf-0001')
+    attachDroneToLesson('period-3', 'ttf-0002')
+
+    expect(readLogbook().lessonDrones).toEqual([
+      { lessonId: 'period-3', droneId: 'ttf-0001' },
+      { lessonId: 'period-4', droneId: 'ttf-0001' },
+      { lessonId: 'period-3', droneId: 'ttf-0002' },
+    ])
+  })
+
+  it('keys LessonAssignment by studentId and applies names to the live board', () => {
+    upsertStudent('yr8-priya', 'Priya')
+    upsertTrainerLesson('period-3', 'Year 8 period 3')
+    attachDroneToLesson('period-3', 'ttf-0001')
+    assignStudentToLessonDrone('period-3', 'ttf-0001', 'yr8-priya')
+    applyLessonAssignments('period-3')
+
+    const book = readLogbook()
+    expect(book.lessonAssignments).toEqual([
+      { lessonId: 'period-3', droneId: 'ttf-0001', studentId: 'yr8-priya' },
+    ])
+    expect(studentOf(book, 'ttf-0001')).toBe('Priya')
+  })
+
+  it('stores trainer Drone metadata without touching Telemetry', () => {
+    upsertTrainerDrone('ttf-0001', 'Classroom quad', '2026-01-15')
+
+    expect(readLogbook().trainerDrones).toEqual([
+      { droneId: 'ttf-0001', model: 'Classroom quad', createdDate: '2026-01-15' },
+    ])
+  })
+
+  it('loads a legacy name-only Logbook without migrating on read', () => {
+    window.localStorage.setItem(
+      LOGBOOK_KEY,
+      JSON.stringify({
+        notes: {},
+        service: {},
+        lessons: [],
+        students: { 'ttf-0001': 'Priya' },
+        roll: ['Priya', 'Ravi'],
+      }),
+    )
+    const stop = subscribeLogbook(() => {})
+    window.dispatchEvent(new StorageEvent('storage', { key: LOGBOOK_KEY }))
+    stop()
+
+    const loaded = readLogbook()
+    expect(loaded.roster).toEqual([])
+    expect(loaded.roll).toEqual(['Priya', 'Ravi'])
+    expect(loaded.students).toEqual({ 'ttf-0001': 'Priya' })
+    expect(studentOf(loaded, 'ttf-0001')).toBe('Priya')
+
+    rememberStudent('Amara')
+    const book = readLogbook()
+    expect(book.roster.map((student) => student.name).sort()).toEqual(['Amara', 'Priya', 'Ravi'])
+    expect(studentOf(book, 'ttf-0001')).toBe('Priya')
+  })
+
+  it('still starts a Lesson with no Assignments at all', () => {
+    const id = startLesson('Ad-hoc', 0, 6, 1_000)
+    expect(runningLesson(readLogbook())?.id).toBe(id)
+    expect(runningLesson(readLogbook())?.assignments).toEqual({})
+  })
+
+  it('captures names — not studentIds — on the LessonRecord at start', () => {
+    upsertStudent('yr8-priya', 'Priya')
+    assignStudent('ttf-0001', 'Priya')
+    startLesson('Year 8', 5, 6, 1_000)
+
+    expect(runningLesson(readLogbook())?.assignments).toEqual({ 'ttf-0001': 'Priya' })
   })
 })
 

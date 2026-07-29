@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { DroneState } from '@techtechflight/contract'
+import {
+  scopeLabelPlacements,
+  type ScopeLabelPlacement,
+} from '@/lib/scope-label-placement'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { cn } from '@/lib/utils'
 
@@ -144,6 +148,13 @@ export function Scope({
 
   const elevation = isElevation(view)
   const showSelectedPanel = expanded && selected != null && selectedPanel != null
+  const labelById = scopeLabelPlacements(
+    drawn.map((drone) => {
+      const point = at(drone)
+      return { id: drone.id, xPercent: point.xPercent, yPercent: point.yPercent }
+    }),
+    elevation ? 'elevation' : 'top-down',
+  )
 
   return (
     /*
@@ -393,7 +404,7 @@ export function Scope({
           })}
         </svg>
 
-        {drawn.map((drone, index) => (
+        {drawn.map((drone) => (
           <Mark
             key={drone.id}
             drone={drone}
@@ -402,15 +413,14 @@ export function Scope({
             selected={selected === drone.id}
             onSelect={onSelect}
             /*
-             * Top-down: labels alternate above and below the mark. Six Drones in a classroom
-             * sit roughly a metre apart, which is wide enough for a name at the Teacher's
-             * font size — but not for two names on the same line when they close up.
+             * Top-down: every name above its mark (#61). Close neighbours get a horizontal
+             * rem stagger so labels do not stack into one unreadable pile — never dropped
+             * to anonymous dots, never flipped below on plan view.
              *
-             * Elevation: the label goes towards the middle of the box instead. Alternating puts
-             * every grounded Drone's name below a mark that is already on the bottom edge,
-             * where it lands outside the frame and on top of the caption.
+             * Elevation: still aim toward the middle of the box so grounded names are not
+             * clipped under the frame; the same horizontal stagger applies when packed.
              */
-            below={elevation ? at(drone).yPercent < 50 : index % 2 === 1}
+            placement={labelById.get(drone.id) ?? { vertical: 'above', nudgeXRem: 0 }}
           />
         ))}
       </div>
@@ -473,7 +483,7 @@ function Mark({
   altitudeM,
   selected,
   onSelect,
-  below,
+  placement,
 }: {
   drone: DroneState
   /** Where this mark sits in whichever view is showing, as a percentage of the box. */
@@ -489,7 +499,7 @@ function Mark({
   altitudeM: number | undefined
   selected: boolean
   onSelect: ((droneId: string) => void) | undefined
-  below: boolean
+  placement: ScopeLabelPlacement
 }) {
   const airborne = drone.status === 'Flying'
 
@@ -516,14 +526,20 @@ function Mark({
    * The mark is where the Drone *is*, so it has to sit on the projected point exactly.
    * Laying the name and the mark out as a column and centring the pair would move the
    * mark by half the label block — and by a different amount above than below, so a row
-   * of Drones standing in a line would draw as a zigzag.
+   * of Drones standing in a line would draw as a zigzag. Horizontal nudge (rem) is on the
+   * label only, so the mark stays put while packed names fan out (#61).
    */
   const labels = (
     <span
       className={cn(
-        'absolute left-1/2 flex -translate-x-1/2 flex-col items-center whitespace-nowrap leading-tight',
-        below ? 'top-full mt-0.5' : 'bottom-full mb-0.5',
+        'absolute left-1/2 flex flex-col items-center whitespace-nowrap leading-tight',
+        placement.vertical === 'below' ? 'top-full mt-0.5' : 'bottom-full mb-0.5',
       )}
+      style={{
+        transform: `translateX(calc(-50% + ${placement.nudgeXRem}rem))`,
+      }}
+      data-label-vertical={placement.vertical}
+      data-label-nudge={String(placement.nudgeXRem)}
     >
       <span className="text-label text-ink-muted">{drone.name}</span>
       {/*

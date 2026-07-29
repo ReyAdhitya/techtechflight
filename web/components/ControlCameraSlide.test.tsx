@@ -30,8 +30,8 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('opening a camera slide from Control', () => {
-  it('opens CameraPane for that Drone and closes on Close', () => {
+describe('opening a camera popup from Control', () => {
+  it('opens CameraPane for that Drone in a large centered dialog and closes on Close', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
@@ -43,14 +43,25 @@ describe('opening a camera slide from Control', () => {
     expect(strip).not.toBeNull()
     fireEvent.click(within(strip as HTMLElement).getByRole('button', { name: 'Camera' }))
 
-    const slide = screen.getByRole('dialog', { name: 'Drone 1 camera' })
-    expect(within(slide).getByRole('button', { name: 'Start camera' })).toBeInTheDocument()
+    const popup = screen.getByRole('dialog', { name: 'Drone 1 camera' })
+    expect(within(popup).getByRole('button', { name: 'Start camera' })).toBeInTheDocument()
+    /*
+     * jsdom has no layout — assert the centering utilities on the dialog itself
+     * (same idea as SiteHeader.test reading the stylesheet for flex axes).
+     */
+    expect(popup.className).toMatch(/left-1\/2/)
+    expect(popup.className).toMatch(/-translate-x-1\/2/)
+    expect(popup.className).toMatch(/top-1\/2/)
+    expect(popup.className).toMatch(/-translate-y-1\/2/)
+    expect(popup.className).toMatch(/min\(42rem,\s*92vw\)/)
+    expect(popup.className).not.toMatch(/right-0/)
+    expect(popup.className).not.toMatch(/inset-y-0/)
 
-    fireEvent.click(within(slide).getByRole('button', { name: 'Close' }))
+    fireEvent.click(within(popup).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog', { name: 'Drone 1 camera' })).not.toBeInTheDocument()
   })
 
-  it('dismisses the slide on Escape', async () => {
+  it('dismisses the popup on Escape', async () => {
     vi.useRealTimers()
     const { default: userEvent } = await import('@testing-library/user-event')
     const user = userEvent.setup()
@@ -86,7 +97,7 @@ describe('opening a camera slide from Control', () => {
     expect(within(strip).getByRole('button', { name: 'Camera' })).toBeInTheDocument()
   })
 
-  it('leaves the Settings stream map in place', () => {
+  it('does not put School camera streams on Settings', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <SettingsScreen />
@@ -94,8 +105,8 @@ describe('opening a camera slide from Control', () => {
     )
     settle()
 
-    expect(screen.getByText('School camera streams')).toBeInTheDocument()
-    expect(screen.getByText(/NEXT_PUBLIC_CAMERA_STREAM_MAP/)).toBeInTheDocument()
+    expect(screen.queryByText('School camera streams')).not.toBeInTheDocument()
+    expect(screen.queryByText(/NEXT_PUBLIC_CAMERA_STREAM_MAP/)).not.toBeInTheDocument()
   })
 
   it('never puts a stream URL on the Telemetry camera shape', () => {

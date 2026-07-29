@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Front/Side coincident piles stack labels vertically
+
+- **Decision:** Elevation Scope labels for craft that share one spot (same Front column /
+  height) use a rem **vertical stack** away from the mark (`nudgeYRem`), not only the
+  horizontal stagger from #61. Grounded piles stay **above** the mark. The drawing box
+  uses `overflow-hidden` so names never paint into the “Filled = flying” figcaption.
+- **Reason:** Owner #86 — Front still showed double-printed names (e.g. Drone 8) when marks
+  stacked; 1 rem horizontal was not enough for “Drone N”.
+- **Note:** Top-down placement unchanged. Marks stay on the projected point (ADR-0014).
+
 ## 2026-07-29 Settings Classroom setup is Sim vs Radio (no hardware Commands)
 
 - **Decision:** Settings **Classroom setup** lets the boss prefer **Simulator** (default,

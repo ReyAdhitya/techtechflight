@@ -649,6 +649,36 @@ describe('the front view', () => {
     expect(box(container).style.aspectRatio).toBe('8 / 2')
   })
 
+  /*
+   * #86 — same east on Front + same height is one pixel pile. Horizontal rem alone still
+   * prints “Drone N” on itself; the seam is a vertical stack (`data-label-stack`) above
+   * the mark, and the drawing box clips so names never glue into “Filled = flying”.
+   */
+  it('stacks coincident Front labels vertically above the mark, clipped from the footer', () => {
+    const { container } = render(
+      <Scope
+        drones={[
+          atHeight('Drone 1', 2, 0, 0),
+          atHeight('Drone 2', 2, 1, 0),
+          atHeight('Drone 8', 2, 2, 0),
+        ]}
+        onSelect={() => {}}
+      />,
+    )
+    showFront()
+
+    const stacks = new Set<string>()
+    for (const name of ['Drone 1', 'Drone 2', 'Drone 8']) {
+      const label = screen.getByText(name).parentElement
+      expect(label).toHaveAttribute('data-label-vertical', 'above')
+      expect(label?.className).toContain('bottom-full')
+      stacks.add(label!.getAttribute('data-label-stack') ?? '')
+    }
+    expect(stacks.size).toBe(3)
+    expect(box(container).className).toContain('overflow-hidden')
+    expect(screen.getByText('Filled = flying')).toBeInTheDocument()
+  })
+
   it('leaves out a heightless Drone and names it, like Side', () => {
     render(
       <Scope

@@ -266,7 +266,9 @@ export function Scope({
        */}
       <div
         className={cn(
-          'relative w-full rounded-surface border border-hairline bg-canvas',
+          // Clip label stacks so grounded Front piles never paint into the figcaption
+          // (“Filled = flying” must stay a footer key, not glue to a mark — #86).
+          'relative w-full overflow-hidden rounded-surface border border-hairline bg-canvas',
           expanded &&
             (showSelectedPanel
               ? 'max-h-[min(100%,calc(100vh-16rem))] w-full max-w-[min(100%,90vh)]'
@@ -417,10 +419,11 @@ export function Scope({
              * rem stagger so labels do not stack into one unreadable pile — never dropped
              * to anonymous dots, never flipped below on plan view.
              *
-             * Elevation: still aim toward the middle of the box so grounded names are not
-             * clipped under the frame; the same horizontal stagger applies when packed.
+             * Elevation: aim toward the middle of the box when alone; coincident Front/Side
+             * piles stack vertically in rem (#86). Grounded piles stay above the mark so
+             * names never glue into the “Filled = flying” footer.
              */
-            placement={labelById.get(drone.id) ?? { vertical: 'above', nudgeXRem: 0 }}
+            placement={labelById.get(drone.id) ?? { vertical: 'above', nudgeXRem: 0, nudgeYRem: 0 }}
           />
         ))}
       </div>
@@ -536,10 +539,13 @@ function Mark({
         placement.vertical === 'below' ? 'top-full mt-0.5' : 'bottom-full mb-0.5',
       )}
       style={{
-        transform: `translateX(calc(-50% + ${placement.nudgeXRem}rem))`,
+        transform: `translate(calc(-50% + ${placement.nudgeXRem}rem), ${
+          placement.vertical === 'below' ? placement.nudgeYRem : -placement.nudgeYRem
+        }rem)`,
       }}
       data-label-vertical={placement.vertical}
       data-label-nudge={String(placement.nudgeXRem)}
+      data-label-stack={String(placement.nudgeYRem)}
     >
       <span className="text-label text-ink-muted">{drone.name}</span>
       {/*

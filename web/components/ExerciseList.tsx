@@ -106,7 +106,7 @@ export function ExerciseList({
           <span className="label">Add an exercise</span>
           <input
             value={name}
-            placeholder="Hover and hold"
+            placeholder="Stay still in the air"
             onChange={(event) => setName(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === 'Enter') {

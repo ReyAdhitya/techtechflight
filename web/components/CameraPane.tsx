@@ -14,8 +14,21 @@ import {
   type Detection,
   type ObjectDetector,
 } from '@/lib/object-detection'
+import { createJsQrDecoder, type QrDecoder } from '@/lib/qr/decoder'
+import {
+  landingTargetPresentation,
+  type LandingTarget,
+} from '@/lib/qr/landing-target'
+import {
+  createUrlScanner,
+  type LandingTargetScanner,
+} from '@/lib/qr/scan-landing-target'
+import { SIM_LANDING_QR_URL } from '@/lib/qr/sim-fixture'
 import { cn } from '@/lib/utils'
 import { InstrumentPanel } from './FlightInstruments'
+
+/** One decoder for the board — avoid allocating jsQR options every render. */
+const defaultQrDecoder = createJsQrDecoder()
 
 /**
  * What this Drone's camera is doing, as a surface a Teacher can look at.
@@ -23,14 +36,13 @@ import { InstrumentPanel } from './FlightInstruments'
  * Telemetry may only say whether a camera is fitted and whether it is streaming
  * (`camera?: { streaming: boolean }`). A stream URL on that wire is an injection
  * surface (REQUIREMENTS) and must never appear here. School stream addresses live
- * in the env/IT map (`camera-stream-map`) — not a Teacher Settings form. On a
- * simulated Fleet the picture is an app-owned placeholder; Start / Stop go through
- * ScenarioControls, never as Commands (C9). Land / Hover / Stop stay on Control —
- * this pane is watch only.
+ * in the Settings/env map. On a simulated Fleet the picture is an app-owned
+ * placeholder; Start / Stop go through ScenarioControls, never as Commands (C9).
+ * Land / Hover / Stop stay on Control — this pane is watch only.
  *
- * Object detection is app-side on this pane (pluggable `ObjectDetector`). It does
- * not travel on Telemetry. The default is a labeled demo detector — not YOLOv12
- * until weights are loaded (docs/DECISIONS.md).
+ * Object detection is app-side (pluggable `ObjectDetector`). QR codes on the
+ * picture are scanned for **landing targets** — never written into Telemetry.
+ * Sim may offer an explicit "Place at landing pad (demo)" ScenarioControl.
  */
 export function CameraPane({
   droneId,
@@ -38,12 +50,21 @@ export function CameraPane({
   camera,
   scenarios,
   detector = demoDetector,
+  qrDecoder = defaultQrDecoder,
+  landingScanner,
 }: {
   droneId: string
   droneName: string
   camera: CameraState | undefined
   scenarios: ScenarioControls | null
   detector?: ObjectDetector
+  /** Injected in tests; production uses jsQR. */
+  qrDecoder?: QrDecoder
+  /**
+   * Injected scanner for jsdom tests. When omitted: sim + streaming scans the
+   * static landing-pad fixture; no picture means no scanner.
+   */
+  landingScanner?: LandingTargetScanner | null
 }) {
   const simulated = scenarios !== null
   const streamMap = useSyncExternalStore(
@@ -52,6 +73,12 @@ export function CameraPane({
     readServerCameraStreamMap,
   )
   const mappedUrl = streamUrlFor(droneId, streamMap)
+  const hasPicture = camera?.streaming === true && simulated
+  const landingTarget = useLandingTargetScan({
+    hasPicture,
+    qrDecoder,
+    landingScanner,
+  })
 
   if (camera === undefined) {
     return (
@@ -74,6 +101,14 @@ export function CameraPane({
           )
         ) : (
           <IdleSurface simulated={simulated} />
+        )}
+
+        {landingTarget && (
+          <LandingTargetReadout
+            droneId={droneId}
+            target={landingTarget}
+            scenarios={scenarios}
+          />
         )}
 
         {simulated && (
@@ -99,6 +134,90 @@ export function CameraPane({
         )}
       </div>
     </InstrumentPanel>
+  )
+}
+
+function useLandingTargetScan({
+  hasPicture,
+  qrDecoder,
+  landingScanner,
+}: {
+  hasPicture: boolean
+  qrDecoder: QrDecoder
+  landingScanner: LandingTargetScanner | null | undefined
+}): LandingTarget | null {
+  const [target, setTarget] = useState<LandingTarget | null>(null)
+
+  useEffect(() => {
+    // No picture → no scanner. Hardware streaming without a school map (#50) is
+    // not a picture; idle sim is not a picture. Do not invent a scan either way.
+    if (!hasPicture) {
+      setTarget(null)
+      return
+    }
+
+    const scanner =
+      landingScanner !== undefined
+        ? landingScanner
+        : createUrlScanner(SIM_LANDING_QR_URL, qrDecoder)
+
+    if (!scanner) {
+      setTarget(null)
+      return
+    }
+
+    let cancelled = false
+    void scanner.scan().then((found) => {
+      if (!cancelled) setTarget(found)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [hasPicture, qrDecoder, landingScanner])
+
+  return target
+}
+
+/**
+ * Decoded landing pad on the camera surface.
+ *
+ * Pose write is opt-in and sim-only: the Teacher presses a labeled demo control,
+ * which calls `ScenarioControls.setPosition`. Never auto-applied; never offered
+ * when `scenarios` is null (hardware).
+ */
+function LandingTargetReadout({
+  droneId,
+  target,
+  scenarios,
+}: {
+  droneId: string
+  target: LandingTarget
+  scenarios: ScenarioControls | null
+}) {
+  const { title, meaning } = landingTargetPresentation(target)
+
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-surface border border-hairline bg-surface-1 px-3 py-2"
+      role="status"
+      aria-label={title}
+    >
+      <p className="m-0 text-value text-ink">{title}</p>
+      <p className="m-0 text-value text-ink-subtle">{meaning}</p>
+      <p className="m-0 text-value text-ink-subtle">
+        Decoded from the camera picture — not written into Telemetry.
+      </p>
+      {scenarios && target.kind === 'pose' && (
+        <button
+          type="button"
+          onClick={() => scenarios.setPosition(droneId, target.eastM, target.northM)}
+          className="min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+        >
+          Place at landing pad (demo)
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -135,12 +254,7 @@ function HardwareStreamingNotice() {
 }
 
 /**
- * Live school feed from the env/IT map — never from Telemetry.
- *
- * Native `<video>` only (no hls.js). Progressive HTTP(S) media works broadly;
- * `.m3u8` HLS plays where the browser supports it natively (Safari). Muted +
- * playsInline so autoplay policies do not block the first frame; Teachers can
- * unmute from the controls.
+ * Live school feed from the Settings/env map — never from Telemetry.
  */
 function SchoolStream({ droneName, src }: { droneName: string; src: string }) {
   return (
@@ -164,13 +278,8 @@ function SchoolStream({ droneName, src }: { droneName: string; src: string }) {
 /**
  * App-owned pixels while the simulator says the camera is on.
  *
- * Deliberately labeled and generated here — never from a Telemetry field — so a
- * demonstration cannot be mistaken for a live aircraft camera. CSS rather than
- * `<canvas>`: jsdom has no drawing surface, and the label is what makes the feed honest.
- * The school stream map is ignored on purpose while ScenarioControls are present.
- *
- * Detection overlays sit as a sibling of the `role="img"` picture (not a child) so
- * assistive tech and tests can still find the list. Failures stay quiet.
+ * Includes the static landing-pad QR fixture and optional detection overlay.
+ * The school stream map is ignored while ScenarioControls are present.
  */
 function SimulatedFeed({
   droneId,
@@ -195,10 +304,14 @@ function SimulatedFeed({
             <span className="label text-canvas">Simulated feed</span>
             <span className="text-value text-canvas/80">{droneName}</span>
           </div>
+          <img
+            src={SIM_LANDING_QR_URL}
+            alt=""
+            width={128}
+            height={128}
+            className="pointer-events-none absolute bottom-4 right-4 size-28 rounded-surface bg-canvas p-1"
+          />
           <span className="text-value text-canvas/70">Not a live aircraft camera</span>
-          {/*
-           * A slow sweep so the pane looks alive without claiming frames from an airframe.
-           */}
           <span
             aria-hidden
             className="pointer-events-none absolute inset-x-0 top-1/3 h-8 animate-pulse bg-canvas/10"
@@ -218,13 +331,6 @@ function SimulatedFeed({
   )
 }
 
-/**
- * Runs the detector on an interval while the simulated feed is mounted.
- *
- * Rejects and throws collapse to an empty list — quiet idle, no crash. The
- * interval is the overlay loop the acceptance criteria ask for; real models can
- * replace `detect` without changing this hook.
- */
 function useDetectionLoop(surfaceId: string, detector: ObjectDetector): readonly Detection[] {
   const [detections, setDetections] = useState<readonly Detection[]>([])
 

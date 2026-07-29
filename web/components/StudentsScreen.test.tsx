@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { assignStudent, clearLogbook, readLogbook, saveRoll } from '@/lib/logbook'
+import { assignStudent, clearLogbook, readLogbook, saveRoll, upsertStudent } from '@/lib/logbook'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { StudentsScreen } from './StudentsScreen'
@@ -39,22 +39,25 @@ describe('the class', () => {
     expect(screen.getByText('Ravi')).toBeInTheDocument()
   })
 
-  it('adds a name', () => {
+  it('adds a Student with id and name', () => {
     show()
 
-    fireEvent.change(screen.getByLabelText(/Add a name/i), { target: { value: 'Amara' } })
+    fireEvent.change(screen.getByLabelText(/^Student ID$/i), { target: { value: 'yr8-amara' } })
+    fireEvent.change(screen.getByLabelText(/^Name$/i), { target: { value: 'Amara' } })
     fireEvent.click(screen.getByRole('button', { name: /^Add$/ }))
 
+    expect(readLogbook().roster).toEqual([{ studentId: 'yr8-amara', name: 'Amara' }])
     expect(readLogbook().roll).toEqual(['Amara'])
   })
 
   it('removes one', () => {
-    saveRoll(['Priya', 'Ravi'])
+    upsertStudent('yr8-priya', 'Priya')
+    upsertStudent('yr8-ravi', 'Ravi')
     show()
 
     fireEvent.click(screen.getByRole('button', { name: /Remove Priya from the class/i }))
 
-    expect(readLogbook().roll).toEqual(['Ravi'])
+    expect(readLogbook().roster).toEqual([{ studentId: 'yr8-ravi', name: 'Ravi' }])
   })
 })
 
@@ -70,7 +73,8 @@ describe('who is flying what', () => {
     show()
 
     expect(screen.getByRole('link', { name: 'Drone 1' })).toBeInTheDocument()
-    expect(screen.getByText('Priya')).toBeInTheDocument()
+    // Name appears on Flying now and again in The class once assign migrates the roster.
+    expect(screen.getAllByText('Priya').length).toBeGreaterThanOrEqual(1)
   })
 
   it('clears everyone at the end of a lesson', () => {

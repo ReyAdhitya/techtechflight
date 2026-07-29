@@ -6,9 +6,10 @@ import {
   clearStudents,
   readLogbook,
   readServerLogbook,
-  saveRoll,
+  removeStudent,
   studentOf,
   subscribeLogbook,
+  upsertStudent,
 } from '@/lib/logbook'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
@@ -33,9 +34,19 @@ export function StudentsScreen() {
   const { snapshot } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const drones = snapshot.state?.drones ?? []
-  const [adding, setAdding] = useState('')
+  const [studentId, setStudentId] = useState('')
+  const [name, setName] = useState('')
 
   const flying = drones.filter((drone) => studentOf(book, drone.id) !== null)
+  const roster = book.roster.length > 0
+    ? book.roster
+    : book.roll.map((rollName) => ({ studentId: '', name: rollName }))
+
+  const addStudent = () => {
+    upsertStudent(studentId, name)
+    setStudentId('')
+    setName('')
+  }
 
   return (
     <main
@@ -103,26 +114,32 @@ export function StudentsScreen() {
         <div className="flex flex-col gap-1">
           <h2 className="label m-0">The class</h2>
           <p className="m-0 text-value text-ink-subtle">
-            Retained so a class is entered once rather than once a period. Names are all this
-            board stores about a Student — nothing is recorded against them.
+            Every Student has an ID for records and a name for calling across the room. Nothing
+            else is stored against them.
           </p>
         </div>
 
-        {book.roll.length > 0 && (
-          <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-            {book.roll.map((name) => (
-              <li key={name}>
-                <span className="inline-flex min-h-11 items-center gap-2 rounded-pill border border-hairline px-3 py-1 text-value text-ink">
-                  {name}
+        {roster.length > 0 && (
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {roster.map((student) => (
+              <li
+                key={student.studentId || student.name}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-3 py-2"
+              >
+                <span className="font-display text-body font-medium text-ink">{student.name}</span>
+                {student.studentId !== '' && (
+                  <span className="tnum text-value text-ink-subtle">{student.studentId}</span>
+                )}
+                {student.studentId !== '' && (
                   <button
                     type="button"
-                    aria-label={`Remove ${name} from the class`}
-                    onClick={() => saveRoll(book.roll.filter((other) => other !== name))}
-                    className="cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
+                    aria-label={`Remove ${student.name} from the class`}
+                    onClick={() => removeStudent(student.studentId)}
+                    className="ml-auto cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
                   >
                     ×
                   </button>
-                </span>
+                )}
               </li>
             ))}
           </ul>
@@ -130,25 +147,29 @@ export function StudentsScreen() {
 
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1">
-            <span className="label">Add a name</span>
+            <span className="label">Student ID</span>
             <input
-              value={adding}
-              onChange={(event) => setAdding(event.target.value)}
+              value={studentId}
+              onChange={(event) => setStudentId(event.target.value)}
+              className="min-h-11 w-36 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="label">Name</span>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter') return
                 event.preventDefault()
-                saveRoll([...book.roll, adding])
-                setAdding('')
+                addStudent()
               }}
               className="min-h-11 w-48 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
             />
           </label>
           <button
             type="button"
-            onClick={() => {
-              saveRoll([...book.roll, adding])
-              setAdding('')
-            }}
+            onClick={addStudent}
             className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
           >
             Add

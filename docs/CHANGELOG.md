@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Trainer DB in the browser Logbook (#48).** Students carry `studentId` + name; trainer
+  Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
+  (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on
+  write. Minimal UI on Students, Settings, and Lesson prep — not a Control redesign.
 - **Camera pane on Drone detail (#45).** Teachers see a per-aircraft camera surface driven
   by Telemetry `camera.streaming` only — no URL on the wire. Simulated Fleet gets a labeled
   demo feed plus Start/Stop via ScenarioControls (not Commands). Hardware Fleets show state

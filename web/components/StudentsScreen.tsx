@@ -6,10 +6,10 @@ import {
   clearStudents,
   readLogbook,
   readServerLogbook,
+  registerStudent,
   removeStudent,
   studentOf,
   subscribeLogbook,
-  upsertStudent,
 } from '@/lib/logbook'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
@@ -30,12 +30,13 @@ import { READING_FRAME } from '@/lib/frame'
  * a system that quietly builds a failure history against a named child in a school is not
  * something to construct as a side effect of adding an assignment feature. If it is ever
  * wanted it is a deliberate decision with a safeguarding conversation attached.
+ *
+ * Teachers type a **name** only. The board assigns `S-…` (#58).
  */
 export function StudentsScreen() {
   const { snapshot } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const drones = snapshot.state?.drones ?? []
-  const [studentId, setStudentId] = useState('')
   const [name, setName] = useState('')
 
   const flying = drones.filter((drone) => studentOf(book, drone.id) !== null)
@@ -44,8 +45,7 @@ export function StudentsScreen() {
     : book.roll.map((rollName) => ({ studentId: '', name: rollName }))
 
   const addStudent = () => {
-    upsertStudent(studentId, name)
-    setStudentId('')
+    registerStudent(name)
     setName('')
   }
 
@@ -118,8 +118,8 @@ export function StudentsScreen() {
         <div className="flex flex-col gap-1">
           <h2 className="label m-0">The class</h2>
           <p className="m-0 text-value text-ink-subtle">
-            Every Student has an ID for records and a name for calling across the room. Nothing
-            else is stored against them.
+            Type a name — the board assigns an ID for records. Strips and Alerts still show
+            the name. Nothing else is stored against them.
           </p>
         </div>
 
@@ -150,14 +150,6 @@ export function StudentsScreen() {
         )}
 
         <div className="flex flex-wrap items-end gap-2">
-          <label className="flex flex-col gap-1">
-            <span className="label">Student ID</span>
-            <input
-              value={studentId}
-              onChange={(event) => setStudentId(event.target.value)}
-              className="min-h-11 w-36 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
-            />
-          </label>
           <label className="flex flex-col gap-1">
             <span className="label">Name</span>
             <input

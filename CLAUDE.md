@@ -58,6 +58,10 @@ here. And every size is `rem` — a `px` font-size on this surface is a defect (
 reorder, counts render at zero, elevation is lightness only, the amber/coral hue split.
 Argue with them in an ADR or leave them alone.
 
+**Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
+no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
+the Simulator; MAVLink radio is opt-in monitoring only (ADR-0011).
+
 **Windows:** `next build` fails with `EBUSY: rmdir 'web/out'` if any shell has that
 directory as its working directory. Git Bash rewrites a bare `/route` argument into a
 Windows path — pass routes to `scripts/shot.mjs` from PowerShell.

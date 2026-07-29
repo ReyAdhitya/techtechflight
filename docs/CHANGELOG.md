@@ -7,6 +7,11 @@ would notice.
 
 ### Added
 
+- **YOLOv8n person/object detection on the camera (#69).** While the sim camera is on, the
+  board prefers the laptop webcam and runs **YOLOv8n** (ONNX, COCO) in the browser — boxes
+  for person, chair, bottle, etc. Falls back to the labeled demo detector if weights/wasm
+  fail. Telemetry unchanged: `camera.streaming` only. Fetch weights:
+  `node scripts/fetch-yolo-model.mjs`.
 - **Camera from Control (#59 / #67).** Every Drone strip (and the scope dock / Fleet detail)
   opens a large centered dialog hosting `CameraPane` — watch the feed without leaving the
   teaching surface. Stream URLs stay env/IT (#66). Not a Command (C9).

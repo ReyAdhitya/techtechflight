@@ -1,8 +1,15 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from 'react'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
+import { boardDetector } from '@/lib/board-detector'
 import {
   readServerCameraStreamMap,
   resolveCameraStreamMap,
@@ -40,16 +47,17 @@ const defaultQrDecoder = createJsQrDecoder()
  * placeholder; Start / Stop go through ScenarioControls, never as Commands (C9).
  * Land / Hover / Stop stay on Control — this pane is watch only.
  *
- * Object detection is app-side (pluggable `ObjectDetector`). QR codes on the
- * picture are scanned for **landing targets** — never written into Telemetry.
- * Sim may offer an explicit "Place at landing pad (demo)" ScenarioControl.
+ * Object detection is app-side (pluggable `ObjectDetector`). Default loads
+ * YOLOv8n ONNX in the browser; tests inject a mock. QR codes on the picture are
+ * scanned for **landing targets** — never written into Telemetry. Sim may offer
+ * an explicit "Place at landing pad (demo)" ScenarioControl.
  */
 export function CameraPane({
   droneId,
   droneName,
   camera,
   scenarios,
-  detector = demoDetector,
+  detector,
   qrDecoder = defaultQrDecoder,
   landingScanner,
 }: {
@@ -57,6 +65,7 @@ export function CameraPane({
   droneName: string
   camera: CameraState | undefined
   scenarios: ScenarioControls | null
+  /** Injected in tests. When omitted, the board loads YOLOv8n (demo fallback). */
   detector?: ObjectDetector
   /** Injected in tests; production uses jsQR. */
   qrDecoder?: QrDecoder
@@ -93,7 +102,11 @@ export function CameraPane({
       <div className="flex flex-col gap-3">
         {camera.streaming ? (
           simulated ? (
-            <SimulatedFeed droneId={droneId} droneName={droneName} detector={detector} />
+            <SimulatedFeed
+              droneId={droneId}
+              droneName={droneName}
+              {...(detector !== undefined ? { detector } : {})}
+            />
           ) : mappedUrl !== null ? (
             <SchoolStream droneName={droneName} src={mappedUrl} />
           ) : (
@@ -276,51 +289,121 @@ function SchoolStream({ droneName, src }: { droneName: string; src: string }) {
 }
 
 /**
- * App-owned pixels while the simulator says the camera is on.
+ * App-owned surface while the simulator says the camera is on.
  *
- * Includes the static landing-pad QR fixture and optional detection overlay.
+ * Prefers the laptop webcam so YOLOv8n has real pixels (person / objects). Falls
+ * back to the labeled CSS sim + QR fixture if the browser denies the camera.
  * The school stream map is ignored while ScenarioControls are present.
  */
 function SimulatedFeed({
   droneId,
   droneName,
-  detector,
+  detector: injected,
 }: {
   droneId: string
   droneName: string
-  detector: ObjectDetector
+  detector?: ObjectDetector
 }) {
-  const detections = useDetectionLoop(droneId, detector)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [live, setLive] = useState(false)
+  const [detector, setDetector] = useState<ObjectDetector>(injected ?? demoDetector)
+
+  useEffect(() => {
+    if (injected) {
+      setDetector(injected)
+      return
+    }
+    let cancelled = false
+    void boardDetector().then((d) => {
+      if (!cancelled) setDetector(d)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [injected])
+
+  useEffect(() => {
+    if (!navigator.mediaDevices?.getUserMedia) return
+    let stream: MediaStream | null = null
+    let cancelled = false
+    void navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
+      .then((s) => {
+        if (cancelled) {
+          s.getTracks().forEach((t) => t.stop())
+          return
+        }
+        stream = s
+        const el = videoRef.current
+        if (el) {
+          el.srcObject = s
+          void el.play().then(() => setLive(true)).catch(() => setLive(false))
+        }
+      })
+      .catch(() => setLive(false))
+    return () => {
+      cancelled = true
+      stream?.getTracks().forEach((t) => t.stop())
+    }
+  }, [])
+
+  const detections = useDetectionLoop(droneId, detector, videoRef)
 
   return (
     <div className="overflow-hidden rounded-surface border border-hairline bg-ink">
       <div className="relative aspect-video w-full bg-ink">
-        <div
-          className="absolute inset-0 flex flex-col justify-between p-4"
-          role="img"
-          aria-label={`Simulated camera feed for ${droneName}`}
-        >
-          <div className="flex flex-col gap-1">
-            <span className="label text-canvas">Simulated feed</span>
+        <video
+          ref={videoRef}
+          className={cn(
+            'absolute inset-0 h-full w-full object-cover',
+            live ? 'opacity-100' : 'opacity-0',
+          )}
+          muted
+          playsInline
+          autoPlay
+          aria-hidden={!live}
+        />
+        {!live && (
+          <div
+            className="absolute inset-0 flex flex-col justify-between p-4"
+            role="img"
+            aria-label={`Simulated camera feed for ${droneName}`}
+          >
+            <div className="flex flex-col gap-1">
+              <span className="label text-canvas">Simulated feed</span>
+              <span className="text-value text-canvas/80">{droneName}</span>
+            </div>
+            <img
+              src={SIM_LANDING_QR_URL}
+              alt=""
+              width={128}
+              height={128}
+              className="pointer-events-none absolute bottom-4 right-4 size-28 rounded-surface bg-canvas p-1"
+            />
+            <span className="text-value text-canvas/70">Not a live aircraft camera</span>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-1/3 h-8 animate-pulse bg-canvas/10"
+            />
+          </div>
+        )}
+        {live && (
+          <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-0.5">
+            <span className="label text-canvas">Live camera</span>
             <span className="text-value text-canvas/80">{droneName}</span>
           </div>
-          <img
-            src={SIM_LANDING_QR_URL}
-            alt=""
-            width={128}
-            height={128}
-            className="pointer-events-none absolute bottom-4 right-4 size-28 rounded-surface bg-canvas p-1"
-          />
-          <span className="text-value text-canvas/70">Not a live aircraft camera</span>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-1/3 h-8 animate-pulse bg-canvas/10"
-          />
-        </div>
+        )}
+        <span className="sr-only">
+          {live
+            ? `Live camera feed for ${droneName}`
+            : `Simulated camera feed for ${droneName}`}
+        </span>
         <DetectionOverlay detections={detections} detector={detector} />
       </div>
       <p className="m-0 border-t border-hairline bg-surface-1 px-3 py-2 text-value text-ink-subtle">
-        Simulated feed — not a live aircraft camera
+        {live
+          ? 'Laptop camera — detection runs in this browser, not on Telemetry'
+          : 'Simulated feed — not a live aircraft camera'}
         {detections.length > 0
           ? detector.demo
             ? ` · ${detector.displayName} (not a loaded model)`
@@ -331,7 +414,11 @@ function SimulatedFeed({
   )
 }
 
-function useDetectionLoop(surfaceId: string, detector: ObjectDetector): readonly Detection[] {
+function useDetectionLoop(
+  surfaceId: string,
+  detector: ObjectDetector,
+  videoRef: RefObject<HTMLVideoElement | null>,
+): readonly Detection[] {
   const [detections, setDetections] = useState<readonly Detection[]>([])
 
   useEffect(() => {
@@ -339,7 +426,12 @@ function useDetectionLoop(surfaceId: string, detector: ObjectDetector): readonly
 
     const run = async () => {
       try {
-        const next = await detector.detect({ surfaceId })
+        const video = videoRef.current
+        const source =
+          video && video.readyState >= 2 && video.videoWidth > 0 ? video : undefined
+        const next = await detector.detect(
+          source !== undefined ? { surfaceId, source } : { surfaceId },
+        )
         if (!cancelled) setDetections(next)
       } catch {
         if (!cancelled) setDetections([])
@@ -349,13 +441,13 @@ function useDetectionLoop(surfaceId: string, detector: ObjectDetector): readonly
     void run()
     const timer = window.setInterval(() => {
       void run()
-    }, 1000)
+    }, detector.demo ? 1000 : 250)
 
     return () => {
       cancelled = true
       window.clearInterval(timer)
     }
-  }, [surfaceId, detector])
+  }, [surfaceId, detector, videoRef])
 
   return detections
 }

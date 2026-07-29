@@ -2,11 +2,9 @@
  * App-side object detection for the camera surface.
  *
  * Telemetry may only say `camera?: { streaming: boolean }` — no URL, no boxes on
- * the wire (REQUIREMENTS). Detection runs in the browser against the pane. The
- * interface is pluggable so a real runtime (ONNX Runtime Web / TF.js) and YOLOv12
- * weights can swap in later without rewriting CameraPane. This package ships a
- * deterministic demo detector only; it must not be labeled as YOLOv12 until
- * weights are actually loaded (see docs/DECISIONS.md).
+ * the wire (REQUIREMENTS). Detection runs in the browser against the pane.
+ * Default path loads YOLOv8n ONNX (`board-detector.ts`); demo detector is the
+ * offline / jsdom fallback (see docs/DECISIONS.md).
  */
 
 /** A box in normalised frame coordinates (0–1 on each axis). */
@@ -28,12 +26,14 @@ export interface Detection {
 /**
  * What the detector is asked to look at.
  *
- * `imageData` is optional: a real model needs pixels; the demo detector ignores
- * it and keys off `surfaceId` so the overlay loop works on the CSS simulated feed.
+ * Real models need `source` (video / canvas / ImageData). The demo detector
+ * ignores pixels and keys off `surfaceId` so jsdom still exercises the overlay.
  */
 export interface DetectionFrame {
   readonly surfaceId: string
   readonly imageData?: ImageData
+  /** Live pixels for ONNX / TF.js — HTMLVideoElement, canvas, or ImageData via wrapper. */
+  readonly source?: CanvasImageSource | ImageData
 }
 
 /**

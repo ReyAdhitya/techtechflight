@@ -74,6 +74,11 @@ Sanitize to absolute http(s) only — no `javascript:` / credentials. Teaching e
 Control/Fleet **Camera** slide (`CameraSlide`) — Settings map is setup only. Camera on a
 strip is not a Command (C9).
 
+**YOLOv8n weights are not in git.** Run `node scripts/fetch-yolo-model.mjs` (or
+`npm run fetch:yolo`) so `web/public/models/yolov8n.onnx` exists (~12 MB). Without it the
+board falls back to the demo detector. Wasm loads from jsDelivr. Sim Start camera asks for
+the laptop webcam so the model has real pixels.
+
 **Camera QR is a landing target, not a scanner.** Only `ttf-land:…` payloads count; they
 answer where to land and stay display-only unless a Teacher presses sim **Place at landing
 pad (demo)**. Do not write QR into Telemetry. On the sim feed the scanner reads

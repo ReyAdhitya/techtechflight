@@ -14,10 +14,14 @@ would notice.
   Drones store model / created date; prepared Lessons use LessonDrone and LessonAssignment
   (studentId-keyed). Strips still show names. Legacy name-only roll still loads; migrate on
   write. Minimal UI on Students, Settings, and Lesson prep — not a Control redesign.
-- **Object-detection overlay on the simulated camera feed (#49).** While the sim feed is
-  streaming, `CameraPane` draws bounding boxes from a pluggable `ObjectDetector`. Default
-  is a labeled demo detector (not YOLOv12 — weights not loaded). Hardware streaming and
-  idle/no-camera still show no overlay. Telemetry unchanged: `camera.streaming` only.
+- **YOLOv8n person/object detection on the camera (#69).** While the sim camera is on, the
+  board prefers the laptop webcam and runs **YOLOv8n** (ONNX, COCO) in the browser — boxes
+  for person, chair, bottle, etc. Falls back to the labeled demo detector if weights/wasm
+  fail. Telemetry unchanged: `camera.streaming` only. Fetch weights:
+  `node scripts/fetch-yolo-model.mjs`.
+- **Object-detection overlay on the simulated camera feed (#49).** Pluggable `ObjectDetector`
+  on `CameraPane` (demo path kept as fallback). Hardware streaming and idle/no-camera still
+  show no overlay. Telemetry unchanged: `camera.streaming` only.
 - **School camera stream map (#50).** Settings holds `droneId → http(s) URL` (localStorage),
   optionally seeded by `NEXT_PUBLIC_CAMERA_STREAM_MAP`. When hardware Telemetry says
   `camera.streaming` and the Drone is mapped, `CameraPane` plays a native `<video>` from

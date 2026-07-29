@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
+
+- **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`
+  (`web/lib/yolo-onnx-detector.ts`). Weights at `/models/yolov8n.onnx` (gitignored; fetch
+  script). Wasm from jsDelivr. Sim Start camera uses **getUserMedia** when allowed so the
+  model has real pixels; CSS sim + demo detector if denied / jsdom / load failure. UI says
+  **YOLOv8n**, never claims YOLOv12 until those weights are wired.
+- **Reason:** Owner wants person/object detection on the board (#69). YOLOv8n is the
+  practical classroom-sized ONNX; napkin “YOLOv12” waits on a publishable browser export.
+- **Note:** Detections stay app-side — never on Telemetry. Swap path: drop a newer ONNX in
+  `public/models/` and point `MODEL_URL`.
+
 ## 2026-07-29 Lesson and Student IDs are assigned by the board
 
 - **Decision:** `registerStudent(name)` → `S-0001…`; `createTrainerLesson(name)` → `L-0001…`.

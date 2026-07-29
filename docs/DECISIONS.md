@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Every classroom sim Drone has a camera
+
+- **Decision:** `SimulatedTelemetrySource` sets `hasCamera: true` for every classroom
+  registration (owner option B / #91). “No camera fitted” remains for Telemetry that omits
+  `camera` (hardware / fixtures).
+- **Reason:** Odd-index craft without cameras confused Teachers on the default sim Fleet.
+- **Note:** Rangefinder and auto-land still vary by index for sensor-absence demos.
+
 ## 2026-07-29 Front/Side coincident piles stack labels vertically
 
 - **Decision:** Elevation Scope labels for craft that share one spot (same Front column /

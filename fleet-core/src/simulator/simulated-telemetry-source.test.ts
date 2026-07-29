@@ -237,7 +237,7 @@ describe('scenarios a demonstration needs on demand', () => {
   })
 
   it('starts and stops the camera stream flag without inventing a URL', () => {
-    // Even-index classroom craft ship with a camera; Telemetry carries only streaming.
+    // Every classroom sim craft is fitted (#91); Telemetry carries only streaming.
     clock.advance(REPORT_INTERVAL)
     expect(latestFor('ttf-0001')?.telemetry.camera).toEqual({ streaming: false })
     expect(latestFor('ttf-0001')?.telemetry).not.toHaveProperty('camera.url')
@@ -250,6 +250,13 @@ describe('scenarios a demonstration needs on demand', () => {
     simulator.stopCamera('ttf-0001')
     clock.advance(REPORT_INTERVAL)
     expect(latestFor('ttf-0001')?.telemetry.camera).toEqual({ streaming: false })
+  })
+
+  it('fits a camera on every classroom sim Drone, including odd board positions', () => {
+    clock.advance(REPORT_INTERVAL)
+    for (const id of ['ttf-0001', 'ttf-0002', 'ttf-0003', 'ttf-0004', 'ttf-0005', 'ttf-0006']) {
+      expect(latestFor(id)?.telemetry.camera).toEqual({ streaming: false })
+    }
   })
 
   it('takes off and lands on demand', () => {

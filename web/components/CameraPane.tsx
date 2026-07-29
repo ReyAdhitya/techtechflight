@@ -12,7 +12,7 @@ import { InstrumentPanel } from './FlightInstruments'
  * (`camera?: { streaming: boolean }`). A stream URL on that wire is an injection
  * surface (REQUIREMENTS) and must never appear here. On a simulated Fleet the
  * picture is an app-owned placeholder; Start / Stop go through ScenarioControls,
- * never as Commands (C9). Land / Hold / Stop stay on Control — this pane is watch
+ * never as Commands (C9). Land / Hover / Stop stay on Control — this pane is watch
  * only.
  */
 export function CameraPane({

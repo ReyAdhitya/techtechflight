@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Control command Hold is labelled Hover
+
+- **Decision:** Teacher-facing strip/dock label and C4 receipt word is **Hover**. Command
+  kind remains `hold` on the wire.
+- **Reason:** Owner notes (#52 / epic #47) — “stay hover immediately”.
+- **Note:** Do not rename `CommandKind` without a separate contract pass.
+
 ## 2026-07-29 Per-Drone camera pane is Telemetry boolean + sim pixels
 
 - **Decision:** Drone detail mounts `CameraPane`. Telemetry stays `camera?: { streaming }`.

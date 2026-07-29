@@ -14,6 +14,8 @@ would notice.
 
 ### Fixed
 
+- **Control Hold label is Hover (#52).** Teacher-facing button and receipts say **Hover**;
+  wire kind stays `hold`. Strips and fullscreen Scope dock updated.
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the
   GuardedButton / C8 press-and-hold path for classroom speed. DESIGN §13.2 marked resolved
   so it no longer contradicts §4.5.

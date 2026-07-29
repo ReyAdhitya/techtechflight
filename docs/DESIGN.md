@@ -277,7 +277,7 @@ Fixed anatomy. The eye learns the positions.
 │ Exercise 2: Hover                                                │
 │ Nearest aircraft: 0.9 m from Drone 1                             │
 │ ▌Now  Separate it from Drone 1 — 0.9m apart.    [ Acknowledge ]  │
-│ [ Land ]  [ Hold ]                          [ Stop ]             │
+│ [ Land ]  [ Hover ]                         [ Stop ]             │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -328,12 +328,12 @@ is not reintroduced.
 
 ### 4.5 Commands
 
-**Land** and **Hold** are on every strip, always visible. They are what a Teacher reaches for.
+**Land** and **Hover** are on every strip, always visible. They are what a Teacher reaches for.
 **More** holds auto-land and anything added later. Commands are absent from every other
-screen in the product.
+screen in the product. (Wire kind for Hover remains `hold` — Teacher-facing copy only.)
 
 **Emergency stop** is labelled **Stop**. It sits apart on the right. It is a **single
-press**, same as Land and Hold — no press-and-hold, no second confirm, no dialog. The owner
+press**, same as Land and Hover — no press-and-hold, no second confirm, no dialog. The owner
 chose speed over a guard: in a classroom the Teacher already meant the cut. (This supersedes
 the earlier C8 press-and-hold reading of DESIGN; see Decisions 2026-07-28.)
 

@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Camera from Control (#59 / #67).** Every Drone strip (and the scope dock / Fleet detail)
+  opens a large centered dialog hosting `CameraPane` — watch the feed without leaving the
+  teaching surface. Stream URLs stay env/IT (#66). Not a Command (C9).
 - **QR landing targets on the camera surface (#51).** When the simulated feed has a picture,
   the board decodes landing-pad QR codes (`ttf-land:…`) and shows where to land. Display-only
   by default — never written into Telemetry. Sim may offer an explicit **Place at landing pad
@@ -38,6 +41,8 @@ would notice.
 
 ### Fixed
 
+- **School camera streams panel stays off Settings (#66).** Teachers do not edit droneId →
+  URL there; env/IT map remains for hardware playback.
 - **Lesson and Student IDs are system-generated (#58).** Teachers type names only; the board
   assigns `L-…` / `S-…`. Fleet Drones stay pick-by-existing-id. Strips still show names.
 - **Scope Drone names stay above each mark without colliding (#61).** Top-down no longer

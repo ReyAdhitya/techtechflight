@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { Exercise } from '@/lib/logbook'
 import { ExerciseList } from './ExerciseList'
 
-const HOVER: Exercise = { id: 'e1', name: 'Hover', minutes: 5 }
+const STAY_STILL: Exercise = { id: 'e1', name: 'Stay still in the air', minutes: 5 }
 const SQUARE: Exercise = { id: 'e2', name: 'Fly a square' }
 
 describe('planning what a Lesson runs through', () => {
@@ -12,6 +12,8 @@ describe('planning what a Lesson runs through', () => {
     render(<ExerciseList exercises={[]} onChange={() => {}} />)
 
     expect(screen.getByText(/A Lesson runs without them/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Stay still in the air')).toBeInTheDocument()
+    expect(screen.queryByPlaceholderText(/Hover and hold/i)).not.toBeInTheDocument()
   })
 
   it('adds one, with a duration when given', async () => {
@@ -19,12 +21,12 @@ describe('planning what a Lesson runs through', () => {
     const onChange = vi.fn()
     render(<ExerciseList exercises={[]} onChange={onChange} />)
 
-    await user.type(screen.getByLabelText(/Add an exercise/i), 'Hover')
+    await user.type(screen.getByLabelText(/Add an exercise/i), 'Stay still in the air')
     await user.type(screen.getByLabelText(/Minutes/i), '5')
     await user.click(screen.getByRole('button', { name: /^Add$/ }))
 
     expect(onChange.mock.calls[0]?.[0]).toEqual([
-      expect.objectContaining({ name: 'Hover', minutes: 5 }),
+      expect.objectContaining({ name: 'Stay still in the air', minutes: 5 }),
     ])
   })
 
@@ -44,28 +46,30 @@ describe('planning what a Lesson runs through', () => {
   it('reorders by keyboard, rather than needing anything dragged', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    render(<ExerciseList exercises={[HOVER, SQUARE]} onChange={onChange} />)
+    render(<ExerciseList exercises={[STAY_STILL, SQUARE]} onChange={onChange} />)
 
     await user.click(screen.getByRole('button', { name: /Move Fly a square earlier/i }))
 
     expect(onChange.mock.calls[0]?.[0]?.map((exercise: Exercise) => exercise.name)).toEqual([
       'Fly a square',
-      'Hover',
+      'Stay still in the air',
     ])
   })
 
   it('will not move the first one earlier', () => {
-    render(<ExerciseList exercises={[HOVER, SQUARE]} onChange={() => {}} />)
+    render(<ExerciseList exercises={[STAY_STILL, SQUARE]} onChange={() => {}} />)
 
-    expect(screen.getByRole('button', { name: /Move Hover earlier/i })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /Move Stay still in the air earlier/i }),
+    ).toBeDisabled()
   })
 
   it('removes one', async () => {
     const user = userEvent.setup()
     const onChange = vi.fn()
-    render(<ExerciseList exercises={[HOVER, SQUARE]} onChange={onChange} />)
+    render(<ExerciseList exercises={[STAY_STILL, SQUARE]} onChange={onChange} />)
 
-    await user.click(screen.getByRole('button', { name: /Remove Hover/i }))
+    await user.click(screen.getByRole('button', { name: /Remove Stay still in the air/i }))
 
     expect(onChange.mock.calls[0]?.[0]?.map((exercise: Exercise) => exercise.name)).toEqual([
       'Fly a square',

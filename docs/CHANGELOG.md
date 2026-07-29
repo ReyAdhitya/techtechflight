@@ -14,6 +14,9 @@ would notice.
 
 ### Fixed
 
+- **Scope Drone names stay above each mark without colliding (#61).** Top-down no longer
+  alternates names below the mark; packed classroom rows get a horizontal rem stagger so
+  labels stay readable. Names are never dropped to anonymous dots.
 - **Stop is one click — no hold, no second press.** Same as Land/Hold; owner dropped the
   GuardedButton / C8 press-and-hold path for classroom speed. DESIGN §13.2 marked resolved
   so it no longer contradicts §4.5.

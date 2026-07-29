@@ -92,7 +92,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Follow-up:** Swap to a newer COCO ONNX (napkin “YOLOv12”) by dropping weights in
   `web/public/models/` and pointing `MODEL_URL` — the board path is already ONNX (#69).
   School-stream pixels can feed the same detector when the map supplies a `<video>`.
-  exist (#50) or a weight artifact is pinned. Then rename `displayName` / drop `demo: true`.
+  Then rename `displayName` / drop `demo: true` on that path.
 - **Alternatives considered:** Bundling a tiny real model now (no useful pixels on the CSS
   feed); putting detections on Telemetry (REQUIREMENTS forbid stream URL; same injection
   class for payload bloat).

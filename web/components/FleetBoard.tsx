@@ -19,6 +19,8 @@ export interface FleetBoardProps {
   readonly now: number
   /** True when `snapshot` is a stand-in Fleet rather than one the ground station sent. */
   readonly demo?: boolean
+  /** Opens the camera slide for this Drone — watch only, not a Command (C9). */
+  readonly onOpenCamera?: (droneId: DroneId) => void
 }
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -39,7 +41,7 @@ const FILTERABLE_FROM = 9
  * look — colour, shape, and word — rather than by moving, because a tile that jumps
  * when a battery dips destroys the muscle memory the ordering exists to build.
  */
-export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
+export function FleetBoard({ snapshot, now, demo = false, onOpenCamera }: FleetBoardProps) {
   const [openDroneId, setOpenDroneId] = useState<DroneId | null>(null)
   const [query, setQuery] = useState('')
   const [only, setOnly] = useState<Lens>('all')
@@ -175,6 +177,14 @@ export function FleetBoard({ snapshot, now, demo = false }: FleetBoardProps) {
         drone={openDrone}
         ageMs={openDrone ? age(openDrone) : null}
         onClose={() => setOpenDroneId(null)}
+        {...(onOpenCamera && openDrone
+          ? {
+              onOpenCamera: () => {
+                onOpenCamera(openDrone.id)
+                setOpenDroneId(null)
+              },
+            }
+          : {})}
       />
     </main>
   )

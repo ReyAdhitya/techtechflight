@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Camera opens from Control as a watch dialog
+
+- **Decision:** Control strips (and the scope selection dock) offer a **Camera** control that
+  opens a dialog hosting the existing `CameraPane`. Fleet detail offers the same entry.
+  Camera is not a Command — kept outside `CommandRow` (C9). Escape / Close dismisses.
+  Stream map stays env/IT only — no Teacher Settings form.
+- **Reason:** Owner — teaching wants click → camera on Control (#59 / #66 / #67).
+- **Note:** No Telemetry URL. Sim Start/Stop remain ScenarioControls inside the pane.
+
 ## 2026-07-29 Lesson and Student IDs are assigned by the board
 
 - **Decision:** `registerStudent(name)` → `S-0001…`; `createTrainerLesson(name)` → `L-0001…`.

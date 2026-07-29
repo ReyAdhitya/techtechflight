@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Camera slide from Control (#59).** Every Drone strip (and the scope dock / Fleet detail)
+  opens a slide hosting `CameraPane` — watch the feed without leaving the teaching surface.
+  Stream URLs stay env/IT configuration. Not a Command (C9).
 - **QR landing targets on the camera surface (#51).** When the simulated feed has a picture,
   the board decodes landing-pad QR codes (`ttf-land:…`) and shows where to land. Display-only
   by default — never written into Telemetry. Sim may offer an explicit **Place at landing pad

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
+import type { ObjectDetector } from '@/lib/object-detection'
 import { CameraPane } from './CameraPane'
 
 /**
@@ -9,6 +10,7 @@ import { CameraPane } from './CameraPane'
  *
  * Telemetry may only carry `{ streaming: boolean }`. Start / Stop are scenario
  * controls on a simulated Fleet — never Commands, never a URL on the wire.
+ * Detection is app-side on the pane; tests inject a mock detector.
  */
 
 const scenarios = (): ScenarioControls =>
@@ -32,6 +34,20 @@ const scenarios = (): ScenarioControls =>
     resetClassroom: vi.fn(),
   }) as ScenarioControls
 
+const mockDetector = (overrides?: Partial<ObjectDetector>): ObjectDetector => ({
+  displayName: 'Test detector',
+  demo: true,
+  detect: vi.fn(async () => [
+    {
+      id: 'box-1',
+      label: 'person',
+      confidence: 0.9,
+      box: { x: 0.1, y: 0.2, width: 0.3, height: 0.4 },
+    },
+  ]),
+  ...overrides,
+})
+
 describe('the camera pane on a Drone', () => {
   it('says so when no camera is fitted, and offers no Start', () => {
     render(
@@ -45,6 +61,7 @@ describe('the camera pane on a Drone', () => {
 
     expect(screen.getByText('No camera fitted')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Start camera' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: /detections/i })).not.toBeInTheDocument()
   })
 
   it('offers Start camera on a simulated Fleet when fitted but idle', () => {
@@ -55,11 +72,13 @@ describe('the camera pane on a Drone', () => {
         droneName="Drone 1"
         camera={{ streaming: false }}
         scenarios={controls}
+        detector={mockDetector()}
       />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Start camera' }))
     expect(controls.startCamera).toHaveBeenCalledWith('ttf-0001')
+    expect(screen.queryByRole('list', { name: /detections/i })).not.toBeInTheDocument()
   })
 
   it('shows a labeled simulated feed while streaming, and offers Stop', () => {
@@ -82,6 +101,49 @@ describe('the camera pane on a Drone', () => {
     expect(controls.stopCamera).toHaveBeenCalledWith('ttf-0001')
   })
 
+  it('draws detections on the simulated feed while streaming', async () => {
+    const detector = mockDetector()
+    render(
+      <CameraPane
+        droneId="ttf-0001"
+        droneName="Drone 1"
+        camera={{ streaming: true }}
+        scenarios={scenarios()}
+        detector={detector}
+      />,
+    )
+
+    const overlay = await screen.findByRole('list', {
+      name: /Demo detections from Test detector/,
+    })
+    expect(overlay.querySelector('[data-detection-label="person"]')).not.toBeNull()
+    expect(screen.getByText(/Test detector \(not a loaded model\)/)).toBeInTheDocument()
+    expect(detector.detect).toHaveBeenCalled()
+  })
+
+  it('stays quiet when the detector fails, without crashing the pane', async () => {
+    const detector = mockDetector({
+      detect: vi.fn(async () => {
+        throw new Error('weights missing')
+      }),
+    })
+    render(
+      <CameraPane
+        droneId="ttf-0001"
+        droneName="Drone 1"
+        camera={{ streaming: true }}
+        scenarios={scenarios()}
+        detector={detector}
+      />,
+    )
+
+    expect(
+      screen.getByRole('img', { name: 'Simulated camera feed for Drone 1' }),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(detector.detect).toHaveBeenCalled())
+    expect(screen.queryByRole('list', { name: /detections/i })).not.toBeInTheDocument()
+  })
+
   it('does not invent Start on a hardware Fleet', () => {
     render(
       <CameraPane
@@ -96,19 +158,21 @@ describe('the camera pane on a Drone', () => {
     expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
   })
 
-  it('names streaming on hardware without pretending there is a picture', () => {
+  it('names streaming on hardware without pretending there is a picture or detections', () => {
     render(
       <CameraPane
         droneId="ttf-0001"
         droneName="Drone 1"
         camera={{ streaming: true }}
         scenarios={null}
+        detector={mockDetector()}
       />,
     )
 
     expect(screen.getByRole('status')).toHaveTextContent(/Camera is streaming/)
     expect(screen.getByRole('status')).toHaveTextContent(/does not carry a URL/)
     expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: /detections/i })).not.toBeInTheDocument()
   })
 
   it('never puts a stream URL on the Telemetry camera shape', () => {

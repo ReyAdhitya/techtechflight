@@ -42,6 +42,7 @@ echo Ground station window stays open while you teach.
 echo Close that window when the lesson is finished.
 echo.
 echo Default Fleet is the classroom Simulator.
-echo Radio (MAVLink) is monitoring-only — advanced; see docs/DECISIONS.md / ADR-0011.
+echo Settings can switch next launch to Radio ^(MAVLink^) — monitoring only.
+echo Close this ground-station window and run the launcher again after changing path.
 echo.
 pause

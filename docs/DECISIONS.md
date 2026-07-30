@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Dual-write Logbook: local first, Vercel Blob copy with shared secret
+
+- **Decision:** Every Logbook save writes **localStorage first**, then debounced PUT to
+  `/api/logbook` when a sync secret is set. Cloud store is private **Vercel Blob** via a
+  root Serverless Function (not Next route handlers). Auth: `LOGBOOK_SYNC_SECRET` /
+  Settings secret. v1 **last-write-wins** on `revisedAt` / `updatedAt`. ADR-0015.
+- **Reason:** Owner #93 / plan #83 — Vercel preview should show Students/Reports, offline
+  classroom must keep working.
+- **Note:** Needs `BLOB_READ_WRITE_TOKEN` + `LOGBOOK_SYNC_SECRET` on Vercel. Telemetry
+  never carries Logbook rows.
+
 ## 2026-07-29 Reports primary action is Download PDF
 
 - **Decision:** Reports’ primary control is **Download PDF** (`jspdf` in the browser) so the

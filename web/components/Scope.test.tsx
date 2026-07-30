@@ -791,4 +791,61 @@ describe('full screen on the scope', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
     expect(screen.getByText('Land Hover Stop for selected')).toBeInTheDocument()
   })
+
+  it('draws the classroom geofence on the top-down view', () => {
+    const { container } = render(
+      <Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 1, 1)]} onSelect={() => {}} />,
+    )
+    expect(container.querySelector('[data-classroom-geofence]')).not.toBeNull()
+    expect(screen.getByText(/classroom boundary/)).toBeInTheDocument()
+  })
+})
+
+describe('freeze scope snapshot', () => {
+  it('holds mark positions while live drones move', () => {
+    const dronesA = [at('Drone 1', 0, 0), at('Drone 2', 5, 0)]
+    const dronesB = [at('Drone 1', 3, 0), at('Drone 2', 5, 0)]
+    const { rerender } = render(<Scope drones={dronesA} onSelect={() => {}} />)
+    const before = markPositions()
+    fireEvent.click(screen.getByRole('button', { name: 'Pause scope updates' }))
+    rerender(<Scope drones={dronesB} onSelect={() => {}} />)
+    expect(markPositions()).toEqual(before)
+    fireEvent.click(screen.getByRole('button', { name: 'Resume scope updates' }))
+    expect(markPositions()).not.toEqual(before)
+  })
+  it('does not offer freeze on read-only mounts', () => {
+    render(<Scope drones={[at('Drone 1', 0, 0)]} />)
+    expect(screen.queryByRole('button', { name: 'Pause scope updates' })).not.toBeInTheDocument()
+  })
+})
+
+describe('ghost paths on the scope', () => {
+  it('offers a toggle and draws a path when history exists', () => {
+    const ghostPaths = new Map([
+      [
+        'drone-1',
+        [
+          { eastM: 0, northM: 0, at: 0 },
+          { eastM: 2, northM: 0, at: 1000 },
+        ],
+      ],
+    ])
+    const { container } = render(
+      <Scope
+        drones={[at('Drone 1', 2, 0), at('Drone 2', 5, 2)]}
+        ghostPaths={ghostPaths}
+      />,
+    )
+    const toggle = screen.getByRole('button', { name: 'Ghost paths' })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(container.querySelector('path[d^="M"]')).not.toBeNull()
+    expect(screen.getByText('Faint dashed = recent path')).toBeInTheDocument()
+  })
+
+  it('does not show the toggle when ghostPaths is omitted', () => {
+    render(<Scope drones={[at('Drone 1', 0, 0)]} />)
+    expect(screen.queryByRole('button', { name: 'Ghost paths' })).not.toBeInTheDocument()
+  })
 })

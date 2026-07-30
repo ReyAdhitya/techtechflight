@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 import type { FleetEvent } from '@techtechflight/contract'
 import {
   addIncident,
@@ -9,6 +11,9 @@ import {
   type LessonRecord,
 } from '@/lib/logbook'
 import { describeEvent } from '@/lib/telemetry-presentation'
+import { LessonBookmarkControl } from './LessonBookmarkControl'
+import { LessonIncidentNoteControl } from './LessonIncidentNoteControl'
+import { AutoPdfAfterLesson } from './AutoPdfAfterLesson'
 
 /**
  * The lesson, while it is running, above everything that needs watching.
@@ -28,6 +33,7 @@ export function LessonStrip({
   readonly events: readonly FleetEvent[]
   readonly now: number
 }) {
+  const [pdfOpen, setPdfOpen] = useState(false)
   const elapsed = Math.max(0, now - lesson.startedAt)
   const onNow = currentExercise(lesson, now)
   const sinceStart = events.filter((event) => event.at >= lesson.startedAt)
@@ -50,6 +56,20 @@ export function LessonStrip({
           </span>
         )}
       </div>
+
+      <LessonBookmarkControl
+        lessonId={lesson.id}
+        startedAt={lesson.startedAt}
+        now={now}
+        bookmarks={lesson.bookmarks ?? []}
+      />
+
+      <LessonIncidentNoteControl
+        lessonId={lesson.id}
+        startedAt={lesson.startedAt}
+        now={now}
+        incidents={lesson.incidents}
+      />
 
       <button
         type="button"
@@ -85,11 +105,17 @@ export function LessonStrip({
            * Drone keeps giving trouble" survives the ground station being restarted.
            */
           endLesson(lesson.id, at, tallyEvents(sinceStart))
+          setPdfOpen(true)
         }}
       >
         End the lesson
       </button>
 
+    <AutoPdfAfterLesson
+      open={pdfOpen}
+      input={{ lessons: [lesson], defects: [] }}
+      onClose={() => setPdfOpen(false)}
+    />
     </section>
   )
 }

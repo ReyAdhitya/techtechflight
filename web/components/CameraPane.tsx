@@ -1,3 +1,4 @@
+import { CameraRecordingClip } from './CameraRecordingClip'
 'use client'
 
 import {
@@ -33,6 +34,7 @@ import {
 import { SIM_LANDING_QR_URL } from '@/lib/qr/sim-fixture'
 import { cn } from '@/lib/utils'
 import { InstrumentPanel } from './FlightInstruments'
+import { PhotoEvidenceButton } from './PhotoEvidenceButton'
 
 /** One decoder for the board — avoid allocating jsQR options every render. */
 const defaultQrDecoder = createJsQrDecoder()
@@ -108,7 +110,7 @@ export function CameraPane({
               {...(detector !== undefined ? { detector } : {})}
             />
           ) : mappedUrl !== null ? (
-            <SchoolStream droneName={droneName} src={mappedUrl} />
+            <SchoolStream droneId={droneId} droneName={droneName} src={mappedUrl} />
           ) : (
             <HardwareStreamingNotice />
           )
@@ -269,10 +271,12 @@ function HardwareStreamingNotice() {
 /**
  * Live school feed from the Settings/env map — never from Telemetry.
  */
-function SchoolStream({ droneName, src }: { droneName: string; src: string }) {
+function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName: string; src: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
   return (
     <div className="overflow-hidden rounded-surface border border-hairline bg-ink">
       <video
+        ref={videoRef}
         className="aspect-video w-full bg-ink"
         src={src}
         controls
@@ -281,9 +285,13 @@ function SchoolStream({ droneName, src }: { droneName: string; src: string }) {
         autoPlay
         aria-label={`Live camera stream for ${droneName}`}
       />
-      <p className="m-0 border-t border-hairline bg-surface-1 px-3 py-2 text-value text-ink-subtle">
-        School stream — from the stream map, not Telemetry
-      </p>
+      <div className="flex flex-wrap gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
+        <CameraRecordingClip onClip={() => {}} />
+        <PhotoEvidenceButton droneId={droneId} droneName={droneName} videoRef={videoRef} />
+        <p className="m-0 self-center text-value text-ink-subtle">
+          School stream — from the stream map, not Telemetry
+        </p>
+      </div>
     </div>
   )
 }
@@ -400,16 +408,24 @@ function SimulatedFeed({
         </span>
         <DetectionOverlay detections={detections} detector={detector} />
       </div>
-      <p className="m-0 border-t border-hairline bg-surface-1 px-3 py-2 text-value text-ink-subtle">
-        {live
-          ? 'Laptop camera — detection runs in this browser, not on Telemetry'
-          : 'Simulated feed — not a live aircraft camera'}
-        {detections.length > 0
-          ? detector.demo
-            ? ` · ${detector.displayName} (not a loaded model)`
-            : ` · ${detector.displayName}`
-          : null}
-      </p>
+      <div className="flex flex-wrap items-center gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
+        <PhotoEvidenceButton
+          droneId={droneId}
+          droneName={droneName}
+          videoRef={videoRef}
+          hasLiveFrame={live}
+        />
+        <p className="m-0 text-value text-ink-subtle">
+          {live
+            ? 'Laptop camera — detection runs in this browser, not on Telemetry'
+            : 'Simulated feed — not a live aircraft camera'}
+          {detections.length > 0
+            ? detector.demo
+              ? ` · ${detector.displayName} (not a loaded model)`
+              : ` · ${detector.displayName}`
+            : null}
+        </p>
+      </div>
     </div>
   )
 }

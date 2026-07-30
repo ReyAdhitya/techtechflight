@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Pause, Play } from 'lucide-react'
 import type { DroneState } from '@techtechflight/contract'
 import {
   scopeLabelPlacements,
   type ScopeLabelPlacement,
 } from '@/lib/scope-label-placement'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
+import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
+import type { GhostPathStore } from '@/lib/scope-ghost-paths'
+import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
 import { cn } from '@/lib/utils'
 
 /**
@@ -31,13 +35,25 @@ import { cn } from '@/lib/utils'
  *   Drone Name are not geometry — they must stay the same size whether the window is 8 m
  *   or 32 m across, they must follow the Teacher's own font size (ADR-0008), and a mark
  *   a Teacher can select has to be a real control rather than a shape with a click on it.
+ *
+ * Freeze pauses what the scope draws — positions, window, and conflict lines — while the
+ * Fleet and flight strips keep updating elsewhere on Control, the same discipline as the
+ * camera wall freeze.
  */
+type FrozenScopeFrame = {
+  readonly drones: readonly DroneState[]
+  readonly vitals?: readonly DroneVitals[]
+  readonly windowChoice: WindowChoice
+  readonly ceilingM: number
+}
+
 export function Scope({
   drones,
   vitals,
   selected,
   onSelect,
   selectedPanel,
+  ghostPaths,
 }: {
   drones: readonly DroneState[]
   /**
@@ -58,6 +74,12 @@ export function Scope({
    * collapsed or when nothing is selected — Reports never passes one.
    */
   selectedPanel?: ReactNode
+  /**
+   * Recent east/north samples per Drone, accumulated on the board. FleetHistory does not
+   * carry position trails yet — when absent or empty, ghost paths toggle still works but
+   * draws nothing.
+   */
+  ghostPaths?: GhostPathStore
 }) {
   /*
    * The window already on screen — its size and where its middle sits. Held across renders
@@ -81,6 +103,9 @@ export function Scope({
    * browser Fullscreen API — classroom projectors and tablets are unreliable with the latter.
    */
   const [expanded, setExpanded] = useState(false)
+  const [frozenFrame, setFrozenFrame] = useState<FrozenScopeFrame | null>(null)
+  const frozen = frozenFrame !== null
+  const [showGhostPaths, setShowGhostPaths] = useState(false)
   const exitFullScreenRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -96,7 +121,29 @@ export function Scope({
   /* Elevation ceiling, held under the same rule as the window: it grows, never shrinks. */
   const heldCeilingM = useRef(0)
 
-  const placed = drones.filter(
+  const toggleFreeze = () => {
+    if (frozen) {
+      setFrozenFrame(null)
+      return
+    }
+    const placedNow = drones.filter(
+      (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
+    )
+    if (placedNow.length === 0) return
+    const windowNow = scopeWindow(placedNow, held.current)
+    const ceilingNow = chooseCeiling(placedNow, heldCeilingM.current)
+    setFrozenFrame({
+      drones: structuredClone(drones),
+      ...(vitals ? { vitals: structuredClone(vitals) } : {}),
+      windowChoice: windowNow.choice,
+      ceilingM: ceilingNow,
+    })
+  }
+
+  const sourceDrones = frozen ? frozenFrame!.drones : drones
+  const sourceVitals = frozen ? frozenFrame!.vitals : vitals
+
+  const placed = sourceDrones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
   )
 
@@ -108,13 +155,15 @@ export function Scope({
     )
   }
 
-  const scope = scopeWindow(placed, held.current)
-  held.current = scope.choice
+  const scope = scopeWindow(placed, frozen ? frozenFrame!.windowChoice : held.current)
+  if (!frozen) held.current = scope.choice
   const stepM = gridStepM(scope.widthM)
-  const conflicts = conflictPairs(placed, vitals)
+  const conflicts = conflictPairs(placed, sourceVitals)
 
-  const ceilingM = chooseCeiling(placed, heldCeilingM.current)
-  heldCeilingM.current = ceilingM
+  const ceilingM = frozen
+    ? frozenFrame!.ceilingM
+    : chooseCeiling(placed, heldCeilingM.current)
+  if (!frozen) heldCeilingM.current = ceilingM
 
   /*
    * A Drone that cannot measure its height has no place in a picture whose vertical axis is
@@ -148,6 +197,7 @@ export function Scope({
 
   const elevation = isElevation(view)
   const showSelectedPanel = expanded && selected != null && selectedPanel != null
+  const pathsReady = ghostPaths !== undefined && ghostPathsAvailable(ghostPaths)
   const labelById = scopeLabelPlacements(
     drawn.map((drone) => {
       const point = at(drone)
@@ -217,6 +267,42 @@ export function Scope({
             </button>
           ))}
         </div>
+        {onSelect && (
+          <button
+            type="button"
+            onClick={toggleFreeze}
+            aria-pressed={frozen}
+            aria-label={frozen ? 'Resume scope updates' : 'Pause scope updates'}
+            className="label inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-pill border border-hairline bg-canvas px-3 py-1.5 text-ink-muted transition-colors hover:border-ink hover:text-ink"
+          >
+            {frozen ? (
+              <>
+                <Play className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                Resume updates
+              </>
+            ) : (
+              <>
+                <Pause className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                Freeze scope
+              </>
+            )}
+          </button>
+        )}
+        {ghostPaths !== undefined && (
+          <button
+            type="button"
+            onClick={() => setShowGhostPaths((on) => !on)}
+            aria-pressed={showGhostPaths}
+            className={cn(
+              'min-h-11 cursor-pointer rounded-pill px-4 py-1.5 text-value',
+              showGhostPaths
+                ? 'border-0 bg-ink font-medium text-canvas'
+                : 'border border-hairline bg-transparent text-ink hover:border-ink',
+            )}
+          >
+            Ghost paths
+          </button>
+        )}
         <button
           ref={exitFullScreenRef}
           type="button"
@@ -388,6 +474,29 @@ export function Scope({
            * the dashed tie between Drones that are linked on purpose. Two aircraft joined
            * by a line here is the one thing on this map that means act now.
            */}
+          {/*
+           * Classroom geofence — a fixed box in metres, not a claim that the room ends
+           * here (ADR-0012). Top-down only; elevation views carry no horizontal boundary.
+           */}
+          {view === 'top-down' && (() => {
+            const nw = scope.project(CLASSROOM_GEOFENCE.westM, CLASSROOM_GEOFENCE.northM)
+            const se = scope.project(CLASSROOM_GEOFENCE.eastM, CLASSROOM_GEOFENCE.southM)
+            return (
+              <rect
+                x={nw.x}
+                y={nw.y}
+                width={se.x - nw.x}
+                height={se.y - nw.y}
+                fill="none"
+                className="stroke-status-not-ready"
+                strokeWidth="2"
+                strokeDasharray="8 6"
+                vectorEffect="non-scaling-stroke"
+                data-classroom-geofence=""
+              />
+            )
+          })()}
+
           {view === 'top-down' && conflicts.map((pair) => {
             const from = scope.project(pair.from.eastM, pair.from.northM)
             const to = scope.project(pair.to.eastM, pair.to.northM)
@@ -404,6 +513,31 @@ export function Scope({
               />
             )
           })}
+
+          {view === 'top-down' &&
+            showGhostPaths &&
+            ghostPaths &&
+            [...ghostPaths.entries()].map(([droneId, points]) => {
+              if (points.length < 2) return null
+              const path = points
+                .map((point, index) => {
+                  const { x, y } = scope.project(point.eastM, point.northM)
+                  return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+                })
+                .join(' ')
+              return (
+                <path
+                  key={`ghost-${droneId}`}
+                  d={path}
+                  fill="none"
+                  className="stroke-ink-muted"
+                  strokeWidth="1.5"
+                  strokeDasharray="5 4"
+                  vectorEffect="non-scaling-stroke"
+                  opacity="0.65"
+                />
+              )
+            })}
         </svg>
 
         {drawn.map((drone) => (
@@ -444,7 +578,21 @@ export function Scope({
          * conflict lines, so offering a key to them would send a Teacher looking for something
          * that is not there.
          */}
+        {view === 'top-down' && (
+          <span>
+            Dashed box = classroom boundary ({CLASSROOM_GEOFENCE.westM} to{' '}
+            {CLASSROOM_GEOFENCE.eastM} m east, {CLASSROOM_GEOFENCE.southM} to{' '}
+            {CLASSROOM_GEOFENCE.northM} m north)
+          </span>
+        )}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
+        {view === 'top-down' && showGhostPaths && (
+          <span>
+            {pathsReady
+              ? 'Faint dashed = recent path'
+              : 'Ghost paths on — waiting for movement history'}
+          </span>
+        )}
         {view === 'top-down' && conflicts.length > 0 && <span>Solid = too close</span>}
         {elevation && heightless.length > 0 && (
           /*

@@ -1,15 +1,21 @@
 'use client'
 
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
 import Link from 'next/link'
 import {
+  absentStudentsNotFlying,
   assignStudent,
+  assignNextRosterName,
   clearStudents,
+  firstUnassignedDrone,
+  nextRosterNameForAssign,
   studentOf,
+  swapStudentAssignments,
   currentExercise,
   readLogbook,
   recordCommand,
   readServerLogbook,
+  remedialQueueOf,
   runningLesson,
   subscribeLogbook,
 } from '@/lib/logbook'
@@ -18,19 +24,43 @@ import { alertQueue, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
 import type { TrackedCommand } from '@/lib/command-tracker'
 import {
   formatCoordinates,
-  formatEndurance,
   formatSeparation,
   formatVerticalMovement,
   SEVERITY_PRESENTATION,
 } from '@/lib/vitals-presentation'
 import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
+import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
+import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
+import type { ScopeLayoutPreset } from '@/lib/scope-layout-presets'
 import { AttentionBar } from './AttentionBar'
+import { RemedialQueue } from './RemedialQueue'
+import { ClassAverageStrip } from './ClassAverageStrip'
+import { YoloLessonScoreStrip } from './YoloLessonScoreStrip'
+import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
+import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
+import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
+import { LessonTimerBanner } from './walls/LessonTimerBanner'
+import { AssignNextButton } from './AssignNextButton'
+import { LiveHeadcount } from './LiveHeadcount'
+import { SpareInventory } from './SpareInventory'
+import { SimLandAllButton } from './SimLandAllButton'
+import { QuietModeToggle } from './QuietModeToggle'
+import { PeerDemoSpotlight } from './PeerDemoSpotlight'
+import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
+import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
+import { ScopeLayoutPresets } from './ScopeLayoutPresets'
+import { StopAuditLog } from './StopAuditLog'
+import { VoiceReadyCallouts } from './VoiceReadyCallouts'
+import { MaintenanceFlag } from './MaintenanceFlag'
+import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import { useFleet } from './FleetProvider'
+import { useTeacherPinGate } from './useTeacherPinGate'
+import { useTrainingWheelsOptional } from '@/lib/training-wheels'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 /**
@@ -49,6 +79,7 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
     useFleet()
+  const trainingWheels = useTrainingWheelsOptional()?.enabled ?? false
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
   // Which Drone the Teacher is looking at. Choosing a mark on the scope lights its strip
@@ -56,10 +87,23 @@ export function ControlScreen() {
   const [selected, setSelected] = useState<string | null>(null)
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
+  const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
+  const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
+  const [endPeriodOpen, setEndPeriodOpen] = useState(false)
+  const [layoutPreset, setLayoutPreset] = useState<ScopeLayoutPreset>('classroom')
+  const { ensureUnlocked, overlay } = useTeacherPinGate()
+  const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
+  const remedial = remedialQueueOf(book)
+  const absentNotFlying = absentStudentsNotFlying(book)
+
+  useEffect(() => {
+    if (!state) return
+    setGhostPaths((current) => recordGhostPaths(current, state.drones, now))
+  }, [state, now])
 
   if (!state) {
     return (
@@ -73,28 +117,53 @@ export function ControlScreen() {
   // Attention bar (`alertQueue`); reshuffling strips when alerts appear or clear is what
   // made this list dizzying. `FleetState.drones` (and thus `vitals`) are already that order.
   const strips = vitals
+  const airborneCount = vitals.filter((entry) => entry.airborne).length
+  const groundedCount = vitals.length - airborneCount
   const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
   const cameraDrone =
     cameraDroneId === null
       ? null
       : (state.drones.find((drone) => drone.id === cameraDroneId) ?? null)
+  const boardDroneIds = state.drones.map((drone) => drone.id)
+  const nextRosterName = nextRosterNameForAssign(book)
+  const assignTargetDroneId =
+    selected !== null && studentOf(book, selected) === null
+      ? selected
+      : firstUnassignedDrone(book, boardDroneIds)
+  const spotlightDrone =
+    spotlightDroneId === null
+      ? null
+      : (state.drones.find((drone) => drone.id === spotlightDroneId) ?? null)
+
+  const focusStrip = (droneId: string) => {
+    setSelected(droneId)
+    requestAnimationFrame(() => {
+      document.getElementById(`control-strip-${droneId}`)?.scrollIntoView({ block: 'nearest' })
+    })
+  }
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
-    command(droneId, kind)
-    /*
-     * Noted against the Lesson as it is sent (C7), not when it resolves.
-     * What the report is a record of is what the Teacher asked for — a
-     * Command that produced nothing is still a thing that happened, and
-     * arguably the more interesting one.
-     */
-    if (lesson) {
-      recordCommand(lesson.id, {
-        at: now,
-        droneId,
-        droneName: callsign,
-        kind,
-      })
-    }
+    ensureUnlocked(() => {
+      command(droneId, kind)
+      /*
+       * Noted against the Lesson as it is sent (C7), not when it resolves.
+       * What the report is a record of is what the Teacher asked for — a
+       * Command that produced nothing is still a thing that happened, and
+       * arguably the more interesting one.
+       */
+      if (lesson) {
+        recordCommand(lesson.id, {
+          at: now,
+          droneId,
+          droneName: callsign,
+          kind,
+        })
+      }
+    })
+  }
+
+  const releaseStop = (_droneId: string, reset: () => void) => {
+    ensureUnlocked(reset)
   }
 
   return (
@@ -107,17 +176,75 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TrainingWheelsBanner className="flex-1" />
+        <TrainingWheelsToggle />
+      </div>
+      {spotlightDrone && (
+        <PeerDemoSpotlight
+          drone={spotlightDrone}
+          student={studentOf(book, spotlightDrone.id)}
+          scenarios={scenarios}
+          onClose={() => setSpotlightDroneId(null)}
+        />
+      )}
+      <LessonTimerBanner
+        initialSeconds={45 * 60}
+        onExpire={() => setEndPeriodOpen(true)}
+      />
+
+      <EndPeriodLandPrompt
+        open={endPeriodOpen}
+        onClose={() => setEndPeriodOpen(false)}
+        onLandAll={
+          scenarios
+            ? () => {
+                for (const entry of vitals) {
+                  if (entry.airborne) scenarios.setAltitude(entry.droneId, 0)
+                }
+              }
+            : null
+        }
+      />
+
+      <div className="flex flex-col gap-2"><h2 className="label m-0">Stop audit</h2><StopAuditLog /></div>
       <AttentionBar
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
 
+      <RemedialQueue queue={remedial} />
+      {absentNotFlying.length > 0 && (
+        <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
+          <span className="label m-0">Absent</span>
+          {absentNotFlying.map((student) => (
+            <span key={student.studentId} className="inline-flex items-center gap-2">
+              <span className="font-display text-value font-medium text-ink">{student.name}</span>
+              <PresenceBadge kind="absent" />
+            </span>
+          ))}
+        </section>
+      )}
+      <ClassAverageStrip vitals={vitals} />
+      <VoiceReadyCallouts readyNames={vitals.filter((v) => !v.airborne && v.status === 'Ready').map((v) => v.callsign)} />
+      <YoloLessonScoreStrip counts={vitals.map(() => 0)} />
+      <ControlAttentionQueue
+        queue={queue}
+        studentFor={(droneId) => studentOf(book, droneId)}
+        selected={selected}
+        onSelect={(entry) => focusStrip(entry.droneId)}
+      />
+
+      <HeightCeilingBanner vitals={vitals} />
+
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
+        <ScopeLayoutPresets value={layoutPreset} onChange={setLayoutPreset} />
         <Scope
           drones={state.drones}
           vitals={vitals}
+          ghostPaths={ghostPaths}
           selected={selected}
           onSelect={(droneId) => setSelected((current) => (current === droneId ? null : droneId))}
           selectedPanel={
@@ -130,21 +257,55 @@ export function ControlScreen() {
                 }
                 onReleaseStop={
                   scenarios
-                    ? () => scenarios.resetEmergencyStop(selectedVitals.droneId)
+                    ? () =>
+                        releaseStop(selectedVitals.droneId, () =>
+                          scenarios.resetEmergencyStop(selectedVitals.droneId),
+                        )
                     : null
                 }
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
+                hideStop={quietMode || trainingWheels}
+                onSpotlight={() => setSpotlightDroneId(selectedVitals.droneId)}
               />
             ) : null
           }
+        />
+        <ScopeCameraFilmstrip
+          vitals={vitals}
+          drones={state.drones}
+          scenarios={scenarios}
+          selected={selected}
+          onOpenCamera={setCameraDroneId}
         />
       </section>
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+          <SpareInventory grounded={groundedCount} total={vitals.length} />
+            <AssignNextButton
+              nextName={nextRosterName}
+              targetDroneId={assignTargetDroneId}
+              onAssign={() => {
+                if (assignTargetDroneId) assignNextRosterName(assignTargetDroneId)
+              }}
+            />
+            {scenarios ? (
+              <SimLandAllButton
+                airborne={airborneCount}
+                onLandAll={() => {
+                  for (const entry of vitals) {
+                    if (entry.airborne) scenarios.setAltitude(entry.droneId, 0)
+                  }
+                }}
+              />
+            ) : null}
+            <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
+          </div>
           {Object.keys(book.students).length > 0 && (
             <button
               type="button"
@@ -185,18 +346,30 @@ export function ControlScreen() {
               student={studentOf(book, entry.droneId)}
               selected={selected === entry.droneId}
               onSelect={() => setSelected((current) => (current === entry.droneId ? null : entry.droneId))}
+              swapTargetId={selected}
+              onSwap={
+                selected !== null && selected !== entry.droneId
+                  ? () => swapStudentAssignments(selected, entry.droneId)
+                  : null
+              }
               isAcknowledged={isAcknowledged}
               acknowledgedAt={acknowledgedAt}
               now={now}
               command={(droneId, kind) => issueCommand(droneId, kind, entry.callsign)}
               onReleaseStop={
                 scenarios
-                  ? () => scenarios.resetEmergencyStop(entry.droneId)
+                  ? () =>
+                      releaseStop(entry.droneId, () =>
+                        scenarios.resetEmergencyStop(entry.droneId),
+                      )
                   : null
               }
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
+              hideStop={quietMode || trainingWheels}
+              softenAlerts={trainingWheels}
+              onSpotlight={() => setSpotlightDroneId(entry.droneId)}
             />
           ))}
         </ul>
@@ -211,6 +384,8 @@ export function ControlScreen() {
           onClose={() => setCameraDroneId(null)}
         />
       )}
+
+      {overlay}
     </main>
   )
 }
@@ -229,6 +404,8 @@ function ScopeSelectedDock({
   tracked,
   onClear,
   onOpenCamera,
+  hideStop = false,
+  onSpotlight,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -237,6 +414,9 @@ function ScopeSelectedDock({
   tracked: TrackedCommand | null
   onClear: () => void
   onOpenCamera: () => void
+  /** Quiet mode — Stop is hidden on strips (local UI only). */
+  hideStop?: boolean
+  onSpotlight: () => void
 }) {
   return (
     <div
@@ -247,12 +427,12 @@ function ScopeSelectedDock({
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 className="m-0 font-display text-body font-medium text-ink">{vitals.callsign}</h3>
-          {student && <span className="text-value text-ink-subtle">{student}</span>}
+          {student && <span className="font-display text-body font-medium text-ink">{student}</span>}
           <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
           <span className="tnum text-value text-ink-subtle">
             {vitals.batteryFraction === null
               ? 'Charge not reported'
-              : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
+              : `${formatBattery(vitals.batteryFraction)} · ${formatBatteryTimeBudget(vitals.batteryFraction)}`}
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -262,6 +442,13 @@ function ScopeSelectedDock({
             className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
           >
             Camera
+          </button>
+          <button
+            type="button"
+            onClick={onSpotlight}
+            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          >
+            Spotlight
           </button>
           <button
             type="button"
@@ -277,6 +464,7 @@ function ScopeSelectedDock({
         command={command}
         onReleaseStop={onReleaseStop}
         tracked={tracked}
+        hideStop={hideStop}
       />
     </div>
   )
@@ -299,7 +487,24 @@ function StudentField({
   student: string | null
 }) {
   const [draft, setDraft] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
   const value = draft ?? student ?? ''
+
+  if (student && !editing) {
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          setEditing(true)
+        }}
+        className="min-h-11 cursor-pointer border-0 bg-transparent p-0 font-display text-body font-medium text-ink hover:underline"
+      >
+        <span className="visually-hidden">Who is flying {droneName}: </span>
+        {student}
+      </button>
+    )
+  }
 
   return (
     <label className="flex items-center">
@@ -307,14 +512,22 @@ function StudentField({
       <input
         value={value}
         placeholder="Add a name"
+        autoFocus={editing}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
           if (draft !== null) assignStudent(droneId, draft)
           setDraft(null)
+          setEditing(false)
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') event.currentTarget.blur()
+          if (event.key === 'Escape') {
+            setDraft(null)
+            setEditing(false)
+            event.currentTarget.blur()
+          }
         }}
+        onClick={(event) => event.stopPropagation()}
         className={cn(
           'min-h-11 w-28 rounded-pill border bg-canvas px-3 py-1 text-value',
           student ? 'border-hairline text-ink' : 'border-dashed border-hairline text-ink-muted',
@@ -336,6 +549,8 @@ function FlightStrip({
   student,
   selected,
   onSelect,
+  swapTargetId,
+  onSwap,
   isAcknowledged,
   acknowledgedAt,
   now,
@@ -344,11 +559,17 @@ function FlightStrip({
   tracked,
   exercise,
   onOpenCamera,
+  hideStop = false,
+  softenAlerts,
+  onSpotlight,
 }: {
   vitals: DroneVitals
   student: string | null
   selected: boolean
   onSelect: () => void
+  /** When set and different from this strip, Swap is offered against this Drone. */
+  swapTargetId: string | null
+  onSwap: (() => void) | null
   isAcknowledged: (droneId: string, alert: VitalsAlert) => boolean
   acknowledgedAt: (droneId: string, alert: VitalsAlert) => number | null
   now: number
@@ -360,19 +581,25 @@ function FlightStrip({
   exercise: string | null
   /** Opens the camera slide — watch only, not a Command (C9). */
   onOpenCamera: () => void
+  /** Quiet mode — Stop is hidden on strips (local UI only). */
+  hideStop?: boolean
+  softenAlerts?: boolean
+  /** Opens peer demo spotlight — watch only, not a Command (C9). */
+  onSpotlight: () => void
 }) {
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
 
   return (
     <li
+      id={`control-strip-${vitals.droneId}`}
       onClick={onSelect}
       className={cn(
         'flex flex-col gap-1.5 rounded-surface border-l-2 bg-surface-1 p-3',
         // The strip keeps its own box — rail, ground, selection outline — and takes the
         // list's columns rather than inventing its own.
         'min-[60rem]:col-span-full min-[60rem]:grid min-[60rem]:grid-cols-subgrid min-[60rem]:items-center min-[60rem]:gap-x-6 min-[60rem]:gap-y-1.5',
-        vitals.alerts[0]
+        vitals.alerts[0] && !softenAlerts
           ? SEVERITY_PRESENTATION[vitals.alerts[0].severity].className
           : 'border-hairline',
         // An outline rather than a fill: the tile's own severity colour has to keep
@@ -399,7 +626,21 @@ function FlightStrip({
         >
           {vitals.callsign}
         </Link>
+        {vitals.status === 'Offline' && <PresenceBadge kind="offline" />}
+        <MaintenanceFlag active={false} />
         <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
+        {onSwap && swapTargetId !== null && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onSwap()
+            }}
+            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-3 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+          >
+            Swap
+          </button>
+        )}
         {/*
          * The height, and no phase word beside it.
          *
@@ -412,7 +653,7 @@ function FlightStrip({
         <span className="tnum text-value text-ink-subtle">
           {vitals.batteryFraction === null
             ? 'Charge not reported'
-            : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
+            : `${formatBattery(vitals.batteryFraction)} · ${formatBatteryTimeBudget(vitals.batteryFraction)}`}
         </span>
         <span className="tnum ml-auto text-right text-value text-ink-muted min-[60rem]:ml-0">
           {vitals.responseAgeMs === null
@@ -470,6 +711,16 @@ function FlightStrip({
           >
             Camera
           </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onSpotlight()
+            }}
+            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+          >
+            Spotlight
+          </button>
         </div>
 
         <CommandRow
@@ -477,6 +728,7 @@ function FlightStrip({
           command={command}
           onReleaseStop={onReleaseStop}
           tracked={tracked}
+          hideStop={hideStop}
         />
 
         {vitals.alerts.length > 0 && (
@@ -486,10 +738,12 @@ function FlightStrip({
               <span
                 className={cn(
                   'label rounded-pill border px-2 py-0.5',
-                  SEVERITY_PRESENTATION[alert.severity].className,
+                  softenAlerts
+                    ? 'border-hairline text-ink-muted'
+                    : SEVERITY_PRESENTATION[alert.severity].className,
                 )}
               >
-                {SEVERITY_PRESENTATION[alert.severity].label}
+                {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
               </span>
               <span className="text-value text-ink">{alert.text}</span>
               {/*
@@ -526,11 +780,14 @@ function CommandRow({
   command,
   onReleaseStop,
   tracked,
+  hideStop = false,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void
   onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
+  /** Quiet mode — hide Stop and Release stop (local UI only). */
+  hideStop?: boolean
 }) {
   const grounded = !vitals.airborne
   const stopHeld = vitals.phase === 'emergency'
@@ -554,37 +811,41 @@ function CommandRow({
       >
         Hover
       </button>
-      {stopHeld ? (
-        onReleaseStop ? (
-          <button
-            type="button"
-            onClick={onReleaseStop}
-            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
-          >
-            Release stop
-          </button>
-        ) : (
-          <span className="ml-auto flex flex-wrap items-center gap-2">
+      {!hideStop ? (
+        stopHeld ? (
+          onReleaseStop ? (
             <button
               type="button"
-              disabled
-              className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
+              onClick={onReleaseStop}
+              className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
             >
               Release stop
             </button>
-            <span className="text-value text-ink-muted">
-              Stop is held — this Fleet cannot release it from here
+          ) : (
+            <span className="ml-auto flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled
+                className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
+              >
+                Release stop
+              </button>
+              <span className="text-value text-ink-muted">
+                Stop is held — this Fleet cannot release it from here
+              </span>
             </span>
-          </span>
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={() => command(vitals.droneId, 'emergency-stop')}
+            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+          >
+            Stop
+          </button>
         )
       ) : (
-        <button
-          type="button"
-          onClick={() => command(vitals.droneId, 'emergency-stop')}
-          className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
-        >
-          Stop
-        </button>
+        <span className="ml-auto text-value text-ink-muted">Stop hidden — training wheels</span>
       )}
       {showTracked && (
         <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>

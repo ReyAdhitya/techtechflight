@@ -1,5 +1,12 @@
 import type { DroneId, FleetEvent } from '@techtechflight/contract'
 import { scheduleLogbookCloudPush } from './logbook-sync'
+import {
+  mergeRemedialQueue,
+  remedialCandidatesFromLesson,
+  type RemedialEntry,
+} from './remedial-queue'
+
+export type { RemedialEntry } from './remedial-queue'
 
 /**
  * What the Teacher knows that no Drone can report.
@@ -108,6 +115,8 @@ export interface LessonRecord {
   readonly assignments?: Readonly<Record<DroneId, string>>
   /** Every Command sent during it. */
   readonly commands?: readonly CommandRecord[]
+  /** Moments the Teacher bookmarked while it was running. */
+  readonly bookmarks?: readonly LessonBookmark[]
 }
 
 /** One task within a Lesson. What a Student is meant to be doing right now. */
@@ -124,6 +133,12 @@ export interface CommandRecord {
   readonly droneId: DroneId
   readonly droneName: string
   readonly kind: string
+}
+
+/** A moment the Teacher marked during a running lesson — timestamp plus optional note. */
+export interface LessonBookmark {
+  readonly at: number
+  readonly note?: string
 }
 
 /**
@@ -198,6 +213,10 @@ export interface Logbook {
   readonly trainerLessons: readonly TrainerLessonRecord[]
   readonly lessonDrones: readonly LessonDroneRecord[]
   readonly lessonAssignments: readonly LessonAssignmentRecord[]
+  /** Students marked absent for this session — roster members not in the room (#46). */
+  readonly absentStudentIds?: readonly string[]
+  /** Students / Drones needing remedial follow-up after a lesson. */
+  readonly remedialQueue?: readonly RemedialEntry[]
   /**
    * When this browser last revised the Logbook. Used for cloud last-write-wins (#93).
    * Absent on records written before dual-write.
@@ -405,6 +424,9 @@ function load(): Logbook {
       trainerLessons: parsed.trainerLessons ?? [],
       lessonDrones: parsed.lessonDrones ?? [],
       lessonAssignments: parsed.lessonAssignments ?? [],
+      ...(Array.isArray(parsed.absentStudentIds)
+        ? { absentStudentIds: parsed.absentStudentIds }
+        : {}),
       ...(typeof parsed.revisedAt === 'number' ? { revisedAt: parsed.revisedAt } : {}),
     }
   } catch {
@@ -469,16 +491,37 @@ export function serviceStateOf(book: Logbook, droneId: DroneId): ServiceState {
   return book.service[droneId]?.state ?? 'in-service'
 }
 
-/** Hand a Drone to a Student, or take it back with an empty name. */
-export function assignStudent(droneId: DroneId, name: string): void {
+/** Which Drone already has this Student name, if any — D7 double-assign guard. */
+export function studentAssignedElsewhere(
+  book: Logbook,
+  name: string,
+  exceptDroneId?: DroneId,
+): DroneId | null {
+  const trimmed = name.trim()
+  if (trimmed === '') return null
+  for (const [otherId, value] of Object.entries(book.students)) {
+    if (exceptDroneId !== undefined && otherId === exceptDroneId) continue
+    if (displayNameForAssignment(book, value) === trimmed) return otherId
+  }
+  return null
+}
+
+/**
+ * Hand a Drone to a Student, or take it back with an empty name.
+ *
+ * Returns false when the name already flies another Drone (D7).
+ */
+export function assignStudent(droneId: DroneId, name: string): boolean {
   let book = migrateRosterForward(readLogbook())
   const trimmed = name.trim()
   const students = { ...book.students }
   if (trimmed === '') {
     delete students[droneId]
     save({ ...book, students })
-    return
+    return true
   }
+
+  if (studentAssignedElsewhere(book, trimmed, droneId) !== null) return false
 
   let student = studentByName(book, trimmed) ?? studentRecordOf(book, trimmed)
   if (!student) {
@@ -488,6 +531,7 @@ export function assignStudent(droneId: DroneId, name: string): void {
   }
   students[droneId] = student.studentId
   save({ ...book, students, roll: rollFromRoster(book.roster) })
+  return true
 }
 
 /** The name strips and Alerts show — never the studentId. */
@@ -508,6 +552,94 @@ export function studentIdOf(book: Logbook, droneId: DroneId): string | null {
 /** Everyone put down at the end of a lesson, so the next one starts clean. */
 export function clearStudents(): void {
   save({ ...migrateRosterForward(readLogbook()), students: {} })
+}
+
+/** Whether a Student is marked absent — distinct from an Offline Drone (#46). */
+export function isStudentAbsent(book: Logbook, studentId: string): boolean {
+  return (book.absentStudentIds ?? []).includes(studentId)
+}
+
+/** Mark a roster Student absent or present. Does not remove them from the class. */
+export function setStudentAbsent(studentId: string, absent: boolean): void {
+  const book = migrateRosterForward(readLogbook())
+  if (!studentRecordOf(book, studentId)) return
+  const current = new Set(book.absentStudentIds ?? [])
+  if (absent) current.add(studentId)
+  else current.delete(studentId)
+  save({ ...book, absentStudentIds: [...current] })
+}
+
+/** Roster Students marked absent and not currently assigned to a Drone. */
+export function absentStudentsNotFlying(book: Logbook): readonly StudentRecord[] {
+  const flyingIds = new Set(
+    Object.values(book.students)
+      .map((value) => studentRecordOf(book, value)?.studentId ?? studentByName(book, value)?.studentId)
+      .filter((id): id is string => id !== undefined && id !== null),
+  )
+  return book.roster.filter(
+    (student) => isStudentAbsent(book, student.studentId) && !flyingIds.has(student.studentId),
+  )
+}
+
+/** Exchange who is flying two Drones without retyping names mid-lesson. */
+export function swapStudentAssignments(droneIdA: DroneId, droneIdB: DroneId): void {
+  if (droneIdA === droneIdB) return
+  const book = migrateRosterForward(readLogbook())
+  const students = { ...book.students }
+  const a = students[droneIdA]
+  const b = students[droneIdB]
+  if (a === undefined && b === undefined) return
+  if (a === undefined) delete students[droneIdB]
+  else students[droneIdB] = a
+  if (b === undefined) delete students[droneIdA]
+  else students[droneIdA] = b
+  save({ ...book, students })
+}
+
+/** Roster names not currently flying a Drone, in roster order. */
+export function unassignedRosterNames(book: Logbook): readonly string[] {
+  const assigned = new Set<string>()
+  for (const droneId of Object.keys(book.students)) {
+    const name = studentOf(book, droneId)
+    if (name !== null) assigned.add(name)
+  }
+  const names =
+    book.roster.length > 0
+      ? book.roster.map((student) => student.name)
+      : [...book.roll]
+  return names.filter((name) => !assigned.has(name))
+}
+
+/** The next name `assignNextRosterName` would hand out, or null when the roster is full. */
+export function nextRosterNameForAssign(book: Logbook): string | null {
+  return unassignedRosterNames(book)[0] ?? null
+}
+
+/** First Drone in board order with no Student, or null. */
+export function firstUnassignedDrone(
+  book: Logbook,
+  droneIds: readonly DroneId[],
+): DroneId | null {
+  for (const droneId of droneIds) {
+    if (studentOf(book, droneId) === null) return droneId
+  }
+  return null
+}
+
+/**
+ * Assign the next roster name to a Drone — one tap through the class list.
+ *
+ * Returns the name assigned, or null when the roster is exhausted or the Drone already
+ * has someone.
+ */
+export function assignNextRosterName(droneId: DroneId): string | null {
+  const book = migrateRosterForward(readLogbook())
+  if (studentOf(book, droneId) !== null) return null
+  const next = nextRosterNameForAssign(book)
+  if (next === null) return null
+  if (!assignStudent(droneId, next)) return null
+  rememberStudent(next)
+  return next
 }
 
 export function startLesson(
@@ -539,6 +671,7 @@ export function startLesson(
     // flying it at the start, which is what the report is a record of.
     assignments,
     commands: [],
+    bookmarks: [],
   }
   save({ ...book, lessons: [lesson, ...book.lessons].slice(0, 100) })
   return id
@@ -550,12 +683,40 @@ export function endLesson(
   tally: Readonly<Record<DroneId, DroneTally>>,
 ): void {
   const book = readLogbook()
+  const closed = book.lessons.find((lesson) => lesson.id === id && lesson.endedAt === null)
+  const lessons = book.lessons.map((lesson) =>
+    lesson.id === id && lesson.endedAt === null ? { ...lesson, endedAt: at, tally } : lesson,
+  )
+  const remedialQueue =
+    closed === undefined
+      ? book.remedialQueue ?? []
+      : mergeRemedialQueue(
+          book.remedialQueue ?? [],
+          remedialCandidatesFromLesson({ ...closed, endedAt: at, tally }, book),
+        )
+  save({ ...book, lessons, remedialQueue })
+}
+
+/** Flag a Drone for remedial follow-up — local Logbook only (ADR-0011). */
+export function enqueueRemedial(entry: RemedialEntry): void {
+  const book = readLogbook()
   save({
     ...book,
-    lessons: book.lessons.map((lesson) =>
-      lesson.id === id && lesson.endedAt === null ? { ...lesson, endedAt: at, tally } : lesson,
-    ),
+    remedialQueue: mergeRemedialQueue(book.remedialQueue ?? [], [entry]),
   })
+}
+
+/** Remove one Drone from the remedial queue once follow-up is done. */
+export function dismissRemedial(droneId: DroneId): void {
+  const book = readLogbook()
+  save({
+    ...book,
+    remedialQueue: (book.remedialQueue ?? []).filter((entry) => entry.droneId !== droneId),
+  })
+}
+
+export function remedialQueueOf(book: Logbook): readonly RemedialEntry[] {
+  return book.remedialQueue ?? []
 }
 
 /** Reduce a run of Fleet Events to the counts worth keeping after the events age out. */
@@ -629,6 +790,31 @@ export function addIncident(id: string, incident: LessonIncident): void {
         ? { ...lesson, incidents: [...lesson.incidents, incident].slice(-200) }
         : lesson,
     ),
+  })
+}
+
+/**
+ * Teacher-written incident note on a running lesson — Logbook only (ADR-0011).
+ *
+ * Distinct from fleet events copied at lesson close; this is what the Teacher observed.
+ */
+export function addTeacherIncidentNote(
+  lessonId: string,
+  at: number,
+  note: string,
+  opts?: { readonly droneId?: DroneId; readonly droneName?: string },
+): void {
+  const trimmed = note.trim()
+  if (trimmed === '') return
+  const book = readLogbook()
+  const running = book.lessons.find((lesson) => lesson.id === lessonId && lesson.endedAt === null)
+  if (!running) return
+  addIncident(lessonId, {
+    at,
+    text: trimmed,
+    severity: 'attention',
+    ...(opts?.droneId !== undefined ? { droneId: opts.droneId } : {}),
+    ...(opts?.droneName !== undefined ? { droneName: opts.droneName } : {}),
   })
 }
 
@@ -897,6 +1083,21 @@ export function recordCommand(lessonId: string, command: CommandRecord): void {
     lessons: book.lessons.map((lesson) =>
       lesson.id === lessonId
         ? { ...lesson, commands: [...(lesson.commands ?? []), command].slice(-200) }
+        : lesson,
+    ),
+  })
+}
+
+/** Bookmark a moment in a running lesson — local Logbook only (ADR-0011). */
+export function addLessonBookmark(lessonId: string, at: number, note?: string): void {
+  const trimmed = note?.trim()
+  const bookmark: LessonBookmark = trimmed ? { at, note: trimmed } : { at }
+  const book = readLogbook()
+  save({
+    ...book,
+    lessons: book.lessons.map((lesson) =>
+      lesson.id === lessonId && lesson.endedAt === null
+        ? { ...lesson, bookmarks: [...(lesson.bookmarks ?? []), bookmark].slice(-50) }
         : lesson,
     ),
   })

@@ -18,13 +18,13 @@ import { alertQueue, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
 import type { TrackedCommand } from '@/lib/command-tracker'
 import {
   formatCoordinates,
-  formatEndurance,
   formatSeparation,
   formatVerticalMovement,
   SEVERITY_PRESENTATION,
 } from '@/lib/vitals-presentation'
 import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
+import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
 import { CameraSlide } from './CameraSlide'
@@ -260,7 +260,7 @@ function ScopeSelectedDock({
           <span className="tnum text-value text-ink-subtle">
             {vitals.batteryFraction === null
               ? 'Charge not reported'
-              : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
+              : `${formatBattery(vitals.batteryFraction)} · ${formatBatteryTimeBudget(vitals.batteryFraction)}`}
           </span>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -420,7 +420,7 @@ function FlightStrip({
         <span className="tnum text-value text-ink-subtle">
           {vitals.batteryFraction === null
             ? 'Charge not reported'
-            : `${formatBattery(vitals.batteryFraction)} · ${formatEndurance(vitals.enduranceMs)}`}
+            : `${formatBattery(vitals.batteryFraction)} · ${formatBatteryTimeBudget(vitals.batteryFraction)}`}
         </span>
         <span className="tnum ml-auto text-right text-value text-ink-muted min-[60rem]:ml-0">
           {vitals.responseAgeMs === null

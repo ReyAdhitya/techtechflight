@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { assignStudent, clearLogbook, readLogbook, studentOf } from '@/lib/logbook'
+import { DEMO_TEACHER_PIN, unlockTeacherPin } from '@/lib/teacher-pin'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
@@ -18,6 +18,7 @@ beforeEach(() => {
   pathname.current = '/demo'
   vi.useFakeTimers()
   clearLogbook()
+  unlockTeacherPin(DEMO_TEACHER_PIN)
 })
 
 afterEach(() => {
@@ -25,8 +26,7 @@ afterEach(() => {
 })
 
 describe('swap drone on Control strips', () => {
-  it('offers Swap on other strips when one is selected', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  it('offers Swap on other strips when one is selected', () => {
     assignStudent('ttf-0001', 'Priya')
     assignStudent('ttf-0002', 'Ravi')
 
@@ -37,13 +37,13 @@ describe('swap drone on Control strips', () => {
     )
     settle()
 
-    await user.click(screen.getByRole('link', { name: 'Drone 1' }))
+    // Select via the strip (li), not the callsign link — the link goes to /drone.
+    fireEvent.click(document.getElementById('control-strip-ttf-0001')!)
 
     expect(screen.getAllByRole('button', { name: 'Swap' }).length).toBeGreaterThan(0)
   })
 
-  it('swaps assignments when Swap is pressed', async () => {
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  it('swaps assignments when Swap is pressed', () => {
     assignStudent('ttf-0001', 'Priya')
     assignStudent('ttf-0002', 'Ravi')
 
@@ -54,8 +54,9 @@ describe('swap drone on Control strips', () => {
     )
     settle()
 
-    const stripTwo = screen.getByRole('link', { name: 'Drone 2' }).closest('li')!
-    await user.click(within(stripTwo).getByRole('button', { name: 'Swap' }))
+    fireEvent.click(document.getElementById('control-strip-ttf-0001')!)
+    const stripTwo = document.getElementById('control-strip-ttf-0002')!
+    fireEvent.click(within(stripTwo).getByRole('button', { name: 'Swap' }))
 
     const book = readLogbook()
     expect(studentOf(book, 'ttf-0001')).toBe('Ravi')

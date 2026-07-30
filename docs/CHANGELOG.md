@@ -5,6 +5,11 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **CI green for Walls classroom branch.** Control `'use client'` import order; PIN unlock
+  in Stop/Swap tests; hub link assertions by href; demo-only env cleared in test setup.
+
 ### Added
 
 - **Landing pad workflow sim.** Step-through approach to touchdown on Pads.

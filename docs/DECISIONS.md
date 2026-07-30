@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Test suite clears DEMO_ONLY and unlocks teacher PIN where Commands run
+
+- **Decision:** `web/test-setup.ts` deletes `NEXT_PUBLIC_DEMO_ONLY` so a leftover demo-only
+  shell does not force SimulationLabel on `/`. Stop/Swap Control tests call
+  `unlockTeacherPin` because Commands go through the PIN gate.
+- **Reason:** Otherwise CI fails after a local `NEXT_PUBLIC_DEMO_ONLY=1` next process, and
+  Stop never reaches the simulator.
+
 ## 2026-07-30 Landing pad workflow is a sim stepper
 
 - **Decision:** Local step UI on Pads route.

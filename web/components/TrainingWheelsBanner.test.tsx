@@ -39,7 +39,7 @@ describe('training wheels on Control', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Training wheels off' }))
     settle()
 
-    expect(screen.getByText(/Training wheels/)).toBeInTheDocument()
+    expect(screen.getByText(/practice mode\. Stop is hidden/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Stop' })).toBeNull()
   })
 })

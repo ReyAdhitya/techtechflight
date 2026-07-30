@@ -32,6 +32,7 @@ import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { LessonStrip } from './LessonStrip'
+import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { LiveHeadcount } from './LiveHeadcount'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { Scope } from './Scope'
@@ -62,6 +63,7 @@ export function ControlScreen() {
   const [selected, setSelected] = useState<string | null>(null)
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
+  const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
 
   const lesson = runningLesson(book)
@@ -87,6 +89,10 @@ export function ControlScreen() {
     cameraDroneId === null
       ? null
       : (state.drones.find((drone) => drone.id === cameraDroneId) ?? null)
+  const spotlightDrone =
+    spotlightDroneId === null
+      ? null
+      : (state.drones.find((drone) => drone.id === spotlightDroneId) ?? null)
 
   const focusStrip = (droneId: string) => {
     setSelected(droneId)
@@ -123,6 +129,14 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
+      {spotlightDrone && (
+        <PeerDemoSpotlight
+          drone={spotlightDrone}
+          student={studentOf(book, spotlightDrone.id)}
+          scenarios={scenarios}
+          onClose={() => setSpotlightDroneId(null)}
+        />
+      )}
       <LessonTimerBanner
         initialSeconds={45 * 60}
         onExpire={() => setEndPeriodOpen(true)}
@@ -140,7 +154,6 @@ export function ControlScreen() {
               }
             : null
         }
-      />
 
       <AttentionBar
         queue={queue}
@@ -179,6 +192,7 @@ export function ControlScreen() {
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
+                onSpotlight={() => setSpotlightDroneId(selectedVitals.droneId)}
               />
             ) : null
           }
@@ -248,6 +262,7 @@ export function ControlScreen() {
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
+              onSpotlight={() => setSpotlightDroneId(entry.droneId)}
             />
           ))}
         </ul>
@@ -280,6 +295,7 @@ function ScopeSelectedDock({
   tracked,
   onClear,
   onOpenCamera,
+  onSpotlight,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -288,6 +304,7 @@ function ScopeSelectedDock({
   tracked: TrackedCommand | null
   onClear: () => void
   onOpenCamera: () => void
+  onSpotlight: () => void
 }) {
   return (
     <div
@@ -313,6 +330,13 @@ function ScopeSelectedDock({
             className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
           >
             Camera
+          </button>
+          <button
+            type="button"
+            onClick={onSpotlight}
+            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          >
+            Spotlight
           </button>
           <button
             type="button"
@@ -395,6 +419,7 @@ function FlightStrip({
   tracked,
   exercise,
   onOpenCamera,
+  onSpotlight,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -411,6 +436,8 @@ function FlightStrip({
   exercise: string | null
   /** Opens the camera slide — watch only, not a Command (C9). */
   onOpenCamera: () => void
+  /** Opens peer demo spotlight — watch only, not a Command (C9). */
+  onSpotlight: () => void
 }) {
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
@@ -521,6 +548,16 @@ function FlightStrip({
             className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
           >
             Camera
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onSpotlight()
+            }}
+            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+          >
+            Spotlight
           </button>
         </div>
 

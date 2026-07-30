@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Peer demo spotlight on Control
+
+- **Decision:** Each Flight strip and the scope dock get a Spotlight button that mounts
+  `PeerDemoSpotlight` — one enlarged `CameraPane` with the assigned Student name when known.
+  Watch-only; no Telemetry URLs or Commands (C9, ADR-0011).
+- **Reason:** Feature 31 — Teachers demo one Student's craft without leaving Control or opening
+  `/walls/spotlight`.
+- **Note:** Separate from `cameraDroneId` / `CameraSlide`; spotlight and slide can coexist.
 ## 2026-07-30 Class average strip on Control
 
 - **Decision:** `ClassAverageStrip` sits between the Attention bar and the scope. Mean height

@@ -156,10 +156,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 - **Decision:** `LESSON_TEMPLATES` three plans; pick wires later into ExerciseList.
 - **Reason:** Feature 57.
-## 2026-07-30 Roster import is paste-then-parse
+## 2026-07-30 Paste roster removed from Students
 
-- **Decision:** `RosterImport` + `parseRosterPaste` on Students; wiring into Logbook roster store can deepen later.
-- **Reason:** Feature 56.
+- **Decision:** Drop `RosterImport` / `parseRosterPaste`. Class names are added one at a
+  time via the Name field.
+- **Reason:** The paste box never wrote into the Logbook (`onImport` was a no-op) and
+  cluttered The class.
+- **Supersedes:** 2026-07-30 “Roster import is paste-then-parse” (Feature 56 stub).
+
 ## 2026-07-30 Reports join student ids from assignments
 
 - **Decision:** `studentIdsForLesson` reads unique names from `lesson.assignments`.
@@ -416,11 +420,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Decision:** /walls/spotlight shows one large CameraPane; thumbnails switch focus by drone id in local state.
 - **Reason:** Feature 17 — class demo focus without leaving Walls.
 - **Note:** Reuses CameraPane; no Telemetry stream URLs.
+## 2026-07-30 Dual watch selects update a/b query params
+
+- **Decision:** Each Dual pane has a native Drone `<select>`; changing it `router.replace`s
+  `?a=` / `?b=`. Missing params still default to the first two Fleet Drones in board order.
+- **Reason:** Teachers pick feeds on the wall; query params stay the shareable address.
+- **Alternatives considered:** Local state only (rejected: deep links and refresh lose the
+  pair); URL-only via typing (rejected: classroom UX).
+
 ## 2026-07-30 Dual watch uses query params a/b for CameraPane pair
 
 - **Decision:** /walls/dual mounts two CameraPanes. `?a=` / `?b=` select drone ids; missing params use the first two Fleet Drones in board order.
 - **Reason:** Feature 16 — compare two feeds without crowding Control.
 - **Note:** Full CameraPane (sim Start/Stop) inside each pane; no new Commands.
+  Superseded for UI by the select decision above; params remain the address.
 ## 2026-07-30 Detection wall shows em dash until counts are shared
 
 - **Decision:** Tiles show —; counts stay in CameraPane for now.

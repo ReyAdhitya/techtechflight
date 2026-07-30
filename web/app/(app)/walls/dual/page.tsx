@@ -12,7 +12,7 @@ export default function DualWallPage() {
   return (
     <WallsShell
       title="Dual"
-      description="Two cameras side by side. Pass ?a= and ?b= drone ids; defaults to the first two."
+      description="Two cameras side by side. Pick a Drone for each pane; defaults to the first two."
     >
       <Suspense fallback={<p className="m-0 text-body text-ink-muted">Loading…</p>}>
         <DualWatch />

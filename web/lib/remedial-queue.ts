@@ -27,11 +27,11 @@ export function remedialCandidatesFromLesson(
     if (incident.severity !== 'fault' || incident.droneId === undefined) continue
     if (seen.has(incident.droneId)) continue
     seen.add(incident.droneId)
-    const studentName = studentOf(book, incident.droneId) ?? undefined
+    const studentName = studentOf(book, incident.droneId)
     entries.push({
       droneId: incident.droneId,
       droneName: incident.droneName ?? incident.droneId,
-      studentName,
+      ...(studentName !== null ? { studentName } : {}),
       reason: incident.text,
       addedAt: lesson.endedAt ?? incident.at,
       lessonId: lesson.id,

@@ -816,6 +816,9 @@ describe('freeze scope snapshot', () => {
   it('does not offer freeze on read-only mounts', () => {
     render(<Scope drones={[at('Drone 1', 0, 0)]} />)
     expect(screen.queryByRole('button', { name: 'Pause scope updates' })).not.toBeInTheDocument()
+  })
+})
+
 describe('ghost paths on the scope', () => {
   it('offers a toggle and draws a path when history exists', () => {
     const ghostPaths = new Map([
@@ -839,7 +842,10 @@ describe('ghost paths on the scope', () => {
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
     expect(container.querySelector('path[d^="M"]')).not.toBeNull()
     expect(screen.getByText('Faint dashed = recent path')).toBeInTheDocument()
+  })
+
   it('does not show the toggle when ghostPaths is omitted', () => {
+    render(<Scope drones={[at('Drone 1', 0, 0)]} />)
     expect(screen.queryByRole('button', { name: 'Ghost paths' })).not.toBeInTheDocument()
   })
 })

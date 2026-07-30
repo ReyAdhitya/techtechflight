@@ -224,6 +224,14 @@ interface Reliability {
   readonly flights: number
 }
 
+export function rankFleetReliability(
+  drones: readonly DroneState[],
+  events: readonly FleetEvent[],
+  book: Logbook,
+): readonly Reliability[] {
+  return rank(drones, events, book)
+}
+
 function rank(
   drones: readonly DroneState[],
   events: readonly FleetEvent[],

@@ -27,6 +27,7 @@ import { formatBattery } from '@/lib/battery'
 import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
+import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { LessonStrip } from './LessonStrip'
 import { Scope } from './Scope'
@@ -80,6 +81,13 @@ export function ControlScreen() {
       ? null
       : (state.drones.find((drone) => drone.id === cameraDroneId) ?? null)
 
+  const focusStrip = (droneId: string) => {
+    setSelected(droneId)
+    requestAnimationFrame(() => {
+      document.getElementById(`control-strip-${droneId}`)?.scrollIntoView({ block: 'nearest' })
+    })
+  }
+
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
     command(droneId, kind)
     /*
@@ -112,6 +120,13 @@ export function ControlScreen() {
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+      />
+
+      <ControlAttentionQueue
+        queue={queue}
+        studentFor={(droneId) => studentOf(book, droneId)}
+        selected={selected}
+        onSelect={(entry) => focusStrip(entry.droneId)}
       />
 
       <section className="flex flex-col gap-3">
@@ -374,6 +389,7 @@ function FlightStrip({
 
   return (
     <li
+      id={`control-strip-${vitals.droneId}`}
       onClick={onSelect}
       className={cn(
         'flex flex-col gap-1.5 rounded-surface border-l-2 bg-surface-1 p-3',

@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Voice callouts are text labels first
+
+- **Decision:** Text labels only.
+- **Reason:** Feature 62.
 ## 2026-07-30 Scope layout presets are local chrome
 
 - **Decision:** Preset buttons store choice in React state.

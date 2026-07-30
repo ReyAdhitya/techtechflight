@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Status wall tiles link to Drone detail
+
+- **Decision:** `/walls/status` renders `StatusWall` — one linked tile per Drone in board
+  order (`vitals`), read-only. Tile body: name, `StatusBadge`, charge %, height when
+  `altitudeM` is on vitals, response age with “Last response …” when stale. Fault →
+  `border-status-fault`; latched emergency → `border-2 border-status-fault`. Click →
+  `/drone?id=`. Empty Fleet → “Waiting for the Fleet.”
+- **Reason:** Feature 3 of classroom walls — whole-class status at a glance without Control.
+- **Note:** Ready and Battery subroutes stay on placeholders until their features land.
+
 ## 2026-07-30 Camera wall at `/walls/cameras`
 
 - **Decision:** Cameras sub-wall shows one compact watch-only tile per Drone in board order

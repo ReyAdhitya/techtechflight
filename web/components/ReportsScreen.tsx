@@ -1,3 +1,4 @@
+import { EndOfDayExportButton } from './EndOfDayExportButton'
 'use client'
 
 import { useRef, useSyncExternalStore } from 'react'
@@ -131,6 +132,7 @@ export function ReportsScreen() {
       <div className="print-hide flex flex-col gap-3 border-t border-hairline pt-8">
         <HistorySections />
       </div>
+          <EndOfDayExportButton lessons={book.lessons} />
     </main>
   )
 }

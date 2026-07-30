@@ -13,6 +13,8 @@ would notice.
 
 ### Changed
 
+- **Dual wall: pick Drones from dropdowns.** Each camera pane has a select; choice updates
+  `?a=` / `?b=` so the pair stays shareable. Defaults remain the first two.
 - **Lesson strip actions sit together.** Bookmark, Note incident, and End share one
   right-hand cluster (`gap-2`); compact mode hides recent lists so the bar stays one row.
 - **Attention is a closed dropdown.** Count + worst line stay put; open to see every

@@ -23,7 +23,6 @@ import { AssignNextButton } from './AssignNextButton'
 import { useFleet } from './FleetProvider'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { PresenceBadge } from './PresenceBadge'
-import { RosterImport } from './RosterImport'
 import { StatusGlyph } from './StatusBadge'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -229,7 +228,6 @@ export function StudentsScreen() {
           </button>
         </div>
       </section>
-          <RosterImport onImport={() => {}} />
     </main>
   )
 }

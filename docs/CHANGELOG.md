@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Detection count wall (`/walls/detect`).** One tile per Drone with an object tally when
@@ -79,6 +80,7 @@ would notice.
 
 ### Added
 
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
@@ -195,6 +197,7 @@ would notice.
 
 ### Added
 
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
@@ -372,6 +375,7 @@ would notice.
 
 ### Added
 
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.

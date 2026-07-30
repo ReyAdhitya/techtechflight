@@ -38,6 +38,7 @@ import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { LiveHeadcount } from './LiveHeadcount'
+import { QuietModeToggle } from './QuietModeToggle'
 import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
@@ -73,6 +74,7 @@ export function ControlScreen() {
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
+  const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
   const state = snapshot.state
@@ -214,6 +216,7 @@ export function ControlScreen() {
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
+                hideStop={quietMode}
                 hideStop={trainingWheels}
                 onSpotlight={() => setSpotlightDroneId(selectedVitals.droneId)}
               />
@@ -232,7 +235,10 @@ export function ControlScreen() {
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
-          <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+            <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
+          </div>
           {Object.keys(book.students).length > 0 && (
             <button
               type="button"
@@ -285,6 +291,7 @@ export function ControlScreen() {
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
+              hideStop={quietMode}
               softenAlerts={trainingWheels}
               hideStop={trainingWheels}
               onSpotlight={() => setSpotlightDroneId(entry.droneId)}
@@ -320,6 +327,7 @@ function ScopeSelectedDock({
   tracked,
   onClear,
   onOpenCamera,
+  hideStop = false,
   hideStop,
   onSpotlight,
 }: {
@@ -330,6 +338,7 @@ function ScopeSelectedDock({
   tracked: TrackedCommand | null
   onClear: () => void
   onOpenCamera: () => void
+  /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
   onSpotlight: () => void
 }) {
@@ -447,6 +456,7 @@ function FlightStrip({
   tracked,
   exercise,
   onOpenCamera,
+  hideStop = false,
   softenAlerts,
   hideStop,
   onSpotlight,
@@ -466,8 +476,9 @@ function FlightStrip({
   exercise: string | null
   /** Opens the camera slide — watch only, not a Command (C9). */
   onOpenCamera: () => void
-  softenAlerts?: boolean
+  /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
+  softenAlerts?: boolean
   /** Opens peer demo spotlight — watch only, not a Command (C9). */
   onSpotlight: () => void
 }) {
@@ -650,12 +661,14 @@ function CommandRow({
   command,
   onReleaseStop,
   tracked,
+  hideStop = false,
   hideStop,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void
   onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
+  /** Quiet mode — hide Stop and Release stop (local UI only). */
   hideStop?: boolean
 }) {
   const grounded = !vitals.airborne
@@ -680,27 +693,39 @@ function CommandRow({
       >
         Hover
       </button>
-      {stopHeld ? (
-        onReleaseStop ? (
-          <button
-            type="button"
-            onClick={onReleaseStop}
-            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
-          >
-            Release stop
-          </button>
-        ) : (
-          <span className="ml-auto flex flex-wrap items-center gap-2">
+      {!hideStop &&
+        (stopHeld ? (
+          onReleaseStop ? (
             <button
               type="button"
-              disabled
-              className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
+              onClick={onReleaseStop}
+              className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
             >
               Release stop
             </button>
-            <span className="text-value text-ink-muted">
-              Stop is held — this Fleet cannot release it from here
+          ) : (
+            <span className="ml-auto flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled
+                className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
+              >
+                Release stop
+              </button>
+              <span className="text-value text-ink-muted">
+                Stop is held — this Fleet cannot release it from here
+              </span>
             </span>
+          )
+        ) : (
+          <button
+            type="button"
+            onClick={() => command(vitals.droneId, 'emergency-stop')}
+            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+          >
+            Stop
+          </button>
+        ))}
           </span>
         )
       ) : hideStop ? (

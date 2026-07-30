@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Lost-link visual siren on Walls.** When any Drone is Offline or has a no-response
+  alert, Walls show a pulsing fault-border alert (motion suppressed under
+  prefers-reduced-motion). Visual only — no audio.
 - **Height wall (`/walls/height`).** One tile per Drone with name and an aligned height
   readout; tiles above the classroom ceiling default (3 m) highlight with a summary count.
   Tiles link to Drone detail. Read-only.

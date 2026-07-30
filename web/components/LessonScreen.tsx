@@ -1,3 +1,4 @@
+import { BatterySwapChecklist } from './BatterySwapChecklist'
 import { LessonTemplatesPack } from './LessonTemplatesPack'
 'use client'
 
@@ -230,6 +231,7 @@ function PreFlight({
         </p>
       )}
 
+      <BatterySwapChecklist />
       <LessonPrepPanel drones={drones} book={book} />
 
       <AssignmentColumn drones={drones} book={book} />

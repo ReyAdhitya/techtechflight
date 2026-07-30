@@ -1,3 +1,5 @@
+import { ScopeLayoutPresets } from './ScopeLayoutPresets'
+import type { ScopeLayoutPreset } from '@/lib/scope-layout-presets'
 import { MaintenanceFlag } from './MaintenanceFlag'
 'use client'
 
@@ -86,6 +88,7 @@ export function ControlScreen() {
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
+  const [layoutPreset, setLayoutPreset] = useState<ScopeLayoutPreset>('classroom')
   const { ensureUnlocked, overlay } = useTeacherPinGate()
   const [quietMode, setQuietMode] = useState(false)
 
@@ -233,6 +236,7 @@ export function ControlScreen() {
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
+        <ScopeLayoutPresets value={layoutPreset} onChange={setLayoutPreset} />
         <Scope
           drones={state.drones}
           vitals={vitals}

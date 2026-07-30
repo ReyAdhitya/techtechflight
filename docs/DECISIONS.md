@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Scope layout presets are local chrome
+
+- **Decision:** Preset buttons store choice in React state.
+- **Reason:** Feature 61.
 ## 2026-07-30 Battery swap checklist is local UI only
 
 - **Decision:** Checklist on Lesson; no hardware Commands (ADR-0011).

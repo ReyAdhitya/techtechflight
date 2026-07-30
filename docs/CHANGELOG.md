@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Scope camera filmstrip on Control.** Horizontal row of watch-only camera thumbs under
+  the scope in board order; click opens CameraSlide. The lit scope mark lights its thumb.
+
 - **Walls hub lists Proximity through Spotlight** after those walls landed.
 
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.

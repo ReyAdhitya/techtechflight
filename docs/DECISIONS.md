@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Projector reuses Cameras wall page
+
+- **Decision:** `/walls/projector` clones Cameras page; hub link included.
+- **Reason:** Feature 64.
 ## 2026-07-30 Parent kiosk reuses Status wall page
 
 - **Decision:** `/walls/kiosk` clones Status page; hub link included.

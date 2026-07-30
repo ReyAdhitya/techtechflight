@@ -21,6 +21,7 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/spotlight', label: 'Spotlight', hint: 'One large camera plus thumbs' },
   { href: '/walls/landed', label: 'Landed', hint: 'Who is down at end of lesson' },
   { href: '/walls/tv', label: 'TV', hint: 'Classroom display of Cameras or Status' },
+  { href: '/walls/projector', label: 'Projector', hint: 'Student-facing cameras' },
   { href: '/walls/kiosk', label: 'Kiosk', hint: 'Parent demo status wall' },
 ]
 

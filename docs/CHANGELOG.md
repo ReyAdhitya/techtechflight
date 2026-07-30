@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **End-lesson landed wall (`/walls/landed`).** One tile per Drone — green when on the
@@ -97,6 +98,7 @@ would notice.
 
 ### Added
 
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **Walls hub lists Proximity through Spotlight** after those walls landed.
@@ -219,6 +221,7 @@ would notice.
 
 ### Added
 
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **Walls hub lists Proximity through Spotlight** after those walls landed.
@@ -402,6 +405,7 @@ would notice.
 
 ### Added
 
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **Walls hub lists Proximity through Spotlight** after those walls landed.

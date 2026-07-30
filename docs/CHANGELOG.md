@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Detection count wall (`/walls/detect`).** One tile per Drone with an object tally when
   the in-browser detector exposes counts and the sim camera is streaming; otherwise "—".
@@ -78,6 +79,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
@@ -193,6 +195,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
@@ -369,6 +372,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.

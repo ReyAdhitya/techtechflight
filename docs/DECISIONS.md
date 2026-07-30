@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Height ceiling banner reuses the wall threshold
+
+- **Decision:** `HeightCeilingBanner` on Control calls `isOverCeiling` from `height-wall.ts` (`CLASSROOM_CEILING_M = 3`). Read-only — no Command path (ADR-0011).
+- **Reason:** Feature 38 — Teachers working strips need the ceiling warning without opening the height wall.
+- **Note:** Banner hides at zero over-ceiling craft; names every offender.
+
 ## 2026-07-30 Freeze scope snapshot on Control
 
 - **Decision:** **Freeze scope** snapshots Drone positions, the held window, ceiling, and

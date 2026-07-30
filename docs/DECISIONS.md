@@ -156,10 +156,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 - **Decision:** `LESSON_TEMPLATES` three plans; pick wires later into ExerciseList.
 - **Reason:** Feature 57.
-## 2026-07-30 Roster import is paste-then-parse
+## 2026-07-30 Paste roster removed from Students
 
-- **Decision:** `RosterImport` + `parseRosterPaste` on Students; wiring into Logbook roster store can deepen later.
-- **Reason:** Feature 56.
+- **Decision:** Drop `RosterImport` / `parseRosterPaste`. Class names are added one at a
+  time via the Name field.
+- **Reason:** The paste box never wrote into the Logbook (`onImport` was a no-op) and
+  cluttered The class.
+- **Supersedes:** 2026-07-30 “Roster import is paste-then-parse” (Feature 56 stub).
+
 ## 2026-07-30 Reports join student ids from assignments
 
 - **Decision:** `studentIdsForLesson` reads unique names from `lesson.assignments`.

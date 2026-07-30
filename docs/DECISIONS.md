@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Training wheels mode is UI-only local state
+
+- **Decision:** `TrainingWheelsProvider` stores on/off in `localStorage`. When on, Control and
+  Lesson show a banner; Stop buttons are replaced with copy; strip and alert chips use muted
+  hairline styling instead of status-fault borders. Land and Hover remain.
+- **Reason:** Feature 32 — first-lesson practice without the highest-risk control surface.
+- **Note:** Does not intercept `command()` or add CommandableSource paths (ADR-0011).
 ## 2026-07-30 Peer demo spotlight on Control
 
 - **Decision:** Each Flight strip and the scope dock get a Spotlight button that mounts

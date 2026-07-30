@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Training wheels mode.** Toggle on Control and Lesson (localStorage). Banner when on; Stop
+  hidden and alert styling softened — UI-only, no hardware commands (ADR-0011).
 - **Peer demo spotlight on Control.** Spotlight button on each strip opens a large watch-only
   CameraPane for class demo; End spotlight dismisses. No Commands (C9).
 - **Class average strip on Control.** Mean airborne height and readiness percentage above the

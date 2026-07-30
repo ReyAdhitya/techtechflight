@@ -7,6 +7,169 @@ would notice.
 
 ### Fixed
 
+- **CI green for Walls classroom branch.** Control `'use client'` import order; PIN unlock
+  in Stop/Swap tests; hub link assertions by href; demo-only env cleared in test setup.
+
+### Added
+
+- **Landing pad workflow sim.** Step-through approach to touchdown on Pads.
+- **Stop audit log.** Session list of Stop presses on Control.
+- **Camera recording clip.** Save clip control on CameraPane (stub handler).
+- **Student projector (`/walls/projector`).** Cameras wall for the class screen.
+- **Parent demo kiosk (`/walls/kiosk`).** Same Status wall for open evenings.
+- **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.
+- **Scope layout presets.** Classroom / wide / tight presets under the Control scope.
+- **Battery swap checklist.** Five-step local checklist on Lesson prep.
+- **Maintenance grounding flag.** Badge for craft held for maintenance.
+- **Spare inventory.** Grounded count shown as spare beside headcount on Control.
+- **Lesson templates pack.** Three starter plans on the Lesson prep screen.
+- **Roster import paste.** Students screen accepts one-name-per-line paste.
+- **Reports student ids.** Helper joins lesson assignment names for report rows.
+- **Weekly teacher digest.** Reports shows finished/started lesson counts for the last 7 days.
+
+- **End-of-day export.** Reports offers a JSON download of todays lessons (ZIP later).
+- **Auto PDF after lesson.** Ending a lesson opens a confirm dialog to download the reports PDF.
+- **Before/after lesson scores.** Score pair formatter and strip for lesson summaries.
+- **YOLO lesson scoring.** Class average of detection counts on Control (stub zeros until detector tallies feed in).
+
+- **Incident note on running lessons (#48).** **Note incident** on Control and `/lesson`
+  saves Teacher observations into the Logbook with optional Drone context — local only
+  (ADR-0011). Fleet events still copy at lesson close.
+- **Absent versus Offline badges (#46).** Students can be marked **Absent** on `/students`;
+  **Offline** badges appear on Drones that have gone quiet. Control shows an Absent summary
+  line and Offline on strips — semantic status tokens, not one shared warning colour.
+- **Double-assign guard (D7).** `assignStudent` refuses when a name already flies another
+  Drone; AssignmentColumn and one-tap assign honour the same rule at the Logbook layer.
+- **Incident note on running lessons (#48).** **Note incident** on Control and `/lesson`
+  saves Teacher observations into the Logbook with optional Drone context — local only
+  (ADR-0011). Fleet events still copy at lesson close.
+- **Absent versus Offline badges (#46).** Students can be marked **Absent** on `/students`;
+  **Offline** badges appear on Drones that have gone quiet. Control shows an Absent summary
+  line and Offline on strips — semantic status tokens, not one shared warning colour.
+- **Double-assign guard (D7).** `assignStudent` refuses when a name already flies another
+  Drone; AssignmentColumn and one-tap assign honour the same rule at the Logbook layer.
+- **Photo evidence on CameraPane (#49).** **Save photo evidence** downloads a PNG from the
+  live video frame (`canvas.toDataURL`); sim surfaces get a labelled placeholder. Browser
+  download only — no Fleet path (ADR-0011).
+
+- **Swap drone mid-lesson.** Select a strip on Control, then **Swap** on another — student assignments exchange without retyping.
+- **One-tap roster assign.** Control and Students offer **Assign {name}** — the next unassigned roster name goes to the selected unassigned Drone, or the first free Drone in board order.
+- **Student name on Control strips.** Assigned names render as prominent display type beside the callsign; click to edit. Scope dock matches.
+- **Land all (sim) on Control.** Beside the live headcount, a button brings every airborne craft down via `setAltitude(0)` when a simulated Fleet is connected — not a hardware Command (ADR-0011).
+- **Teacher PIN gate.** Demo PIN `4242` unlocks session access to Control Commands (Land/Hover/Stop/Release) and Settings; overlay until entered. Not security — documented demo only.
+- **Quiet mode on Control.** Toggle beside Every Drone hides Stop and Release stop on every strip and the selected scope dock; Land and Hover stay. Local UI only — not a Fleet Command.
+- **Classroom geofence on Scope.** Top-down view draws a dashed 8×6 m box (−4…4 m east, −3…3 m north from setup); caption documents extents. Orientation only — no alerts yet.
+- **Height ceiling banner on Control.** Alert when any Drone exceeds the 3 m classroom ceiling default; reuses the height wall threshold.
+- **Freeze scope on Control.** **Freeze scope** snapshots Drone positions, the scope window,
+  and conflict lines while Telemetry and flight strips keep updating — same discipline as
+  camera wall freeze. **Resume updates** catches up from the live Fleet.
+- **Ghost paths on the Scope (Control).** Optional **Ghost paths** toggle draws faint dashed
+  recent trails on top-down view. Positions accumulate in a browser ring buffer — FleetHistory
+  has no position trail yet, so the toggle works with empty paths until Drones move.
+- **Lesson bookmark moment on Control and Lesson.** While a lesson runs, **Bookmark moment**
+  saves elapsed time plus an optional note into the Logbook — local only, no Command
+  (ADR-0011). Recent bookmarks list under the control on Control and `/lesson`.
+- **Remedial queue on Control and Lesson.** After a lesson ends, Drones with fault
+  incidents are queued for remedial follow-up in the Logbook. Control and `/lesson` show a
+  minimal list linking to `/drone?id=`; **Done** dismisses without sending a Command.
+- **Lesson plan wizard on /lesson.** Three steps — name, exercises, confirm — before start, with
+  a header shortcut to start immediately (E7). Reuses `ExerciseList`.
+- **Training wheels mode.** Toggle on Control and Lesson (localStorage). Banner when on; Stop
+  hidden and alert styling softened — UI-only, no hardware commands (ADR-0011).
+- **Peer demo spotlight on Control.** Spotlight button on each strip opens a large watch-only
+  CameraPane for class demo; End spotlight dismisses. No Commands (C9).
+- **Class average strip on Control.** Mean airborne height and readiness percentage above the
+  scope — glanceable fleet summary without opening a wall.
+- **Live headcount on Control.** Airborne / grounded counts beside Every Drone.
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
+
+- **Attention queue dock on Control.** Sorted needs-you list beneath the Attention bar;
+  click lights and scrolls to the matching flight strip. The bar still carries one Alert at
+  a time; the dock carries the whole queue worst-first.
+- **Battery time budget on Control strips.** Charge now carries a naive minutes-left readout
+  (`minutes ≈ charge × 12`) beside the percentage on every flight strip and the selected
+  strip panel — enough to eyeball whether a lesson fits without reading discharge history.
+- **Pre-flight checklist on `/lesson`.** Before start, the Lesson screen shows the same
+  ready / not ready counts and per-Drone labels as the Ready wall (`ready-mapping.ts`).
+  Starting with zero ready shows calm copy beside Start; the button stays enabled (E7).
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
+- **End-lesson landed wall (`/walls/landed`).** One tile per Drone — green when on the
+  ground, red when still airborne; summary landed / still flying counts; tiles link to Drone
+  detail. Read-only. Not on the Walls hub yet.
+- **Camera wall freeze (`/walls/cameras`).** Freeze wall snapshots tile names and camera
+  labels while Telemetry and ScenarioControls keep running; Resume updates catches up.
+  CameraSlide stays live so Start/Stop still works during a freeze.
+- **Who's-who labels on the camera wall.** Each tile names the assigned student from the
+  Logbook when one exists; otherwise the Drone callsign only. Simulated-feed overlays use
+  the same label.
+- **Scope camera filmstrip on Control.** Horizontal row of watch-only camera thumbs under
+  the scope in board order; click opens CameraSlide. The lit scope mark lights its thumb.
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
+
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **Detection count wall (`/walls/detect`).** One tile per Drone with an object tally when
+  the in-browser detector exposes counts and the sim camera is streaming; otherwise "—".
+  Summary total when any tile reports; tiles link to Drone detail. Read-only. Not on the
+  Walls hub yet.
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
+
+- **Landing pad wall (`/walls/pads`).** One tile per Drone with landing-pad QR seen or not on
+  the camera picture; reuses the camera landing-target readout. Simulated streaming scans the
+  static fixture; idle cameras and hardware show an em dash until a school-frame scan path
+  lands. Summary seen count; tiles link to Drone detail. Read-only — never written into
+  Telemetry.
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
+
+- **Landing watch wall (`/walls/landing`).** When any Drone is descending or auto-landing,
+  the wall narrows to those tiles with phase, airborne state, and height; otherwise every
+  Drone stays visible with land-relevant vitals. Summary: “N landing”. Tiles link to Drone
+  detail. Read-only.
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
+
+- **Proximity wall (`/walls/proximity`).** One tile per close pair of airborne Drones inside
+  the 1.5 m separation warning; summary count, distance readout, tiles link to Drone detail.
+  Read-only.
+- **Walls hub lists Attention, Faults, Heartbeat, and Height.** Sync after those walls landed.
+- **Lost-link visual siren on Walls.** When any Drone is Offline or has a no-response
+  alert, Walls show a pulsing fault-border alert (motion suppressed under
+  prefers-reduced-motion). Visual only — no audio.
+- **Height wall (`/walls/height`).** One tile per Drone with name and an aligned height
+  readout; tiles above the classroom ceiling default (3 m) highlight with a summary count.
+  Tiles link to Drone detail. Read-only.
+- **Last Contact wall (`/walls/heartbeat`).** One dot per Drone in board order — filled when
+  the link is live, hollow when Telemetry is Stale or the Drone has not responded. Summary
+  stale count; tiles link to Drone detail. Teacher-facing copy says Last Contact, not
+  heartbeat.
+- **Fault mosaic (`/walls/faults`).** Every Drone on one grid; fault, stale, and emergency
+  tiles sort to the front, the rest follow in board order. Summary count, fault reason when
+  reported, stale hint. Tiles link to Drone detail. Read-only.
+- **Attention wall (`/walls/attention`).** Troubled Drones — fault, emergency, stale, or
+  alerts still on the Teacher queue — read large with the headline alert; nominal Drones
+  shrink to a muted callsign. Summary: “N need you”. Tiles link to `/drone?id=`. Read-only.
+- **Battery wall (`/walls/battery`).** One tile per Drone with name, charge bar, and
+  percentage; critical count when charge is below the ground-station usable threshold.
+  Tiles link to Drone detail. Read-only.
+- **Ready wall (`/walls/ready`).** Pre-flight board: each Drone tile shows Ready, Not
+  ready, Offline, or Fault with a calm “N ready · M not ready” summary. Tap a tile for
+  `/drone?id=`. Offline and Fault count in the not-ready bucket.
+- **Status wall (`/walls/status`).** Grid of linked tiles — name, Status word, charge, height
+  when reported, and response age with a stale hint. Fault and emergency stop use existing
+  status-fault borders; empty Fleet keeps the calm waiting line.
+- **Classroom Walls hub (`/walls`).** SiteNav “Walls” after Control opens a hub with links
+  to Cameras, Status, Ready, and Battery subroutes. Shared `WallsShell` + `WallGrid`
+  primitives; subroutes ship placeholder tiles named from the Fleet until each wall lands.
+- **Camera wall (`/walls/cameras`).** Grid of watch-only camera tiles in board order; click
+  opens CameraSlide with the full CameraPane for that Drone.
+
+### Fixed
+
 - **Front/Side Scope labels no longer double-print when marks stack (#86).** Coincident
   elevation piles stack names vertically in rem above the mark; the drawing box clips so
   “Filled = flying” stays in the footer only.
@@ -20,6 +183,24 @@ would notice.
   fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.
 
 ### Added
+
+- **Live headcount on Control.** Airborne / grounded counts beside Every Drone.
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
+
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
+
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Header logo goes to Control (#96).** The brand mark (and wordmark fallback) is a link to
   `/control` — same teaching surface as the Control nav item. “Flight Deck” product name
@@ -130,6 +311,24 @@ would notice.
   behind route params and warm leftovers. Key `'watch'` and the five Status words untouched.
 
 ### Added
+
+- **Live headcount on Control.** Airborne / grounded counts beside Every Drone.
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
+
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
+
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Full-screen Scope keeps Commands for the selected mark.** Overlay covers Every Drone
   strips; picking a mark docks Land / Hold / Stop (same row as the strip) at the bottom
@@ -301,6 +500,24 @@ would notice.
   "TechTech Readyboard". Every tab now reads "… · Flight Deck · TechTech".
 
 ### Added
+
+- **Live headcount on Control.** Airborne / grounded counts beside Every Drone.
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
+
+- **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
+
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
+- **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **The rule a hardware adapter has to keep is written down as a test.** `CODEBASE_AUDIT.md`
   §8 noticed that `sameFleet` compares Telemetry by reference and judged it worth a test

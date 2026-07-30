@@ -92,7 +92,10 @@ function AssignmentRow({
       setDraft(null)
       return
     }
-    assignStudent(drone.id, draft)
+    if (!assignStudent(drone.id, draft)) {
+      setDraft(null)
+      return
+    }
     rememberStudent(draft)
     setDraft(null)
   }

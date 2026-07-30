@@ -12,10 +12,10 @@ import { cn } from '@/lib/utils'
  * reasoning holds and this is what changed: there are genuinely four other places to be,
  * each answering a question the board cannot.
  *
- * Five, ordered by a Teacher's day rather than alphabetically: Control while a lesson
- * runs, Fleet and Lesson and Students before one, Reports after. Settings is not here —
- * it is a room-and-records screen rather than a place in the workflow, so it sits in the
- * header.
+ * Six, ordered by a Teacher's day rather than alphabetically: Control while a lesson
+ * runs, Walls for the whole-class glance, Fleet and Lesson and Students before one,
+ * Reports after. Settings is not here — it is a room-and-records screen rather than a
+ * place in the workflow, so it sits in the header.
  *
  * The Fleet remains the default landing screen. A Teacher who only ever wants "which
  * Drones can I hand out" never has to learn the rest, which is the part of ADR-0004's
@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
  */
 export const DESTINATIONS = [
   { href: '/control', label: 'Control', hint: 'The Flight Control Center — the lesson as it runs' },
+  { href: '/walls', label: 'Walls', hint: 'See the whole class at once' },
   { href: '/', label: 'Fleet', hint: 'Every Drone, and what needs doing to it' },
   { href: '/lesson', label: 'Lesson', hint: 'Plan it, then start it' },
   { href: '/students', label: 'Students', hint: 'The class, and Drone assignment' },
@@ -44,7 +45,7 @@ export function SiteNav() {
           const active =
             destination.href === '/'
               ? pathname === '/' || pathname === '/demo'
-              : pathname === destination.href
+              : pathname === destination.href || pathname.startsWith(`${destination.href}/`)
 
           return (
             <li key={destination.href}>

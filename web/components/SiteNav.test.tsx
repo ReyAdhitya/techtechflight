@@ -6,17 +6,18 @@ const pathname = vi.hoisted(() => ({ current: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 /**
- * Five places, ordered by a Teacher's day.
+ * Six places, ordered by a Teacher's day.
  *
  * The count matters. Every destination added past what a Teacher actually visits is one
  * more thing to read past while looking for the one they wanted.
  */
 describe('where a Teacher can go', () => {
-  it('offers exactly the five places in the workflow', () => {
+  it('offers exactly the six places in the workflow', () => {
     render(<SiteNav />)
 
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'Control',
+      'Walls',
       'Fleet',
       'Lesson',
       'Students',
@@ -45,6 +46,13 @@ describe('where a Teacher can go', () => {
     expect(screen.getByRole('link', { name: 'Reports' })).toHaveAttribute('aria-current', 'page')
   })
 
+  it('marks Walls active on wall subroutes', () => {
+    pathname.current = '/walls/cameras'
+    render(<SiteNav />)
+
+    expect(screen.getByRole('link', { name: 'Walls' })).toHaveAttribute('aria-current', 'page')
+  })
+
   it('treats the demonstration board as the Fleet, because it is the same screen', () => {
     pathname.current = '/demo'
     render(<SiteNav />)
@@ -55,6 +63,7 @@ describe('where a Teacher can go', () => {
   it('every destination is a real route', () => {
     expect(DESTINATIONS.map((destination) => destination.href)).toEqual([
       '/control',
+      '/walls',
       '/',
       '/lesson',
       '/students',

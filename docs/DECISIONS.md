@@ -9,6 +9,498 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Test suite clears DEMO_ONLY and unlocks teacher PIN where Commands run
+
+- **Decision:** `web/test-setup.ts` deletes `NEXT_PUBLIC_DEMO_ONLY` so a leftover demo-only
+  shell does not force SimulationLabel on `/`. Stop/Swap Control tests call
+  `unlockTeacherPin` because Commands go through the PIN gate.
+- **Reason:** Otherwise CI fails after a local `NEXT_PUBLIC_DEMO_ONLY=1` next process, and
+  Stop never reaches the simulator.
+
+## 2026-07-30 Landing pad workflow is a sim stepper
+
+- **Decision:** Local step UI on Pads route.
+- **Reason:** Feature 65c.
+## 2026-07-30 Stop audit is sessionStorage
+
+- **Decision:** Local session only.
+- **Reason:** Feature 65b.
+## 2026-07-30 Recording clip is a stub control
+
+- **Decision:** Button only.
+- **Reason:** Feature 65a.
+## 2026-07-30 Projector reuses Cameras wall page
+
+- **Decision:** `/walls/projector` clones Cameras page; hub link included.
+- **Reason:** Feature 64.
+## 2026-07-30 Parent kiosk reuses Status wall page
+
+- **Decision:** `/walls/kiosk` clones Status page; hub link included.
+- **Reason:** Feature 63.
+## 2026-07-30 Voice callouts are text labels first
+
+- **Decision:** Text labels only.
+- **Reason:** Feature 62.
+## 2026-07-30 Scope layout presets are local chrome
+
+- **Decision:** Preset buttons store choice in React state.
+- **Reason:** Feature 61.
+## 2026-07-30 Battery swap checklist is local UI only
+
+- **Decision:** Checklist on Lesson; no hardware Commands (ADR-0011).
+- **Reason:** Feature 60.
+## 2026-07-30 Maintenance flag is a strip badge
+
+- **Decision:** `MaintenanceFlag` badge; active state can bind to out-of-service later.
+- **Reason:** Feature 59.
+## 2026-07-30 Spare inventory is grounded count
+
+- **Decision:** `SpareInventory` uses grounded vitals as spare.
+- **Reason:** Feature 58.
+## 2026-07-30 Lesson templates are a fixed starter pack
+
+- **Decision:** `LESSON_TEMPLATES` three plans; pick wires later into ExerciseList.
+- **Reason:** Feature 57.
+## 2026-07-30 Roster import is paste-then-parse
+
+- **Decision:** `RosterImport` + `parseRosterPaste` on Students; wiring into Logbook roster store can deepen later.
+- **Reason:** Feature 56.
+## 2026-07-30 Reports join student ids from assignments
+
+- **Decision:** `studentIdsForLesson` reads unique names from `lesson.assignments`.
+- **Reason:** Feature 55.
+## 2026-07-30 Weekly digest is a 7-day lesson count
+
+- **Decision:** `WeeklyDigest` on Reports summarises the last 7 days.
+- **Reason:** Feature 54.
+
+## 2026-07-30 End-of-day export is JSON until ZIP lands
+
+- **Decision:** `EndOfDayExportButton` downloads todays lessons as JSON; ZIP deferred.
+- **Reason:** Feature 53.
+- **Note:** Filename `techtechflight-eod.json`.
+## 2026-07-30 Auto PDF is confirm-then-download on lesson end
+
+- **Decision:** `AutoPdfAfterLesson` opens from `LessonStrip` after `endLesson`; Teacher confirms download via existing `downloadReportsPdf`.
+- **Reason:** Feature 52.
+- **Note:** Defects list empty in the prompt payload; Reports still has the full export.
+## 2026-07-30 Before/after scores are a pair on the lesson summary
+
+- **Decision:** `formatScorePair` / `BeforeAfterScores` present before→after; storage on LessonRecord can follow.
+- **Reason:** Feature 51.
+- **Note:** Local presentation first.
+## 2026-07-30 YOLO lesson score averages detection counts
+
+- **Decision:** `YoloLessonScoreStrip` shows mean detection count per craft; Control passes zeros until Detect wall tallies are wired live.
+- **Reason:** Feature 50.
+- **Note:** Formula in `yolo-lesson-score.ts`.
+
+## 2026-07-30 Teacher incident notes during a lesson
+
+- **Decision:** `addTeacherIncidentNote` appends attention-severity incidents to the running
+  lesson. Control and `/lesson` expose **Note incident** beside bookmark — Logbook only
+  (ADR-0011).
+- **Reason:** Feature #48 — Teachers need to record what they saw without waiting for
+  lesson close or a fault event.
+- **Note:** Auto-copied fleet incidents at close are unchanged; teacher notes use the same
+  `incidents` array with `severity: 'attention'`.
+## 2026-07-30 Absent Student versus Offline Drone badges
+
+- **Decision:** **Absent** is a Teacher-marked roster flag (`absentStudentIds` in the Logbook).
+  **Offline** is Telemetry Status on a Drone. Separate pills: `text-status-not-ready` vs
+  `text-status-offline`. Nothing is sent to the Fleet (ADR-0011).
+- **Reason:** Feature #46 — a Student away from class is not the same fact as a craft that
+  lost link.
+- **Note:** Absent Students still appear on the roster; assignment is unchanged.
+## 2026-07-30 Double-assign blocked in the Logbook
+
+- **Decision:** `assignStudent` returns false when `studentAssignedElsewhere` finds the name
+  on another Drone. UI clash warnings stay; the Logbook is the backstop so one-tap assign
+  cannot bypass D7.
+- **Reason:** Feature #47 — six quick taps must not put one Student on two craft.
+- **Note:** Clearing a name or swapping assignments is unchanged.
+## 2026-07-30 Camera photo evidence download
+
+- **Decision:** `PhotoEvidenceButton` on CameraPane captures the current `<video>` frame to
+  PNG via an off-screen canvas; sim feeds without pixels use `downloadPlaceholderEvidence`.
+  No upload or Command (ADR-0011).
+- **Reason:** Feature #49 — Teachers need a still for incident follow-up without inventing
+  cloud storage.
+- **Note:** Filename `{droneId}-evidence.png`; school streams and sim both offer the control.
+
+## 2026-07-30 Swap exchanges live assignments only
+
+- **Decision:** `swapStudentAssignments` exchanges `book.students` entries between two Drones. Control shows **Swap** on every other strip while one is selected. Lesson-record assignments at start are untouched (G6).
+- **Reason:** Feature 45 — a faulted airframe swap mid-lesson should not make a Teacher retype names.
+- **Note:** Swap with one empty Drone moves the assignment; both empty is a no-op.
+
+## 2026-07-30 One-tap assign walks the roster in order
+
+- **Decision:** `assignNextRosterName` hands the next unassigned roster name to a Drone. Control targets the selected unassigned craft when one is lit; otherwise `firstUnassignedDrone` in board order. Students uses board order only.
+- **Reason:** Feature 44 — six assignments in thirty seconds; typing six names is not thirty seconds.
+- **Note:** Does not bypass D7 double-assign — `assignStudent` still owns clashes.
+
+## 2026-07-30 Assigned Students read as display type on strips
+
+- **Decision:** When a Student is assigned, Control strips show their name as `font-display text-body font-medium text-ink` beside the callsign; click opens the existing inline field. Unassigned strips keep the dashed input.
+- **Reason:** Feature 43 — §4.4 wireframe puts the name at equal weight to the Drone name; a narrow input buried it.
+- **Note:** Alert copy still repeats "Flown by …" under alerts; that line is for urgency, not identity.
+
+## 2026-07-30 Land all (sim) is a ScenarioControls surface
+
+- **Decision:** `SimLandAllButton` on Control calls `scenarios.setAltitude(id, 0)` for every airborne craft. Shown only when `scenarios` is present; hidden when nothing is up.
+- **Reason:** Feature 42 — Teachers need land-all without waiting for the period timer; still not a Command path (ADR-0011 / C9).
+- **Note:** End-period prompt keeps the same landing logic; this is the always-available control.
+
+## 2026-07-30 Teacher PIN is session demo gate only
+
+- **Decision:** `DEMO_TEACHER_PIN = '4242'` in `teacher-pin.ts`; unlock stored in `sessionStorage`. Control wraps Commands via `useTeacherPinGate`; Settings blocks behind `TeacherPinOverlay` until unlocked.
+- **Reason:** Feature 41 — minimal authority gate before sensitive actions without inventing school identity.
+- **Note:** Demo PIN only, not authentication; closing the tab clears unlock.
+
+## 2026-07-30 Quiet mode hides Stop on Control strips
+
+- **Decision:** `QuietModeToggle` sets local React state on Control; `CommandRow` accepts `hideStop` and omits Stop / Release stop when true. Land and Hover unchanged.
+- **Reason:** Feature 40 — demonstrations and quiet classrooms where the red Stop must not sit on every strip.
+- **Note:** UI-only; does not change what the Fleet accepts (ADR-0011).
+
+## 2026-07-30 Classroom geofence is a fixed 8×6 m box on Scope
+
+- **Decision:** `CLASSROOM_GEOFENCE` in `web/lib/classroom-geofence.ts` — west −4, east 4, south −3, north 3 metres from setup. Scope top-down draws a dashed `stroke-status-not-ready` rect; elevation views omit it. Caption states extents.
+- **Reason:** Feature 39 — show a nominal classroom boundary without claiming it is the room (ADR-0012 / ADR-0014).
+- **Note:** No geofence alerts yet; the line is orientation only.
+
+## 2026-07-30 Height ceiling banner reuses the wall threshold
+
+- **Decision:** `HeightCeilingBanner` on Control calls `isOverCeiling` from `height-wall.ts` (`CLASSROOM_CEILING_M = 3`). Read-only — no Command path (ADR-0011).
+- **Reason:** Feature 38 — Teachers working strips need the ceiling warning without opening the height wall.
+- **Note:** Banner hides at zero over-ceiling craft; names every offender.
+
+## 2026-07-30 Freeze scope snapshot on Control
+
+- **Decision:** **Freeze scope** snapshots Drone positions, the held window, ceiling, and
+  conflict lines on Control's Scope only (`onSelect` mounts). Telemetry, strips, and
+  Commands stay live — display pause only, mirroring camera wall freeze. No backend flag.
+- **Reason:** Teachers need a still plan view without stopping the Fleet behind Control.
+- **Note:** Reports Scope omits the control; read-only mounts never offered freeze.
+## 2026-07-30 Ghost paths on the Scope
+
+- **Decision:** **Ghost paths** are optional on Control's Scope (top-down only). Positions
+  accumulate client-side in `scope-ghost-paths.ts` (two-minute window, 40 points per Drone).
+  `FleetHistory` carries events and charge samples only — no wire trail yet — so Reports and
+  other Scope mounts omit the toggle; enabling with no movement shows caption copy only.
+- **Reason:** Teachers asked for recent trails without claiming Telemetry history that does
+  not exist.
+- **Note:** When position history lands on the ground station, this buffer can hydrate from
+  it; until then the stub toggle documents the gap honestly.
+## 2026-07-30 Lesson bookmark moment on Control and Lesson
+
+- **Decision:** **Bookmark moment** appends `{ at, note? }` to the running lesson in the
+  Logbook (`bookmarks`, capped at 50). Shown on the Control lesson strip and `/lesson` while
+  the lesson is under way. No Fleet message (ADR-0011).
+- **Reason:** Teachers need to mark a classroom moment without leaving Control.
+- **Note:** Closed lessons keep bookmarks on the record for reports later.
+## 2026-07-30 Remedial queue on Control and Lesson
+
+- **Decision:** **Remedial queue** lives in the browser Logbook (`remedialQueue`). When a
+  lesson closes, Drones with **fault**-severity incidents are merged in once each. Control
+  and `/lesson` render a minimal linked list; **Done** dismisses locally — no Command
+  (ADR-0011).
+- **Reason:** Classroom follow-up after incidents without another screen to maintain.
+- **Note:** Attention-severity incidents stay off the queue unless a Teacher adds them later.
+## 2026-07-30 Lesson plan wizard on /lesson prep
+
+- **Decision:** `LessonPlanWizard` replaces the inline label + exercises + start block with three
+  steps (Name → Exercises → Confirm). A persistent **Start now** in the wizard header
+  preserves E7 — planning never gates start.
+- **Reason:** Feature 33 — structured prep without redesigning `LessonPrepPanel` or assignments.
+- **Note:** Confirm step summarizes label (or Untitled lesson), exercises, and serviceable count.
+## 2026-07-30 Training wheels mode is UI-only local state
+
+- **Decision:** `TrainingWheelsProvider` stores on/off in `localStorage`. When on, Control and
+  Lesson show a banner; Stop buttons are replaced with copy; strip and alert chips use muted
+  hairline styling instead of status-fault borders. Land and Hover remain.
+- **Reason:** Feature 32 — first-lesson practice without the highest-risk control surface.
+- **Note:** Does not intercept `command()` or add CommandableSource paths (ADR-0011).
+## 2026-07-30 Peer demo spotlight on Control
+
+- **Decision:** Each Flight strip and the scope dock get a Spotlight button that mounts
+  `PeerDemoSpotlight` — one enlarged `CameraPane` with the assigned Student name when known.
+  Watch-only; no Telemetry URLs or Commands (C9, ADR-0011).
+- **Reason:** Feature 31 — Teachers demo one Student's craft without leaving Control or opening
+  `/walls/spotlight`.
+- **Note:** Separate from `cameraDroneId` / `CameraSlide`; spotlight and slide can coexist.
+## 2026-07-30 Class average strip on Control
+
+- **Decision:** `ClassAverageStrip` sits between the Attention bar and the scope. Mean height
+  averages airborne Drones with a reported altitude only; readiness is the share labelled Ready
+  via `readyBoardLabel`.
+- **Reason:** Feature 30 — Teachers scanning a lesson need a fleet-wide line without a wall.
+- **Note:** Grounded craft at 0 m are excluded from the height average so the number tracks the
+  air, not the desk.
+## 2026-07-30 Live headcount is airborne vs grounded counts
+
+- **Decision:** `LiveHeadcount` shows `vitals.airborne` true/false tallies next to the Every Drone heading.
+- **Reason:** Feature 29 — glance how many are up without scanning strips.
+- **Note:** Board order of strips unchanged.
+
+## 2026-07-30 End-period prompt lands via setAltitude(0)
+
+- **Decision:** `LessonTimerBanner.onExpire` opens `EndPeriodLandPrompt`. Sim land-all calls `scenarios.setAltitude(id, 0)` for airborne craft — not a hardware Command surface (ADR-0011 / C9).
+- **Reason:** Feature 28 — period end needs a land nudge without inventing ScenarioControls.landAll.
+- **Note:** Absent `scenarios` (hardware), the dialog is dismiss-only copy.
+
+## 2026-07-30 Lesson warm-up is a 60s overlay once per lesson
+
+- **Decision:** `LessonWarmUp` shows for 60s after a lesson starts on `/lesson`; Skip or expiry marks `sessionStorage` so reload does not re-show for that lesson id.
+- **Reason:** Feature 27 — brief settle time before the class treats the lesson as running.
+- **Note:** Overlay only; does not block Control.
+## 2026-07-30 Control reuses the camera-wall lesson timer
+
+- **Decision:** Control mounts `LessonTimerBanner` under `LessonStrip` — local countdown only, same component as `/walls/cameras`.
+- **Reason:** Feature 26 — Teachers watching Control need the period clock without opening Cameras.
+- **Note:** End-period prompt is a separate feature that hooks `onExpire`.
+
+## 2026-07-30 Attention queue dock on Control
+
+- **Decision:** Add `ControlAttentionQueue` beneath the Attention bar — the full
+  `alertQueue` worst-first as clickable rows. Click selects the matching strip and scrolls
+  it into view; the bar still shows one Alert at a time with Acknowledge.
+- **Reason:** Feature 25 — Teachers working several alerts need to jump between strips
+  without re-finding them in board order. The dock reuses queue ordering and presentation;
+  strips stay in `boardOrder` (deliberate position #1).
+- **Note:** Hide the dock at zero queue length — the bar's count and reassuring sentence
+  already cover the empty case.
+## 2026-07-30 Battery time budget uses charge × 12 minutes
+
+- **Decision:** Control flight strips show estimated flight minutes as `batteryFraction × 12`,
+  rounded to whole minutes (`about N min left`). No discharge slope — a classroom rule of
+  thumb only. Low-budget threshold for warnings is `< 20%` charge (~2.4 min).
+- **Reason:** Feature 24 — Teachers need a quick time budget beside charge without vitals
+  history; the vitals endurance forecast stays on Drone detail where slope data exists.
+- **Note:** Helper lives in `web/lib/battery-budget.ts`.
+
+## 2026-07-30 Lesson timer on camera wall is local state
+
+- **Decision:** `LessonTimerBanner` on `/walls/cameras` holds countdown in React state only.
+- **Reason:** Feature 22.
+- **Note:** Persist later; Control timer is a separate feature.
+## 2026-07-30 Walls TV mode toggles Cameras and Status
+
+- **Decision:** `/walls/tv` mounts CameraWall or StatusWall with a toggle; Exit TV → `/walls`. No Settings link on this surface.
+- **Reason:** Feature 21.
+- **Note:** SiteHeader still present via app layout.
+
+## 2026-07-30 End-lesson landed wall at `/walls/landed`
+
+- **Decision:** `/walls/landed` renders `LandedWall` — one linked tile per Drone in board
+  order. Green (`success`) when `airborne` is false, red (`destructive`) when still airborne.
+  Summary: `N landed · M still flying`. Click → `/drone?id=`. Empty Fleet → “Waiting for the
+  Fleet.”
+- **Reason:** Feature 19 — end-of-lesson glance at who is down without Control.
+- **Note:** Pure filter in `landed-wall.ts`; hub link deferred — do not edit `WallsHub`
+  until hub sync.
+## 2026-07-30 Camera wall names the assigned student when the Logbook has one
+
+- **Decision:** Camera wall tiles use `studentOf` for the headline and simulated-feed label;
+  unassigned tiles keep the Drone callsign only — no placeholder.
+- **Reason:** Feature 20 — Teachers scanning six feeds need who's flying, not another row of
+  "Drone N".
+- **Follow-up:** When assignment is missing, the tile stays drone-named; assignment still
+  happens on Control / Students, not on the wall.
+## 2026-07-30 Scope camera filmstrip under Control scope
+
+- **Decision:** Control's "Where everything is" section adds a horizontal filmstrip of
+  `CameraTile` thumbs below `Scope`. Board order, watch-only; click opens `CameraSlide`.
+  Selected scope mark sets `aria-pressed` on the matching thumb.
+- **Reason:** Feature 15 — glance every fitted camera without leaving the scope.
+- **Note:** Lives on `/control` (Tower redirects there). Reuses `CameraTile`; no new Commands.
+
+## 2026-07-30 Spotlight wall is one CameraPane plus thumb row
+
+- **Decision:** /walls/spotlight shows one large CameraPane; thumbnails switch focus by drone id in local state.
+- **Reason:** Feature 17 — class demo focus without leaving Walls.
+- **Note:** Reuses CameraPane; no Telemetry stream URLs.
+## 2026-07-30 Dual watch uses query params a/b for CameraPane pair
+
+- **Decision:** /walls/dual mounts two CameraPanes. `?a=` / `?b=` select drone ids; missing params use the first two Fleet Drones in board order.
+- **Reason:** Feature 16 — compare two feeds without crowding Control.
+- **Note:** Full CameraPane (sim Start/Stop) inside each pane; no new Commands.
+## 2026-07-30 Detection wall shows em dash until counts are shared
+
+- **Decision:** Tiles show —; counts stay in CameraPane for now.
+- **Reason:** Feature 14.
+## 2026-07-30 QR pad wall ships Not seen until CameraPane sightings are shared
+
+- **Decision:** Tiles show Not seen; no Telemetry write.
+- **Reason:** Feature 13.
+## 2026-07-30 Landing watch focuses descending and auto-landing phases
+
+- **Decision:** Prefer `descending` / `auto-landing` / low airborne; else all with height. Click `/drone?id=`.
+- **Reason:** Feature 12.
+- **Note:** Read-only.
+
+
+## 2026-07-30 Landing watch wall at `/walls/landing`
+
+- **Decision:** `/walls/landing` renders `LandingWatch` — one linked tile per Drone in board
+  order when nothing is landing; when any Drone has phase `descending` or `auto-landing`
+  (or airborne with vertical rate below the vitals deadband), the wall **narrows to those
+  tiles only**. Tile body: name, phase label when focused, airborne state, aligned height.
+  Summary: `N landing`. Click → `/drone?id=`. Empty Fleet → “Waiting for the Fleet.”
+- **Reason:** Feature 12 of classroom walls — whole-class landing glance without Control.
+- **Note:** Pure filter in `landing-wall.ts`; hub link deferred — do not edit `WallsHub`
+  until hub sync.
+## 2026-07-30 Proximity wall at `/walls/proximity`
+
+- **Decision:** `/walls/proximity` renders `ProximityWall` — one linked tile per unique pair
+  of airborne Drones closer than **`SEPARATION_WARNING_M` (1.5 m)** from vitals, deduped the
+  same way Scope draws conflict lines. Summary: `N close pairs`; distance readout uses one
+  decimal and ` m apart`. Click → `/drone?id=` on the lexicographically first id in the
+  pair. Empty when all clear. Display-only.
+- **Reason:** Feature 11 proximity risk wall — whole-class separation glance without Scope.
+- **Note:** Pair logic lives in `proximity-wall.ts`; hub link syncs in a later wave.
+## 2026-07-30 Lost-link siren is visual pulse on Walls, not audio
+
+- **Decision:** `LostLinkSiren` mounts in `WallsShell` when any vitals entry is Offline,
+  `no-contact`, or has a `no-response` alert. Uses `role="alert"` and
+  `motion-safe:animate-pulse` (no compulsory motion). No audio in this feature.
+- **Reason:** Owner feature 10 — Teacher glance when a craft goes quiet mid-lesson.
+- **Note:** Does not change ConnectionBanner (board↔ground-station); this is per-Drone link.
+## 2026-07-30 Height wall uses 3 m classroom ceiling default
+
+- **Decision:** `/walls/height` compares each reported `altitudeM` against
+  **`CLASSROOM_CEILING_M = 3`** in `height-wall.ts`. At or below 3 m is normal; above
+  highlights the tile and counts in “N over ceiling”. No shared ceiling constant existed
+  elsewhere — Scope uses an adaptive ladder, and ADR-0016’s “3 m ceiling” is illustrative
+  only.
+- **Reason:** Feature 9 height wall — whole-class height comparison with one teaching
+  default until a room model lands.
+- **Note:** Readouts use one decimal and a fixed ` m` suffix for column alignment; click
+  → `/drone?id=`. Hub link syncs in a later wave.
+## 2026-07-30 Last Contact wall at `/walls/heartbeat`
+
+- **Decision:** `/walls/heartbeat` renders `HeartbeatWall` — one linked tile per Drone in
+  board order (`vitals`), read-only. Tile body: name plus a single dot — filled (`bg-ink`)
+  when `lastContact` is set and the Drone is not Stale, hollow (`border-stale`) otherwise.
+  Summary line: `N stale`. Click → `/drone?id=`. Teacher-facing title **Last Contact**;
+  route keeps `heartbeat` internally. Empty Fleet → “Waiting for the Fleet.”
+- **Reason:** Feature 8 of classroom walls — whole-class link liveness at a glance without
+  Status noise.
+- **Note:** Alive logic in `heartbeat-wall.ts`; aria-label carries responding/stale for
+  screen readers because the dot alone would violate ADR-0004.
+## 2026-07-30 Fault mosaic reorders trouble to the front
+
+- **Decision:** `/walls/faults` renders `FaultMosaic` — one linked tile per Drone. Unlike
+  Control strips and the Status wall, **priority tiles sort first**: stale silence, Fault
+  status, latched emergency, or a `fault` / `emergency-stop` alert. Within each group,
+  board order is preserved. Summary line: `N troubled`. Tile body: name, `StatusBadge`, fault
+  reason when Telemetry carries one, stale “Link gone quiet” otherwise, response age. Fault →
+  `border-status-fault`; emergency → `border-2 border-status-fault`. Non-priority tiles stay
+  visible but slightly muted. Click → `/drone?id=`.
+- **Reason:** Feature 7 of classroom walls — a mosaic view where trouble is never buried
+  behind healthy Drones.
+- **Note:** Pure sort in `fault-mosaic.ts`; hub link lands in a later sync commit.
+## 2026-07-30 Attention wall — loud trouble, quiet nominal
+
+- **Decision:** `/walls/attention` renders `AttentionWall` — one linked tile per Drone in
+  board order. **Troubled** when any of: `status === Fault`, `phase === emergency`,
+  `drone.stale`, or an unacknowledged vitals alert. Troubled tiles use `text-tile-name`,
+  show the worst pending alert (or a fault/emergency/stale fallback), and reuse Status
+  wall border accents. **Nominal** tiles are `text-label text-ink-muted` with callsign
+  only. Summary: `N need you`. Click → `/drone?id=`.
+- **Reason:** Feature 6 of classroom walls — whole-class triage without Control's one-at-a-time
+  attention bar.
+- **Note:** Acknowledgement only gates alert kinds; fault/emergency/stale stay loud. Hub
+  link deferred — do not edit `WallsHub` until hub sync.
+
+## 2026-07-30 Battery wall critical threshold matches board usable charge
+
+- **Decision:** A tile is **critical** when `batteryFraction` is below
+  `DEFAULT_THRESHOLDS.usableBatteryFraction` (30%) — the same number vitals uses for
+  `battery-low` and the ground station uses for Not Ready. No separate 20% wall threshold.
+- **Reason:** Owner battery wall spec — one low-battery idea across board and walls.
+- **Note:** Reuses `BatteryLevel` with `low={critical}`; summary line is “N critical”.
+
+## 2026-07-30 Remedial queue on Control and Lesson
+
+- **Decision:** **Remedial queue** lives in the browser Logbook (`remedialQueue`). When a
+  lesson closes, Drones with **fault**-severity incidents are merged in once each. Control
+  and `/lesson` render a minimal linked list; **Done** dismisses locally — no Command
+  (ADR-0011).
+- **Reason:** Classroom follow-up after incidents without another screen to maintain.
+- **Note:** Attention-severity incidents stay off the queue unless a Teacher adds them later.
+
+## 2026-07-30 Pre-flight checklist on `/lesson`
+
+- **Decision:** Before start, `/lesson` shows a **Pre-flight check** section: summary
+  `N ready · M not ready` and a list of not-ready Drones with Ready-wall labels and glyphs.
+  Reuses `readyBoardLabel`, `readyBoardSummary`, and `READY_BOARD_PRESENTATION` from
+  `ready-mapping.ts` — same mapping as `/walls/ready`, no second ruleset. `readyAtStart`
+  on the lesson record uses that ready count. Zero ready shows calm copy near Start; Start
+  stays enabled (E7).
+- **Reason:** Feature 23 — Teachers see pre-flight readiness on the lesson workflow without
+  opening the Ready wall.
+- **Note:** Serviceable headline and “Standing in the way” stay on contract Status; the
+  checklist is the vitals-based Ready-board view.
+
+## 2026-07-30 Ready wall maps vitals to four pre-flight labels
+
+- **Decision:** `/walls/ready` derives each tile from existing `DroneVitals` and Status
+  only — no new Telemetry fields. Four labels: **Ready**, **Not ready**, **Offline**,
+  **Fault**. Summary line: `N ready · M not ready`; Offline, Fault, and Not ready share
+  the second count.
+- **Mapping (first match wins):**
+
+  | Condition | Label |
+  | --- | --- |
+  | `status === Offline`, `phase === no-contact`, or a `no-response` alert | Offline |
+  | `status === Fault`, `phase === emergency`, or a `fault` / `emergency-stop` alert | Fault |
+  | `status === Ready` and not airborne | Ready |
+  | otherwise (Not Ready, Flying, airborne Ready, etc.) | Not ready |
+
+- **Reason:** Owner ready-board plan — whole-class pre-flight glance without Commands.
+- **Note:** Pure function in `ready-mapping.ts`; tiles link to `/drone?id=` like Status wall.
+
+## 2026-07-30 Status wall tiles link to Drone detail
+
+- **Decision:** `/walls/status` renders `StatusWall` — one linked tile per Drone in board
+  order (`vitals`), read-only. Tile body: name, `StatusBadge`, charge %, height when
+  `altitudeM` is on vitals, response age with “Last response …” when stale. Fault →
+  `border-status-fault`; latched emergency → `border-2 border-status-fault`. Click →
+  `/drone?id=`. Empty Fleet → “Waiting for the Fleet.”
+- **Reason:** Feature 3 of classroom walls — whole-class status at a glance without Control.
+- **Note:** Battery subroute stays on placeholder until its feature lands.
+
+## 2026-07-30 Camera wall freeze on `/walls/cameras`
+
+- **Decision:** **Freeze wall** snapshots vitals order and per-tile drone/camera labels on
+  the camera wall only. Telemetry, ScenarioControls, and CameraSlide stay live — freeze is a
+  display pause for comparing a class moment, not a sim or link stop. **Resume updates**
+  drops the snapshot and re-renders from the current Fleet.
+- **Reason:** Feature 18 — Teachers need a still frame of every camera label without
+  stopping the Fleet behind the wall.
+- **Note:** No backend or Telemetry flag; UI state in `CameraWall` only.
+
+## 2026-07-30 Camera wall at `/walls/cameras`
+
+- **Decision:** Cameras sub-wall shows one compact watch-only tile per Drone in board order
+  (`CameraTile` + `WallGrid`). Tiles reuse stream-map / sim rules from CameraPane without
+  YOLO, QR, or Start/Stop on the tile. Click opens existing `CameraSlide`. Offline or
+  missing Telemetry uses board connection language (Status badge, “No Telemetry yet”).
+- **Reason:** Feature 2 of classroom walls — whole-class camera glance without crowding Control.
+- **Note:** Full CameraPane behaviour stays in the slide only.
+
+## 2026-07-30 Classroom Walls live under `/walls` after Control in SiteNav
+
+- **Decision:** Sixth workflow destination is **Walls** (`/walls`), placed immediately after
+  Control. Sub-walls are `/walls/*`. Shared `WallsShell` + `WallGrid`; hub lists every
+  wall as it lands. Nav active state matches `/walls` and any `/walls/…` child. Camera-like
+  tiles open CameraSlide; status-like tiles go to `/drone?id=`. Instrument frame (same
+  family as Control).
+- **Reason:** Owner classroom-walls plan — whole-class glance without crowding Control.
+- **Note:** Feature 1 is shell + placeholders only; feeds and vitals arrive per wall.
+
 ## 2026-07-30 Trainer Drones Model/Created stay optional behind Add details
 
 - **Decision:** Settings Trainer Drones lists name + id with a quiet summary; Model and
@@ -85,6 +577,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Note:** Unreachable banner points at the `.bat`. Vercel preview needs no :4321
   (`NEXT_PUBLIC_DEMO_ONLY`).
 
+## 2026-07-30 Detect wall tallies come from the browser detector, not Telemetry
+
+- **Decision:** `/walls/detect` runs the same pluggable `ObjectDetector` as `CameraPane`, but
+  only for **simulated streaming** cameras and only when `exposesCounts !== false`. Tiles
+  show `detect().length`; idle cameras, hardware streams, and detectors that set
+  `exposesCounts: false` show **"—"**. Counts never go on the Telemetry wire. Tiles link to
+  `/drone?id=` (not CameraSlide). The wall is not listed on the Walls hub in this PR.
+- **Reason:** Feature #14 — Teachers need a class-wide glance at YOLO tallies without opening
+  every camera pane. Reusing the detector interface avoids a second model load path.
+- **Note:** Hardware school streams could reuse the same loop when the map supplies pixels;
+  until then those tiles stay unavailable. A future hub entry can land separately.
+
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 
 - **Decision:** Default `ObjectDetector` loads **YOLOv8n** COCO via `onnxruntime-web`
@@ -147,6 +651,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   Curriculum task ≠ kind `hold`.
 - **Note:** Do not rename the Control strip label or wire `hold`. Teachers may still type
   any exercise name; this is catalog/hint copy only.
+
+## 2026-07-30 Pad wall ships read-only with an honest no-signal tile
+
+- **Decision:** `/walls/pads` shows landing-pad QR **seen / not seen** per Drone using the
+  same `landingTargetPresentation` copy as `CameraPane`. Scan gate matches the camera pane:
+  simulated feed with `camera.streaming` only. Idle sim, no camera, and hardware (`scenarios
+  === null`) show **—**; a streaming sim picture with no landing QR shows **Not seen**.
+  Tiles link to `/drone?id=`; nothing writes Telemetry.
+- **Reason:** Feature #13 — classroom glance at pad visibility without opening every camera.
+  Hardware school streams still lack a frame scan on the wall (#50 follow-up).
+- **Follow-up:** When mapped school `<video>` pixels are scannable on the wall, reuse
+  `createUrlScanner` / stream-frame capture — same display-first rule, no Telemetry write.
 
 ## 2026-07-29 QR on camera is a landing target (display-first)
 

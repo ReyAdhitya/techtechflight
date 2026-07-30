@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 End-lesson landed wall at `/walls/landed`
+
+- **Decision:** `/walls/landed` renders `LandedWall` — one linked tile per Drone in board
+  order. Green (`success`) when `airborne` is false, red (`destructive`) when still airborne.
+  Summary: `N landed · M still flying`. Click → `/drone?id=`. Empty Fleet → “Waiting for the
+  Fleet.”
+- **Reason:** Feature 19 — end-of-lesson glance at who is down without Control.
+- **Note:** Pure filter in `landed-wall.ts`; hub link deferred — do not edit `WallsHub`
+  until hub sync.
 ## 2026-07-30 Camera wall names the assigned student when the Logbook has one
 
 - **Decision:** Camera wall tiles use `studentOf` for the headline and simulated-feed label;

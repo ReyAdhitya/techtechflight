@@ -42,6 +42,44 @@ describe('the bar every screen carries', () => {
     expect(screen.getByRole('link', { name: /settings/i })).toBeInTheDocument()
   })
 
+  /*
+   * The logo goes to Control, which is not where a header logo conventionally goes. The
+   * reasoning is in `docs/DECISIONS.md`; what matters here is that it is a real link with a
+   * name that says where it leads, because the mark on its own says nothing about that.
+   */
+  it('makes the logo a link to Control', () => {
+    pathname.current = '/'
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <SiteHeader />
+      </FleetProvider>,
+    )
+
+    const brand = screen.getByRole('link', { name: /go to Control/i })
+    expect(brand).toHaveAttribute('href', '/control')
+    expect(brand).toContainElement(screen.getByRole('img', { name: /TechTech Flight Deck/i }))
+  })
+
+  /*
+   * The product name is not part of the logo. It sits the far side of a divider rule and
+   * says what the software is rather than whose it is, so taking it into the link would make
+   * the two read as one control.
+   */
+  it('leaves the product name beside the logo outside the link', () => {
+    pathname.current = '/'
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <SiteHeader />
+      </FleetProvider>,
+    )
+
+    expect(screen.getByRole('link', { name: /go to Control/i })).not.toHaveTextContent(
+      /Flight Deck/,
+    )
+    // Still on screen — outside the link, not removed from it.
+    expect(screen.getByText('Flight Deck')).toBeInTheDocument()
+  })
+
   it('says which Fleet this is, underneath, when the Fleet is simulated', () => {
     pathname.current = '/demo'
     render(

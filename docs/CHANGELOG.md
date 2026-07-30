@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Incident note on running lessons (#48).** **Note incident** on Control and `/lesson`
+  saves Teacher observations into the Logbook with optional Drone context — local only
+  (ADR-0011). Fleet events still copy at lesson close.
 - **Absent versus Offline badges (#46).** Students can be marked **Absent** on `/students`;
   **Offline** badges appear on Drones that have gone quiet. Control shows an Absent summary
   line and Offline on strips — semantic status tokens, not one shared warning colour.

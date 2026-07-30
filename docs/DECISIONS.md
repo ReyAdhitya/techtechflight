@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 QR pad wall ships Not seen until CameraPane sightings are shared
+
+- **Decision:** Tiles show Not seen; no Telemetry write.
+- **Reason:** Feature 13.
 ## 2026-07-30 Landing watch focuses descending and auto-landing phases
 
 - **Decision:** Prefer `descending` / `auto-landing` / low airborne; else all with height. Click `/drone?id=`.
@@ -35,7 +39,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   pair. Empty when all clear. Display-only.
 - **Reason:** Feature 11 proximity risk wall — whole-class separation glance without Scope.
 - **Note:** Pair logic lives in `proximity-wall.ts`; hub link syncs in a later wave.
-
 ## 2026-07-30 Lost-link siren is visual pulse on Walls, not audio
 
 - **Decision:** `LostLinkSiren` mounts in `WallsShell` when any vitals entry is Offline,
@@ -283,6 +286,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   Curriculum task ≠ kind `hold`.
 - **Note:** Do not rename the Control strip label or wire `hold`. Teachers may still type
   any exercise name; this is catalog/hint copy only.
+
+## 2026-07-30 Pad wall ships read-only with an honest no-signal tile
+
+- **Decision:** `/walls/pads` shows landing-pad QR **seen / not seen** per Drone using the
+  same `landingTargetPresentation` copy as `CameraPane`. Scan gate matches the camera pane:
+  simulated feed with `camera.streaming` only. Idle sim, no camera, and hardware (`scenarios
+  === null`) show **—**; a streaming sim picture with no landing QR shows **Not seen**.
+  Tiles link to `/drone?id=`; nothing writes Telemetry.
+- **Reason:** Feature #13 — classroom glance at pad visibility without opening every camera.
+  Hardware school streams still lack a frame scan on the wall (#50 follow-up).
+- **Follow-up:** When mapped school `<video>` pixels are scannable on the wall, reuse
+  `createUrlScanner` / stream-frame capture — same display-first rule, no Telemetry write.
 
 ## 2026-07-29 QR on camera is a landing target (display-first)
 

@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Land all (sim) is a ScenarioControls surface
+
+- **Decision:** `SimLandAllButton` on Control calls `scenarios.setAltitude(id, 0)` for every airborne craft. Shown only when `scenarios` is present; hidden when nothing is up.
+- **Reason:** Feature 42 — Teachers need land-all without waiting for the period timer; still not a Command path (ADR-0011 / C9).
+- **Note:** End-period prompt keeps the same landing logic; this is the always-available control.
+
 ## 2026-07-30 Teacher PIN is session demo gate only
 
 - **Decision:** `DEMO_TEACHER_PIN = '4242'` in `teacher-pin.ts`; unlock stored in `sessionStorage`. Control wraps Commands via `useTeacherPinGate`; Settings blocks behind `TeacherPinOverlay` until unlocked.

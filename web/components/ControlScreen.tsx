@@ -1,3 +1,4 @@
+import { StopAuditLog } from './StopAuditLog'
 import { VoiceReadyCallouts } from './VoiceReadyCallouts'
 import { ScopeLayoutPresets } from './ScopeLayoutPresets'
 import type { ScopeLayoutPreset } from '@/lib/scope-layout-presets'
@@ -206,6 +207,7 @@ export function ControlScreen() {
         }
       />
 
+      <div className="flex flex-col gap-2"><h2 className="label m-0">Stop audit</h2><StopAuditLog /></div>
       <AttentionBar
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}

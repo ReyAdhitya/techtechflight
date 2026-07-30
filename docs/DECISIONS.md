@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Dual watch uses query params a/b for CameraPane pair
+
+- **Decision:** /walls/dual mounts two CameraPanes. `?a=` / `?b=` select drone ids; missing params use the first two Fleet Drones in board order.
+- **Reason:** Feature 16 — compare two feeds without crowding Control.
+- **Note:** Full CameraPane (sim Start/Stop) inside each pane; no new Commands.
 ## 2026-07-30 Detection wall shows em dash until counts are shared
 
 - **Decision:** Tiles show —; counts stay in CameraPane for now.

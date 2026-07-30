@@ -270,13 +270,22 @@ describe('swap drone assignments', () => {
   })
 
   it('moves someone onto an empty Drone', () => {
+    assignStudent('ttf-0001', 'Priya')
 
+    swapStudentAssignments('ttf-0001', 'ttf-0002')
 
+    const book = readLogbook()
     expect(studentOf(book, 'ttf-0001')).toBeNull()
+    expect(studentOf(book, 'ttf-0002')).toBe('Priya')
+  })
 
   it('does nothing when both Drones are empty', () => {
+    swapStudentAssignments('ttf-0001', 'ttf-0002')
 
     expect(readLogbook().students).toEqual({})
+  })
+})
+
 describe('one-tap roster assign', () => {
   it('walks the roster in order, skipping names already flying', () => {
     saveRoll(['Amara', 'Priya', 'Ravi'])
@@ -284,6 +293,7 @@ describe('one-tap roster assign', () => {
 
     expect(unassignedRosterNames(readLogbook())).toEqual(['Priya', 'Ravi'])
     expect(nextRosterNameForAssign(readLogbook())).toBe('Priya')
+  })
 
   it('assigns the next name to a Drone in one tap', () => {
     saveRoll(['Priya', 'Ravi'])
@@ -292,13 +302,18 @@ describe('one-tap roster assign', () => {
     expect(studentOf(readLogbook(), 'ttf-0001')).toBe('Priya')
     expect(assignNextRosterName('ttf-0002')).toBe('Ravi')
     expect(assignNextRosterName('ttf-0003')).toBeNull()
+  })
 
   it('refuses a Drone that already has someone', () => {
     saveRoll(['Priya'])
+    assignStudent('ttf-0001', 'Priya')
 
     expect(assignNextRosterName('ttf-0001')).toBeNull()
+  })
 
   it('picks the first unassigned Drone in board order', () => {
+    saveRoll(['Priya'])
+    const book = readLogbook()
 
     expect(firstUnassignedDrone(book, ['ttf-0002', 'ttf-0001'])).toBe('ttf-0002')
   })

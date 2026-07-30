@@ -811,8 +811,8 @@ function CommandRow({
       >
         Hover
       </button>
-      {!hideStop &&
-        (stopHeld ? (
+      {!hideStop ? (
+        stopHeld ? (
           onReleaseStop ? (
             <button
               type="button"
@@ -843,19 +843,9 @@ function CommandRow({
           >
             Stop
           </button>
-        ))}
-          </span>
         )
-      ) : hideStop ? (
-        <span className="ml-auto text-value text-ink-muted">Stop hidden — training wheels</span>
       ) : (
-        <button
-          type="button"
-          onClick={() => command(vitals.droneId, 'emergency-stop')}
-          className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
-        >
-          Stop
-        </button>
+        <span className="ml-auto text-value text-ink-muted">Stop hidden — training wheels</span>
       )}
       {showTracked && (
         <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>

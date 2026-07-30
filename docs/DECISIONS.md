@@ -9,7 +9,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
-<<<<<<< HEAD
 ## 2026-07-30 Teacher incident notes during a lesson
 
 - **Decision:** `addTeacherIncidentNote` appends attention-severity incidents to the running
@@ -19,8 +18,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   lesson close or a fault event.
 - **Note:** Auto-copied fleet incidents at close are unchanged; teacher notes use the same
   `incidents` array with `severity: 'attention'`.
-=======
->>>>>>> 8662d54 (feat: absent vs offline badges)
 ## 2026-07-30 Absent Student versus Offline Drone badges
 
 - **Decision:** **Absent** is a Teacher-marked roster flag (`absentStudentIds` in the Logbook).
@@ -29,7 +26,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Feature #46 — a Student away from class is not the same fact as a craft that
   lost link.
 - **Note:** Absent Students still appear on the roster; assignment is unchanged.
-<<<<<<< HEAD
 ## 2026-07-30 Double-assign blocked in the Logbook
 
 - **Decision:** `assignStudent` returns false when `studentAssignedElsewhere` finds the name
@@ -45,8 +41,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Feature #49 — Teachers need a still for incident follow-up without inventing
   cloud storage.
 - **Note:** Filename `{droneId}-evidence.png`; school streams and sim both offer the control.
-=======
->>>>>>> 8662d54 (feat: absent vs offline badges)
 
 ## 2026-07-30 Swap exchanges live assignments only
 

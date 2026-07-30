@@ -7,6 +7,12 @@ would notice.
 
 ### Added
 
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
+
+- **Landing watch wall (`/walls/landing`).** When any Drone is descending or auto-landing,
+  the wall narrows to those tiles with phase, airborne state, and height; otherwise every
+  Drone stays visible with land-relevant vitals. Summary: “N landing”. Tiles link to Drone
+  detail. Read-only.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Proximity wall (`/walls/proximity`).** One tile per close pair of airborne Drones inside
@@ -60,6 +66,7 @@ would notice.
 
 ### Added
 
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Header logo goes to Control (#96).** The brand mark (and wordmark fallback) is a link to
@@ -172,6 +179,7 @@ would notice.
 
 ### Added
 
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Full-screen Scope keeps Commands for the selected mark.** Overlay covers Every Drone
@@ -345,6 +353,7 @@ would notice.
 
 ### Added
 
+- **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **The rule a hardware adapter has to keep is written down as a test.** `CODEBASE_AUDIT.md`

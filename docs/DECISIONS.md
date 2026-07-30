@@ -9,6 +9,23 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Landing watch focuses descending and auto-landing phases
+
+- **Decision:** Prefer `descending` / `auto-landing` / low airborne; else all with height. Click `/drone?id=`.
+- **Reason:** Feature 12.
+- **Note:** Read-only.
+
+
+## 2026-07-30 Landing watch wall at `/walls/landing`
+
+- **Decision:** `/walls/landing` renders `LandingWatch` — one linked tile per Drone in board
+  order when nothing is landing; when any Drone has phase `descending` or `auto-landing`
+  (or airborne with vertical rate below the vitals deadband), the wall **narrows to those
+  tiles only**. Tile body: name, phase label when focused, airborne state, aligned height.
+  Summary: `N landing`. Click → `/drone?id=`. Empty Fleet → “Waiting for the Fleet.”
+- **Reason:** Feature 12 of classroom walls — whole-class landing glance without Control.
+- **Note:** Pure filter in `landing-wall.ts`; hub link deferred — do not edit `WallsHub`
+  until hub sync.
 ## 2026-07-30 Proximity wall at `/walls/proximity`
 
 - **Decision:** `/walls/proximity` renders `ProximityWall` — one linked tile per unique pair

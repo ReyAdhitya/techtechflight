@@ -527,6 +527,52 @@ export function clearStudents(): void {
   save({ ...migrateRosterForward(readLogbook()), students: {} })
 }
 
+/** Roster names not currently flying a Drone, in roster order. */
+export function unassignedRosterNames(book: Logbook): readonly string[] {
+  const assigned = new Set<string>()
+  for (const droneId of Object.keys(book.students)) {
+    const name = studentOf(book, droneId)
+    if (name !== null) assigned.add(name)
+  }
+  const names =
+    book.roster.length > 0
+      ? book.roster.map((student) => student.name)
+      : [...book.roll]
+  return names.filter((name) => !assigned.has(name))
+}
+
+/** The next name `assignNextRosterName` would hand out, or null when the roster is full. */
+export function nextRosterNameForAssign(book: Logbook): string | null {
+  return unassignedRosterNames(book)[0] ?? null
+}
+
+/** First Drone in board order with no Student, or null. */
+export function firstUnassignedDrone(
+  book: Logbook,
+  droneIds: readonly DroneId[],
+): DroneId | null {
+  for (const droneId of droneIds) {
+    if (studentOf(book, droneId) === null) return droneId
+  }
+  return null
+}
+
+/**
+ * Assign the next roster name to a Drone — one tap through the class list.
+ *
+ * Returns the name assigned, or null when the roster is exhausted or the Drone already
+ * has someone.
+ */
+export function assignNextRosterName(droneId: DroneId): string | null {
+  const book = migrateRosterForward(readLogbook())
+  if (studentOf(book, droneId) !== null) return null
+  const next = nextRosterNameForAssign(book)
+  if (next === null) return null
+  assignStudent(droneId, next)
+  rememberStudent(next)
+  return next
+}
+
 export function startLesson(
   label: string,
   readyAtStart: number,

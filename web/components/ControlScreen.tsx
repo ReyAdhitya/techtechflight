@@ -4,7 +4,10 @@ import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
 import Link from 'next/link'
 import {
   assignStudent,
+  assignNextRosterName,
   clearStudents,
+  firstUnassignedDrone,
+  nextRosterNameForAssign,
   studentOf,
   currentExercise,
   readLogbook,
@@ -37,6 +40,7 @@ import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
+import { AssignNextButton } from './AssignNextButton'
 import { LiveHeadcount } from './LiveHeadcount'
 import { SimLandAllButton } from './SimLandAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
@@ -108,6 +112,12 @@ export function ControlScreen() {
     cameraDroneId === null
       ? null
       : (state.drones.find((drone) => drone.id === cameraDroneId) ?? null)
+  const boardDroneIds = state.drones.map((drone) => drone.id)
+  const nextRosterName = nextRosterNameForAssign(book)
+  const assignTargetDroneId =
+    selected !== null && studentOf(book, selected) === null
+      ? selected
+      : firstUnassignedDrone(book, boardDroneIds)
   const spotlightDrone =
     spotlightDroneId === null
       ? null
@@ -249,6 +259,13 @@ export function ControlScreen() {
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+            <AssignNextButton
+              nextName={nextRosterName}
+              targetDroneId={assignTargetDroneId}
+              onAssign={() => {
+                if (assignTargetDroneId) assignNextRosterName(assignTargetDroneId)
+              }}
+            />
             {scenarios ? (
               <SimLandAllButton
                 airborne={airborneCount}

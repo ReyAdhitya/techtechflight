@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **One-tap roster assign.** Control and Students offer **Assign {name}** — the next unassigned roster name goes to the selected unassigned Drone, or the first free Drone in board order.
 - **Student name on Control strips.** Assigned names render as prominent display type beside the callsign; click to edit. Scope dock matches.
 - **Land all (sim) on Control.** Beside the live headcount, a button brings every airborne craft down via `setAltitude(0)` when a simulated Fleet is connected — not a hardware Command (ADR-0011).
 - **Teacher PIN gate.** Demo PIN `4242` unlocks session access to Control Commands (Land/Hover/Stop/Release) and Settings; overlay until entered. Not security — documented demo only.

@@ -1,3 +1,4 @@
+import { MaintenanceFlag } from './MaintenanceFlag'
 'use client'
 
 import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
@@ -618,6 +619,7 @@ function FlightStrip({
           {vitals.callsign}
         </Link>
         {vitals.status === 'Offline' && <PresenceBadge kind="offline" />}
+        <MaintenanceFlag active={false} />
         <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
         {onSwap && swapTargetId !== null && (
           <button

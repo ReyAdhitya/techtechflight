@@ -27,15 +27,13 @@ import { formatBattery } from '@/lib/battery'
 import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
+import { ClassAverageStrip } from './ClassAverageStrip'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { LessonStrip } from './LessonStrip'
-<<<<<<< HEAD
-import { LessonTimerBanner } from './walls/LessonTimerBanner'
-=======
 import { LiveHeadcount } from './LiveHeadcount'
->>>>>>> 72d8818 (feat: live headcount)
+import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { useFleet } from './FleetProvider'
@@ -150,6 +148,7 @@ export function ControlScreen() {
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
 
+      <ClassAverageStrip vitals={vitals} />
       <ControlAttentionQueue
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}

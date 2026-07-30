@@ -32,7 +32,7 @@ export function LandedWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
       <p
         className={cn(
           'm-0 font-display text-summary font-medium',
-          stillFlying > 0 ? 'text-destructive' : 'text-ink',
+          stillFlying > 0 ? 'text-status-fault' : 'text-ink',
         )}
       >
         <span className="tnum">{landed}</span>

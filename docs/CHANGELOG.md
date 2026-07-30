@@ -19,6 +19,8 @@ would notice.
 
 ### Removed
 
+- **Projector and TV walls.** Hub tiles and `/walls/projector` / `/walls/tv` routes gone —
+  use Cameras / Status (and Large format) for the room screen.
 - **Control lesson chrome pile.** Waiting queue dock, lesson timer, remedial/absent/
   class-average/voice/YOLO strips, camera filmstrip, and end-period prompt no longer
   mount on Control (components may remain for Walls / Lesson).

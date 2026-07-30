@@ -3,7 +3,6 @@
 import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  absentStudentsNotFlying,
   assignStudent,
   assignNextRosterName,
   clearStudents,
@@ -15,7 +14,6 @@ import {
   readLogbook,
   recordCommand,
   readServerLogbook,
-  remedialQueueOf,
   runningLesson,
   subscribeLogbook,
 } from '@/lib/logbook'
@@ -34,16 +32,9 @@ import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
 import { AttentionBar } from './AttentionBar'
-import { RemedialQueue } from './RemedialQueue'
-import { ClassAverageStrip } from './ClassAverageStrip'
-import { YoloLessonScoreStrip } from './YoloLessonScoreStrip'
-import { ControlAttentionQueue } from './ControlAttentionQueue'
-import { ControlDisclosure } from './ControlDisclosure'
 import { CameraSlide } from './CameraSlide'
-import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
-import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { AssignNextButton } from './AssignNextButton'
 import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
@@ -52,9 +43,8 @@ import { QuietModeToggle } from './QuietModeToggle'
 import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
-import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
-import { VoiceReadyCallouts } from './VoiceReadyCallouts'
 import { MaintenanceFlag } from './MaintenanceFlag'
+import { ControlDisclosure } from './ControlDisclosure'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import { useFleet } from './FleetProvider'
 import { useTrainingWheelsOptional } from '@/lib/training-wheels'
@@ -64,14 +54,9 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
  * The Flight Control Center: the whole lesson at once, the way a controller reads a
  * sector.
  *
- * The Fleet board answers "can I hand this out" and is built to be glanced at. This is
- * built to be watched. The difference is that everything here says what to do next
- * rather than what is true — a controller does not need to be told a Drone is at 0.4m
- * and falling, they need to be told which aircraft needs them first.
- *
- * Order is deliberate and fixed: what needs you, then where everything is, then the
- * detail. A Teacher who looks up for two seconds should get the answer from the first
- * line without reading the rest.
+ * Order is fixed and short: what needs you, where everything is, then every strip.
+ * Lesson extras live on Lesson / Walls — not stacked here — so a Teacher glancing up
+ * for two seconds is not hunting past chrome.
  */
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
@@ -86,14 +71,11 @@ export function ControlScreen() {
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
-  const [endPeriodOpen, setEndPeriodOpen] = useState(false)
   const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
-  const remedial = remedialQueueOf(book)
-  const absentNotFlying = absentStudentsNotFlying(book)
 
   useEffect(() => {
     if (!state) return
@@ -130,13 +112,6 @@ export function ControlScreen() {
       ? null
       : (state.drones.find((drone) => drone.id === spotlightDroneId) ?? null)
 
-  const focusStrip = (droneId: string) => {
-    setSelected(droneId)
-    requestAnimationFrame(() => {
-      document.getElementById(`control-strip-${droneId}`)?.scrollIntoView({ block: 'nearest' })
-    })
-  }
-
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
     command(droneId, kind)
     /*
@@ -169,10 +144,8 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TrainingWheelsBanner className="flex-1" />
-        <TrainingWheelsToggle />
-      </div>
+      <TrainingWheelsBanner />
+
       {spotlightDrone && (
         <PeerDemoSpotlight
           drone={spotlightDrone}
@@ -181,64 +154,13 @@ export function ControlScreen() {
           onClose={() => setSpotlightDroneId(null)}
         />
       )}
-      <EndPeriodLandPrompt
-        open={endPeriodOpen}
-        onClose={() => setEndPeriodOpen(false)}
-        onLandAll={
-          scenarios
-            ? () => {
-                for (const entry of vitals) {
-                  if (entry.airborne) scenarios.setAltitude(entry.droneId, 0)
-                }
-              }
-            : null
-        }
-      />
 
-      {/*
-       * One urgent line stays visible. The rest of the attention chrome lives in a
-       * disclosure so a long NOW/SOON list cannot shove Scope and Every Drone off-screen.
-       */}
       <AttentionBar
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
-      <ControlDisclosure summary="Waiting queue" count={queue.length}>
-        <ControlAttentionQueue
-          queue={queue}
-          studentFor={(droneId) => studentOf(book, droneId)}
-          selected={selected}
-          onSelect={(entry) => focusStrip(entry.droneId)}
-        />
-        <HeightCeilingBanner vitals={vitals} />
-      </ControlDisclosure>
-
-      <ControlDisclosure summary="Lesson tools">
-        <LessonTimerBanner
-          initialSeconds={45 * 60}
-          onExpire={() => setEndPeriodOpen(true)}
-        />
-        <RemedialQueue queue={remedial} />
-        {absentNotFlying.length > 0 && (
-          <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
-            <span className="label m-0">Absent</span>
-            {absentNotFlying.map((student) => (
-              <span key={student.studentId} className="inline-flex items-center gap-2">
-                <span className="font-display text-value font-medium text-ink">{student.name}</span>
-                <PresenceBadge kind="absent" />
-              </span>
-            ))}
-          </section>
-        )}
-        <ClassAverageStrip vitals={vitals} />
-        <VoiceReadyCallouts
-          readyNames={vitals
-            .filter((v) => !v.airborne && v.status === 'Ready')
-            .map((v) => v.callsign)}
-        />
-        <YoloLessonScoreStrip counts={vitals.map(() => 0)} />
-      </ControlDisclosure>
+      <HeightCeilingBanner vitals={vitals} />
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
@@ -273,21 +195,12 @@ export function ControlScreen() {
             ) : null
           }
         />
-        <ControlDisclosure summary="Camera glance">
-          <ScopeCameraFilmstrip
-            vitals={vitals}
-            drones={state.drones}
-            scenarios={scenarios}
-            selected={selected}
-            onOpenCamera={setCameraDroneId}
-          />
-        </ControlDisclosure>
       </section>
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
             <SpareInventory grounded={groundedCount} total={vitals.length} />
             <AssignNextButton
@@ -299,7 +212,7 @@ export function ControlScreen() {
             />
           </div>
         </div>
-        <ControlDisclosure summary="Class actions">
+        <ControlDisclosure summary="More actions">
           <div className="flex flex-wrap items-center gap-3">
             {scenarios ? (
               <SimLandAllButton
@@ -312,13 +225,14 @@ export function ControlScreen() {
               />
             ) : null}
             <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
+            <TrainingWheelsToggle />
             {Object.keys(book.students).length > 0 && (
               <button
                 type="button"
                 onClick={clearStudents}
                 className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
               >
-                Clear all assignments
+                Clear assignments
               </button>
             )}
           </div>
@@ -738,32 +652,61 @@ function FlightStrip({
         />
 
         {vitals.alerts.length > 0 && (
-          <ul className="m-0 flex list-none flex-col gap-1 p-0">
-          {vitals.alerts.map((alert) => (
-            <li key={alert.kind} className="flex flex-wrap items-baseline gap-2">
+          <details
+            className="rounded-surface border border-hairline bg-canvas open:pb-2 [&[open]>summary>span:first-child]:rotate-90"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-1.5 text-value text-ink marker:content-none [&::-webkit-details-marker]:hidden">
+              <span className="text-ink-muted" aria-hidden="true">
+                ▸
+              </span>
               <span
                 className={cn(
                   'label rounded-pill border px-2 py-0.5',
                   softenAlerts
                     ? 'border-hairline text-ink-muted'
-                    : SEVERITY_PRESENTATION[alert.severity].className,
+                    : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].className,
                 )}
               >
-                {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
+                {softenAlerts
+                  ? 'Note'
+                  : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].label}
               </span>
-              <span className="text-value text-ink">{alert.text}</span>
-              {/*
-                * Still here after it has been taken off the queue, and quieter. A Teacher
-                * having seen a problem is not the same as the problem having stopped.
-                */}
-              {isAcknowledged(vitals.droneId, alert) && (
-                <span className="tnum text-value text-ink-muted">
-                  Acknowledged — {formatAge(Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)))}
-                </span>
-              )}
-            </li>
-          ))}
-          </ul>
+              <span className="font-medium">
+                {vitals.alerts.length === 1 ? '1 alert' : `${vitals.alerts.length} alerts`}
+              </span>
+              <span className="min-w-0 truncate text-ink-subtle">{vitals.alerts[0]!.text}</span>
+            </summary>
+            <ul className="m-0 flex list-none flex-col gap-1 border-t border-hairline px-3 pt-2">
+              {vitals.alerts.map((alert) => (
+                <li key={alert.kind} className="flex flex-wrap items-baseline gap-2">
+                  <span
+                    className={cn(
+                      'label rounded-pill border px-2 py-0.5',
+                      softenAlerts
+                        ? 'border-hairline text-ink-muted'
+                        : SEVERITY_PRESENTATION[alert.severity].className,
+                    )}
+                  >
+                    {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
+                  </span>
+                  <span className="text-value text-ink">{alert.text}</span>
+                  {/*
+                    * Still here after it has been taken off the queue, and quieter. A Teacher
+                    * having seen a problem is not the same as the problem having stopped.
+                    */}
+                  {isAcknowledged(vitals.droneId, alert) && (
+                    <span className="tnum text-value text-ink-muted">
+                      Acknowledged —{' '}
+                      {formatAge(
+                        Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)),
+                      )}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
     </li>

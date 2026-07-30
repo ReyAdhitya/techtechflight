@@ -7,14 +7,21 @@ would notice.
 
 ### Changed
 
-- **Control chrome is collapsible.** Waiting queue, lesson tools, camera glance, and
-  class actions sit in closed disclosures so the page no longer jumps when alerts pile
-  up. Attention bar (one line) stays visible.
+- **Control is three beats again.** Attention → Scope → Every Drone. Lesson tools,
+  waiting queue dock, camera filmstrip, YOLO/voice/class-average strips, timer, and
+  end-period prompt are off Control. Secondary actions sit under **More actions**.
+- **Strip alerts collapse.** NOW/SOON lines on each Every Drone row sit in a closed
+  disclosure (count + first line); open for the full list.
+- **Ceiling warning is one compact line** so it no longer owns half the viewport.
+- **Walls hub:** eight everyday walls up front; the rest under **More walls**.
 - **Ghost paths on Side and Front.** Scope trails use altitude when known, not only the
   top-down plan.
 
 ### Removed
 
+- **Control lesson chrome pile.** Waiting queue dock, lesson timer, remedial/absent/
+  class-average/voice/YOLO strips, camera filmstrip, and end-period prompt no longer
+  mount on Control (components may remain for Walls / Lesson).
 - **Parent demo kiosk (`/walls/kiosk`).** Redundant Status wall clone — Status wall stays.
 - **Stop audit log.** Session list of Stop presses removed from Control Lesson tools.
 - **Classroom / Wide hall / Tight bay presets** from Control — they cluttered “Where

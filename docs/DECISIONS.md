@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Control and Walls UX: teach first, chrome later
+
+- **Decision:** Strip Control to Attention bar + optional ceiling line + Scope + Every
+  Drone list. Park Land-all / Quiet / Training wheels / Clear under **More actions**.
+  Drop Control mounts for waiting-queue dock, lesson tools stack, and camera filmstrip.
+  Collapse per-strip NOW/SOON alerts into a closed disclosure. Walls hub shows eight
+  primary walls; remaining walls live under **More walls**.
+- **Reason:** Owner — the board felt chaotic; Teachers need a calm glance, not every
+  walls experiment on the teaching surface.
+
 ## 2026-07-30 Drop kiosk wall and Stop audit
 
 - **Decision:** Remove `/walls/kiosk` (and hub link) and delete Stop audit

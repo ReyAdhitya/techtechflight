@@ -491,16 +491,37 @@ export function serviceStateOf(book: Logbook, droneId: DroneId): ServiceState {
   return book.service[droneId]?.state ?? 'in-service'
 }
 
-/** Hand a Drone to a Student, or take it back with an empty name. */
-export function assignStudent(droneId: DroneId, name: string): void {
+/** Which Drone already has this Student name, if any — D7 double-assign guard. */
+export function studentAssignedElsewhere(
+  book: Logbook,
+  name: string,
+  exceptDroneId?: DroneId,
+): DroneId | null {
+  const trimmed = name.trim()
+  if (trimmed === '') return null
+  for (const [otherId, value] of Object.entries(book.students)) {
+    if (exceptDroneId !== undefined && otherId === exceptDroneId) continue
+    if (displayNameForAssignment(book, value) === trimmed) return otherId
+  }
+  return null
+}
+
+/**
+ * Hand a Drone to a Student, or take it back with an empty name.
+ *
+ * Returns false when the name already flies another Drone (D7).
+ */
+export function assignStudent(droneId: DroneId, name: string): boolean {
   let book = migrateRosterForward(readLogbook())
   const trimmed = name.trim()
   const students = { ...book.students }
   if (trimmed === '') {
     delete students[droneId]
     save({ ...book, students })
-    return
+    return true
   }
+
+  if (studentAssignedElsewhere(book, trimmed, droneId) !== null) return false
 
   let student = studentByName(book, trimmed) ?? studentRecordOf(book, trimmed)
   if (!student) {
@@ -510,6 +531,7 @@ export function assignStudent(droneId: DroneId, name: string): void {
   }
   students[droneId] = student.studentId
   save({ ...book, students, roll: rollFromRoster(book.roster) })
+  return true
 }
 
 /** The name strips and Alerts show — never the studentId. */
@@ -615,7 +637,7 @@ export function assignNextRosterName(droneId: DroneId): string | null {
   if (studentOf(book, droneId) !== null) return null
   const next = nextRosterNameForAssign(book)
   if (next === null) return null
-  assignStudent(droneId, next)
+  if (!assignStudent(droneId, next)) return null
   rememberStudent(next)
   return next
 }

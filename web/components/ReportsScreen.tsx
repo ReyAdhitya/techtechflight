@@ -1,9 +1,9 @@
-import { studentIdsForLesson } from '@/lib/reports-student-id'
-import { WeeklyDigest } from './WeeklyDigest'
-import { EndOfDayExportButton } from './EndOfDayExportButton'
 'use client'
 
 import { useRef, useSyncExternalStore } from 'react'
+import { studentIdsForLesson } from '@/lib/reports-student-id'
+import { WeeklyDigest } from './WeeklyDigest'
+import { EndOfDayExportButton } from './EndOfDayExportButton'
 import { FleetReliability, rankFleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'

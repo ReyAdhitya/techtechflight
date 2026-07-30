@@ -22,6 +22,7 @@ import { LessonPrepPanel } from './LessonPrepPanel'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { LogbookLocationNote } from './LogbookLocationNote'
+import { LessonWarmUp } from './LessonWarmUp'
 import { StatusGlyph } from './StatusBadge'
 import {
   readyBoardLabel,
@@ -265,8 +266,20 @@ function PreFlight({
  * mistake.
  */
 function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) {
+  const storageKey = `lesson-warmup-done:${lesson.id}`
+  const [warming, setWarming] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return sessionStorage.getItem(storageKey) !== '1'
+  })
+
+  const finishWarmUp = () => {
+    sessionStorage.setItem(storageKey, '1')
+    setWarming(false)
+  }
+
   return (
     <section className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5">
+      {warming ? <LessonWarmUp onDone={finishWarmUp} /> : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>
         <h1 className="m-0 font-display text-heading font-medium">{lesson.label}</h1>

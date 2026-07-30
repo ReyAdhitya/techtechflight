@@ -9,13 +9,27 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Lesson warm-up is a 60s overlay once per lesson
+
+- **Decision:** `LessonWarmUp` shows for 60s after a lesson starts on `/lesson`; Skip or expiry marks `sessionStorage` so reload does not re-show for that lesson id.
+- **Reason:** Feature 27 — brief settle time before the class treats the lesson as running.
+- **Note:** Overlay only; does not block Control.
 ## 2026-07-30 Control reuses the camera-wall lesson timer
 
 - **Decision:** Control mounts `LessonTimerBanner` under `LessonStrip` — local countdown only, same component as `/walls/cameras`.
 - **Reason:** Feature 26 — Teachers watching Control need the period clock without opening Cameras.
 - **Note:** End-period prompt is a separate feature that hooks `onExpire`.
 
-<<<<<<< HEAD
+## 2026-07-30 Attention queue dock on Control
+
+- **Decision:** Add `ControlAttentionQueue` beneath the Attention bar — the full
+  `alertQueue` worst-first as clickable rows. Click selects the matching strip and scrolls
+  it into view; the bar still shows one Alert at a time with Acknowledge.
+- **Reason:** Feature 25 — Teachers working several alerts need to jump between strips
+  without re-finding them in board order. The dock reuses queue ordering and presentation;
+  strips stay in `boardOrder` (deliberate position #1).
+- **Note:** Hide the dock at zero queue length — the bar's count and reassuring sentence
+  already cover the empty case.
 ## 2026-07-30 Battery time budget uses charge × 12 minutes
 
 - **Decision:** Control flight strips show estimated flight minutes as `batteryFraction × 12`,
@@ -35,18 +49,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Decision:** `/walls/tv` mounts CameraWall or StatusWall with a toggle; Exit TV → `/walls`. No Settings link on this surface.
 - **Reason:** Feature 21.
 - **Note:** SiteHeader still present via app layout.
-=======
-## 2026-07-30 Attention queue dock on Control
-
-- **Decision:** Add `ControlAttentionQueue` beneath the Attention bar — the full
-  `alertQueue` worst-first as clickable rows. Click selects the matching strip and scrolls
-  it into view; the bar still shows one Alert at a time with Acknowledge.
-- **Reason:** Feature 25 — Teachers working several alerts need to jump between strips
-  without re-finding them in board order. The dock reuses queue ordering and presentation;
-  strips stay in `boardOrder` (deliberate position #1).
-- **Note:** Hide the dock at zero queue length — the bar's count and reassuring sentence
-  already cover the empty case.
->>>>>>> 5318717 (feat: control attention queue)
 
 ## 2026-07-30 End-lesson landed wall at `/walls/landed`
 

@@ -3,7 +3,6 @@ import { FleetProvider } from '@/components/FleetProvider'
 import { TrainingWheelsProvider } from '@/lib/training-wheels'
 import { CommandPalette } from '@/components/CommandPalette'
 import { SiteHeader } from '@/components/SiteHeader'
-import { LogbookCloudHydrator } from '@/components/LogbookCloudHydrator'
 
 /**
  * Everything a Teacher uses, around one connection to the ground station.
@@ -24,7 +23,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           Skip to the Fleet
         </a>
         <SiteHeader />
-        <LogbookCloudHydrator />
         {children}
         <CommandPalette />
       </TrainingWheelsProvider>

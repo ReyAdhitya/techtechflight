@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Teacher PIN and Cloud Logbook copy UI removed
+
+- **Decision:** Drop the demo Teacher PIN gate and the Settings “Cloud Logbook copy”
+  panel (plus layout hydrator). Commands and Settings are ungated again.
+- **Reason:** Owner — both felt like noise in the classroom product; PIN especially.
+- **Note:** `logbook-sync` helpers may remain for API/env use; the Teacher-facing copy UI
+  is what went.
+
 ## 2026-07-30 Test suite clears DEMO_ONLY and unlocks teacher PIN where Commands run
 
 - **Decision:** `web/test-setup.ts` deletes `NEXT_PUBLIC_DEMO_ONLY` so a leftover demo-only

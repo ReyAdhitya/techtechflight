@@ -1,16 +1,12 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
 import { useFleet } from './FleetProvider'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
-import { LogbookSyncPanel } from './LogbookSyncPanel'
 import { ScenarioPanel } from './ScenarioPanel'
-import { TeacherPinOverlay } from './TeacherPinOverlay'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
 import { cn } from '@/lib/utils'
-import { isTeacherPinUnlocked } from '@/lib/teacher-pin'
 import { READING_FRAME } from '@/lib/frame'
 
 /**
@@ -28,22 +24,6 @@ import { READING_FRAME } from '@/lib/frame'
  */
 export function SettingsScreen() {
   const { snapshot, demo } = useFleet()
-  const unlocked = useSyncExternalStore(
-    (onStoreChange) => {
-      window.addEventListener('teacher-pin-change', onStoreChange)
-      return () => window.removeEventListener('teacher-pin-change', onStoreChange)
-    },
-    isTeacherPinUnlocked,
-    () => false,
-  )
-
-  if (!unlocked) {
-    return (
-      <TeacherPinOverlay
-        onUnlocked={() => window.dispatchEvent(new Event('teacher-pin-change'))}
-      />
-    )
-  }
 
   return (
     <main
@@ -56,8 +36,6 @@ export function SettingsScreen() {
       <LogbookLocationNote />
 
       <ClassroomSetupPanel />
-
-      <LogbookSyncPanel />
 
       <Panel title="The ground station">
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">

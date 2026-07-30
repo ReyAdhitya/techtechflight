@@ -6,7 +6,6 @@ import { FleetProvider } from './FleetProvider'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
 import { SettingsScreen } from './SettingsScreen'
 import { putClassroomSetup } from '@/lib/classroom-setup'
-import { unlockTeacherPin } from '@/lib/teacher-pin'
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
@@ -23,7 +22,6 @@ beforeEach(() => {
   clearLogbook()
   pathname.current = '/demo'
   vi.useFakeTimers()
-  unlockTeacherPin('4242')
 })
 
 afterEach(() => {

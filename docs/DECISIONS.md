@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 No Camera button on Fleet Details
+
+- **Decision:** Drop the quiet **Camera** footer control (and Fleet `CameraSlide` host)
+  from the tile Details dialog. CameraPane remains under **More details**.
+- **Reason:** Owner — another chrome control on Fleet; Walls / Control cover large view.
+
 ## 2026-07-30 Attention bar is a closed dropdown
 
 - **Decision:** Replace the single rotating “next alert” panel with a `<details>`

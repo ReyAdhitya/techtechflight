@@ -20,8 +20,6 @@ export interface FleetBoardProps {
   readonly now: number
   /** True when `snapshot` is a stand-in Fleet rather than one the ground station sent. */
   readonly demo?: boolean
-  /** Opens the camera slide for this Drone — watch only, not a Command (C9). */
-  readonly onOpenCamera?: (droneId: DroneId) => void
   readonly scenarios?: ScenarioControls | null
 }
 
@@ -47,7 +45,6 @@ export function FleetBoard({
   snapshot,
   now,
   demo = false,
-  onOpenCamera,
   scenarios = null,
 }: FleetBoardProps) {
   const [openDroneId, setOpenDroneId] = useState<DroneId | null>(null)
@@ -194,14 +191,6 @@ export function FleetBoard({
         }
         chartSince={snapshot.history?.since ?? state.generatedAt}
         chartUntil={state.generatedAt}
-        {...(onOpenCamera && openDrone
-          ? {
-              onOpenCamera: () => {
-                onOpenCamera(openDrone.id)
-                setOpenDroneId(null)
-              },
-            }
-          : {})}
       />
     </main>
   )

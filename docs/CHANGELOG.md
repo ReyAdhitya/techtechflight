@@ -26,6 +26,8 @@ would notice.
 
 ### Removed
 
+- **Camera button on Fleet Details.** Dialog footer is only **Back to the Fleet**. Camera
+  still lives under **More details** (and Walls / Control); no separate slide from Fleet.
 - **Spotlight.** Peer-demo Spotlight on Control strips/dock, `/walls/spotlight`, and hub
   tile removed — open **Camera** when you need a large view.
 - **Projector and TV walls.** Hub tiles and `/walls/projector` / `/walls/tv` routes gone —

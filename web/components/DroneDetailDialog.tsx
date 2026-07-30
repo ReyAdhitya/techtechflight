@@ -30,8 +30,6 @@ export interface DroneDetailDialogProps {
   readonly drone: DroneState | null
   readonly ageMs: number | null
   readonly onClose: () => void
-  /** Opens the camera slide — watch only; omitted when the host has no slide. */
-  readonly onOpenCamera?: () => void
   readonly scenarios?: ScenarioControls | null
   readonly batterySamples?: readonly BatterySample[]
   readonly chartSince?: number
@@ -48,7 +46,6 @@ export function DroneDetailDialog({
   drone,
   ageMs,
   onClose,
-  onOpenCamera,
   scenarios = null,
   batterySamples = [],
   chartSince,
@@ -231,11 +228,6 @@ export function DroneDetailDialog({
           )}
 
           <div className="flex flex-wrap gap-2 self-start">
-            {onOpenCamera && (
-              <Button type="button" variant="quiet" onClick={onOpenCamera}>
-                Camera
-              </Button>
-            )}
             <Dialog.Close asChild>
               <Button variant="primary">Back to the Fleet</Button>
             </Dialog.Close>

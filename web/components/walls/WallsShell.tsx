@@ -4,12 +4,13 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 import { cn } from '@/lib/utils'
+import { LostLinkSiren } from './LostLinkSiren'
 
 /**
  * Shared chrome for every Classroom Wall.
  *
  * Title, a calm way back to the hub, and the screen body. Sub-walls fill `children`;
- * they do not invent their own page frame.
+ * they do not invent their own page frame. Lost-link siren sits above every wall.
  */
 export function WallsShell({
   title,
@@ -29,6 +30,7 @@ export function WallsShell({
       tabIndex={-1}
       className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
+      <LostLinkSiren />
       <header className="flex flex-col gap-2">
         {!hideBack ? (
           <Link

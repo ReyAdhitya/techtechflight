@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Lost-link siren is visual pulse on Walls, not audio
+
+- **Decision:** `LostLinkSiren` mounts in `WallsShell` when any vitals entry is Offline,
+  `no-contact`, or has a `no-response` alert. Uses `role="alert"` and
+  `motion-safe:animate-pulse` (no compulsory motion). No audio in this feature.
+- **Reason:** Owner feature 10 — Teacher glance when a craft goes quiet mid-lesson.
+- **Note:** Does not change ConnectionBanner (board↔ground-station); this is per-Drone link.
 ## 2026-07-30 Height wall uses 3 m classroom ceiling default
 
 - **Decision:** `/walls/height` compares each reported `altitudeM` against

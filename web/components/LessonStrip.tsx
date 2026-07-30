@@ -40,8 +40,8 @@ export function LessonStrip({
   const incidents = sinceStart.filter((event) => event.severity !== 'routine')
 
   return (
-    <section className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+    <section className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1">
         <span className="label">Lesson under way</span>
         <span className="font-display text-body font-medium text-ink">{lesson.label}</span>
         <span className="tnum text-value text-ink-subtle">{formatElapsed(elapsed)}</span>
@@ -57,65 +57,69 @@ export function LessonStrip({
         )}
       </div>
 
-      <LessonBookmarkControl
-        lessonId={lesson.id}
-        startedAt={lesson.startedAt}
-        now={now}
-        bookmarks={lesson.bookmarks ?? []}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <LessonBookmarkControl
+          lessonId={lesson.id}
+          startedAt={lesson.startedAt}
+          now={now}
+          bookmarks={lesson.bookmarks ?? []}
+          compact
+        />
 
-      <LessonIncidentNoteControl
-        lessonId={lesson.id}
-        startedAt={lesson.startedAt}
-        now={now}
-        incidents={lesson.incidents}
-      />
+        <LessonIncidentNoteControl
+          lessonId={lesson.id}
+          startedAt={lesson.startedAt}
+          now={now}
+          incidents={lesson.incidents}
+          compact
+        />
 
-      <button
-        type="button"
-        /*
-         * The same filled treatment "Start the lesson" carries in LessonScreen, character
-         * for character. The two are symmetrical halves of one lifecycle and a Teacher has
-         * to find the closing half across a room; as a ghost button it read as an aside.
-         *
-         * Not a Status colour. design.md §9 reserves colour for exception, and a lesson
-         * ending on time is the normal path rather than a fault.
-         */
-        className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
-        onClick={() => {
-          const at = now || Date.now()
+        <button
+          type="button"
           /*
-           * Written into the record as the lesson closes rather than recomputed later. The
-           * ground station's history is bounded, so by next week these events will have
-           * aged out of it — and a lesson summary that quietly emptied itself would be
-           * worse than no summary at all.
+           * The same filled treatment "Start the lesson" carries in LessonScreen, character
+           * for character. The two are symmetrical halves of one lifecycle and a Teacher has
+           * to find the closing half across a room; as a ghost button it read as an aside.
+           *
+           * Not a Status colour. design.md §9 reserves colour for exception, and a lesson
+           * ending on time is the normal path rather than a fault.
            */
-          for (const event of incidents) {
-            addIncident(lesson.id, {
-              at: event.at,
-              text: `${describeEvent(event)}${event.detail ? ` — ${event.detail}` : ''}`,
-              severity: event.severity === 'fault' ? 'fault' : 'attention',
-              droneId: event.droneId,
-              droneName: event.droneName,
-            })
-          }
-          /*
-           * The counts go in at the same moment and for the same reason: this is the last
-           * point at which the events still exist. Maintenance reads them back so "which
-           * Drone keeps giving trouble" survives the ground station being restarted.
-           */
-          endLesson(lesson.id, at, tallyEvents(sinceStart))
-          setPdfOpen(true)
-        }}
-      >
-        End the lesson
-      </button>
+          className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
+          onClick={() => {
+            const at = now || Date.now()
+            /*
+             * Written into the record as the lesson closes rather than recomputed later. The
+             * ground station's history is bounded, so by next week these events will have
+             * aged out of it — and a lesson summary that quietly emptied itself would be
+             * worse than no summary at all.
+             */
+            for (const event of incidents) {
+              addIncident(lesson.id, {
+                at: event.at,
+                text: `${describeEvent(event)}${event.detail ? ` — ${event.detail}` : ''}`,
+                severity: event.severity === 'fault' ? 'fault' : 'attention',
+                droneId: event.droneId,
+                droneName: event.droneName,
+              })
+            }
+            /*
+             * The counts go in at the same moment and for the same reason: this is the last
+             * point at which the events still exist. Maintenance reads them back so "which
+             * Drone keeps giving trouble" survives the ground station being restarted.
+             */
+            endLesson(lesson.id, at, tallyEvents(sinceStart))
+            setPdfOpen(true)
+          }}
+        >
+          End the lesson
+        </button>
+      </div>
 
-    <AutoPdfAfterLesson
-      open={pdfOpen}
-      input={{ lessons: [lesson], defects: [] }}
-      onClose={() => setPdfOpen(false)}
-    />
+      <AutoPdfAfterLesson
+        open={pdfOpen}
+        input={{ lessons: [lesson], defects: [] }}
+        onClose={() => setPdfOpen(false)}
+      />
     </section>
   )
 }

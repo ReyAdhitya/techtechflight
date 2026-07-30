@@ -13,6 +13,8 @@ would notice.
 
 ### Changed
 
+- **Lesson strip actions sit together.** Bookmark, Note incident, and End share one
+  right-hand cluster (`gap-2`); compact mode hides recent lists so the bar stays one row.
 - **Attention is a closed dropdown.** Count + worst line stay put; open to see every
   item and acknowledge. No more single-alert swap that made the board feel like it was
   moving.

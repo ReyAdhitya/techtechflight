@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Charge reading uses an iPhone-style battery glyph
+
+- **Decision:** Add `BatteryGlyph` (outline + nub + proportional fill) beside the
+  existing percent · time words via `BatteryChargeReading` on Control strips / Scope dock.
+- **Reason:** Owner asked for a familiar phone battery icon next to the charge line.
+
 ## 2026-07-30 Camera Record is one session mark, many buttons
 
 - **Decision:** Shared `camera-recording` session store. Per-Drone **Record** on Control

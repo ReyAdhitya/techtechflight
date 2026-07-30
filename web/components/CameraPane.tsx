@@ -1,3 +1,4 @@
+import { CameraRecordingClip } from './CameraRecordingClip'
 'use client'
 
 import {
@@ -285,6 +286,7 @@ function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName:
         aria-label={`Live camera stream for ${droneName}`}
       />
       <div className="flex flex-wrap gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
+        <CameraRecordingClip onClip={() => {}} />
         <PhotoEvidenceButton droneId={droneId} droneName={droneName} videoRef={videoRef} />
         <p className="m-0 self-center text-value text-ink-subtle">
           School stream — from the stream map, not Telemetry

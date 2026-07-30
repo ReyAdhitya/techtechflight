@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Camera recording clip.** Save clip control on CameraPane (stub handler).
 - **Student projector (`/walls/projector`).** Cameras wall for the class screen.
 - **Parent demo kiosk (`/walls/kiosk`).** Same Status wall for open evenings.
 - **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.

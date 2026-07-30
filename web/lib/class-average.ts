@@ -1,4 +1,3 @@
-import { readyBoardLabel } from '@/components/walls/ready-mapping'
 import type { DroneVitals } from './vitals'
 
 /**
@@ -6,7 +5,7 @@ import type { DroneVitals } from './vitals'
  *
  * Mean height uses airborne craft with a reported altitude only — grounded Drones at 0 m
  * would drag the average down without telling the Teacher anything about the lesson in the air.
- * Readiness is the share of the Fleet that reads Ready on the pre-flight board vocabulary.
+ * Readiness is the share of the Fleet that reads Ready on the status Ready.
  */
 export function classAverageStats(vitals: readonly DroneVitals[]): {
   readonly meanHeightM: number | null
@@ -27,7 +26,7 @@ export function classAverageStats(vitals: readonly DroneVitals[]): {
         airborneWithHeight.length
       : null
 
-  const readyCount = vitals.filter((entry) => readyBoardLabel(entry) === 'Ready').length
+  const readyCount = vitals.filter((entry) => entry.status === 'Ready').length
 
   return { meanHeightM, readyCount, total }
 }

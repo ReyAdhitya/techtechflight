@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Reports join student ids from assignments
+
+- **Decision:** `studentIdsForLesson` reads unique names from `lesson.assignments`.
+- **Reason:** Feature 55.
 ## 2026-07-30 Weekly digest is a 7-day lesson count
 
 - **Decision:** `WeeklyDigest` on Reports summarises the last 7 days.

@@ -19,6 +19,9 @@ would notice.
 
 ### Added
 
+- **Dual-write Logbook to Vercel (#93 / #83).** Local save first; debounced cloud copy via
+  `/api/logbook` (Blob + shared secret). Vercel board hydrates when cloud is newer.
+  ADR-0015. Print/PDF and static classroom export unchanged.
 - **Reports Download PDF (#92).** Primary control saves a real PDF (Lessons + recurring
   defects) with no browser Headers/footers. Print stays secondary.
 - **Settings Classroom setup — Sim vs Radio (#88).** Plain-language path picker on Settings.

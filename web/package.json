@@ -21,6 +21,7 @@
     "@react-three/fiber": "^9.6.1",
     "@techtechflight/contract": "*",
     "@techtechflight/fleet-core": "*",
+    "@vercel/blob": "^2.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "jspdf": "^4.2.1",

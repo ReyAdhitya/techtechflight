@@ -31,11 +31,11 @@ afterEach(() => {
 })
 
 describe('the class', () => {
-  it('says Student records live in this browser, not on Vercel', () => {
+  it('says Student records save on this laptop first, with optional Vercel copy', () => {
     show()
 
     expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
-    expect(screen.getByRole('note')).toHaveTextContent(/not saved on Vercel/)
+    expect(screen.getByRole('note')).toHaveTextContent(/copy also goes to Vercel/)
     expect(screen.getByRole('note')).toHaveTextContent(/Students/)
     expect(screen.getByRole('note')).toHaveTextContent(/Settings/)
     expect(screen.getByRole('note')).toHaveTextContent(/Lesson/)

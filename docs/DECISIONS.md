@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Spare inventory is grounded count
+
+- **Decision:** `SpareInventory` uses grounded vitals as spare.
+- **Reason:** Feature 58.
 ## 2026-07-30 Lesson templates are a fixed starter pack
 
 - **Decision:** `LESSON_TEMPLATES` three plans; pick wires later into ExerciseList.

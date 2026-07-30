@@ -3,14 +3,17 @@
 import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import {
+  absentStudentsNotFlying,
   assignNextRosterName,
   clearStudents,
   firstUnassignedDrone,
+  isStudentAbsent,
   nextRosterNameForAssign,
   readLogbook,
   readServerLogbook,
   registerStudent,
   removeStudent,
+  setStudentAbsent,
   studentOf,
   subscribeLogbook,
 } from '@/lib/logbook'
@@ -19,6 +22,7 @@ import { cn } from '@/lib/utils'
 import { AssignNextButton } from './AssignNextButton'
 import { useFleet } from './FleetProvider'
 import { LogbookLocationNote } from './LogbookLocationNote'
+import { PresenceBadge } from './PresenceBadge'
 import { StatusGlyph } from './StatusBadge'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -44,6 +48,7 @@ export function StudentsScreen() {
   const [name, setName] = useState('')
 
   const flying = drones.filter((drone) => studentOf(book, drone.id) !== null)
+  const absentNotFlying = absentStudentsNotFlying(book)
   const roster = book.roster.length > 0
     ? book.roster
     : book.roll.map((rollName) => ({ studentId: '', name: rollName }))
@@ -111,24 +116,45 @@ export function StudentsScreen() {
                 >
                   {drone.name}
                 </Link>
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-2 text-value',
-                    drone.status === 'Fault'
-                      ? 'text-status-fault'
-                      : drone.status === 'Not Ready'
-                        ? 'text-status-not-ready'
-                        : 'text-ink-subtle',
-                  )}
-                >
-                  <StatusGlyph shape={STATUS_PRESENTATION[drone.status].shape} />
-                  {STATUS_PRESENTATION[drone.status].label}
-                </span>
+                {drone.status === 'Offline' ? (
+                  <PresenceBadge kind="offline" />
+                ) : (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-2 text-value',
+                      drone.status === 'Fault'
+                        ? 'text-status-fault'
+                        : drone.status === 'Not Ready'
+                          ? 'text-status-not-ready'
+                          : 'text-ink-subtle',
+                    )}
+                  >
+                    <StatusGlyph shape={STATUS_PRESENTATION[drone.status].shape} />
+                    {STATUS_PRESENTATION[drone.status].label}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
         )}
       </section>
+
+      {absentNotFlying.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="label m-0">Absent today</h2>
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {absentNotFlying.map((student) => (
+              <li
+                key={student.studentId}
+                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-3 py-2"
+              >
+                <span className="font-display text-body font-medium text-ink">{student.name}</span>
+                <PresenceBadge kind="absent" />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3 border-t border-hairline pt-6">
         <div className="flex flex-col gap-1">
@@ -147,8 +173,22 @@ export function StudentsScreen() {
                 className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-3 py-2"
               >
                 <span className="font-display text-body font-medium text-ink">{student.name}</span>
+                {student.studentId !== '' && isStudentAbsent(book, student.studentId) && (
+                  <PresenceBadge kind="absent" />
+                )}
                 {student.studentId !== '' && (
                   <span className="tnum text-value text-ink-subtle">{student.studentId}</span>
+                )}
+                {student.studentId !== '' && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setStudentAbsent(student.studentId, !isStudentAbsent(book, student.studentId))
+                    }
+                    className="cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
+                  >
+                    {isStudentAbsent(book, student.studentId) ? 'Mark present' : 'Mark absent'}
+                  </button>
                 )}
                 {student.studentId !== '' && (
                   <button

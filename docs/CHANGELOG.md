@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Spare inventory.** Grounded count shown as spare beside headcount on Control.
 - **Lesson templates pack.** Three starter plans on the Lesson prep screen.
 - **Roster import paste.** Students screen accepts one-name-per-line paste.
 - **Reports student ids.** Helper joins lesson assignment names for report rows.

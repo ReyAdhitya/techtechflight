@@ -45,6 +45,7 @@ import { LessonStrip } from './LessonStrip'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { AssignNextButton } from './AssignNextButton'
 import { LiveHeadcount } from './LiveHeadcount'
+import { SpareInventory } from './SpareInventory'
 import { SimLandAllButton } from './SimLandAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
 import { PeerDemoSpotlight } from './PeerDemoSpotlight'
@@ -276,6 +277,7 @@ export function ControlScreen() {
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+          <SpareInventory grounded={groundedCount} total={vitals.length} />
             <AssignNextButton
               nextName={nextRosterName}
               targetDroneId={assignTargetDroneId}

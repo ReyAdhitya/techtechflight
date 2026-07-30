@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Attention queue dock on Control.** Sorted needs-you list beneath the Attention bar;
@@ -108,6 +109,7 @@ would notice.
 
 ### Added
 
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
@@ -233,6 +235,7 @@ would notice.
 
 ### Added
 
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
@@ -419,6 +422,7 @@ would notice.
 
 ### Added
 
+- **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.

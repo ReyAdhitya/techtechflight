@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Spotlight wall is one CameraPane plus thumb row
+
+- **Decision:** /walls/spotlight shows one large CameraPane; thumbnails switch focus by drone id in local state.
+- **Reason:** Feature 17 — class demo focus without leaving Walls.
+- **Note:** Reuses CameraPane; no Telemetry stream URLs.
 ## 2026-07-30 Dual watch uses query params a/b for CameraPane pair
 
 - **Decision:** /walls/dual mounts two CameraPanes. `?a=` / `?b=` select drone ids; missing params use the first two Fleet Drones in board order.

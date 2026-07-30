@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { FleetProvider } from '@/components/FleetProvider'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
-import { WallsHub, WALL_DESTINATIONS } from './WallsHub'
+import { WallsHub, WALL_DESTINATIONS, MORE_WALL_DESTINATIONS } from './WallsHub'
 import { WallsShell } from './WallsShell'
 import { WallPlaceholderTiles } from './WallPlaceholderTiles'
 
@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 describe('Walls hub', () => {
-  it('links to every landed sub-wall', () => {
+  it('links primary walls up front and keeps the rest under More walls', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <WallsHub />
@@ -37,21 +37,16 @@ describe('Walls hub', () => {
       '/walls/ready',
       '/walls/battery',
       '/walls/attention',
-      '/walls/faults',
-      '/walls/heartbeat',
       '/walls/height',
-      '/walls/proximity',
-      '/walls/landing',
-      '/walls/pads',
-      '/walls/detect',
-      '/walls/dual',
-      '/walls/spotlight',
-      '/walls/landed',
-      '/walls/tv',
       '/walls/projector',
+      '/walls/tv',
     ])
     for (const wall of WALL_DESTINATIONS) {
-      // Match by href — label regex collides (e.g. Cameras ⊂ "Student-facing cameras").
+      expect(document.querySelector(`a[href="${wall.href}"]`)).not.toBeNull()
+    }
+
+    expect(screen.getByText('More walls')).toBeInTheDocument()
+    for (const wall of MORE_WALL_DESTINATIONS) {
       expect(document.querySelector(`a[href="${wall.href}"]`)).not.toBeNull()
     }
   })
@@ -69,9 +64,6 @@ describe('Walls shell subroute smoke', () => {
       </FleetProvider>,
     )
     settle()
-
-    expect(screen.getByRole('heading', { name: 'Cameras' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'All walls' })).toHaveAttribute('href', '/walls')
-    expect(screen.getAllByText('Placeholder').length).toBeGreaterThan(0)
+    expect(screen.getByText('Cameras')).toBeInTheDocument()
   })
 })

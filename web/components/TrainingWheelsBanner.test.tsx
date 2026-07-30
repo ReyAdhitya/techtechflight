@@ -36,6 +36,7 @@ describe('training wheels on Control', () => {
 
     expect(screen.getAllByRole('button', { name: 'Stop' }).length).toBeGreaterThan(0)
 
+    fireEvent.click(screen.getByText('More actions'))
     fireEvent.click(screen.getByRole('button', { name: 'Training wheels off' }))
     settle()
 

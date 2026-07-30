@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 import { ScenarioPanel } from './ScenarioPanel'
 
 /**
- * Attention queue dock on Control — sorted needs-you list that jumps to the matching strip.
+ * Control keeps a single Attention bar — not a second full queue dock that shoved the
+ * Scope down the page.
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
@@ -20,20 +21,14 @@ const settle = () =>
 beforeEach(() => {
   pathname.current = '/demo'
   vi.useFakeTimers()
-  Element.prototype.scrollIntoView = vi.fn()
-  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
-    cb(0)
-    return 0
-  })
 })
 
 afterEach(() => {
   vi.useRealTimers()
-  vi.unstubAllGlobals()
 })
 
-describe('Attention queue dock on Control', () => {
-  it('stays hidden when nothing needs you', () => {
+describe('Attention on Control', () => {
+  it('shows the calm empty Attention bar when nothing needs you', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
@@ -42,9 +37,10 @@ describe('Attention queue dock on Control', () => {
     settle()
 
     expect(screen.queryByRole('navigation', { name: 'Attention queue' })).not.toBeInTheDocument()
+    expect(screen.getByText('No items require action. All Drones in contact are nominal.')).toBeInTheDocument()
   })
 
-  it('lists alerts worst first and selects the matching strip on click', () => {
+  it('surfaces the worst alert on the Attention bar after a fault', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ScenarioPanel />
@@ -57,16 +53,7 @@ describe('Attention queue dock on Control', () => {
     fireEvent.click(faultButtons[5]!)
     settle()
 
-    const dock = screen.getByRole('navigation', { name: 'Attention queue' })
-    const queueButtons = within(dock).getAllByRole('button')
-    expect(queueButtons.length).toBeGreaterThanOrEqual(1)
-    expect(queueButtons[0]).toHaveTextContent('Drone 6')
-
-    fireEvent.click(queueButtons[0]!)
-
-    const strip = screen.getByRole('link', { name: 'Drone 6' }).closest('li')
-    expect(strip).not.toBeNull()
-    expect(strip).toHaveClass('outline-2')
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
+    expect(screen.queryByRole('navigation', { name: 'Attention queue' })).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Items requiring action')).toHaveTextContent('Drone 6')
   })
 })

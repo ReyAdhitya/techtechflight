@@ -22,7 +22,7 @@ describe('height ceiling banner on Control', () => {
 
   it('names craft above the classroom ceiling default', () => {
     render(<HeightCeilingBanner vitals={[vitals('d1', 3.4), vitals('d2', 1)]} />)
-    expect(screen.getByRole('alert')).toHaveTextContent('above the 3 m ceiling')
+    expect(screen.getByRole('alert')).toHaveTextContent('above 3 m')
     expect(screen.getByRole('alert')).toHaveTextContent('d1')
   })
 })

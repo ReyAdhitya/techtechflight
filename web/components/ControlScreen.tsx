@@ -44,6 +44,7 @@ import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import { useFleet } from './FleetProvider'
+import { useTeacherPinGate } from './useTeacherPinGate'
 import { useTrainingWheelsOptional } from '@/lib/training-wheels'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
@@ -74,6 +75,7 @@ export function ControlScreen() {
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
+  const { ensureUnlocked, overlay } = useTeacherPinGate()
   const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
@@ -118,21 +120,27 @@ export function ControlScreen() {
   }
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
-    command(droneId, kind)
-    /*
-     * Noted against the Lesson as it is sent (C7), not when it resolves.
-     * What the report is a record of is what the Teacher asked for — a
-     * Command that produced nothing is still a thing that happened, and
-     * arguably the more interesting one.
-     */
-    if (lesson) {
-      recordCommand(lesson.id, {
-        at: now,
-        droneId,
-        droneName: callsign,
-        kind,
-      })
-    }
+    ensureUnlocked(() => {
+      command(droneId, kind)
+      /*
+       * Noted against the Lesson as it is sent (C7), not when it resolves.
+       * What the report is a record of is what the Teacher asked for — a
+       * Command that produced nothing is still a thing that happened, and
+       * arguably the more interesting one.
+       */
+      if (lesson) {
+        recordCommand(lesson.id, {
+          at: now,
+          droneId,
+          droneName: callsign,
+          kind,
+        })
+      }
+    })
+  }
+
+  const releaseStop = (_droneId: string, reset: () => void) => {
+    ensureUnlocked(reset)
   }
 
   return (
@@ -210,7 +218,10 @@ export function ControlScreen() {
                 }
                 onReleaseStop={
                   scenarios
-                    ? () => scenarios.resetEmergencyStop(selectedVitals.droneId)
+                    ? () =>
+                        releaseStop(selectedVitals.droneId, () =>
+                          scenarios.resetEmergencyStop(selectedVitals.droneId),
+                        )
                     : null
                 }
                 tracked={commandFor(selectedVitals.droneId)}
@@ -285,7 +296,10 @@ export function ControlScreen() {
               command={(droneId, kind) => issueCommand(droneId, kind, entry.callsign)}
               onReleaseStop={
                 scenarios
-                  ? () => scenarios.resetEmergencyStop(entry.droneId)
+                  ? () =>
+                      releaseStop(entry.droneId, () =>
+                        scenarios.resetEmergencyStop(entry.droneId),
+                      )
                   : null
               }
               tracked={commandFor(entry.droneId)}
@@ -309,6 +323,8 @@ export function ControlScreen() {
           onClose={() => setCameraDroneId(null)}
         />
       )}
+
+      {overlay}
     </main>
   )
 }

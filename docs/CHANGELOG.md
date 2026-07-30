@@ -5,6 +5,13 @@ would notice.
 
 ## Unreleased
 
+### Removed
+
+- **Teacher PIN.** No more `4242` gate on Control commands or Settings — Stop/Land/Hover
+  and Settings open without a PIN.
+- **Cloud Logbook copy panel.** Settings no longer shows the cloud sync secret UI; the
+  background hydrator is gone with it. Local Logbook stays as before.
+
 ### Fixed
 
 - **CI green for Walls classroom branch.** Control `'use client'` import order; PIN unlock

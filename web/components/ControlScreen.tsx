@@ -59,7 +59,6 @@ import { VoiceReadyCallouts } from './VoiceReadyCallouts'
 import { MaintenanceFlag } from './MaintenanceFlag'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import { useFleet } from './FleetProvider'
-import { useTeacherPinGate } from './useTeacherPinGate'
 import { useTrainingWheelsOptional } from '@/lib/training-wheels'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
@@ -91,7 +90,6 @@ export function ControlScreen() {
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
   const [layoutPreset, setLayoutPreset] = useState<ScopeLayoutPreset>('classroom')
-  const { ensureUnlocked, overlay } = useTeacherPinGate()
   const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
@@ -143,27 +141,25 @@ export function ControlScreen() {
   }
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
-    ensureUnlocked(() => {
-      command(droneId, kind)
-      /*
-       * Noted against the Lesson as it is sent (C7), not when it resolves.
-       * What the report is a record of is what the Teacher asked for — a
-       * Command that produced nothing is still a thing that happened, and
-       * arguably the more interesting one.
-       */
-      if (lesson) {
-        recordCommand(lesson.id, {
-          at: now,
-          droneId,
-          droneName: callsign,
-          kind,
-        })
-      }
-    })
+    command(droneId, kind)
+    /*
+     * Noted against the Lesson as it is sent (C7), not when it resolves.
+     * What the report is a record of is what the Teacher asked for — a
+     * Command that produced nothing is still a thing that happened, and
+     * arguably the more interesting one.
+     */
+    if (lesson) {
+      recordCommand(lesson.id, {
+        at: now,
+        droneId,
+        droneName: callsign,
+        kind,
+      })
+    }
   }
 
   const releaseStop = (_droneId: string, reset: () => void) => {
-    ensureUnlocked(reset)
+    reset()
   }
 
   return (
@@ -385,7 +381,6 @@ export function ControlScreen() {
         />
       )}
 
-      {overlay}
     </main>
   )
 }

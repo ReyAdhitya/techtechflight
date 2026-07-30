@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { clearLogbook, readLogbook, runningLesson, startLesson, writeNote } from '@/lib/logbook'
-import { unlockTeacherPin } from '@/lib/teacher-pin'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { LessonStrip } from './LessonStrip'
@@ -37,7 +36,6 @@ beforeEach(() => {
   clearLogbook()
   pathname.current = '/demo'
   vi.useFakeTimers()
-  unlockTeacherPin('4242')
 })
 
 afterEach(() => {

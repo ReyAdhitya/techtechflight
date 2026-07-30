@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { DEMO_TEACHER_PIN, unlockTeacherPin } from '@/lib/teacher-pin'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
@@ -24,7 +23,6 @@ const settle = () =>
 beforeEach(() => {
   pathname.current = '/demo'
   vi.useFakeTimers()
-  unlockTeacherPin(DEMO_TEACHER_PIN)
 })
 
 afterEach(() => {

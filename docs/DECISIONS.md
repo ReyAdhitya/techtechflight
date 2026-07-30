@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Teacher PIN is session demo gate only
+
+- **Decision:** `DEMO_TEACHER_PIN = '4242'` in `teacher-pin.ts`; unlock stored in `sessionStorage`. Control wraps Commands via `useTeacherPinGate`; Settings blocks behind `TeacherPinOverlay` until unlocked.
+- **Reason:** Feature 41 — minimal authority gate before sensitive actions without inventing school identity.
+- **Note:** Demo PIN only, not authentication; closing the tab clears unlock.
+
 ## 2026-07-30 Quiet mode hides Stop on Control strips
 
 - **Decision:** `QuietModeToggle` sets local React state on Control; `CommandRow` accepts `hideStop` and omits Stop / Release stop when true. Land and Hover unchanged.

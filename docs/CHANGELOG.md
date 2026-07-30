@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Fault mosaic (`/walls/faults`).** Every Drone on one grid; fault, stale, and emergency
+  tiles sort to the front, the rest follow in board order. Summary count, fault reason when
+  reported, stale hint. Tiles link to Drone detail. Read-only.
 - **Attention wall (`/walls/attention`).** Troubled Drones — fault, emergency, stale, or
   alerts still on the Teacher queue — read large with the headline alert; nominal Drones
   shrink to a muted callsign. Summary: “N need you”. Tiles link to `/drone?id=`. Read-only.

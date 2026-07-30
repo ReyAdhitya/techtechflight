@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Battery wall critical threshold matches board usable charge
+
+- **Decision:** A tile is **critical** when `batteryFraction` is below
+  `DEFAULT_THRESHOLDS.usableBatteryFraction` (30%) — the same number vitals uses for
+  `battery-low` and the ground station uses for Not Ready. No separate 20% wall threshold.
+- **Reason:** Owner battery wall spec — one low-battery idea across board and walls.
+- **Note:** Reuses `BatteryLevel` with `low={critical}`; summary line is “N critical”.
+
 ## 2026-07-30 Ready wall maps vitals to four pre-flight labels
 
 - **Decision:** `/walls/ready` derives each tile from existing `DroneVitals` and Status
@@ -45,7 +53,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   missing Telemetry uses board connection language (Status badge, “No Telemetry yet”).
 - **Reason:** Feature 2 of classroom walls — whole-class camera glance without crowding Control.
 - **Note:** Full CameraPane behaviour stays in the slide only.
-
 
 ## 2026-07-30 Classroom Walls live under `/walls` after Control in SiteNav
 

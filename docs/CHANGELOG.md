@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **End-lesson landed wall (`/walls/landed`).** One tile per Drone — green when on the
+  ground, red when still airborne; summary landed / still flying counts; tiles link to Drone
+  detail. Read-only. Not on the Walls hub yet.
 - **Camera wall freeze (`/walls/cameras`).** Freeze wall snapshots tile names and camera
   labels while Telemetry and ScenarioControls keep running; Resume updates catches up.
   CameraSlide stays live so Start/Stop still works during a freeze.

@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Swap exchanges live assignments only
+
+- **Decision:** `swapStudentAssignments` exchanges `book.students` entries between two Drones. Control shows **Swap** on every other strip while one is selected. Lesson-record assignments at start are untouched (G6).
+- **Reason:** Feature 45 — a faulted airframe swap mid-lesson should not make a Teacher retype names.
+- **Note:** Swap with one empty Drone moves the assignment; both empty is a no-op.
+
 ## 2026-07-30 One-tap assign walks the roster in order
 
 - **Decision:** `assignNextRosterName` hands the next unassigned roster name to a Drone. Control targets the selected unassigned craft when one is lit; otherwise `firstUnassignedDrone` in board order. Students uses board order only.

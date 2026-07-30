@@ -527,6 +527,19 @@ export function clearStudents(): void {
   save({ ...migrateRosterForward(readLogbook()), students: {} })
 }
 
+/** Exchange who is flying two Drones without retyping names mid-lesson. */
+export function swapStudentAssignments(droneIdA: DroneId, droneIdB: DroneId): void {
+  if (droneIdA === droneIdB) return
+  const book = migrateRosterForward(readLogbook())
+  const students = { ...book.students }
+  const a = students[droneIdA]
+  const b = students[droneIdB]
+  if (a === undefined && b === undefined) return
+  if (a === undefined) delete students[droneIdB]
+  else students[droneIdB] = a
+  if (b === undefined) delete students[droneIdA]
+  else students[droneIdA] = b
+  save({ ...book, students })
 /** Roster names not currently flying a Drone, in roster order. */
 export function unassignedRosterNames(book: Logbook): readonly string[] {
   const assigned = new Set<string>()
@@ -544,7 +557,6 @@ export function unassignedRosterNames(book: Logbook): readonly string[] {
 /** The next name `assignNextRosterName` would hand out, or null when the roster is full. */
 export function nextRosterNameForAssign(book: Logbook): string | null {
   return unassignedRosterNames(book)[0] ?? null
-}
 
 /** First Drone in board order with no Student, or null. */
 export function firstUnassignedDrone(
@@ -553,9 +565,7 @@ export function firstUnassignedDrone(
 ): DroneId | null {
   for (const droneId of droneIds) {
     if (studentOf(book, droneId) === null) return droneId
-  }
   return null
-}
 
 /**
  * Assign the next roster name to a Drone — one tap through the class list.
@@ -564,7 +574,6 @@ export function firstUnassignedDrone(
  * has someone.
  */
 export function assignNextRosterName(droneId: DroneId): string | null {
-  const book = migrateRosterForward(readLogbook())
   if (studentOf(book, droneId) !== null) return null
   const next = nextRosterNameForAssign(book)
   if (next === null) return null

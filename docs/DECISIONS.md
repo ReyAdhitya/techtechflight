@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Class average strip on Control
+
+- **Decision:** `ClassAverageStrip` sits between the Attention bar and the scope. Mean height
+  averages airborne Drones with a reported altitude only; readiness is the share labelled Ready
+  via `readyBoardLabel`.
+- **Reason:** Feature 30 — Teachers scanning a lesson need a fleet-wide line without a wall.
+- **Note:** Grounded craft at 0 m are excluded from the height average so the number tracks the
+  air, not the desk.
 ## 2026-07-30 Live headcount is airborne vs grounded counts
 
 - **Decision:** `LiveHeadcount` shows `vitals.airborne` true/false tallies next to the Every Drone heading.

@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Camera photo evidence download
+
+- **Decision:** `PhotoEvidenceButton` on CameraPane captures the current `<video>` frame to
+  PNG via an off-screen canvas; sim feeds without pixels use `downloadPlaceholderEvidence`.
+  No upload or Command (ADR-0011).
+- **Reason:** Feature #49 — Teachers need a still for incident follow-up without inventing
+  cloud storage.
+- **Note:** Filename `{droneId}-evidence.png`; school streams and sim both offer the control.
+
 ## 2026-07-30 Swap exchanges live assignments only
 
 - **Decision:** `swapStudentAssignments` exchanges `book.students` entries between two Drones. Control shows **Swap** on every other strip while one is selected. Lesson-record assignments at start are untouched (G6).

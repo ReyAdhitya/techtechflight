@@ -9,16 +9,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
-<<<<<<< HEAD
-## 2026-07-30 Camera photo evidence download
-
-- **Decision:** `PhotoEvidenceButton` on CameraPane captures the current `<video>` frame to
-  PNG via an off-screen canvas; sim feeds without pixels use `downloadPlaceholderEvidence`.
-  No upload or Command (ADR-0011).
-- **Reason:** Feature #49 — Teachers need a still for incident follow-up without inventing
-  cloud storage.
-- **Note:** Filename `{droneId}-evidence.png`; school streams and sim both offer the control.
-=======
 ## 2026-07-30 Absent Student versus Offline Drone badges
 
 - **Decision:** **Absent** is a Teacher-marked roster flag (`absentStudentIds` in the Logbook).
@@ -27,7 +17,21 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Feature #46 — a Student away from class is not the same fact as a craft that
   lost link.
 - **Note:** Absent Students still appear on the roster; assignment is unchanged.
->>>>>>> 8662d54 (feat: absent vs offline badges)
+## 2026-07-30 Double-assign blocked in the Logbook
+
+- **Decision:** `assignStudent` returns false when `studentAssignedElsewhere` finds the name
+  on another Drone. UI clash warnings stay; the Logbook is the backstop so one-tap assign
+  cannot bypass D7.
+- **Reason:** Feature #47 — six quick taps must not put one Student on two craft.
+- **Note:** Clearing a name or swapping assignments is unchanged.
+## 2026-07-30 Camera photo evidence download
+
+- **Decision:** `PhotoEvidenceButton` on CameraPane captures the current `<video>` frame to
+  PNG via an off-screen canvas; sim feeds without pixels use `downloadPlaceholderEvidence`.
+  No upload or Command (ADR-0011).
+- **Reason:** Feature #49 — Teachers need a still for incident follow-up without inventing
+  cloud storage.
+- **Note:** Filename `{droneId}-evidence.png`; school streams and sim both offer the control.
 
 ## 2026-07-30 Swap exchanges live assignments only
 

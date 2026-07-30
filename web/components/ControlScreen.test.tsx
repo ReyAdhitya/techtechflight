@@ -26,8 +26,7 @@ afterEach(() => {
 
 describe('swap drone on Control strips', () => {
   it('offers Swap on other strips when one is selected', async () => {
-    vi.useRealTimers()
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     assignStudent('ttf-0001', 'Priya')
     assignStudent('ttf-0002', 'Ravi')
 
@@ -36,9 +35,7 @@ describe('swap drone on Control strips', () => {
         <ControlScreen />
       </FleetProvider>,
     )
-    await act(async () => {
-      vi.advanceTimersByTime(2_000)
-    })
+    settle()
 
     await user.click(screen.getByRole('link', { name: 'Drone 1' }))
 
@@ -46,8 +43,7 @@ describe('swap drone on Control strips', () => {
   })
 
   it('swaps assignments when Swap is pressed', async () => {
-    vi.useRealTimers()
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     assignStudent('ttf-0001', 'Priya')
     assignStudent('ttf-0002', 'Ravi')
 
@@ -56,9 +52,7 @@ describe('swap drone on Control strips', () => {
         <ControlScreen />
       </FleetProvider>,
     )
-    await act(async () => {
-      vi.advanceTimersByTime(2_000)
-    })
+    settle()
 
     const stripTwo = screen.getByRole('link', { name: 'Drone 2' }).closest('li')!
     await user.click(within(stripTwo).getByRole('button', { name: 'Swap' }))

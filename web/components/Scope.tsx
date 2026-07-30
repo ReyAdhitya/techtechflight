@@ -134,7 +134,7 @@ export function Scope({
     const ceilingNow = chooseCeiling(placedNow, heldCeilingM.current)
     setFrozenFrame({
       drones: structuredClone(drones),
-      vitals: vitals ? structuredClone(vitals) : undefined,
+      ...(vitals ? { vitals: structuredClone(vitals) } : {}),
       windowChoice: windowNow.choice,
       ceilingM: ceilingNow,
     })

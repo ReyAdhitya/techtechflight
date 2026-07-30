@@ -10,7 +10,7 @@ const vitals = (id: string, altitudeM: number | null): DroneVitals =>
     altitudeM,
     airborne: altitudeM !== null && altitudeM > 0,
     alerts: [],
-  }) as DroneVitals
+  }) as unknown as DroneVitals
 
 describe('height ceiling banner on Control', () => {
   it('stays hidden when every Drone is at or below the ceiling', () => {

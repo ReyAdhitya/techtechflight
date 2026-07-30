@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Auto PDF is confirm-then-download on lesson end
+
+- **Decision:** `AutoPdfAfterLesson` opens from `LessonStrip` after `endLesson`; Teacher confirms download via existing `downloadReportsPdf`.
+- **Reason:** Feature 52.
+- **Note:** Defects list empty in the prompt payload; Reports still has the full export.
 ## 2026-07-30 Before/after scores are a pair on the lesson summary
 
 - **Decision:** `formatScorePair` / `BeforeAfterScores` present before→after; storage on LessonRecord can follow.

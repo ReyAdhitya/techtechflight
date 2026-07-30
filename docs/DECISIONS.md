@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Assigned Students read as display type on strips
+
+- **Decision:** When a Student is assigned, Control strips show their name as `font-display text-body font-medium text-ink` beside the callsign; click opens the existing inline field. Unassigned strips keep the dashed input.
+- **Reason:** Feature 43 — §4.4 wireframe puts the name at equal weight to the Drone name; a narrow input buried it.
+- **Note:** Alert copy still repeats "Flown by …" under alerts; that line is for urgency, not identity.
+
 ## 2026-07-30 Land all (sim) is a ScenarioControls surface
 
 - **Decision:** `SimLandAllButton` on Control calls `scenarios.setAltitude(id, 0)` for every airborne craft. Shown only when `scenarios` is present; hidden when nothing is up.

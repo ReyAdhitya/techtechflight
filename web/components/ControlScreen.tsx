@@ -40,7 +40,6 @@ import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
 import { SimLandAllButton } from './SimLandAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
-import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { MaintenanceFlag } from './MaintenanceFlag'
@@ -70,7 +69,6 @@ export function ControlScreen() {
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
-  const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
@@ -107,10 +105,6 @@ export function ControlScreen() {
     selected !== null && studentOf(book, selected) === null
       ? selected
       : firstUnassignedDrone(book, boardDroneIds)
-  const spotlightDrone =
-    spotlightDroneId === null
-      ? null
-      : (state.drones.find((drone) => drone.id === spotlightDroneId) ?? null)
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
     command(droneId, kind)
@@ -145,15 +139,6 @@ export function ControlScreen() {
       )}
 
       <TrainingWheelsBanner />
-
-      {spotlightDrone && (
-        <PeerDemoSpotlight
-          drone={spotlightDrone}
-          student={studentOf(book, spotlightDrone.id)}
-          scenarios={scenarios}
-          onClose={() => setSpotlightDroneId(null)}
-        />
-      )}
 
       <AttentionBar
         queue={queue}
@@ -190,7 +175,6 @@ export function ControlScreen() {
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
                 hideStop={quietMode || trainingWheels}
-                onSpotlight={() => setSpotlightDroneId(selectedVitals.droneId)}
               />
             ) : null
           }
@@ -290,7 +274,6 @@ export function ControlScreen() {
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
               hideStop={quietMode || trainingWheels}
               softenAlerts={trainingWheels}
-              onSpotlight={() => setSpotlightDroneId(entry.droneId)}
             />
           ))}
         </ul>
@@ -325,7 +308,6 @@ function ScopeSelectedDock({
   onClear,
   onOpenCamera,
   hideStop = false,
-  onSpotlight,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -336,7 +318,6 @@ function ScopeSelectedDock({
   onOpenCamera: () => void
   /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
-  onSpotlight: () => void
 }) {
   return (
     <div
@@ -362,13 +343,6 @@ function ScopeSelectedDock({
             className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
           >
             Camera
-          </button>
-          <button
-            type="button"
-            onClick={onSpotlight}
-            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-          >
-            Spotlight
           </button>
           <button
             type="button"
@@ -481,7 +455,6 @@ function FlightStrip({
   onOpenCamera,
   hideStop = false,
   softenAlerts,
-  onSpotlight,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -504,8 +477,6 @@ function FlightStrip({
   /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
   softenAlerts?: boolean
-  /** Opens peer demo spotlight — watch only, not a Command (C9). */
-  onSpotlight: () => void
 }) {
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
@@ -630,16 +601,6 @@ function FlightStrip({
             className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
           >
             Camera
-          </button>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              onSpotlight()
-            }}
-            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
-          >
-            Spotlight
           </button>
         </div>
 

@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Drop Spotlight entirely
+
+- **Decision:** Remove peer-demo Spotlight from Control (strip + scope dock +
+  `PeerDemoSpotlight`) and delete `/walls/spotlight` / hub link / `SpotlightWall`.
+- **Reason:** Owner — do not want a Spotlight feature; Camera is enough.
+
 ## 2026-07-30 Walls hub is a searchable flat list
 
 - **Decision:** Drop the “More walls” disclosure. Show every wall in one grid; filter

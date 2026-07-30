@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Parent kiosk reuses Status wall page
+
+- **Decision:** `/walls/kiosk` clones Status page; hub link included.
+- **Reason:** Feature 63.
 ## 2026-07-30 Voice callouts are text labels first
 
 - **Decision:** Text labels only.

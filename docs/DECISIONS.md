@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Lesson timer on camera wall is local state
+
+- **Decision:** `LessonTimerBanner` on `/walls/cameras` holds countdown in React state only.
+- **Reason:** Feature 22.
+- **Note:** Persist later; Control timer is a separate feature.
 ## 2026-07-30 Walls TV mode toggles Cameras and Status
 
 - **Decision:** `/walls/tv` mounts CameraWall or StatusWall with a toggle; Exit TV → `/walls`. No Settings link on this surface.

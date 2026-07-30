@@ -159,6 +159,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Feature 3 of classroom walls — whole-class status at a glance without Control.
 - **Note:** Battery subroute stays on placeholder until its feature lands.
 
+## 2026-07-30 Camera wall freeze on `/walls/cameras`
+
+- **Decision:** **Freeze wall** snapshots vitals order and per-tile drone/camera labels on
+  the camera wall only. Telemetry, ScenarioControls, and CameraSlide stay live — freeze is a
+  display pause for comparing a class moment, not a sim or link stop. **Resume updates**
+  drops the snapshot and re-renders from the current Fleet.
+- **Reason:** Feature 18 — Teachers need a still frame of every camera label without
+  stopping the Fleet behind the wall.
+- **Note:** No backend or Telemetry flag; UI state in `CameraWall` only.
+
 ## 2026-07-30 Camera wall at `/walls/cameras`
 
 - **Decision:** Cameras sub-wall shows one compact watch-only tile per Drone in board order

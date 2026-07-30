@@ -108,13 +108,9 @@ describe('Camera wall', () => {
     expect(screen.queryByRole('dialog', { name: 'Drone 1 camera' })).not.toBeInTheDocument()
   })
 
-<<<<<<< HEAD
   it('names a tile after the assigned student when the Logbook has one', () => {
     assignStudent('ttf-0001', 'Priya')
 
-=======
-  it('freezes tile labels while Telemetry keeps updating in CameraSlide', () => {
->>>>>>> 98a78b8 (feat: freeze camera wall)
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <CameraWall />
@@ -122,10 +118,18 @@ describe('Camera wall', () => {
     )
     settle()
 
-<<<<<<< HEAD
     expect(screen.getByRole('button', { name: 'Priya camera' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Drone 2 camera' })).toBeInTheDocument()
-=======
+  })
+
+  it('freezes tile labels while Telemetry keeps updating in CameraSlide', () => {
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <CameraWall />
+      </FleetProvider>,
+    )
+    settle()
+
     const notStreaming =
       'Fitted, not streaming. Start the simulated feed when you want a picture.'
     expect(screen.getAllByText(notStreaming)).toHaveLength(6)
@@ -156,7 +160,6 @@ describe('Camera wall', () => {
     settle()
     expect(screen.getByLabelText('Simulated camera feed for Drone 1')).toBeInTheDocument()
     expect(screen.getAllByText(notStreaming)).toHaveLength(5)
->>>>>>> 98a78b8 (feat: freeze camera wall)
   })
 })
 

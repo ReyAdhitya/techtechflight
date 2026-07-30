@@ -1,21 +1,14 @@
 'use client'
 
-<<<<<<< HEAD
 import { useState, useSyncExternalStore } from 'react'
-=======
-import { useState } from 'react'
 import { Pause, Play } from 'lucide-react'
 import type { DroneState } from '@techtechflight/contract'
->>>>>>> 98a78b8 (feat: freeze camera wall)
 import { useFleet } from '@/components/FleetProvider'
 import { CameraSlide } from '@/components/CameraSlide'
 import { readLogbook, readServerLogbook, studentOf, subscribeLogbook } from '@/lib/logbook'
 import { cn } from '@/lib/utils'
-<<<<<<< HEAD
-import { cameraTileLabel } from './camera-wall'
-=======
 import type { DroneVitals } from '@/lib/vitals'
->>>>>>> 98a78b8 (feat: freeze camera wall)
+import { cameraTileLabel } from './camera-wall'
 import { CameraTile } from './CameraTile'
 import { WallGrid, WallTile } from './WallGrid'
 
@@ -42,6 +35,7 @@ function snapshotFrame(
  *
  * Freeze pauses what the tiles show — a snapshot of names and camera labels — while
  * Telemetry and ScenarioControls keep running for CameraSlide and the rest of the board.
+ * Tile titles prefer the Logbook student name when assigned (who’s-who).
  */
 export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLabel?: string }) {
   const { snapshot, vitals, scenarios } = useFleet()
@@ -73,39 +67,6 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
 
   return (
     <>
-<<<<<<< HEAD
-      <WallGrid>
-        {vitals.map((entry) => {
-          const drone = drones.find((d) => d.id === entry.droneId)
-          if (!drone) return null
-          const name = drone.name
-          const label = cameraTileLabel(name, studentOf(book, entry.droneId))
-          return (
-            <WallTile key={entry.droneId} className="gap-0 p-0">
-              <button
-                type="button"
-                onClick={() => setCameraDroneId(entry.droneId)}
-                className={cn(
-                  'flex min-h-[6rem] w-full cursor-pointer flex-col gap-2 rounded-sm border-0 bg-transparent p-3 text-left text-ink',
-                  'hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
-                )}
-                aria-label={`${label} camera`}
-              >
-                <p className="m-0 font-display text-body font-medium text-ink">{label}</p>
-                <CameraTile
-                  droneId={drone.id}
-                  droneName={name}
-                  label={label}
-                  drone={drone}
-                  camera={drone.telemetry?.camera}
-                  scenarios={scenarios}
-                />
-              </button>
-            </WallTile>
-          )
-        })}
-      </WallGrid>
-=======
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-end gap-2">
           <button
@@ -136,6 +97,7 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
             const drone = displayDrones.find((d) => d.id === entry.droneId)
             if (!drone) return null
             const name = drone.name
+            const label = cameraTileLabel(name, studentOf(book, entry.droneId))
             return (
               <WallTile key={entry.droneId} className="gap-0 p-0">
                 <button
@@ -145,12 +107,13 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
                     'flex min-h-[6rem] w-full cursor-pointer flex-col gap-2 rounded-sm border-0 bg-transparent p-3 text-left text-ink',
                     'hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
                   )}
-                  aria-label={`${name} camera`}
+                  aria-label={`${label} camera`}
                 >
-                  <p className="m-0 font-display text-body font-medium text-ink">{name}</p>
+                  <p className="m-0 font-display text-body font-medium text-ink">{label}</p>
                   <CameraTile
                     droneId={drone.id}
                     droneName={name}
+                    label={label}
                     drone={drone}
                     camera={drone.telemetry?.camera}
                     scenarios={scenarios}
@@ -161,7 +124,6 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
           })}
         </WallGrid>
       </div>
->>>>>>> 98a78b8 (feat: freeze camera wall)
 
       {cameraDrone ? (
         <CameraSlide

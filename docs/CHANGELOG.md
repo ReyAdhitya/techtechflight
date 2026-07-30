@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Status wall (`/walls/status`).** Grid of linked tiles — name, Status word, charge, height
+  when reported, and response age with a stale hint. Fault and emergency stop use existing
+  status-fault borders; empty Fleet keeps the calm waiting line.
+
 - **Classroom Walls hub (`/walls`).** SiteNav “Walls” after Control opens a hub with links
   to Cameras, Status, Ready, and Battery subroutes. Shared `WallsShell` + `WallGrid`
   primitives; subroutes ship placeholder tiles named from the Fleet until each wall lands.

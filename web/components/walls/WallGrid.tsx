@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
@@ -28,16 +28,18 @@ export function WallGrid({
 export function WallTile({
   children,
   className,
+  ...rest
 }: {
   children: ReactNode
   className?: string
-}) {
+} & ComponentPropsWithoutRef<'li'>) {
   return (
     <li
       className={cn(
         'flex min-h-[6rem] flex-col gap-2 rounded-sm border border-hairline bg-surface-1 p-3 text-ink',
         className,
       )}
+      {...rest}
     >
       {children}
     </li>

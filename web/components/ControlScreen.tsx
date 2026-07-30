@@ -30,6 +30,7 @@ import { AttentionBar } from './AttentionBar'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { LessonStrip } from './LessonStrip'
+import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { useFleet } from './FleetProvider'
@@ -115,6 +116,8 @@ export function ControlScreen() {
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
+
+      <LessonTimerBanner initialSeconds={45 * 60} />
 
       <AttentionBar
         queue={queue}

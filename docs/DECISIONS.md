@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Battery swap checklist is local UI only
+
+- **Decision:** Checklist on Lesson; no hardware Commands (ADR-0011).
+- **Reason:** Feature 60.
 ## 2026-07-30 Maintenance flag is a strip badge
 
 - **Decision:** `MaintenanceFlag` badge; active state can bind to out-of-service later.

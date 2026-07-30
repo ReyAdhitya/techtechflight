@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 One-tap assign walks the roster in order
+
+- **Decision:** `assignNextRosterName` hands the next unassigned roster name to a Drone. Control targets the selected unassigned craft when one is lit; otherwise `firstUnassignedDrone` in board order. Students uses board order only.
+- **Reason:** Feature 44 — six assignments in thirty seconds; typing six names is not thirty seconds.
+- **Note:** Does not bypass D7 double-assign — `assignStudent` still owns clashes.
+
 ## 2026-07-30 Assigned Students read as display type on strips
 
 - **Decision:** When a Student is assigned, Control strips show their name as `font-display text-body font-medium text-ink` beside the callsign; click opens the existing inline field. Unassigned strips keep the dashed input.

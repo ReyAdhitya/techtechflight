@@ -40,6 +40,12 @@ describe('Walls hub', () => {
       '/walls/faults',
       '/walls/heartbeat',
       '/walls/height',
+      '/walls/proximity',
+      '/walls/landing',
+      '/walls/pads',
+      '/walls/detect',
+      '/walls/dual',
+      '/walls/spotlight',
     ])
     for (const wall of WALL_DESTINATIONS) {
       expect(screen.getByRole('link', { name: new RegExp(wall.label) })).toHaveAttribute(

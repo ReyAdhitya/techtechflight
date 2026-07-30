@@ -5,8 +5,9 @@ import type { ObjectDetector } from '@/lib/object-detection'
 /** Shown when a tile cannot report a detection tally. */
 export const DETECTION_COUNT_UNAVAILABLE = '—'
 
-export function detectorExposesCounts(detector: ObjectDetector): boolean {
-  return detector.exposesCounts !== false
+export function detectorExposesCounts(_detector: ObjectDetector): boolean {
+  // ObjectDetector has no count API yet — DetectWall still mounts tiles with "—".
+  return true
 }
 
 /**

@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+<<<<<<< HEAD
 - **Incident note on running lessons (#48).** **Note incident** on Control and `/lesson`
   saves Teacher observations into the Logbook with optional Drone context — local only
   (ADR-0011). Fleet events still copy at lesson close.
@@ -18,6 +19,11 @@ would notice.
 - **Photo evidence on CameraPane (#49).** **Save photo evidence** downloads a PNG from the
   live video frame (`canvas.toDataURL`); sim surfaces get a labelled placeholder. Browser
   download only — no Fleet path (ADR-0011).
+=======
+- **Absent versus Offline badges (#46).** Students can be marked **Absent** on `/students`;
+  **Offline** badges appear on Drones that have gone quiet. Control shows an Absent summary
+  line and Offline on strips — semantic status tokens, not one shared warning colour.
+>>>>>>> 8662d54 (feat: absent vs offline badges)
 
 - **Swap drone mid-lesson.** Select a strip on Control, then **Swap** on another — student assignments exchange without retyping.
 - **One-tap roster assign.** Control and Students offer **Assign {name}** — the next unassigned roster name goes to the selected unassigned Drone, or the first free Drone in board order.

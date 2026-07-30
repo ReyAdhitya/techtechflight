@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Freeze scope snapshot on Control
+
+- **Decision:** **Freeze scope** snapshots Drone positions, the held window, ceiling, and
+  conflict lines on Control's Scope only (`onSelect` mounts). Telemetry, strips, and
+  Commands stay live — display pause only, mirroring camera wall freeze. No backend flag.
+- **Reason:** Teachers need a still plan view without stopping the Fleet behind Control.
+- **Note:** Reports Scope omits the control; read-only mounts never offered freeze.
 ## 2026-07-30 Ghost paths on the Scope
 
 - **Decision:** **Ghost paths** are optional on Control's Scope (top-down only). Positions

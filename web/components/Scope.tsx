@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Pause, Play } from 'lucide-react'
 import type { DroneState } from '@techtechflight/contract'
 import {
   scopeLabelPlacements,
@@ -33,7 +34,18 @@ import { cn } from '@/lib/utils'
  *   Drone Name are not geometry — they must stay the same size whether the window is 8 m
  *   or 32 m across, they must follow the Teacher's own font size (ADR-0008), and a mark
  *   a Teacher can select has to be a real control rather than a shape with a click on it.
+ *
+ * Freeze pauses what the scope draws — positions, window, and conflict lines — while the
+ * Fleet and flight strips keep updating elsewhere on Control, the same discipline as the
+ * camera wall freeze.
  */
+type FrozenScopeFrame = {
+  readonly drones: readonly DroneState[]
+  readonly vitals?: readonly DroneVitals[]
+  readonly windowChoice: WindowChoice
+  readonly ceilingM: number
+}
+
 export function Scope({
   drones,
   vitals,
@@ -90,6 +102,8 @@ export function Scope({
    * browser Fullscreen API — classroom projectors and tablets are unreliable with the latter.
    */
   const [expanded, setExpanded] = useState(false)
+  const [frozenFrame, setFrozenFrame] = useState<FrozenScopeFrame | null>(null)
+  const frozen = frozenFrame !== null
   const [showGhostPaths, setShowGhostPaths] = useState(false)
   const exitFullScreenRef = useRef<HTMLButtonElement>(null)
 
@@ -106,7 +120,29 @@ export function Scope({
   /* Elevation ceiling, held under the same rule as the window: it grows, never shrinks. */
   const heldCeilingM = useRef(0)
 
-  const placed = drones.filter(
+  const toggleFreeze = () => {
+    if (frozen) {
+      setFrozenFrame(null)
+      return
+    }
+    const placedNow = drones.filter(
+      (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
+    )
+    if (placedNow.length === 0) return
+    const windowNow = scopeWindow(placedNow, held.current)
+    const ceilingNow = chooseCeiling(placedNow, heldCeilingM.current)
+    setFrozenFrame({
+      drones: structuredClone(drones),
+      vitals: vitals ? structuredClone(vitals) : undefined,
+      windowChoice: windowNow.choice,
+      ceilingM: ceilingNow,
+    })
+  }
+
+  const sourceDrones = frozen ? frozenFrame!.drones : drones
+  const sourceVitals = frozen ? frozenFrame!.vitals : vitals
+
+  const placed = sourceDrones.filter(
     (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
   )
 
@@ -118,13 +154,15 @@ export function Scope({
     )
   }
 
-  const scope = scopeWindow(placed, held.current)
-  held.current = scope.choice
+  const scope = scopeWindow(placed, frozen ? frozenFrame!.windowChoice : held.current)
+  if (!frozen) held.current = scope.choice
   const stepM = gridStepM(scope.widthM)
-  const conflicts = conflictPairs(placed, vitals)
+  const conflicts = conflictPairs(placed, sourceVitals)
 
-  const ceilingM = chooseCeiling(placed, heldCeilingM.current)
-  heldCeilingM.current = ceilingM
+  const ceilingM = frozen
+    ? frozenFrame!.ceilingM
+    : chooseCeiling(placed, heldCeilingM.current)
+  if (!frozen) heldCeilingM.current = ceilingM
 
   /*
    * A Drone that cannot measure its height has no place in a picture whose vertical axis is
@@ -228,9 +266,24 @@ export function Scope({
             </button>
           ))}
         </div>
-        {ghostPaths !== undefined && (
+        {onSelect && (
           <button
             type="button"
+            onClick={toggleFreeze}
+            aria-pressed={frozen}
+            aria-label={frozen ? 'Resume scope updates' : 'Pause scope updates'}
+            className="label inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-pill border border-hairline bg-canvas px-3 py-1.5 text-ink-muted transition-colors hover:border-ink hover:text-ink"
+          >
+            {frozen ? (
+              <>
+                <Play className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                Resume updates
+              </>
+            ) : (
+                <Pause className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                Freeze scope
+            )}
+        {ghostPaths !== undefined && (
             onClick={() => setShowGhostPaths((on) => !on)}
             aria-pressed={showGhostPaths}
             className={cn(
@@ -238,8 +291,6 @@ export function Scope({
               showGhostPaths
                 ? 'border-0 bg-ink font-medium text-canvas'
                 : 'border border-hairline bg-transparent text-ink hover:border-ink',
-            )}
-          >
             Ghost paths
           </button>
         )}

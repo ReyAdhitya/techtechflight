@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { FleetProvider } from '@/components/FleetProvider'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
-import { WallsHub, WALL_DESTINATIONS, MORE_WALL_DESTINATIONS } from './WallsHub'
+import { WallsHub, WALL_DESTINATIONS } from './WallsHub'
 import { WallsShell } from './WallsShell'
 import { WallPlaceholderTiles } from './WallPlaceholderTiles'
 
@@ -24,13 +24,15 @@ afterEach(() => {
 })
 
 describe('Walls hub', () => {
-  it('links primary walls up front and keeps the rest under More walls', () => {
+  it('lists every wall in one grid with a search field', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <WallsHub />
       </FleetProvider>,
     )
 
+    expect(screen.queryByText('More walls')).not.toBeInTheDocument()
+    expect(screen.getByRole('searchbox', { name: 'Find a wall' })).toBeInTheDocument()
     expect(WALL_DESTINATIONS.map((w) => w.href)).toEqual([
       '/walls/cameras',
       '/walls/status',
@@ -38,21 +40,39 @@ describe('Walls hub', () => {
       '/walls/battery',
       '/walls/attention',
       '/walls/height',
+      '/walls/faults',
+      '/walls/heartbeat',
+      '/walls/proximity',
+      '/walls/landing',
+      '/walls/pads',
+      '/walls/detect',
+      '/walls/dual',
+      '/walls/spotlight',
+      '/walls/landed',
     ])
     for (const wall of WALL_DESTINATIONS) {
       expect(document.querySelector(`a[href="${wall.href}"]`)).not.toBeNull()
     }
+  })
 
-    expect(screen.getByText('More walls')).toBeInTheDocument()
-    for (const wall of MORE_WALL_DESTINATIONS) {
-      expect(document.querySelector(`a[href="${wall.href}"]`)).not.toBeNull()
-    }
+  it('filters walls by search text', () => {
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <WallsHub />
+      </FleetProvider>,
+    )
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Find a wall' }), {
+      target: { value: 'battery' },
+    })
+
+    expect(document.querySelector('a[href="/walls/battery"]')).not.toBeNull()
+    expect(document.querySelector('a[href="/walls/cameras"]')).toBeNull()
   })
 })
 
 describe('Walls shell subroute smoke', () => {
   it('renders placeholder tiles named from the fleet', () => {
-    // Demonstration Fleet only boots on /demo (same as other FleetProvider tests).
     pathname.current = '/demo'
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>

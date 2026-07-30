@@ -1,9 +1,10 @@
 'use client'
 
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { WallsShell } from './WallsShell'
 
-/** Everyday walls — open from the hub without hunting. */
+/** Every Classroom Wall linked from the hub, in a fixed glance order. */
 export const WALL_DESTINATIONS = [
   { href: '/walls/cameras', label: 'Cameras', hint: 'Every fitted camera at once' },
   { href: '/walls/status', label: 'Status', hint: 'Status, battery, and height per Drone' },
@@ -11,10 +12,6 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/battery', label: 'Battery', hint: 'Charge across the class' },
   { href: '/walls/attention', label: 'Attention', hint: 'Who needs you right now' },
   { href: '/walls/height', label: 'Height', hint: 'Aligned heights across the class' },
-] as const
-
-/** Less-used walls — still reachable, not competing for the first glance. */
-export const MORE_WALL_DESTINATIONS = [
   { href: '/walls/faults', label: 'Faults', hint: 'Fault and stale craft first' },
   { href: '/walls/heartbeat', label: 'Heartbeat', hint: 'Alive or quiet at a glance' },
   { href: '/walls/proximity', label: 'Proximity', hint: 'Close pairs in the classroom' },
@@ -26,15 +23,19 @@ export const MORE_WALL_DESTINATIONS = [
   { href: '/walls/landed', label: 'Landed', hint: 'Who is down at end of lesson' },
 ] as const
 
-function WallLink({
-  href,
-  label,
-  hint,
-}: {
-  readonly href: string
-  readonly label: string
-  readonly hint: string
-}) {
+export type WallDestination = (typeof WALL_DESTINATIONS)[number]
+
+function matchesQuery(wall: WallDestination, query: string): boolean {
+  const q = query.trim().toLowerCase()
+  if (q.length === 0) return true
+  return (
+    wall.label.toLowerCase().includes(q) ||
+    wall.hint.toLowerCase().includes(q) ||
+    wall.href.toLowerCase().includes(q)
+  )
+}
+
+function WallLink({ href, label, hint }: WallDestination) {
   return (
     <Link
       href={href}
@@ -48,38 +49,41 @@ function WallLink({
 }
 
 export function WallsHub() {
+  const [query, setQuery] = useState('')
+  const walls = useMemo(
+    () => WALL_DESTINATIONS.filter((wall) => matchesQuery(wall, query)),
+    [query],
+  )
+
   return (
     <WallsShell
       hideBack
       title="Walls"
       description="See the whole class at once — pick a wall for the glance you need."
     >
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[30rem]:grid-cols-2">
-        {WALL_DESTINATIONS.map((wall) => (
-          <li key={wall.href}>
-            <WallLink {...wall} />
-          </li>
-        ))}
-      </ul>
+      <label className="flex flex-col gap-2">
+        <span className="label m-0">Find a wall</span>
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search walls…"
+          autoComplete="off"
+          className="min-h-11 w-full rounded-surface border border-hairline bg-surface-1 px-4 py-2 font-display text-body text-ink placeholder:text-ink-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        />
+      </label>
 
-      <details className="rounded-surface border border-hairline bg-surface-1 open:pb-3">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 font-display text-body font-medium text-ink marker:content-none [&::-webkit-details-marker]:hidden">
-          <span className="text-ink-muted" aria-hidden="true">
-            ▸
-          </span>
-          More walls
-          <span className="tnum label rounded-pill border border-hairline px-2 py-0.5 text-ink-subtle">
-            {MORE_WALL_DESTINATIONS.length}
-          </span>
-        </summary>
-        <ul className="m-0 grid list-none grid-cols-1 gap-3 border-t border-hairline p-4 pt-3 min-[30rem]:grid-cols-2">
-          {MORE_WALL_DESTINATIONS.map((wall) => (
+      {walls.length === 0 ? (
+        <p className="m-0 text-body text-ink-muted">No walls match “{query.trim()}”.</p>
+      ) : (
+        <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[30rem]:grid-cols-2">
+          {walls.map((wall) => (
             <li key={wall.href}>
               <WallLink {...wall} />
             </li>
           ))}
         </ul>
-      </details>
+      )}
     </WallsShell>
   )
 }

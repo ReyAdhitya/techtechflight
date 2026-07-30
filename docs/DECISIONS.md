@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Walls hub is a searchable flat list
+
+- **Decision:** Drop the “More walls” disclosure. Show every wall in one grid; filter
+  with a “Find a wall” search input (label + hint + path).
+- **Reason:** Owner — disclosure felt unnecessary; search is how they want to find a wall.
+
 ## 2026-07-30 Drop Projector and TV walls
 
 - **Decision:** Remove `/walls/projector` and `/walls/tv` (hub links + `WallsTvMode`).

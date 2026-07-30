@@ -13,7 +13,8 @@ would notice.
 - **Strip alerts collapse.** NOW/SOON lines on each Every Drone row sit in a closed
   disclosure (count + first line); open for the full list.
 - **Ceiling warning is one compact line** so it no longer owns half the viewport.
-- **Walls hub:** eight everyday walls up front; the rest under **More walls**.
+- **Walls hub:** one flat grid of every wall, plus a **Find a wall** search field.
+  No “More walls” disclosure.
 - **Ghost paths on Side and Front.** Scope trails use altitude when known, not only the
   top-down plan.
 

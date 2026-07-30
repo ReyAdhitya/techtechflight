@@ -31,7 +31,8 @@ describe('classAverageStats', () => {
     ])
 
     expect(result.meanHeightM).toBe(3)
-    expect(result.readyCount).toBe(1)
+    // a, b default Ready; c is Ready; only d is Not Ready
+    expect(result.readyCount).toBe(3)
     expect(result.total).toBe(4)
   })
 

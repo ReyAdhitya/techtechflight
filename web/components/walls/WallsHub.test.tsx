@@ -47,7 +47,6 @@ describe('Walls hub', () => {
       '/walls/pads',
       '/walls/detect',
       '/walls/dual',
-      '/walls/spotlight',
       '/walls/landed',
     ])
     for (const wall of WALL_DESTINATIONS) {

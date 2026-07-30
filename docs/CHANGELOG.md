@@ -20,6 +20,8 @@ would notice.
 
 ### Removed
 
+- **Spotlight.** Peer-demo Spotlight on Control strips/dock, `/walls/spotlight`, and hub
+  tile removed — open **Camera** when you need a large view.
 - **Projector and TV walls.** Hub tiles and `/walls/projector` / `/walls/tv` routes gone —
   use Cameras / Status (and Large format) for the room screen.
 - **Control lesson chrome pile.** Waiting queue dock, lesson timer, remedial/absent/

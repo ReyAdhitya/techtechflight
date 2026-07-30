@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 describe('Walls hub', () => {
-  it('links to the four core sub-walls', () => {
+  it('links to every landed sub-wall', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <WallsHub />
@@ -36,6 +36,10 @@ describe('Walls hub', () => {
       '/walls/status',
       '/walls/ready',
       '/walls/battery',
+      '/walls/attention',
+      '/walls/faults',
+      '/walls/heartbeat',
+      '/walls/height',
     ])
     for (const wall of WALL_DESTINATIONS) {
       expect(screen.getByRole('link', { name: new RegExp(wall.label) })).toHaveAttribute(

@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Camera wall at `/walls/cameras`
+
+- **Decision:** Cameras sub-wall shows one compact watch-only tile per Drone in board order
+  (`CameraTile` + `WallGrid`). Tiles reuse stream-map / sim rules from CameraPane without
+  YOLO, QR, or Start/Stop on the tile. Click opens existing `CameraSlide`. Offline or
+  missing Telemetry uses board connection language (Status badge, “No Telemetry yet”).
+- **Reason:** Feature 2 of classroom walls — whole-class camera glance without crowding Control.
+- **Note:** Full CameraPane behaviour stays in the slide only.
+
 ## 2026-07-30 Classroom Walls live under `/walls` after Control in SiteNav
 
 - **Decision:** Sixth workflow destination is **Walls** (`/walls`), placed immediately after

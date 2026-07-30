@@ -52,10 +52,8 @@ describe('Walls hub', () => {
       '/walls/kiosk',
     ])
     for (const wall of WALL_DESTINATIONS) {
-      expect(screen.getByRole('link', { name: new RegExp(wall.label) })).toHaveAttribute(
-        'href',
-        wall.href,
-      )
+      // Match by href — label regex collides (e.g. Cameras ⊂ "Student-facing cameras").
+      expect(document.querySelector(`a[href="${wall.href}"]`)).not.toBeNull()
     }
   })
 })

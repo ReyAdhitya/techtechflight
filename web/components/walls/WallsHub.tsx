@@ -11,8 +11,6 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/battery', label: 'Battery', hint: 'Charge across the class' },
   { href: '/walls/attention', label: 'Attention', hint: 'Who needs you right now' },
   { href: '/walls/height', label: 'Height', hint: 'Aligned heights across the class' },
-  { href: '/walls/projector', label: 'Projector', hint: 'Student-facing cameras' },
-  { href: '/walls/tv', label: 'TV', hint: 'Classroom display of Cameras or Status' },
 ] as const
 
 /** Less-used walls — still reachable, not competing for the first glance. */

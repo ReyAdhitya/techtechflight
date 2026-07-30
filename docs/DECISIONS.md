@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Drop Projector and TV walls
+
+- **Decision:** Remove `/walls/projector` and `/walls/tv` (hub links + `WallsTvMode`).
+  Classroom display uses Cameras/Status plus the existing Large format toggle.
+- **Reason:** Owner — redundant with Cameras/Status; cluttered the Walls hub.
+
 ## 2026-07-30 Control and Walls UX: teach first, chrome later
 
 - **Decision:** Strip Control to Attention bar + optional ceiling line + Scope + Every

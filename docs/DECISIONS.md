@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Recording clip is a stub control
+
+- **Decision:** Button only.
+- **Reason:** Feature 65a.
 ## 2026-07-30 Projector reuses Cameras wall page
 
 - **Decision:** `/walls/projector` clones Cameras page; hub link included.

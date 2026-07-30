@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
+
 - **Attention queue dock on Control.** Sorted needs-you list beneath the Attention bar;
   click lights and scrolls to the matching flight strip. The bar still carries one Alert at
   a time; the dock carries the whole queue worst-first.
@@ -105,6 +107,8 @@ would notice.
   fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.
 
 ### Added
+
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
@@ -228,6 +232,8 @@ would notice.
   behind route params and warm leftovers. Key `'watch'` and the five Status words untouched.
 
 ### Added
+
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
@@ -412,6 +418,8 @@ would notice.
   "TechTech Readyboard". Every tab now reads "… · Flight Deck · TechTech".
 
 ### Added
+
+- **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.

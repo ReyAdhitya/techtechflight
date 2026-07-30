@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Control reuses the camera-wall lesson timer
+
+- **Decision:** Control mounts `LessonTimerBanner` under `LessonStrip` — local countdown only, same component as `/walls/cameras`.
+- **Reason:** Feature 26 — Teachers watching Control need the period clock without opening Cameras.
+- **Note:** End-period prompt is a separate feature that hooks `onExpire`.
+
 <<<<<<< HEAD
 ## 2026-07-30 Battery time budget uses charge × 12 minutes
 

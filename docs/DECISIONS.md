@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Detection wall shows em dash until counts are shared
+
+- **Decision:** Tiles show —; counts stay in CameraPane for now.
+- **Reason:** Feature 14.
 ## 2026-07-30 QR pad wall ships Not seen until CameraPane sightings are shared
 
 - **Decision:** Tiles show Not seen; no Telemetry write.
@@ -223,6 +227,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner #75 — “cara nyalain localhost 4321” must not require npm/IDE.
 - **Note:** Unreachable banner points at the `.bat`. Vercel preview needs no :4321
   (`NEXT_PUBLIC_DEMO_ONLY`).
+
+## 2026-07-30 Detect wall tallies come from the browser detector, not Telemetry
+
+- **Decision:** `/walls/detect` runs the same pluggable `ObjectDetector` as `CameraPane`, but
+  only for **simulated streaming** cameras and only when `exposesCounts !== false`. Tiles
+  show `detect().length`; idle cameras, hardware streams, and detectors that set
+  `exposesCounts: false` show **"—"**. Counts never go on the Telemetry wire. Tiles link to
+  `/drone?id=` (not CameraSlide). The wall is not listed on the Walls hub in this PR.
+- **Reason:** Feature #14 — Teachers need a class-wide glance at YOLO tallies without opening
+  every camera pane. Reusing the detector interface avoids a second model load path.
+- **Note:** Hardware school streams could reuse the same loop when the map supplies pixels;
+  until then those tiles stay unavailable. A future hub entry can land separately.
 
 ## 2026-07-29 In-browser detection is YOLOv8n ONNX (not napkin YOLOv12 yet)
 

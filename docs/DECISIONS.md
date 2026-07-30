@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Stop audit is sessionStorage
+
+- **Decision:** Local session only.
+- **Reason:** Feature 65b.
 ## 2026-07-30 Recording clip is a stub control
 
 - **Decision:** Button only.

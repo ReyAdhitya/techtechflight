@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 End-period prompt lands via setAltitude(0)
+
+- **Decision:** `LessonTimerBanner.onExpire` opens `EndPeriodLandPrompt`. Sim land-all calls `scenarios.setAltitude(id, 0)` for airborne craft — not a hardware Command surface (ADR-0011 / C9).
+- **Reason:** Feature 28 — period end needs a land nudge without inventing ScenarioControls.landAll.
+- **Note:** Absent `scenarios` (hardware), the dialog is dismiss-only copy.
+
 ## 2026-07-30 Lesson warm-up is a 60s overlay once per lesson
 
 - **Decision:** `LessonWarmUp` shows for 60s after a lesson starts on `/lesson`; Skip or expiry marks `sessionStorage` so reload does not re-show for that lesson id.

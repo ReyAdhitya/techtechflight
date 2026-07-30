@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
 - **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
@@ -109,6 +110,7 @@ would notice.
 
 ### Added
 
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
 - **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
@@ -235,6 +237,7 @@ would notice.
 
 ### Added
 
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
 - **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 
@@ -422,6 +425,7 @@ would notice.
 
 ### Added
 
+- **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
 - **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.
 - **Lesson timer on Control.** Same local `LessonTimerBanner` as the camera wall, under the lesson strip.
 

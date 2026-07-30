@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Fault mosaic reorders trouble to the front
+
+- **Decision:** `/walls/faults` renders `FaultMosaic` — one linked tile per Drone. Unlike
+  Control strips and the Status wall, **priority tiles sort first**: stale silence, Fault
+  status, latched emergency, or a `fault` / `emergency-stop` alert. Within each group,
+  board order is preserved. Summary line: `N troubled`. Tile body: name, `StatusBadge`, fault
+  reason when Telemetry carries one, stale “Link gone quiet” otherwise, response age. Fault →
+  `border-status-fault`; emergency → `border-2 border-status-fault`. Non-priority tiles stay
+  visible but slightly muted. Click → `/drone?id=`.
+- **Reason:** Feature 7 of classroom walls — a mosaic view where trouble is never buried
+  behind healthy Drones.
+- **Note:** Pure sort in `fault-mosaic.ts`; hub link lands in a later sync commit.
 ## 2026-07-30 Attention wall — loud trouble, quiet nominal
 
 - **Decision:** `/walls/attention` renders `AttentionWall` — one linked tile per Drone in

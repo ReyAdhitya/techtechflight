@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Warm-up countdown ignores unstable onDone
+
+- **Decision:** `LessonWarmUp` ticks with one `setInterval` and keeps `onDone` in a ref
+  (effect does not depend on the callback identity).
+- **Reason:** Fleet `now` re-renders every second with a new inline `finishWarmUp`. That
+  used to sit in the timeout effect deps, clearing the 1s timeout so the overlay stuck
+  near 60.
+
 ## 2026-07-30 Drop Battery swap checklist
 
 - **Decision:** Remove `BatterySwapChecklist` from Lesson (and delete the component).

@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Roster import is paste-then-parse
+
+- **Decision:** `RosterImport` + `parseRosterPaste` on Students; wiring into Logbook roster store can deepen later.
+- **Reason:** Feature 56.
 ## 2026-07-30 Reports join student ids from assignments
 
 - **Decision:** `studentIdsForLesson` reads unique names from `lesson.assignments`.

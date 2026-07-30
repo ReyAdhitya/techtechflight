@@ -7,13 +7,15 @@ would notice.
 
 ### Added
 
+- **Battery wall (`/walls/battery`).** One tile per Drone with name, charge bar, and
+  percentage; critical count when charge is below the ground-station usable threshold.
+  Tiles link to Drone detail. Read-only.
 - **Ready wall (`/walls/ready`).** Pre-flight board: each Drone tile shows Ready, Not
   ready, Offline, or Fault with a calm “N ready · M not ready” summary. Tap a tile for
   `/drone?id=`. Offline and Fault count in the not-ready bucket.
 - **Status wall (`/walls/status`).** Grid of linked tiles — name, Status word, charge, height
   when reported, and response age with a stale hint. Fault and emergency stop use existing
   status-fault borders; empty Fleet keeps the calm waiting line.
-
 - **Classroom Walls hub (`/walls`).** SiteNav “Walls” after Control opens a hub with links
   to Cameras, Status, Ready, and Battery subroutes. Shared `WallsShell` + `WallGrid`
   primitives; subroutes ship placeholder tiles named from the Fleet until each wall lands.

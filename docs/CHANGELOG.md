@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Quiet mode on Control.** Toggle beside Every Drone hides Stop and Release stop on every strip and the selected scope dock; Land and Hover stay. Local UI only — not a Fleet Command.
 - **Classroom geofence on Scope.** Top-down view draws a dashed 8×6 m box (−4…4 m east, −3…3 m north from setup); caption documents extents. Orientation only — no alerts yet.
 - **Height ceiling banner on Control.** Alert when any Drone exceeds the 3 m classroom ceiling default; reuses the height wall threshold.
 - **Freeze scope on Control.** **Freeze scope** snapshots Drone positions, the scope window,

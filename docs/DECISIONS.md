@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Quiet mode hides Stop on Control strips
+
+- **Decision:** `QuietModeToggle` sets local React state on Control; `CommandRow` accepts `hideStop` and omits Stop / Release stop when true. Land and Hover unchanged.
+- **Reason:** Feature 40 — demonstrations and quiet classrooms where the red Stop must not sit on every strip.
+- **Note:** UI-only; does not change what the Fleet accepts (ADR-0011).
+
 ## 2026-07-30 Classroom geofence is a fixed 8×6 m box on Scope
 
 - **Decision:** `CLASSROOM_GEOFENCE` in `web/lib/classroom-geofence.ts` — west −4, east 4, south −3, north 3 metres from setup. Scope top-down draws a dashed `stroke-status-not-ready` rect; elevation views omit it. Caption states extents.

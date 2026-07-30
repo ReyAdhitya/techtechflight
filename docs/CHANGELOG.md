@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Pre-flight checklist on `/lesson`.** Before start, the Lesson screen shows the same
+  ready / not ready counts and per-Drone labels as the Ready wall (`ready-mapping.ts`).
+  Starting with zero ready shows calm copy beside Start; the button stays enabled (E7).
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 

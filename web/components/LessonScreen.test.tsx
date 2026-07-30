@@ -4,6 +4,7 @@ import { clearLogbook, readLogbook, runningLesson } from '@/lib/logbook'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { LessonScreen } from './LessonScreen'
+import * as readyMapping from './walls/ready-mapping'
 
 /**
  * Requirement E7, which gets a screen test of its own because it is the requirement the
@@ -80,5 +81,36 @@ describe('starting a lesson with nothing filled in', () => {
       'href',
       '/control',
     )
+  })
+})
+
+describe('pre-flight checklist', () => {
+  it('shows ready and not ready counts from the Ready wall mapping', () => {
+    screenUnderTest()
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
+    expect(
+      screen.getByText((_, element) =>
+        Boolean(element?.classList.contains('text-summary') && element.textContent?.includes('ready ·')),
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('warns calmly when none are ready but does not block Start', () => {
+    const summary = vi.spyOn(readyMapping, 'readyBoardSummary')
+    summary.mockReturnValue({ ready: 0, notReady: 6 })
+
+    screenUnderTest()
+    settle()
+
+    expect(screen.getByText(/None ready to fly yet/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
+
+    expect(runningLesson(readLogbook())?.readyAtStart).toBe(0)
+
+    summary.mockRestore()
   })
 })

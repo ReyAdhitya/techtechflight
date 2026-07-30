@@ -2,8 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import type { CameraState, DroneState } from '@techtechflight/contract'
 import { FleetProvider } from '@/components/FleetProvider'
+import { assignStudent, clearLogbook } from '@/lib/logbook'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { WallsShell } from './WallsShell'
+import { cameraTileLabel } from './camera-wall'
 import { CameraTile } from './CameraTile'
 import { CameraWall } from './CameraWall'
 
@@ -43,6 +45,7 @@ const aDrone = (overrides: Partial<DroneState> & Pick<DroneState, 'id' | 'name'>
 beforeEach(() => {
   pathname.current = '/demo'
   vi.useFakeTimers()
+  clearLogbook()
 })
 
 afterEach(() => {
@@ -104,9 +107,28 @@ describe('Camera wall', () => {
     fireEvent.click(within(popup).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog', { name: 'Drone 1 camera' })).not.toBeInTheDocument()
   })
+
+  it('names a tile after the assigned student when the Logbook has one', () => {
+    assignStudent('ttf-0001', 'Priya')
+
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <CameraWall />
+      </FleetProvider>,
+    )
+    settle()
+
+    expect(screen.getByRole('button', { name: 'Priya camera' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Drone 2 camera' })).toBeInTheDocument()
+  })
 })
 
 describe('Camera tile labels', () => {
+  it('prefers the assigned student over the Drone callsign', () => {
+    expect(cameraTileLabel('Drone 1', 'Priya')).toBe('Priya')
+    expect(cameraTileLabel('Drone 1', null)).toBe('Drone 1')
+  })
+
   it('says when no camera is fitted', () => {
     const telemetry = { ...aDrone({ id: 'x', name: 'x' }).telemetry! }
     delete (telemetry as { camera?: CameraState }).camera

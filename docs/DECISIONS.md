@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Camera wall names the assigned student when the Logbook has one
+
+- **Decision:** Camera wall tiles use `studentOf` for the headline and simulated-feed label;
+  unassigned tiles keep the Drone callsign only — no placeholder.
+- **Reason:** Feature 20 — Teachers scanning six feeds need who's flying, not another row of
+  "Drone N".
+- **Follow-up:** When assignment is missing, the tile stays drone-named; assignment still
+  happens on Control / Students, not on the wall.
 ## 2026-07-30 Scope camera filmstrip under Control scope
 
 - **Decision:** Control's "Where everything is" section adds a horizontal filmstrip of

@@ -13,13 +13,13 @@ export const LANDED_BOARD_PRESENTATION: Readonly<Record<LandedBoardLabel, Landed
   {
     Landed: {
       label: 'Landed',
-      className: 'text-success',
-      borderClassName: 'border-success',
+      className: 'text-ink',
+      borderClassName: 'border-hairline',
     },
     'Still flying': {
       label: 'Still flying',
-      className: 'text-destructive',
-      borderClassName: 'border-destructive',
+      className: 'text-status-fault',
+      borderClassName: 'border-status-fault',
     },
   }
 

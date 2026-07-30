@@ -1,5 +1,12 @@
 import type { DroneId, FleetEvent } from '@techtechflight/contract'
 import { scheduleLogbookCloudPush } from './logbook-sync'
+import {
+  mergeRemedialQueue,
+  remedialCandidatesFromLesson,
+  type RemedialEntry,
+} from './remedial-queue'
+
+export type { RemedialEntry } from './remedial-queue'
 
 /**
  * What the Teacher knows that no Drone can report.
@@ -198,6 +205,8 @@ export interface Logbook {
   readonly trainerLessons: readonly TrainerLessonRecord[]
   readonly lessonDrones: readonly LessonDroneRecord[]
   readonly lessonAssignments: readonly LessonAssignmentRecord[]
+  /** Students / Drones needing remedial follow-up after a lesson. */
+  readonly remedialQueue?: readonly RemedialEntry[]
   /**
    * When this browser last revised the Logbook. Used for cloud last-write-wins (#93).
    * Absent on records written before dual-write.
@@ -550,12 +559,40 @@ export function endLesson(
   tally: Readonly<Record<DroneId, DroneTally>>,
 ): void {
   const book = readLogbook()
+  const closed = book.lessons.find((lesson) => lesson.id === id && lesson.endedAt === null)
+  const lessons = book.lessons.map((lesson) =>
+    lesson.id === id && lesson.endedAt === null ? { ...lesson, endedAt: at, tally } : lesson,
+  )
+  const remedialQueue =
+    closed === undefined
+      ? book.remedialQueue ?? []
+      : mergeRemedialQueue(
+          book.remedialQueue ?? [],
+          remedialCandidatesFromLesson({ ...closed, endedAt: at, tally }, book),
+        )
+  save({ ...book, lessons, remedialQueue })
+}
+
+/** Flag a Drone for remedial follow-up — local Logbook only (ADR-0011). */
+export function enqueueRemedial(entry: RemedialEntry): void {
+  const book = readLogbook()
   save({
     ...book,
-    lessons: book.lessons.map((lesson) =>
-      lesson.id === id && lesson.endedAt === null ? { ...lesson, endedAt: at, tally } : lesson,
-    ),
+    remedialQueue: mergeRemedialQueue(book.remedialQueue ?? [], [entry]),
   })
+}
+
+/** Remove one Drone from the remedial queue once follow-up is done. */
+export function dismissRemedial(droneId: DroneId): void {
+  const book = readLogbook()
+  save({
+    ...book,
+    remedialQueue: (book.remedialQueue ?? []).filter((entry) => entry.droneId !== droneId),
+  })
+}
+
+export function remedialQueueOf(book: Logbook): readonly RemedialEntry[] {
+  return book.remedialQueue ?? []
 }
 
 /** Reduce a run of Fleet Events to the counts worth keeping after the events age out. */

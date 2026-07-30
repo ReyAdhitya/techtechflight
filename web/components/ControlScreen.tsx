@@ -10,6 +10,7 @@ import {
   readLogbook,
   recordCommand,
   readServerLogbook,
+  remedialQueueOf,
   runningLesson,
   subscribeLogbook,
 } from '@/lib/logbook'
@@ -27,6 +28,7 @@ import { formatBattery } from '@/lib/battery'
 import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
+import { RemedialQueue } from './RemedialQueue'
 import { ClassAverageStrip } from './ClassAverageStrip'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
@@ -72,6 +74,7 @@ export function ControlScreen() {
   const lesson = runningLesson(book)
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
+  const remedial = remedialQueueOf(book)
 
   if (!state) {
     return (
@@ -168,6 +171,7 @@ export function ControlScreen() {
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
 
+      <RemedialQueue queue={remedial} />
       <ClassAverageStrip vitals={vitals} />
       <ControlAttentionQueue
         queue={queue}

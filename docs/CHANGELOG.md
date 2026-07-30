@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Remedial queue on Control and Lesson.** After a lesson ends, Drones with fault
+  incidents are queued for remedial follow-up in the Logbook. Control and `/lesson` show a
+  minimal list linking to `/drone?id=`; **Done** dismisses without sending a Command.
 - **Lesson plan wizard on /lesson.** Three steps — name, exercises, confirm — before start, with
   a header shortcut to start immediately (E7). Reuses `ExerciseList`.
 - **Training wheels mode.** Toggle on Control and Lesson (localStorage). Banner when on; Stop

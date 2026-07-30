@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils'
 import { AttentionBar } from './AttentionBar'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
+import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { LessonStrip } from './LessonStrip'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { Scope } from './Scope'
@@ -59,6 +60,7 @@ export function ControlScreen() {
   const [selected, setSelected] = useState<string | null>(null)
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
+  const [endPeriodOpen, setEndPeriodOpen] = useState(false)
 
   const lesson = runningLesson(book)
   const state = snapshot.state
@@ -117,7 +119,24 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
-      <LessonTimerBanner initialSeconds={45 * 60} />
+      <LessonTimerBanner
+        initialSeconds={45 * 60}
+        onExpire={() => setEndPeriodOpen(true)}
+      />
+
+      <EndPeriodLandPrompt
+        open={endPeriodOpen}
+        onClose={() => setEndPeriodOpen(false)}
+        onLandAll={
+          scenarios
+            ? () => {
+                for (const entry of vitals) {
+                  if (entry.airborne) scenarios.setAltitude(entry.droneId, 0)
+                }
+              }
+            : null
+        }
+      />
 
       <AttentionBar
         queue={queue}

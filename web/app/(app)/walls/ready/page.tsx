@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
+import { ReadyWall } from '@/components/walls/ReadyWall'
 import { WallsShell } from '@/components/walls/WallsShell'
-import { WallPlaceholderTiles } from '@/components/walls/WallPlaceholderTiles'
 
 export const metadata: Metadata = {
   title: 'Ready · Walls · Flight Deck · TechTech',
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ReadyWallPage() {
   return (
     <WallsShell title="Ready" description="Who is ready to fly before the lesson starts.">
-      <WallPlaceholderTiles />
+      <ReadyWall />
     </WallsShell>
   )
 }

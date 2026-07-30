@@ -9,6 +9,24 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Ready wall maps vitals to four pre-flight labels
+
+- **Decision:** `/walls/ready` derives each tile from existing `DroneVitals` and Status
+  only — no new Telemetry fields. Four labels: **Ready**, **Not ready**, **Offline**,
+  **Fault**. Summary line: `N ready · M not ready`; Offline, Fault, and Not ready share
+  the second count.
+- **Mapping (first match wins):**
+
+  | Condition | Label |
+  | --- | --- |
+  | `status === Offline`, `phase === no-contact`, or a `no-response` alert | Offline |
+  | `status === Fault`, `phase === emergency`, or a `fault` / `emergency-stop` alert | Fault |
+  | `status === Ready` and not airborne | Ready |
+  | otherwise (Not Ready, Flying, airborne Ready, etc.) | Not ready |
+
+- **Reason:** Owner ready-board plan — whole-class pre-flight glance without Commands.
+- **Note:** Pure function in `ready-mapping.ts`; tiles link to `/drone?id=` like Status wall.
+
 ## 2026-07-30 Status wall tiles link to Drone detail
 
 - **Decision:** `/walls/status` renders `StatusWall` — one linked tile per Drone in board
@@ -17,7 +35,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   `border-status-fault`; latched emergency → `border-2 border-status-fault`. Click →
   `/drone?id=`. Empty Fleet → “Waiting for the Fleet.”
 - **Reason:** Feature 3 of classroom walls — whole-class status at a glance without Control.
-- **Note:** Ready and Battery subroutes stay on placeholders until their features land.
+- **Note:** Battery subroute stays on placeholder until its feature lands.
 
 ## 2026-07-30 Camera wall at `/walls/cameras`
 
@@ -27,6 +45,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   missing Telemetry uses board connection language (Status badge, “No Telemetry yet”).
 - **Reason:** Feature 2 of classroom walls — whole-class camera glance without crowding Control.
 - **Note:** Full CameraPane behaviour stays in the slide only.
+
 
 ## 2026-07-30 Classroom Walls live under `/walls` after Control in SiteNav
 

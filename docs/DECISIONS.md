@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Remedial queue on Control and Lesson
+
+- **Decision:** **Remedial queue** lives in the browser Logbook (`remedialQueue`). When a
+  lesson closes, Drones with **fault**-severity incidents are merged in once each. Control
+  and `/lesson` render a minimal linked list; **Done** dismisses locally — no Command
+  (ADR-0011).
+- **Reason:** Classroom follow-up after incidents without another screen to maintain.
+- **Note:** Attention-severity incidents stay off the queue unless a Teacher adds them later.
 ## 2026-07-30 Lesson plan wizard on /lesson prep
 
 - **Decision:** `LessonPlanWizard` replaces the inline label + exercises + start block with three
@@ -222,6 +230,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   `battery-low` and the ground station uses for Not Ready. No separate 20% wall threshold.
 - **Reason:** Owner battery wall spec — one low-battery idea across board and walls.
 - **Note:** Reuses `BatteryLevel` with `low={critical}`; summary line is “N critical”.
+
+## 2026-07-30 Remedial queue on Control and Lesson
+
+- **Decision:** **Remedial queue** lives in the browser Logbook (`remedialQueue`). When a
+  lesson closes, Drones with **fault**-severity incidents are merged in once each. Control
+  and `/lesson` render a minimal linked list; **Done** dismisses locally — no Command
+  (ADR-0011).
+- **Reason:** Classroom follow-up after incidents without another screen to maintain.
+- **Note:** Attention-severity incidents stay off the queue unless a Teacher adds them later.
 
 ## 2026-07-30 Pre-flight checklist on `/lesson`
 

@@ -7,6 +7,9 @@ would notice.
 
 ### Changed
 
+- **Attention is a closed dropdown.** Count + worst line stay put; open to see every
+  item and acknowledge. No more single-alert swap that made the board feel like it was
+  moving.
 - **Fleet Details → More details.** Opening Details on a Fleet tile keeps you on the board
   (dialog). Charge chart, height, camera, and attitude sit under **More details** —
   same instruments as the old full `/drone` page, without leaving Fleet.

@@ -1,17 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { DroneId } from '@techtechflight/contract'
 import { alertQueue, type DroneVitals } from '@/lib/vitals'
 import { AttentionBar } from './AttentionBar'
-
-/**
- * What needs the Teacher next.
- *
- * The point of this bar is what it leaves out. A controller works a queue down one item at
- * a time; a list of everything wrong is the triage handed back to the person it was meant
- * to spare.
- */
 
 const aVitals = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
   droneId: 'ttf-0001',
@@ -45,9 +37,6 @@ describe('when nothing needs the Teacher', () => {
 
   it('still shows the count, so its return is a number changing', () => {
     bar([aVitals()])
-
-    // Present at zero on purpose. A count that vanishes makes the next Alert an element
-    // materialising somewhere new, which is the opposite of glanceable.
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
   })
 })
@@ -73,37 +62,33 @@ describe('when several things need the Teacher', () => {
 
   it('counts every one of them', () => {
     bar(busy)
-
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('3')
   })
 
-  it('shows only the worst, and not the others', () => {
+  it('keeps the full list inside a closed disclosure, with the worst on the summary', () => {
     bar(busy)
 
-    expect(screen.getByText(/Separate it from Drone 1/)).toBeInTheDocument()
-    expect(screen.queryByText(/Put it on charge/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Move it away from the wall/)).not.toBeInTheDocument()
-  })
+    const summary = screen.getByText(/items require action/i).closest('summary')
+    expect(summary).toHaveTextContent(/Separate it from Drone 1/)
+    expect(summary).toHaveTextContent('Now')
 
-  it('says how soon in a word, so the ordering does not rest on colour', () => {
-    bar(busy)
-
-    expect(screen.getByRole('status', { name: /items requiring action/i })).toHaveTextContent('Now')
+    const list = screen.getByRole('list', { name: /items requiring action/i })
+    expect(within(list).getByText(/Separate it from Drone 1/)).toBeInTheDocument()
+    expect(within(list).getByText(/Put it on charge/)).toBeInTheDocument()
+    expect(within(list).getByText(/Move it away from the wall/)).toBeInTheDocument()
   })
 
   it('names the Student flying it, because that is who the Teacher speaks to', () => {
     bar(busy, (droneId) => (droneId === 'ttf-0003' ? 'Priya' : null))
-
-    expect(screen.getByText(/Flown by Priya/)).toBeInTheDocument()
+    expect(screen.getAllByText(/Flown by Priya/).length).toBeGreaterThanOrEqual(1)
   })
 
   it('says nothing about who is flying when nobody has been written down', () => {
     bar(busy)
-
     expect(screen.queryByText(/Flown by/)).not.toBeInTheDocument()
   })
 
-  it('offers to take the one it is showing, and hands back which one that was', async () => {
+  it('offers to take an item from the list, and hands back which one that was', async () => {
     const taken: string[] = []
     render(
       <AttentionBar
@@ -113,14 +98,15 @@ describe('when several things need the Teacher', () => {
       />,
     )
 
-    await userEvent.click(screen.getByRole('button', { name: /I have this/i }))
+    await userEvent.click(
+      screen.getByRole('button', { name: /I have this — Drone 3, Separate it from Drone 1/i }),
+    )
 
     expect(taken).toEqual(['ttf-0003:separation'])
   })
 
   it('offers nothing to take when there is nothing to take', () => {
     render(<AttentionBar queue={alertQueue([aVitals()])} studentFor={nobody} onAcknowledge={() => {}} />)
-
     expect(screen.queryByRole('button', { name: /I have this/i })).not.toBeInTheDocument()
   })
 })

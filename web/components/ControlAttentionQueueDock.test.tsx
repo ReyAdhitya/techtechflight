@@ -54,6 +54,7 @@ describe('Attention on Control', () => {
     settle()
 
     expect(screen.queryByRole('navigation', { name: 'Attention queue' })).not.toBeInTheDocument()
-    expect(screen.getByLabelText('Items requiring action')).toHaveTextContent('Drone 6')
+    expect(screen.getByRole('list', { name: 'Items requiring action' })).toHaveTextContent('Drone 6')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/item requires action|items require action/)
   })
 })

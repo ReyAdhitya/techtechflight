@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Weekly teacher digest.** Reports shows finished/started lesson counts for the last 7 days.
+
 - **End-of-day export.** Reports offers a JSON download of todays lessons (ZIP later).
 - **Auto PDF after lesson.** Ending a lesson opens a confirm dialog to download the reports PDF.
 - **Before/after lesson scores.** Score pair formatter and strip for lesson summaries.

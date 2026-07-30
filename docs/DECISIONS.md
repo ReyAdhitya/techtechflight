@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Weekly digest is a 7-day lesson count
+
+- **Decision:** `WeeklyDigest` on Reports summarises the last 7 days.
+- **Reason:** Feature 54.
+
 ## 2026-07-30 End-of-day export is JSON until ZIP lands
 
 - **Decision:** `EndOfDayExportButton` downloads todays lessons as JSON; ZIP deferred.

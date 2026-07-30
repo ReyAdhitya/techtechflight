@@ -13,6 +13,8 @@ would notice.
 
 ### Changed
 
+- **Trainer Drones inventory is optional and less crowded (#80).** Model / created date sit
+  behind Add details; empty is fine and does not block teaching. Empty save clears the row.
 - **Every classroom sim Drone has a camera fitted (#91).** Default simulator no longer
   leaves odd-index craft without `camera` on Telemetry — Teachers never see “No camera
   fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.

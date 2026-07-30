@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Trainer Drones Model/Created stay optional behind Add details
+
+- **Decision:** Settings Trainer Drones lists name + id with a quiet summary; Model and
+  Created open only via **Add details** / **Edit details**. Empty values are valid; saving
+  both blank removes the inventory row. Teaching never depends on model.
+- **Reason:** Owner #80 — MODEL must not feel mandatory.
+- **Note:** Still Logbook-only (ADR-0005); not Telemetry.
+
 ## 2026-07-30 Header logo navigates to Control
 
 - **Decision:** The brand mark (logo asset / wordmark fallback) is a `<Link href="/control">`

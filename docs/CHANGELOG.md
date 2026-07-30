@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Land all (sim) on Control.** Beside the live headcount, a button brings every airborne craft down via `setAltitude(0)` when a simulated Fleet is connected — not a hardware Command (ADR-0011).
 - **Teacher PIN gate.** Demo PIN `4242` unlocks session access to Control Commands (Land/Hover/Stop/Release) and Settings; overlay until entered. Not security — documented demo only.
 - **Quiet mode on Control.** Toggle beside Every Drone hides Stop and Release stop on every strip and the selected scope dock; Land and Hover stay. Local UI only — not a Fleet Command.
 - **Classroom geofence on Scope.** Top-down view draws a dashed 8×6 m box (−4…4 m east, −3…3 m north from setup); caption documents extents. Orientation only — no alerts yet.

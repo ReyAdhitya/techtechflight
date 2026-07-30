@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Photo evidence on CameraPane (#49).** **Save photo evidence** downloads a PNG from the
+  live video frame (`canvas.toDataURL`); sim surfaces get a labelled placeholder. Browser
+  download only — no Fleet path (ADR-0011).
+
 - **Swap drone mid-lesson.** Select a strip on Control, then **Swap** on another — student assignments exchange without retyping.
 - **One-tap roster assign.** Control and Students offer **Assign {name}** — the next unassigned roster name goes to the selected unassigned Drone, or the first free Drone in board order.
 - **Student name on Control strips.** Assigned names render as prominent display type beside the callsign; click to edit. Scope dock matches.

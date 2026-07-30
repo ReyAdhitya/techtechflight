@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Walls hub lists Attention, Faults, Heartbeat, and Height.** Sync after those walls landed.
 - **Lost-link visual siren on Walls.** When any Drone is Offline or has a no-response
   alert, Walls show a pulsing fault-border alert (motion suppressed under
   prefers-reduced-motion). Visual only — no audio.

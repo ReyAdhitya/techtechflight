@@ -9,7 +9,11 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/status', label: 'Status', hint: 'Status, battery, and height per Drone' },
   { href: '/walls/ready', label: 'Ready', hint: 'Who is ready to fly' },
   { href: '/walls/battery', label: 'Battery', hint: 'Charge across the class' },
-] as const
+  { href: '/walls/attention', label: 'Attention', hint: 'Who needs you right now' },
+  { href: '/walls/faults', label: 'Faults', hint: 'Fault and stale craft first' },
+  { href: '/walls/heartbeat', label: 'Heartbeat', hint: 'Alive or quiet at a glance' },
+  { href: '/walls/height', label: 'Height', hint: 'Aligned heights across the class' },
+]
 
 export function WallsHub() {
   return (

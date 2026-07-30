@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-29 Reports primary action is Download PDF
+
+- **Decision:** Reports’ primary control is **Download PDF** (`jspdf` in the browser) so the
+  file has no browser Headers/footers (URL/clock). **Print** remains secondary. No
+  “Printed at” stamp on the PDF (optional omit).
+- **Reason:** Owner #92 — Teachers should not fight print-dialog chrome for a take-home copy.
+- **Note:** Still client-side / static export compatible (ADR-0005). No server PDF route.
+
 ## 2026-07-29 Every classroom sim Drone has a camera
 
 - **Decision:** `SimulatedTelemetrySource` sets `hasCamera: true` for every classroom

@@ -19,6 +19,8 @@ would notice.
 
 ### Added
 
+- **Reports Download PDF (#92).** Primary control saves a real PDF (Lessons + recurring
+  defects) with no browser Headers/footers. Print stays secondary.
 - **Settings Classroom setup — Sim vs Radio (#88).** Plain-language path picker on Settings.
   Simulator (default, Commands) vs Radio/MAVLink (monitoring only, ADR-0011). Preference in
   `ground-station/classroom-source.json`; restart the launcher to apply. No hardware

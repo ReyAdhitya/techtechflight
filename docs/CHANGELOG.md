@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
@@ -80,6 +81,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
@@ -197,6 +199,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
@@ -375,6 +378,7 @@ would notice.
 
 ### Added
 
+- **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).

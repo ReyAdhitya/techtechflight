@@ -1,8 +1,6 @@
 'use client'
 
-import { useState } from 'react'
 import { useFleet } from './FleetProvider'
-import { CameraSlide } from './CameraSlide'
 import { FleetBoard } from './FleetBoard'
 import { WhatNeedsDoing } from './MaintenanceScreen'
 import { cn } from '@/lib/utils'
@@ -19,11 +17,6 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
  */
 export function FleetScreen() {
   const { snapshot, now, demo, scenarios } = useFleet()
-  const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
-  const cameraDrone =
-    cameraDroneId === null
-      ? null
-      : (snapshot.state?.drones.find((drone) => drone.id === cameraDroneId) ?? null)
 
   return (
     <>
@@ -32,20 +25,10 @@ export function FleetScreen() {
         now={now}
         demo={demo}
         scenarios={scenarios}
-        onOpenCamera={setCameraDroneId}
       />
       <div className={cn(INSTRUMENT_FRAME, 'px-4 pb-8 min-[26rem]:px-8')}>
         <WhatNeedsDoing />
       </div>
-      {cameraDrone && (
-        <CameraSlide
-          droneId={cameraDrone.id}
-          droneName={cameraDrone.name}
-          camera={cameraDrone.telemetry?.camera}
-          scenarios={scenarios}
-          onClose={() => setCameraDroneId(null)}
-        />
-      )}
     </>
   )
 }

@@ -19,6 +19,9 @@ would notice.
 
 ### Added
 
+- **Header logo goes to Control (#96).** The brand mark (and wordmark fallback) is a link to
+  `/control` — same teaching surface as the Control nav item. “Flight Deck” product name
+  stays outside the link.
 - **Dual-write Logbook to Vercel (#93 / #83).** Local save first; debounced cloud copy via
   `/api/logbook` (Blob + shared secret). Vercel board hydrates when cloud is newer.
   ADR-0015. Print/PDF and static classroom export unchanged.

@@ -1,3 +1,4 @@
+import { WeeklyDigest } from './WeeklyDigest'
 import { EndOfDayExportButton } from './EndOfDayExportButton'
 'use client'
 
@@ -133,6 +134,7 @@ export function ReportsScreen() {
         <HistorySections />
       </div>
           <EndOfDayExportButton lessons={book.lessons} />
+          <WeeklyDigest lessons={book.lessons} />
     </main>
   )
 }

@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **YOLO lesson scoring.** Class average of detection counts on Control (stub zeros until detector tallies feed in).
+
 - **Incident note on running lessons (#48).** **Note incident** on Control and `/lesson`
   saves Teacher observations into the Logbook with optional Drone context — local only
   (ADR-0011). Fleet events still copy at lesson close.

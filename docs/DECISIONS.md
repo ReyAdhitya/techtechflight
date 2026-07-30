@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 YOLO lesson score averages detection counts
+
+- **Decision:** `YoloLessonScoreStrip` shows mean detection count per craft; Control passes zeros until Detect wall tallies are wired live.
+- **Reason:** Feature 50.
+- **Note:** Formula in `yolo-lesson-score.ts`.
+
 ## 2026-07-30 Teacher incident notes during a lesson
 
 - **Decision:** `addTeacherIncidentNote` appends attention-severity incidents to the running

@@ -23,7 +23,13 @@ import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { StatusGlyph } from './StatusBadge'
+import {
+  readyBoardLabel,
+  readyBoardSummary,
+  READY_BOARD_PRESENTATION,
+} from './walls/ready-mapping'
 import { READING_FRAME } from '@/lib/frame'
+import type { DroneVitals } from '@/lib/vitals'
 
 /**
  * The lesson, from the check before it to the summary after it.
@@ -34,7 +40,7 @@ import { READING_FRAME } from '@/lib/frame'
  * out what broke. Everything here is built around those two moments.
  */
 export function LessonScreen() {
-  const { snapshot, now } = useFleet()
+  const { snapshot, now, vitals } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const lesson = runningLesson(book)
   const drones = snapshot.state?.drones ?? []
@@ -58,7 +64,7 @@ export function LessonScreen() {
       {lesson ? (
         <LessonUnderWay lesson={lesson} now={now} />
       ) : (
-        <PreFlight drones={drones} book={book} now={now} />
+        <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
       )}
 
       <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
@@ -75,10 +81,12 @@ export function LessonScreen() {
  */
 function PreFlight({
   drones,
+  vitals,
   book,
   now,
 }: {
   drones: readonly DroneState[]
+  vitals: readonly DroneVitals[]
   book: ReturnType<typeof readLogbook>
   now: number
 }) {
@@ -92,6 +100,8 @@ function PreFlight({
   const blocking = drones.filter(
     (drone) => needsAttention(drone.status) && !withheldIds.has(drone.id),
   )
+  const readyLabels = vitals.map(readyBoardLabel)
+  const { ready, notReady } = readyBoardSummary(readyLabels)
 
   return (
     <section className="flex flex-col gap-5">
@@ -108,6 +118,52 @@ function PreFlight({
             : `Sufficient for ${usable.length} ${usable.length === 1 ? 'Student' : 'Students'} airborne at once.`}
         </p>
       </div>
+
+      {vitals.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h2 className="label m-0">Pre-flight check</h2>
+          <p className="m-0 font-display text-summary font-medium text-ink">
+            <span className="tnum">{ready}</span>
+            {' ready · '}
+            <span className="tnum">{notReady}</span>
+            {' not ready'}
+          </p>
+          {notReady > 0 && (
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {vitals.map((entry) => {
+                const boardLabel = readyBoardLabel(entry)
+                if (boardLabel === 'Ready') return null
+                const presentation = READY_BOARD_PRESENTATION[boardLabel]
+                return (
+                  <li key={entry.droneId}>
+                    <Link
+                      prefetch={false}
+                      href={`/drone?id=${encodeURIComponent(entry.droneId)}`}
+                      className={cn(
+                        'flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-2 bg-surface-1 py-3 pl-3 pr-4 no-underline',
+                        boardLabel === 'Fault' ? 'border-status-fault' : 'border-status-not-ready',
+                      )}
+                    >
+                      <span className="font-display text-body font-medium text-ink">
+                        {entry.callsign}
+                      </span>
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-2 text-value',
+                          presentation.className,
+                        )}
+                      >
+                        <StatusGlyph shape={presentation.shape} />
+                        {presentation.label}
+                      </span>
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      )}
 
       {blocking.length > 0 && (
         <div className="flex flex-col gap-2">
@@ -165,28 +221,35 @@ function PreFlight({
 
       <ExerciseList exercises={exercises} onChange={setExercises} />
 
-      <div className="flex flex-wrap items-end gap-3 border-t border-hairline pt-5">
-        <div className="flex flex-1 flex-col gap-1">
-          <label className="label" htmlFor="lesson-label">
-            What is this lesson?
-          </label>
-          <input
-            id="lesson-label"
-            value={label}
-            onChange={(event) => setLabel(event.target.value)}
-            placeholder="Year 8, period 3"
-            className="min-h-11 rounded-pill border border-hairline bg-surface-1 px-4 py-1.5 text-value text-ink"
-          />
+      <div className="flex flex-col gap-2 border-t border-hairline pt-5">
+        {ready === 0 && vitals.length > 0 && (
+          <p className="m-0 text-value text-ink-muted">
+            None ready to fly yet. You can still start the lesson when you need to.
+          </p>
+        )}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-1 flex-col gap-1">
+            <label className="label" htmlFor="lesson-label">
+              What is this lesson?
+            </label>
+            <input
+              id="lesson-label"
+              value={label}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder="Year 8, period 3"
+              className="min-h-11 rounded-pill border border-hairline bg-surface-1 px-4 py-1.5 text-value text-ink"
+            />
+          </div>
+          <button
+            type="button"
+            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
+            onClick={() =>
+              startLesson(label, ready, drones.length, now || Date.now(), exercises)
+            }
+          >
+            Start the lesson
+          </button>
         </div>
-        <button
-          type="button"
-          className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
-          onClick={() =>
-            startLesson(label, usable.length, drones.length, now || Date.now(), exercises)
-          }
-        >
-          Start the lesson
-        </button>
       </div>
     </section>
   )

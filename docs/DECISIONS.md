@@ -152,6 +152,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Reason:** Owner battery wall spec — one low-battery idea across board and walls.
 - **Note:** Reuses `BatteryLevel` with `low={critical}`; summary line is “N critical”.
 
+## 2026-07-30 Pre-flight checklist on `/lesson`
+
+- **Decision:** Before start, `/lesson` shows a **Pre-flight check** section: summary
+  `N ready · M not ready` and a list of not-ready Drones with Ready-wall labels and glyphs.
+  Reuses `readyBoardLabel`, `readyBoardSummary`, and `READY_BOARD_PRESENTATION` from
+  `ready-mapping.ts` — same mapping as `/walls/ready`, no second ruleset. `readyAtStart`
+  on the lesson record uses that ready count. Zero ready shows calm copy near Start; Start
+  stays enabled (E7).
+- **Reason:** Feature 23 — Teachers see pre-flight readiness on the lesson workflow without
+  opening the Ready wall.
+- **Note:** Serviceable headline and “Standing in the way” stay on contract Status; the
+  checklist is the vitals-based Ready-board view.
+
 ## 2026-07-30 Ready wall maps vitals to four pre-flight labels
 
 - **Decision:** `/walls/ready` derives each tile from existing `DroneVitals` and Status

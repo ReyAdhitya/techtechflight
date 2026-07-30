@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Detection count wall (`/walls/detect`).** One tile per Drone with an object tally when
+  the in-browser detector exposes counts and the sim camera is streaming; otherwise "—".
+  Summary total when any tile reports; tiles link to Drone detail. Read-only. Not on the
+  Walls hub yet.
 - **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 
 - **Landing pad wall (`/walls/pads`).** One tile per Drone with landing-pad QR seen or not on

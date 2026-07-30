@@ -115,6 +115,8 @@ export interface LessonRecord {
   readonly assignments?: Readonly<Record<DroneId, string>>
   /** Every Command sent during it. */
   readonly commands?: readonly CommandRecord[]
+  /** Moments the Teacher bookmarked while it was running. */
+  readonly bookmarks?: readonly LessonBookmark[]
 }
 
 /** One task within a Lesson. What a Student is meant to be doing right now. */
@@ -131,6 +133,12 @@ export interface CommandRecord {
   readonly droneId: DroneId
   readonly droneName: string
   readonly kind: string
+}
+
+/** A moment the Teacher marked during a running lesson — timestamp plus optional note. */
+export interface LessonBookmark {
+  readonly at: number
+  readonly note?: string
 }
 
 /**
@@ -548,6 +556,7 @@ export function startLesson(
     // flying it at the start, which is what the report is a record of.
     assignments,
     commands: [],
+    bookmarks: [],
   }
   save({ ...book, lessons: [lesson, ...book.lessons].slice(0, 100) })
   return id
@@ -934,6 +943,21 @@ export function recordCommand(lessonId: string, command: CommandRecord): void {
     lessons: book.lessons.map((lesson) =>
       lesson.id === lessonId
         ? { ...lesson, commands: [...(lesson.commands ?? []), command].slice(-200) }
+        : lesson,
+    ),
+  })
+}
+
+/** Bookmark a moment in a running lesson — local Logbook only (ADR-0011). */
+export function addLessonBookmark(lessonId: string, at: number, note?: string): void {
+  const trimmed = note?.trim()
+  const bookmark: LessonBookmark = trimmed ? { at, note: trimmed } : { at }
+  const book = readLogbook()
+  save({
+    ...book,
+    lessons: book.lessons.map((lesson) =>
+      lesson.id === lessonId && lesson.endedAt === null
+        ? { ...lesson, bookmarks: [...(lesson.bookmarks ?? []), bookmark].slice(-50) }
         : lesson,
     ),
   })

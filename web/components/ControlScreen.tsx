@@ -30,6 +30,7 @@ import { AttentionBar } from './AttentionBar'
 import { CameraSlide } from './CameraSlide'
 import { LessonStrip } from './LessonStrip'
 import { Scope } from './Scope'
+import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
@@ -139,6 +140,13 @@ export function ControlScreen() {
               />
             ) : null
           }
+        />
+        <ScopeCameraFilmstrip
+          vitals={vitals}
+          drones={state.drones}
+          scenarios={scenarios}
+          selected={selected}
+          onOpenCamera={setCameraDroneId}
         />
       </section>
 

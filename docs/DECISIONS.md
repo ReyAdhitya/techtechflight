@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Scope camera filmstrip under Control scope
+
+- **Decision:** Control's "Where everything is" section adds a horizontal filmstrip of
+  `CameraTile` thumbs below `Scope`. Board order, watch-only; click opens `CameraSlide`.
+  Selected scope mark sets `aria-pressed` on the matching thumb.
+- **Reason:** Feature 15 — glance every fitted camera without leaving the scope.
+- **Note:** Lives on `/control` (Tower redirects there). Reuses `CameraTile`; no new Commands.
+
 ## 2026-07-30 Spotlight wall is one CameraPane plus thumb row
 
 - **Decision:** /walls/spotlight shows one large CameraPane; thumbnails switch focus by drone id in local state.

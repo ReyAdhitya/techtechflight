@@ -34,10 +34,11 @@ import { ClassAverageStrip } from './ClassAverageStrip'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
+import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
-import { PeerDemoSpotlight } from './PeerDemoSpotlight'
-import { LiveHeadcount } from './LiveHeadcount'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
+import { LiveHeadcount } from './LiveHeadcount'
+import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
@@ -186,6 +187,8 @@ export function ControlScreen() {
         selected={selected}
         onSelect={(entry) => focusStrip(entry.droneId)}
       />
+
+      <HeightCeilingBanner vitals={vitals} />
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>

@@ -24,12 +24,15 @@ const SURFACE =
 export function CameraTile({
   droneId,
   droneName,
+  label = droneName,
   drone,
   camera,
   scenarios,
 }: {
   droneId: string
   droneName: string
+  /** Who the tile names — Logbook assignment when present, otherwise the Drone callsign. */
+  label?: string
   drone: DroneState
   camera: CameraState | undefined
   scenarios: ScenarioControls | null
@@ -85,12 +88,12 @@ export function CameraTile({
       <div
         className="overflow-hidden rounded-surface border border-hairline bg-ink"
         role="img"
-        aria-label={`Simulated camera feed for ${droneName}`}
+        aria-label={`Simulated camera feed for ${label}`}
       >
         <div className="relative flex aspect-video w-full flex-col justify-between p-3">
           <div className="flex flex-col gap-0.5">
             <span className="label text-canvas">Simulated feed</span>
-            <span className="text-value text-canvas/80">{droneName}</span>
+            <span className="text-value text-canvas/80">{label}</span>
           </div>
           <span className="text-value text-canvas/70">Not a live aircraft camera</span>
         </div>
@@ -107,7 +110,7 @@ export function CameraTile({
           playsInline
           muted
           autoPlay
-          aria-label={`Live camera stream for ${droneName}`}
+          aria-label={`Live camera stream for ${label}`}
         />
       </div>
     )

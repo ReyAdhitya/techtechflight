@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Lesson plan wizard on /lesson.** Three steps — name, exercises, confirm — before start, with
+  a header shortcut to start immediately (E7). Reuses `ExerciseList`.
 - **Training wheels mode.** Toggle on Control and Lesson (localStorage). Banner when on; Stop
   hidden and alert styling softened — UI-only, no hardware commands (ADR-0011).
 - **Peer demo spotlight on Control.** Spotlight button on each strip opens a large watch-only

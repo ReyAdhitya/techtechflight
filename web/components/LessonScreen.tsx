@@ -17,7 +17,7 @@ import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { AssignmentColumn } from './AssignmentColumn'
-import { ExerciseList } from './ExerciseList'
+import { LessonPlanWizard } from './LessonPlanWizard'
 import { LessonPrepPanel } from './LessonPrepPanel'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
@@ -226,6 +226,17 @@ function PreFlight({
 
       <AssignmentColumn drones={drones} book={book} />
 
+      <LessonPlanWizard
+        label={label}
+        onLabelChange={setLabel}
+        exercises={exercises}
+        onExercisesChange={setExercises}
+        usableCount={usable.length}
+        fleetSize={drones.length}
+        onStart={() =>
+          startLesson(label, usable.length, drones.length, now || Date.now(), exercises)
+        }
+      />
       <ExerciseList exercises={exercises} onChange={setExercises} />
 
       <div className="flex flex-col gap-2 border-t border-hairline pt-5">

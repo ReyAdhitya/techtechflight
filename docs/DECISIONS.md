@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Lesson plan wizard on /lesson prep
+
+- **Decision:** `LessonPlanWizard` replaces the inline label + exercises + start block with three
+  steps (Name → Exercises → Confirm). A persistent **Start now** in the wizard header
+  preserves E7 — planning never gates start.
+- **Reason:** Feature 33 — structured prep without redesigning `LessonPrepPanel` or assignments.
+- **Note:** Confirm step summarizes label (or Untitled lesson), exercises, and serviceable count.
 ## 2026-07-30 Training wheels mode is UI-only local state
 
 - **Decision:** `TrainingWheelsProvider` stores on/off in `localStorage`. When on, Control and

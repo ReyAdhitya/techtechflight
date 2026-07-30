@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Ready wall (`/walls/ready`).** Pre-flight board: each Drone tile shows Ready, Not
+  ready, Offline, or Fault with a calm “N ready · M not ready” summary. Tap a tile for
+  `/drone?id=`. Offline and Fault count in the not-ready bucket.
 - **Status wall (`/walls/status`).** Grid of linked tiles — name, Status word, charge, height
   when reported, and response age with a stale hint. Fault and emergency stop use existing
   status-fault borders; empty Fleet keeps the calm waiting line.

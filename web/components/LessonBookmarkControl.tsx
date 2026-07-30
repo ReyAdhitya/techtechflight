@@ -15,11 +15,14 @@ export function LessonBookmarkControl({
   startedAt,
   now,
   bookmarks,
+  compact = false,
 }: {
   readonly lessonId: string
   readonly startedAt: number
   readonly now: number
   readonly bookmarks: readonly LessonBookmark[]
+  /** Strip chrome: one row of controls, no recent-list under the button. */
+  readonly compact?: boolean
 }) {
   const [note, setNote] = useState('')
   const [draftOpen, setDraftOpen] = useState(false)
@@ -31,7 +34,7 @@ export function LessonBookmarkControl({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={compact ? 'contents' : 'flex flex-col gap-2'}>
       <div className="flex flex-wrap items-center gap-2">
         {!draftOpen ? (
           <button
@@ -77,7 +80,7 @@ export function LessonBookmarkControl({
         )}
       </div>
 
-      {bookmarks.length > 0 && (
+      {!compact && bookmarks.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {[...bookmarks].reverse().slice(0, 5).map((bookmark) => (
             <li key={bookmark.at} className="tnum text-value text-ink-subtle">

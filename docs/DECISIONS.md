@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Lesson strip actions are one cluster
+
+- **Decision:** Group Bookmark / Note incident / End in a single flex on the Lesson strip;
+  pass `compact` so recent lists do not stack under the buttons.
+- **Reason:** Owner — `justify-between` with four siblings left the ghost buttons floating
+  in the middle of the bar.
+
 ## 2026-07-30 Warm-up countdown ignores unstable onDone
 
 - **Decision:** `LessonWarmUp` ticks with one `setInterval` and keeps `onDone` in a ref

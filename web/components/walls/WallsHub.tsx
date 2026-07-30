@@ -13,6 +13,12 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/faults', label: 'Faults', hint: 'Fault and stale craft first' },
   { href: '/walls/heartbeat', label: 'Heartbeat', hint: 'Alive or quiet at a glance' },
   { href: '/walls/height', label: 'Height', hint: 'Aligned heights across the class' },
+  { href: '/walls/proximity', label: 'Proximity', hint: 'Close pairs in the classroom' },
+  { href: '/walls/landing', label: 'Landing', hint: 'Who is coming down' },
+  { href: '/walls/pads', label: 'Pads', hint: 'QR landing targets seen or not' },
+  { href: '/walls/detect', label: 'Detect', hint: 'Detection counts across the class' },
+  { href: '/walls/dual', label: 'Dual', hint: 'Two cameras side by side' },
+  { href: '/walls/spotlight', label: 'Spotlight', hint: 'One large camera plus thumbs' },
 ]
 
 export function WallsHub() {

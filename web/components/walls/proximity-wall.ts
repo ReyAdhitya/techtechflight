@@ -38,7 +38,8 @@ export function proximityPairs(
     if (seen.has(key)) continue
     seen.add(key)
 
-    const [idA, idB] = [mine.id, other.id].sort()
+    const sorted = [mine.id, other.id].sort() as [DroneId, DroneId]
+    const [idA, idB] = sorted
     pairs.push({
       key,
       droneIdA: idA,

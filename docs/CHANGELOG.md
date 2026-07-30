@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
+
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
@@ -80,6 +82,8 @@ would notice.
   fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.
 
 ### Added
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
 
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
@@ -198,6 +202,8 @@ would notice.
   behind route params and warm leftovers. Key `'watch'` and the five Status words untouched.
 
 ### Added
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
 
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).
@@ -377,6 +383,8 @@ would notice.
   "TechTech Readyboard". Every tab now reads "… · Flight Deck · TechTech".
 
 ### Added
+
+- **Walls hub lists Proximity through Spotlight** after those walls landed.
 
 - **Camera spotlight (/walls/spotlight).** One large CameraPane plus a thumbnail row to switch focus.
 - **Dual camera watch (`/walls/dual`).** Two CameraPanes side by side; `?a=` / `?b=` pick Drones (defaults first two).

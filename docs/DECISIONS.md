@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Height wall uses 3 m classroom ceiling default
+
+- **Decision:** `/walls/height` compares each reported `altitudeM` against
+  **`CLASSROOM_CEILING_M = 3`** in `height-wall.ts`. At or below 3 m is normal; above
+  highlights the tile and counts in “N over ceiling”. No shared ceiling constant existed
+  elsewhere — Scope uses an adaptive ladder, and ADR-0016’s “3 m ceiling” is illustrative
+  only.
+- **Reason:** Feature 9 height wall — whole-class height comparison with one teaching
+  default until a room model lands.
+- **Note:** Readouts use one decimal and a fixed ` m` suffix for column alignment; click
+  → `/drone?id=`. Hub link syncs in a later wave.
 ## 2026-07-30 Last Contact wall at `/walls/heartbeat`
 
 - **Decision:** `/walls/heartbeat` renders `HeartbeatWall` — one linked tile per Drone in

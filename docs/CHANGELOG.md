@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Height wall (`/walls/height`).** One tile per Drone with name and an aligned height
+  readout; tiles above the classroom ceiling default (3 m) highlight with a summary count.
+  Tiles link to Drone detail. Read-only.
 - **Last Contact wall (`/walls/heartbeat`).** One dot per Drone in board order — filled when
   the link is live, hollow when Telemetry is Stale or the Drone has not responded. Summary
   stale count; tiles link to Drone detail. Teacher-facing copy says Last Contact, not

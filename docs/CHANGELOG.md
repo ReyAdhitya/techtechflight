@@ -69,8 +69,12 @@ would notice.
 
 ### Added
 
+- **Camera Record (one + all).** Per-Drone **Record** on Control strips, Scope dock,
+  Camera wall tiles, and CameraPane. **Record all cameras** on Control (Every Drone) and
+  the Cameras wall. Session marks only — not a Fleet Command; no clip bytes yet.
 - **Landing pad workflow sim.** Step-through approach to touchdown on Pads.
-- **Camera recording clip.** Save clip control on CameraPane (stub handler).
+- **Camera recording clip.** Save clip control on CameraPane (stub handler) — superseded
+  by per-Drone / all-Fleet **Record** marks (see Added).
 - **Student projector (`/walls/projector`).** Cameras wall for the class screen.
 - **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.
 - **Battery swap checklist.** Five-step local checklist on Lesson prep.

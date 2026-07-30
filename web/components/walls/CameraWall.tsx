@@ -11,6 +11,8 @@ import type { DroneVitals } from '@/lib/vitals'
 import { cameraTileLabel } from './camera-wall'
 import { CameraTile } from './CameraTile'
 import { WallGrid, WallTile } from './WallGrid'
+import { CameraRecordAllButton } from '@/components/CameraRecordAllButton'
+import { CameraRecordingClip } from '@/components/CameraRecordingClip'
 
 type FrozenFrame = {
   vitals: readonly DroneVitals[]
@@ -69,6 +71,7 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
     <>
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-end gap-2">
+          <CameraRecordAllButton droneIds={liveDrones.map((drone) => drone.id)} />
           <button
             type="button"
             onClick={toggleFreeze}
@@ -100,25 +103,30 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
             const label = cameraTileLabel(name, studentOf(book, entry.droneId))
             return (
               <WallTile key={entry.droneId} className="gap-0 p-0">
-                <button
-                  type="button"
-                  onClick={() => setCameraDroneId(entry.droneId)}
-                  className={cn(
-                    'flex min-h-[6rem] w-full cursor-pointer flex-col gap-2 rounded-sm border-0 bg-transparent p-3 text-left text-ink',
-                    'hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
-                  )}
-                  aria-label={`${label} camera`}
-                >
-                  <p className="m-0 font-display text-body font-medium text-ink">{label}</p>
-                  <CameraTile
-                    droneId={drone.id}
-                    droneName={name}
-                    label={label}
-                    drone={drone}
-                    camera={drone.telemetry?.camera}
-                    scenarios={scenarios}
-                  />
-                </button>
+                <div className="flex flex-col gap-2 p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="m-0 font-display text-body font-medium text-ink">{label}</p>
+                    <CameraRecordingClip droneId={drone.id} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCameraDroneId(entry.droneId)}
+                    className={cn(
+                      'flex min-h-[6rem] w-full cursor-pointer flex-col gap-2 rounded-sm border-0 bg-transparent p-0 text-left text-ink',
+                      'hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                    )}
+                    aria-label={`${label} camera`}
+                  >
+                    <CameraTile
+                      droneId={drone.id}
+                      droneName={name}
+                      label={label}
+                      drone={drone}
+                      camera={drone.telemetry?.camera}
+                      scenarios={scenarios}
+                    />
+                  </button>
+                </div>
               </WallTile>
             )
           })}

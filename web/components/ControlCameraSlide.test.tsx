@@ -95,6 +95,18 @@ describe('opening a camera popup from Control', () => {
     expect(within(strip).getByRole('button', { name: 'Hover' })).toBeInTheDocument()
     expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
     expect(within(strip).getByRole('button', { name: 'Camera' })).toBeInTheDocument()
+    expect(within(strip).getByRole('button', { name: 'Record' })).toBeInTheDocument()
+  })
+
+  it('offers Record all cameras above Every Drone', () => {
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+
+    expect(screen.getByRole('button', { name: 'Record all cameras' })).toBeInTheDocument()
   })
 
   it('does not put School camera streams on Settings', () => {

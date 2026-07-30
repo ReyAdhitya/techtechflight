@@ -32,6 +32,8 @@ import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
 import { AttentionBar } from './AttentionBar'
+import { CameraRecordAllButton } from './CameraRecordAllButton'
+import { CameraRecordingClip } from './CameraRecordingClip'
 import { CameraSlide } from './CameraSlide'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
@@ -185,6 +187,7 @@ export function ControlScreen() {
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <CameraRecordAllButton droneIds={vitals.map((entry) => entry.droneId)} />
             <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
             <SpareInventory grounded={groundedCount} total={vitals.length} />
             <AssignNextButton
@@ -344,6 +347,7 @@ function ScopeSelectedDock({
           >
             Camera
           </button>
+          <CameraRecordingClip droneId={vitals.droneId} />
           <button
             type="button"
             onClick={onClear}
@@ -602,6 +606,7 @@ function FlightStrip({
           >
             Camera
           </button>
+          <CameraRecordingClip droneId={vitals.droneId} />
         </div>
 
         <CommandRow

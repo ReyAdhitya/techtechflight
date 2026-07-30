@@ -64,6 +64,7 @@ describe('Camera wall', () => {
     settle()
 
     expect(screen.getByRole('heading', { name: 'Cameras' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Record all cameras' })).toBeInTheDocument()
     const tiles = screen.getAllByRole('button', { name: / camera$/i })
     expect(tiles).toHaveLength(6)
     expect(tiles.map((tile) => tile.getAttribute('aria-label'))).toEqual([

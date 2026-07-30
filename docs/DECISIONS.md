@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Last Contact wall at `/walls/heartbeat`
+
+- **Decision:** `/walls/heartbeat` renders `HeartbeatWall` — one linked tile per Drone in
+  board order (`vitals`), read-only. Tile body: name plus a single dot — filled (`bg-ink`)
+  when `lastContact` is set and the Drone is not Stale, hollow (`border-stale`) otherwise.
+  Summary line: `N stale`. Click → `/drone?id=`. Teacher-facing title **Last Contact**;
+  route keeps `heartbeat` internally. Empty Fleet → “Waiting for the Fleet.”
+- **Reason:** Feature 8 of classroom walls — whole-class link liveness at a glance without
+  Status noise.
+- **Note:** Alive logic in `heartbeat-wall.ts`; aria-label carries responding/stale for
+  screen readers because the dot alone would violate ADR-0004.
 ## 2026-07-30 Fault mosaic reorders trouble to the front
 
 - **Decision:** `/walls/faults` renders `FaultMosaic` — one linked tile per Drone. Unlike

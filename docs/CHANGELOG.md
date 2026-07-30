@@ -7,6 +7,10 @@ would notice.
 
 ### Added
 
+- **Last Contact wall (`/walls/heartbeat`).** One dot per Drone in board order — filled when
+  the link is live, hollow when Telemetry is Stale or the Drone has not responded. Summary
+  stale count; tiles link to Drone detail. Teacher-facing copy says Last Contact, not
+  heartbeat.
 - **Fault mosaic (`/walls/faults`).** Every Drone on one grid; fault, stale, and emergency
   tiles sort to the front, the rest follow in board order. Summary count, fault reason when
   reported, stale hint. Tiles link to Drone detail. Read-only.

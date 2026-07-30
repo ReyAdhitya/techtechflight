@@ -1,3 +1,4 @@
+import { LessonTemplatesPack } from './LessonTemplatesPack'
 'use client'
 
 import { useState, useSyncExternalStore } from 'react'
@@ -244,6 +245,7 @@ function PreFlight({
           startLesson(label, usable.length, drones.length, now || Date.now(), exercises)
         }
       />
+      <LessonTemplatesPack onPick={() => {}} />
       <ExerciseList exercises={exercises} onChange={setExercises} />
 
       <div className="flex flex-col gap-2 border-t border-hairline pt-5">

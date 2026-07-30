@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Header logo navigates to Control
+
+- **Decision:** The brand mark (logo asset / wordmark fallback) is a `<Link href="/control">`
+  with accessible name “… go to Control”. The “Flight Deck” product title beside the mark
+  is **not** in the link — it is identity, not the logo cluster the owner highlighted.
+- **Reason:** Owner #96 — click logo → teaching surface (Control), not Fleet/home.
+- **Note:** Min-height 2.75rem on `.brand-link` for touch without scaling the mark.
+
 ## 2026-07-30 Dual-write Logbook: local first, Vercel Blob copy with shared secret
 
 - **Decision:** Every Logbook save writes **localStorage first**, then debounced PUT to

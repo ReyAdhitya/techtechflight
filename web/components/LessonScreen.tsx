@@ -6,6 +6,7 @@ import { isUsable, needsAttention, type DroneState } from '@techtechflight/contr
 import {
   readLogbook,
   readServerLogbook,
+  remedialQueueOf,
   runningLesson,
   serviceStateOf,
   startLesson,
@@ -32,6 +33,7 @@ import {
 } from './walls/ready-mapping'
 import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
+import { RemedialQueue } from './RemedialQueue'
 
 /**
  * The lesson, from the check before it to the summary after it.
@@ -73,6 +75,8 @@ export function LessonScreen() {
       ) : (
         <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
       )}
+
+      <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
 
       <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
     </main>

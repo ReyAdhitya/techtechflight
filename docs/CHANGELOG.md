@@ -15,6 +15,8 @@ would notice.
 
 ### Removed
 
+- **Parent demo kiosk (`/walls/kiosk`).** Redundant Status wall clone — Status wall stays.
+- **Stop audit log.** Session list of Stop presses removed from Control Lesson tools.
 - **Classroom / Wide hall / Tight bay presets** from Control — they cluttered “Where
   everything is” without driving the Scope window.
 - **Lesson timer on `/walls/cameras` and `/walls/projector`.** Countdown stays under
@@ -34,10 +36,8 @@ would notice.
 ### Added
 
 - **Landing pad workflow sim.** Step-through approach to touchdown on Pads.
-- **Stop audit log.** Session list of Stop presses on Control.
 - **Camera recording clip.** Save clip control on CameraPane (stub handler).
 - **Student projector (`/walls/projector`).** Cameras wall for the class screen.
-- **Parent demo kiosk (`/walls/kiosk`).** Same Status wall for open evenings.
 - **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.
 - **Battery swap checklist.** Five-step local checklist on Lesson prep.
 - **Maintenance grounding flag.** Badge for craft held for maintenance.

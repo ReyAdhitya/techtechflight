@@ -49,7 +49,6 @@ describe('Walls hub', () => {
       '/walls/landed',
       '/walls/tv',
       '/walls/projector',
-      '/walls/kiosk',
     ])
     for (const wall of WALL_DESTINATIONS) {
       // Match by href — label regex collides (e.g. Cameras ⊂ "Student-facing cameras").

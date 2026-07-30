@@ -53,7 +53,6 @@ import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
-import { StopAuditLog } from './StopAuditLog'
 import { VoiceReadyCallouts } from './VoiceReadyCallouts'
 import { MaintenanceFlag } from './MaintenanceFlag'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
@@ -220,10 +219,6 @@ export function ControlScreen() {
           initialSeconds={45 * 60}
           onExpire={() => setEndPeriodOpen(true)}
         />
-        <div className="flex flex-col gap-2">
-          <h2 className="label m-0">Stop audit</h2>
-          <StopAuditLog />
-        </div>
         <RemedialQueue queue={remedial} />
         {absentNotFlying.length > 0 && (
           <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3">

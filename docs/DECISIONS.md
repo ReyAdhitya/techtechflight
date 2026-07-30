@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Drop kiosk wall and Stop audit
+
+- **Decision:** Remove `/walls/kiosk` (and hub link) and delete Stop audit
+  (`StopAuditLog` / `stop-audit` sessionStorage) from Control.
+- **Reason:** Owner — neither mattered for classroom teaching; Status wall covers the
+  kiosk glance, and Stop audit was unused noise.
+
 ## 2026-07-30 Control disclosures and Scope ghost paths on elevation
 
 - **Decision:** Collapse Control extras (full waiting queue, lesson tools, camera

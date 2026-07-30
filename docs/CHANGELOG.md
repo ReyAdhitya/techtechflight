@@ -5,6 +5,12 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **Warm-up timer actually counts down.** Fleet’s 1s clock was recreating `onDone` each
+  tick, which cleared the 60s timeout before it fired — stuck on 60. Callback is now
+  held in a ref so re-renders cannot reset the countdown.
+
 ### Changed
 
 - **Attention is a closed dropdown.** Count + worst line stay put; open to see every

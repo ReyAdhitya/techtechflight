@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /** 60s warm-up overlay after Lesson start before the running view takes over. */
 export function LessonWarmUp({
@@ -11,15 +11,25 @@ export function LessonWarmUp({
   onDone: () => void
 }) {
   const [left, setLeft] = useState(seconds)
+  const onDoneRef = useRef(onDone)
+  onDoneRef.current = onDone
 
   useEffect(() => {
-    if (left <= 0) {
-      onDone()
-      return
-    }
-    const id = window.setTimeout(() => setLeft((s) => s - 1), 1000)
-    return () => window.clearTimeout(id)
-  }, [left, onDone])
+    const id = window.setInterval(() => {
+      setLeft((s) => {
+        if (s <= 1) {
+          window.clearInterval(id)
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    if (left <= 0) onDoneRef.current()
+  }, [left])
 
   return (
     <div
@@ -33,7 +43,7 @@ export function LessonWarmUp({
       <button
         type="button"
         className="min-h-11 rounded-pill border border-hairline px-4 py-1.5 text-caption text-ink"
-        onClick={onDone}
+        onClick={() => onDoneRef.current()}
       >
         Skip
       </button>

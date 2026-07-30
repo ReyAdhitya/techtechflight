@@ -6,6 +6,7 @@ import { needsAttention } from '@techtechflight/contract'
 import { motion, useReducedMotion } from 'motion/react'
 import { ageMs } from '@/lib/age'
 import type { FleetSnapshot } from '@/lib/fleet-connection'
+import type { ScenarioControls } from '@/lib/fleet-link'
 import { cn } from '@/lib/utils'
 import { ConnectionBanner } from './ConnectionBanner'
 import { DroneDetailDialog } from './DroneDetailDialog'
@@ -21,6 +22,7 @@ export interface FleetBoardProps {
   readonly demo?: boolean
   /** Opens the camera slide for this Drone — watch only, not a Command (C9). */
   readonly onOpenCamera?: (droneId: DroneId) => void
+  readonly scenarios?: ScenarioControls | null
 }
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -41,7 +43,13 @@ const FILTERABLE_FROM = 9
  * look — colour, shape, and word — rather than by moving, because a tile that jumps
  * when a battery dips destroys the muscle memory the ordering exists to build.
  */
-export function FleetBoard({ snapshot, now, demo = false, onOpenCamera }: FleetBoardProps) {
+export function FleetBoard({
+  snapshot,
+  now,
+  demo = false,
+  onOpenCamera,
+  scenarios = null,
+}: FleetBoardProps) {
   const [openDroneId, setOpenDroneId] = useState<DroneId | null>(null)
   const [query, setQuery] = useState('')
   const [only, setOnly] = useState<Lens>('all')
@@ -177,6 +185,15 @@ export function FleetBoard({ snapshot, now, demo = false, onOpenCamera }: FleetB
         drone={openDrone}
         ageMs={openDrone ? age(openDrone) : null}
         onClose={() => setOpenDroneId(null)}
+        scenarios={scenarios}
+        batterySamples={
+          openDrone
+            ? (snapshot.history?.batteries.find((entry) => entry.droneId === openDrone.id)
+                ?.samples ?? [])
+            : []
+        }
+        chartSince={snapshot.history?.since ?? state.generatedAt}
+        chartUntil={state.generatedAt}
         {...(onOpenCamera && openDrone
           ? {
               onOpenCamera: () => {

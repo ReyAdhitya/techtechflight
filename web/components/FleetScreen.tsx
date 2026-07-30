@@ -31,6 +31,7 @@ export function FleetScreen() {
         snapshot={snapshot}
         now={now}
         demo={demo}
+        scenarios={scenarios}
         onOpenCamera={setCameraDroneId}
       />
       <div className={cn(INSTRUMENT_FRAME, 'px-4 pb-8 min-[26rem]:px-8')}>

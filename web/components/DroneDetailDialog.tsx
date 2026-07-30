@@ -1,11 +1,21 @@
+'use client'
+
 import { useId, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import type { DroneState, Status } from '@techtechflight/contract'
+import type { BatterySample, DroneState, Status } from '@techtechflight/contract'
+import type { ScenarioControls } from '@/lib/fleet-link'
 import { formatAge, formatExactTime } from '@/lib/age'
-import { formatBattery } from '@/lib/battery'
+import { formatBattery, formatTimeToReady } from '@/lib/battery'
 import { STATUS_PRESENTATION, isFixableBeforeTheLesson } from '@/lib/status-presentation'
 import { formatCoordinates } from '@/lib/vitals-presentation'
+import { BatteryChart } from './BatteryChart'
+import { CameraPane } from './CameraPane'
+import {
+  AltitudeAndLanding,
+  AttitudeIndicator,
+  InstrumentPanel,
+} from './FlightInstruments'
 import { Button } from './ui/Button'
 
 const STATUS_COLOUR: Record<Status, string> = {
@@ -22,20 +32,27 @@ export interface DroneDetailDialogProps {
   readonly onClose: () => void
   /** Opens the camera slide — watch only; omitted when the host has no slide. */
   readonly onOpenCamera?: () => void
+  readonly scenarios?: ScenarioControls | null
+  readonly batterySamples?: readonly BatterySample[]
+  readonly chartSince?: number
+  readonly chartUntil?: number
 }
 
 /**
- * Everything known about one Drone, so a Teacher can investigate without leaving the
- * board and can read values out to someone technical.
+ * Investigate one Drone without leaving the Fleet board.
  *
- * Radix Dialog handles focus trapping and Escape, so closing and returning to the Fleet
- * is immediate and never leaves anyone stuck in a sub-screen.
+ * Summary first (Status, contact, battery). Instruments that used to live only on
+ * `/drone` sit under **More details** so the board stays the home screen.
  */
 export function DroneDetailDialog({
   drone,
   ageMs,
   onClose,
   onOpenCamera,
+  scenarios = null,
+  batterySamples = [],
+  chartSince,
+  chartUntil,
 }: DroneDetailDialogProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const descriptionId = useId()
@@ -55,23 +72,18 @@ export function DroneDetailDialog({
     .filter(Boolean)
     .join(' ')
 
+  const since = chartSince ?? drone.lastContact ?? 0
+  const until = chartUntil ?? drone.lastContact ?? since
+
   return (
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/70" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 flex w-[min(32rem,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-surface border border-hairline bg-surface-1 p-6"
+          className="fixed left-1/2 top-1/2 z-50 flex w-[min(48rem,calc(100vw-2rem))] max-h-[calc(100vh-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 overflow-y-auto rounded-surface border border-hairline bg-surface-1 p-6"
           aria-describedby={describedBy}
           ref={contentRef}
           tabIndex={-1}
-          /*
-           * Focus the dialog itself rather than letting focus land on the first control
-           * inside it. That first control is the Last Contact tooltip trigger, and
-           * focusing it opens the tooltip — whose own Escape handler would then swallow
-           * the key, leaving a Teacher stuck in a sub-screen they pressed Escape to
-           * leave. Focusing the container also means a screen reader reads the Drone's
-           * name on opening.
-           */
           onOpenAutoFocus={(event) => {
             event.preventDefault()
             contentRef.current?.focus()
@@ -93,12 +105,6 @@ export function DroneDetailDialog({
             </p>
           </div>
 
-          {/*
-           * Shown whenever the Drone reported one, not only when the Status is Fault.
-           * An airborne Drone reads as Flying ahead of any fault it is also reporting,
-           * and an Offline one keeps a fault in its last known Telemetry — in both
-           * cases this is the detail a Teacher opened the Drone to find.
-           */}
           {telemetry?.fault && (
             <p
               className="m-0 border-l-2 border-status-fault pl-3 text-body text-ink"
@@ -158,10 +164,6 @@ export function DroneDetailDialog({
                 <dt className="label self-center">Airborne</dt>
                 <dd className="m-0 text-value">{telemetry.airborne ? 'Yes' : 'No'}</dd>
 
-                {/*
-                 * The same three numbers the flight strip carries, in the same format, so a
-                 * Teacher who opens a Drone is not made to learn a second one.
-                 */}
                 {formatCoordinates(telemetry) && (
                   <>
                     <dt className="label self-center">Position</dt>
@@ -180,6 +182,52 @@ export function DroneDetailDialog({
             <p className="m-0 text-value italic text-stale">
               These are the last known values, not current ones.
             </p>
+          )}
+
+          {telemetry && (
+            <details className="rounded-surface border border-hairline bg-canvas open:pb-3 [&[open]>summary>span:first-child]:rotate-90">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 font-display text-body font-medium text-ink marker:content-none [&::-webkit-details-marker]:hidden">
+                <span className="text-ink-muted transition-transform" aria-hidden="true">
+                  ▸
+                </span>
+                More details
+              </summary>
+              <div className="grid gap-4 border-t border-hairline px-4 pt-3 md:grid-cols-2">
+                <InstrumentPanel label="Charge">
+                  <div className="flex items-baseline gap-3">
+                    <span className="tnum font-display text-summary font-medium">
+                      {telemetry.batteryIsEstimate ? '~' : ''}
+                      {formatBattery(telemetry.batteryFraction)}
+                    </span>
+                  </div>
+                  {drone.timeToReadyMs !== null && (
+                    <p className="tnum m-0 text-value text-status-not-ready">
+                      {formatTimeToReady(drone.timeToReadyMs)}
+                    </p>
+                  )}
+                  <BatteryChart samples={[...batterySamples]} since={since} until={until} />
+                </InstrumentPanel>
+
+                <InstrumentPanel label="Height and landing">
+                  <AltitudeAndLanding telemetry={telemetry} />
+                </InstrumentPanel>
+
+                <div className="md:col-span-2">
+                  <CameraPane
+                    droneId={drone.id}
+                    droneName={drone.name}
+                    camera={telemetry.camera}
+                    scenarios={scenarios}
+                  />
+                </div>
+
+                {telemetry.orientation && (
+                  <InstrumentPanel label="How it is sitting">
+                    <AttitudeIndicator orientation={telemetry.orientation} />
+                  </InstrumentPanel>
+                )}
+              </div>
+            </details>
           )}
 
           <div className="flex flex-wrap gap-2 self-start">

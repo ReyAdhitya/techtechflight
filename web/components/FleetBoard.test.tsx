@@ -430,9 +430,10 @@ describe('opening a single Drone', () => {
     const dialog = within(dialogElement)
     expect(dialog.getByRole('heading', { name: 'Drone 1' })).toBeInTheDocument()
     expect(dialog.getByText(/motion sensor needs recalibrating/i)).toBeInTheDocument()
-    expect(dialog.getByText('44%')).toBeInTheDocument()
     expect(dialog.getByText('41.2')).toBeInTheDocument()
     expect(dialog.getByText('1.4.2')).toBeInTheDocument()
+    expect(dialog.getByText('More details')).toBeInTheDocument()
+    expect(dialog.getByRole('heading', { name: 'Charge' })).toBeInTheDocument()
     expect(dialogElement).toHaveAccessibleDescription(
       /withdraw from service.*motion sensor needs recalibrating/i,
     )

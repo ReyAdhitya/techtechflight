@@ -791,6 +791,14 @@ describe('full screen on the scope', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Full screen' }))
     expect(screen.getByText('Land Hover Stop for selected')).toBeInTheDocument()
   })
+
+  it('draws the classroom geofence on the top-down view', () => {
+    const { container } = render(
+      <Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 1, 1)]} onSelect={() => {}} />,
+    )
+    expect(container.querySelector('[data-classroom-geofence]')).not.toBeNull()
+    expect(screen.getByText(/classroom boundary/)).toBeInTheDocument()
+  })
 })
 
 describe('freeze scope snapshot', () => {

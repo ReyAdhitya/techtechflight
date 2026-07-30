@@ -6,6 +6,7 @@ import {
   type ScopeLabelPlacement,
 } from '@/lib/scope-label-placement'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
+import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
 import type { GhostPathStore } from '@/lib/scope-ghost-paths'
 import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
 import { cn } from '@/lib/utils'
@@ -465,6 +466,29 @@ export function Scope({
            * the dashed tie between Drones that are linked on purpose. Two aircraft joined
            * by a line here is the one thing on this map that means act now.
            */}
+          {/*
+           * Classroom geofence — a fixed box in metres, not a claim that the room ends
+           * here (ADR-0012). Top-down only; elevation views carry no horizontal boundary.
+           */}
+          {view === 'top-down' && (() => {
+            const nw = scope.project(CLASSROOM_GEOFENCE.westM, CLASSROOM_GEOFENCE.northM)
+            const se = scope.project(CLASSROOM_GEOFENCE.eastM, CLASSROOM_GEOFENCE.southM)
+            return (
+              <rect
+                x={nw.x}
+                y={nw.y}
+                width={se.x - nw.x}
+                height={se.y - nw.y}
+                fill="none"
+                className="stroke-status-not-ready"
+                strokeWidth="2"
+                strokeDasharray="8 6"
+                vectorEffect="non-scaling-stroke"
+                data-classroom-geofence=""
+              />
+            )
+          })()}
+
           {view === 'top-down' && conflicts.map((pair) => {
             const from = scope.project(pair.from.eastM, pair.from.northM)
             const to = scope.project(pair.to.eastM, pair.to.northM)
@@ -546,6 +570,13 @@ export function Scope({
          * conflict lines, so offering a key to them would send a Teacher looking for something
          * that is not there.
          */}
+        {view === 'top-down' && (
+          <span>
+            Dashed box = classroom boundary ({CLASSROOM_GEOFENCE.westM} to{' '}
+            {CLASSROOM_GEOFENCE.eastM} m east, {CLASSROOM_GEOFENCE.southM} to{' '}
+            {CLASSROOM_GEOFENCE.northM} m north)
+          </span>
+        )}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
         {view === 'top-down' && showGhostPaths && (
           <span>

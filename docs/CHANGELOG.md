@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Landing pad workflow sim.** Step-through approach to touchdown on Pads.
 - **Stop audit log.** Session list of Stop presses on Control.
 - **Camera recording clip.** Save clip control on CameraPane (stub handler).
 - **Student projector (`/walls/projector`).** Cameras wall for the class screen.

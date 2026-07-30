@@ -9,6 +9,7 @@ import {
   firstUnassignedDrone,
   nextRosterNameForAssign,
   studentOf,
+  swapStudentAssignments,
   currentExercise,
   readLogbook,
   recordCommand,
@@ -318,6 +319,12 @@ export function ControlScreen() {
               student={studentOf(book, entry.droneId)}
               selected={selected === entry.droneId}
               onSelect={() => setSelected((current) => (current === entry.droneId ? null : entry.droneId))}
+              swapTargetId={selected}
+              onSwap={
+                selected !== null && selected !== entry.droneId
+                  ? () => swapStudentAssignments(selected, entry.droneId)
+                  : null
+              }
               isAcknowledged={isAcknowledged}
               acknowledgedAt={acknowledgedAt}
               now={now}
@@ -517,6 +524,8 @@ function FlightStrip({
   student,
   selected,
   onSelect,
+  swapTargetId,
+  onSwap,
   isAcknowledged,
   acknowledgedAt,
   now,
@@ -534,6 +543,9 @@ function FlightStrip({
   student: string | null
   selected: boolean
   onSelect: () => void
+  /** When set and different from this strip, Swap is offered against this Drone. */
+  swapTargetId: string | null
+  onSwap: (() => void) | null
   isAcknowledged: (droneId: string, alert: VitalsAlert) => boolean
   acknowledgedAt: (droneId: string, alert: VitalsAlert) => number | null
   now: number
@@ -591,6 +603,18 @@ function FlightStrip({
           {vitals.callsign}
         </Link>
         <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
+        {onSwap && swapTargetId !== null && (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onSwap()
+            }}
+            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-3 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+          >
+            Swap
+          </button>
+        )}
         {/*
          * The height, and no phase word beside it.
          *

@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Swap drone mid-lesson.** Select a strip on Control, then **Swap** on another — student assignments exchange without retyping.
 - **One-tap roster assign.** Control and Students offer **Assign {name}** — the next unassigned roster name goes to the selected unassigned Drone, or the first free Drone in board order.
 - **Student name on Control strips.** Assigned names render as prominent display type beside the callsign; click to edit. Scope dock matches.
 - **Land all (sim) on Control.** Beside the live headcount, a button brings every airborne craft down via `setAltitude(0)` when a simulated Fleet is connected — not a hardware Command (ADR-0011).

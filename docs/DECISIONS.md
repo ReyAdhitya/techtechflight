@@ -9,6 +9,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Attention wall — loud trouble, quiet nominal
+
+- **Decision:** `/walls/attention` renders `AttentionWall` — one linked tile per Drone in
+  board order. **Troubled** when any of: `status === Fault`, `phase === emergency`,
+  `drone.stale`, or an unacknowledged vitals alert. Troubled tiles use `text-tile-name`,
+  show the worst pending alert (or a fault/emergency/stale fallback), and reuse Status
+  wall border accents. **Nominal** tiles are `text-label text-ink-muted` with callsign
+  only. Summary: `N need you`. Click → `/drone?id=`.
+- **Reason:** Feature 6 of classroom walls — whole-class triage without Control's one-at-a-time
+  attention bar.
+- **Note:** Acknowledgement only gates alert kinds; fault/emergency/stale stay loud. Hub
+  link deferred — do not edit `WallsHub` until hub sync.
+
 ## 2026-07-30 Battery wall critical threshold matches board usable charge
 
 - **Decision:** A tile is **critical** when `batteryFraction` is below

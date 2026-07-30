@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Attention wall (`/walls/attention`).** Troubled Drones — fault, emergency, stale, or
+  alerts still on the Teacher queue — read large with the headline alert; nominal Drones
+  shrink to a muted callsign. Summary: “N need you”. Tiles link to `/drone?id=`. Read-only.
 - **Battery wall (`/walls/battery`).** One tile per Drone with name, charge bar, and
   percentage; critical count when charge is below the ground-station usable threshold.
   Tiles link to Drone detail. Read-only.

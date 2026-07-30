@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Battery time budget uses charge × 12 minutes
+
+- **Decision:** Control flight strips show estimated flight minutes as `batteryFraction × 12`,
+  rounded to whole minutes (`about N min left`). No discharge slope — a classroom rule of
+  thumb only. Low-budget threshold for warnings is `< 20%` charge (~2.4 min).
+- **Reason:** Feature 24 — Teachers need a quick time budget beside charge without vitals
+  history; the vitals endurance forecast stays on Drone detail where slope data exists.
+- **Note:** Helper lives in `web/lib/battery-budget.ts`.
+
 ## 2026-07-30 Lesson timer on camera wall is local state
 
 - **Decision:** `LessonTimerBanner` on `/walls/cameras` holds countdown in React state only.
@@ -19,7 +28,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Decision:** `/walls/tv` mounts CameraWall or StatusWall with a toggle; Exit TV → `/walls`. No Settings link on this surface.
 - **Reason:** Feature 21.
 - **Note:** SiteHeader still present via app layout.
-
 
 ## 2026-07-30 End-lesson landed wall at `/walls/landed`
 

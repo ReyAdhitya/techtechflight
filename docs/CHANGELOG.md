@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Battery time budget on Control strips.** Charge now carries a naive minutes-left readout
+  (`minutes ≈ charge × 12`) beside the percentage on every flight strip and the selected
+  strip panel — enough to eyeball whether a lesson fits without reading discharge history.
 - **Pre-flight checklist on `/lesson`.** Before start, the Lesson screen shows the same
   ready / not ready counts and per-Drone labels as the Ready wall (`ready-mapping.ts`).
   Starting with zero ready shows calm copy beside Start; the button stays enabled (E7).

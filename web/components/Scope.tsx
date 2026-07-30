@@ -281,10 +281,16 @@ export function Scope({
                 Resume updates
               </>
             ) : (
+              <>
                 <Pause className="size-4" strokeWidth={1.75} aria-hidden="true" />
                 Freeze scope
+              </>
             )}
+          </button>
+        )}
         {ghostPaths !== undefined && (
+          <button
+            type="button"
             onClick={() => setShowGhostPaths((on) => !on)}
             aria-pressed={showGhostPaths}
             className={cn(
@@ -292,6 +298,8 @@ export function Scope({
               showGhostPaths
                 ? 'border-0 bg-ink font-medium text-canvas'
                 : 'border border-hairline bg-transparent text-ink hover:border-ink',
+            )}
+          >
             Ghost paths
           </button>
         )}

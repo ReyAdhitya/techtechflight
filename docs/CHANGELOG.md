@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Parent demo kiosk (`/walls/kiosk`).** Same Status wall for open evenings.
 - **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.
 - **Scope layout presets.** Classroom / wide / tight presets under the Control scope.
 - **Battery swap checklist.** Five-step local checklist on Lesson prep.

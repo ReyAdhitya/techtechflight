@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 End-of-day export is JSON until ZIP lands
+
+- **Decision:** `EndOfDayExportButton` downloads todays lessons as JSON; ZIP deferred.
+- **Reason:** Feature 53.
+- **Note:** Filename `techtechflight-eod.json`.
 ## 2026-07-30 Auto PDF is confirm-then-download on lesson end
 
 - **Decision:** `AutoPdfAfterLesson` opens from `LessonStrip` after `endLesson`; Teacher confirms download via existing `downloadReportsPdf`.

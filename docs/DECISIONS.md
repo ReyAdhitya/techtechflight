@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Control disclosures and Scope ghost paths on elevation
+
+- **Decision:** Collapse Control extras (full waiting queue, lesson tools, camera
+  filmstrip, class actions) into closed `<details>` disclosures; keep AttentionBar as
+  the single always-visible urgent line. Delete Scope layout presets (Control mount +
+  module). Drop the lesson timer from `/walls/cameras` and `/walls/projector`. Record
+  `altitudeM` on ghost-path samples and draw trails on Side/Front as well as top-down.
+- **Reason:** Owner — long alert lists and filmstrip chrome shoved the board around and
+  made Control hard to scan; layout presets were unused noise; ghost paths should match
+  every Scope view.
+
 ## 2026-07-30 Teacher PIN and Cloud Logbook copy UI removed
 
 - **Decision:** Drop the demo Teacher PIN gate and the Settings “Cloud Logbook copy”

@@ -5,8 +5,22 @@ would notice.
 
 ## Unreleased
 
+### Changed
+
+- **Control chrome is collapsible.** Waiting queue, lesson tools, camera glance, and
+  class actions sit in closed disclosures so the page no longer jumps when alerts pile
+  up. Attention bar (one line) stays visible.
+- **Ghost paths on Side and Front.** Scope trails use altitude when known, not only the
+  top-down plan.
+
 ### Removed
 
+- **Classroom / Wide hall / Tight bay presets** from Control — they cluttered “Where
+  everything is” without driving the Scope window.
+- **Lesson timer on `/walls/cameras` and `/walls/projector`.** Countdown stays under
+  Control’s Lesson tools disclosure only.
+- **Scope layout preset module.** Dead `ScopeLayoutPresets` / `scope-layout-presets`
+  removed after Control stopped mounting them.
 - **Teacher PIN.** No more `4242` gate on Control commands or Settings — Stop/Land/Hover
   and Settings open without a PIN.
 - **Cloud Logbook copy panel.** Settings no longer shows the cloud sync secret UI; the
@@ -25,7 +39,6 @@ would notice.
 - **Student projector (`/walls/projector`).** Cameras wall for the class screen.
 - **Parent demo kiosk (`/walls/kiosk`).** Same Status wall for open evenings.
 - **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.
-- **Scope layout presets.** Classroom / wide / tight presets under the Control scope.
 - **Battery swap checklist.** Five-step local checklist on Lesson prep.
 - **Maintenance grounding flag.** Badge for craft held for maintenance.
 - **Spare inventory.** Grounded count shown as spare beside headcount on Control.

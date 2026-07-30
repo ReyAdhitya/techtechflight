@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { assignStudent, clearLogbook, readLogbook, studentOf } from '@/lib/logbook'
+import { act, render, screen } from '@testing-library/react'
 import { assignStudent, clearLogbook } from '@/lib/logbook'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { ControlScreen } from './ControlScreen'
@@ -24,9 +26,14 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+describe('swap drone on Control strips', () => {
+  it('offers Swap on other strips when one is selected', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    assignStudent('ttf-0001', 'Priya')
+    assignStudent('ttf-0002', 'Ravi')
 describe('student name on flight strips', () => {
   it('shows the assigned name prominently beside the callsign', () => {
-    assignStudent('ttf-0001', 'Priya')
 
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
@@ -43,9 +50,6 @@ describe('student name on flight strips', () => {
   })
 
   it('opens the name field when the prominent label is clicked', async () => {
-    vi.useRealTimers()
-    const user = userEvent.setup()
-    assignStudent('ttf-0001', 'Priya')
 
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
@@ -56,6 +60,32 @@ describe('student name on flight strips', () => {
       vi.advanceTimersByTime(2_000)
     })
 
+    await user.click(screen.getByRole('link', { name: 'Drone 1' }))
+
+    expect(screen.getAllByRole('button', { name: 'Swap' }).length).toBeGreaterThan(0)
+  })
+
+  it('swaps assignments when Swap is pressed', async () => {
+    vi.useRealTimers()
+    const user = userEvent.setup()
+    assignStudent('ttf-0001', 'Priya')
+    assignStudent('ttf-0002', 'Ravi')
+
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    await act(async () => {
+      vi.advanceTimersByTime(2_000)
+    })
+
+    const stripTwo = screen.getByRole('link', { name: 'Drone 2' }).closest('li')!
+    await user.click(within(stripTwo).getByRole('button', { name: 'Swap' }))
+
+    const book = readLogbook()
+    expect(studentOf(book, 'ttf-0001')).toBe('Ravi')
+    expect(studentOf(book, 'ttf-0002')).toBe('Priya')
     await user.click(screen.getByRole('button', { name: /Who is flying Drone 1: Priya/i }))
 
     expect(screen.getByDisplayValue('Priya')).toBeInTheDocument()

@@ -7,6 +7,11 @@ would notice.
 
 ### Added
 
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
+
+- **Proximity wall (`/walls/proximity`).** One tile per close pair of airborne Drones inside
+  the 1.5 m separation warning; summary count, distance readout, tiles link to Drone detail.
+  Read-only.
 - **Walls hub lists Attention, Faults, Heartbeat, and Height.** Sync after those walls landed.
 - **Lost-link visual siren on Walls.** When any Drone is Offline or has a no-response
   alert, Walls show a pulsing fault-border alert (motion suppressed under
@@ -54,6 +59,8 @@ would notice.
   fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.
 
 ### Added
+
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Header logo goes to Control (#96).** The brand mark (and wordmark fallback) is a link to
   `/control` — same teaching surface as the Control nav item. “Flight Deck” product name
@@ -164,6 +171,8 @@ would notice.
   behind route params and warm leftovers. Key `'watch'` and the five Status words untouched.
 
 ### Added
+
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **Full-screen Scope keeps Commands for the selected mark.** Overlay covers Every Drone
   strips; picking a mark docks Land / Hold / Stop (same row as the strip) at the bottom
@@ -335,6 +344,8 @@ would notice.
   "TechTech Readyboard". Every tab now reads "… · Flight Deck · TechTech".
 
 ### Added
+
+- **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
 - **The rule a hardware adapter has to keep is written down as a test.** `CODEBASE_AUDIT.md`
   §8 noticed that `sameFleet` compares Telemetry by reference and judged it worth a test

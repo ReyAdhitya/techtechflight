@@ -3,7 +3,10 @@
 import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import {
+  assignNextRosterName,
   clearStudents,
+  firstUnassignedDrone,
+  nextRosterNameForAssign,
   readLogbook,
   readServerLogbook,
   registerStudent,
@@ -13,6 +16,7 @@ import {
 } from '@/lib/logbook'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
+import { AssignNextButton } from './AssignNextButton'
 import { useFleet } from './FleetProvider'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { StatusGlyph } from './StatusBadge'
@@ -43,6 +47,9 @@ export function StudentsScreen() {
   const roster = book.roster.length > 0
     ? book.roster
     : book.roll.map((rollName) => ({ studentId: '', name: rollName }))
+  const boardDroneIds = drones.map((drone) => drone.id)
+  const nextRosterName = nextRosterNameForAssign(book)
+  const assignTargetDroneId = firstUnassignedDrone(book, boardDroneIds)
 
   const addStudent = () => {
     registerStudent(name)
@@ -63,7 +70,15 @@ export function StudentsScreen() {
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Flying now</h2>
-          {flying.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <AssignNextButton
+              nextName={nextRosterName}
+              targetDroneId={assignTargetDroneId}
+              onAssign={() => {
+                if (assignTargetDroneId) assignNextRosterName(assignTargetDroneId)
+              }}
+            />
+            {flying.length > 0 && (
             <button
               type="button"
               onClick={clearStudents}
@@ -71,7 +86,8 @@ export function StudentsScreen() {
             >
               Everyone has put theirs down
             </button>
-          )}
+            )}
+          </div>
         </div>
 
         {flying.length === 0 ? (

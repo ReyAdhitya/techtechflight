@@ -7,12 +7,15 @@ import {
   allocateStudentId,
   applyLessonAssignments,
   assignStudent,
+  assignNextRosterName,
   assignStudentToLessonDrone,
   attachDroneToLesson,
   clearLogbook,
   createTrainerLesson,
+  firstUnassignedDrone,
   legacyStudentIdFor,
   LOGBOOK_KEY,
+  nextRosterNameForAssign,
   SERVICE_PRESENTATION,
   serviceStateOf,
   setServiceState,
@@ -34,6 +37,7 @@ import {
   talliedWindows,
   tallyEvents,
   upsertStudent,
+  unassignedRosterNames,
   upsertTrainerDrone,
   upsertTrainerLesson,
 } from './logbook'
@@ -249,6 +253,39 @@ describe('the class list', () => {
     rememberStudent('Ravi')
 
     expect(readLogbook().roll).toEqual(['Ravi'])
+  })
+})
+
+describe('one-tap roster assign', () => {
+  it('walks the roster in order, skipping names already flying', () => {
+    saveRoll(['Amara', 'Priya', 'Ravi'])
+    assignStudent('ttf-0001', 'Amara')
+
+    expect(unassignedRosterNames(readLogbook())).toEqual(['Priya', 'Ravi'])
+    expect(nextRosterNameForAssign(readLogbook())).toBe('Priya')
+  })
+
+  it('assigns the next name to a Drone in one tap', () => {
+    saveRoll(['Priya', 'Ravi'])
+
+    expect(assignNextRosterName('ttf-0001')).toBe('Priya')
+    expect(studentOf(readLogbook(), 'ttf-0001')).toBe('Priya')
+    expect(assignNextRosterName('ttf-0002')).toBe('Ravi')
+    expect(assignNextRosterName('ttf-0003')).toBeNull()
+  })
+
+  it('refuses a Drone that already has someone', () => {
+    saveRoll(['Priya'])
+    assignStudent('ttf-0001', 'Priya')
+
+    expect(assignNextRosterName('ttf-0001')).toBeNull()
+  })
+
+  it('picks the first unassigned Drone in board order', () => {
+    saveRoll(['Priya'])
+    const book = readLogbook()
+
+    expect(firstUnassignedDrone(book, ['ttf-0002', 'ttf-0001'])).toBe('ttf-0002')
   })
 })
 

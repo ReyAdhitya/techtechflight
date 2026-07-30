@@ -20,6 +20,7 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/dual', label: 'Dual', hint: 'Two cameras side by side' },
   { href: '/walls/spotlight', label: 'Spotlight', hint: 'One large camera plus thumbs' },
   { href: '/walls/landed', label: 'Landed', hint: 'Who is down at end of lesson' },
+  { href: '/walls/tv', label: 'TV', hint: 'Classroom display of Cameras or Status' },
 ]
 
 export function WallsHub() {

@@ -36,6 +36,8 @@ would notice.
 
 ### Removed
 
+- **Paste roster on Students.** Bulk paste box and Import names were chrome — never wired
+  into the Logbook. Add names one at a time.
 - **Battery swap checklist.** Five-step Power off → Confirm charge list gone from Lesson
   prep — Teachers already know the pack swap; it was chrome.
 - **Camera button on Fleet Details.** Dialog footer is only **Back to the Fleet**. Camera

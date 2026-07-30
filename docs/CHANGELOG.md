@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Attention queue dock on Control.** Sorted needs-you list beneath the Attention bar;
+  click lights and scrolls to the matching flight strip. The bar still carries one Alert at
+  a time; the dock carries the whole queue worst-first.
 - **Battery time budget on Control strips.** Charge now carries a naive minutes-left readout
   (`minutes ≈ charge × 12`) beside the percentage on every flight strip and the selected
   strip panel — enough to eyeball whether a lesson fits without reading discharge history.
@@ -15,7 +18,6 @@ would notice.
   Starting with zero ready shows calm copy beside Start; the button stays enabled (E7).
 - **Lesson timer on camera wall.** Local countdown banner above Cameras; Start/Pause/Reset.
 - **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
-
 - **End-lesson landed wall (`/walls/landed`).** One tile per Drone — green when on the
   ground, red when still airborne; summary landed / still flying counts; tiles link to Drone
   detail. Read-only. Not on the Walls hub yet.

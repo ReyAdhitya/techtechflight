@@ -37,7 +37,9 @@ import { LiveHeadcount } from './LiveHeadcount'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
+import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import { useFleet } from './FleetProvider'
+import { useTrainingWheelsOptional } from '@/lib/training-wheels'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 /**
@@ -56,6 +58,7 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
     useFleet()
+  const trainingWheels = useTrainingWheelsOptional()?.enabled ?? false
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
   // Which Drone the Teacher is looking at. Choosing a mark on the scope lights its strip
@@ -129,6 +132,10 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TrainingWheelsBanner className="flex-1" />
+        <TrainingWheelsToggle />
+      </div>
       {spotlightDrone && (
         <PeerDemoSpotlight
           drone={spotlightDrone}
@@ -192,6 +199,7 @@ export function ControlScreen() {
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
+                hideStop={trainingWheels}
                 onSpotlight={() => setSpotlightDroneId(selectedVitals.droneId)}
               />
             ) : null
@@ -262,6 +270,8 @@ export function ControlScreen() {
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
+              softenAlerts={trainingWheels}
+              hideStop={trainingWheels}
               onSpotlight={() => setSpotlightDroneId(entry.droneId)}
             />
           ))}
@@ -295,6 +305,7 @@ function ScopeSelectedDock({
   tracked,
   onClear,
   onOpenCamera,
+  hideStop,
   onSpotlight,
 }: {
   vitals: DroneVitals
@@ -304,6 +315,7 @@ function ScopeSelectedDock({
   tracked: TrackedCommand | null
   onClear: () => void
   onOpenCamera: () => void
+  hideStop?: boolean
   onSpotlight: () => void
 }) {
   return (
@@ -352,6 +364,7 @@ function ScopeSelectedDock({
         command={command}
         onReleaseStop={onReleaseStop}
         tracked={tracked}
+        hideStop={hideStop}
       />
     </div>
   )
@@ -419,6 +432,8 @@ function FlightStrip({
   tracked,
   exercise,
   onOpenCamera,
+  softenAlerts,
+  hideStop,
   onSpotlight,
 }: {
   vitals: DroneVitals
@@ -436,6 +451,8 @@ function FlightStrip({
   exercise: string | null
   /** Opens the camera slide — watch only, not a Command (C9). */
   onOpenCamera: () => void
+  softenAlerts?: boolean
+  hideStop?: boolean
   /** Opens peer demo spotlight — watch only, not a Command (C9). */
   onSpotlight: () => void
 }) {
@@ -451,7 +468,7 @@ function FlightStrip({
         // The strip keeps its own box — rail, ground, selection outline — and takes the
         // list's columns rather than inventing its own.
         'min-[60rem]:col-span-full min-[60rem]:grid min-[60rem]:grid-cols-subgrid min-[60rem]:items-center min-[60rem]:gap-x-6 min-[60rem]:gap-y-1.5',
-        vitals.alerts[0]
+        vitals.alerts[0] && !softenAlerts
           ? SEVERITY_PRESENTATION[vitals.alerts[0].severity].className
           : 'border-hairline',
         // An outline rather than a fill: the tile's own severity colour has to keep
@@ -566,6 +583,7 @@ function FlightStrip({
           command={command}
           onReleaseStop={onReleaseStop}
           tracked={tracked}
+          hideStop={hideStop}
         />
 
         {vitals.alerts.length > 0 && (
@@ -575,10 +593,12 @@ function FlightStrip({
               <span
                 className={cn(
                   'label rounded-pill border px-2 py-0.5',
-                  SEVERITY_PRESENTATION[alert.severity].className,
+                  softenAlerts
+                    ? 'border-hairline text-ink-muted'
+                    : SEVERITY_PRESENTATION[alert.severity].className,
                 )}
               >
-                {SEVERITY_PRESENTATION[alert.severity].label}
+                {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
               </span>
               <span className="text-value text-ink">{alert.text}</span>
               {/*
@@ -615,11 +635,13 @@ function CommandRow({
   command,
   onReleaseStop,
   tracked,
+  hideStop,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void
   onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
+  hideStop?: boolean
 }) {
   const grounded = !vitals.airborne
   const stopHeld = vitals.phase === 'emergency'
@@ -666,6 +688,8 @@ function CommandRow({
             </span>
           </span>
         )
+      ) : hideStop ? (
+        <span className="ml-auto text-value text-ink-muted">Stop hidden — training wheels</span>
       ) : (
         <button
           type="button"

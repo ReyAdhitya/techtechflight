@@ -3,6 +3,7 @@
 import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
 import Link from 'next/link'
 import {
+  absentStudentsNotFlying,
   assignStudent,
   assignNextRosterName,
   clearStudents,
@@ -46,6 +47,7 @@ import { LiveHeadcount } from './LiveHeadcount'
 import { SimLandAllButton } from './SimLandAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
 import { PeerDemoSpotlight } from './PeerDemoSpotlight'
+import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
@@ -88,6 +90,7 @@ export function ControlScreen() {
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
   const remedial = remedialQueueOf(book)
+  const absentNotFlying = absentStudentsNotFlying(book)
 
   useEffect(() => {
     if (!state) return
@@ -194,6 +197,7 @@ export function ControlScreen() {
               }
             : null
         }
+      />
 
       <AttentionBar
         queue={queue}
@@ -202,6 +206,17 @@ export function ControlScreen() {
       />
 
       <RemedialQueue queue={remedial} />
+      {absentNotFlying.length > 0 && (
+        <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
+          <span className="label m-0">Absent</span>
+          {absentNotFlying.map((student) => (
+            <span key={student.studentId} className="inline-flex items-center gap-2">
+              <span className="font-display text-value font-medium text-ink">{student.name}</span>
+              <PresenceBadge kind="absent" />
+            </span>
+          ))}
+        </section>
+      )}
       <ClassAverageStrip vitals={vitals} />
       <ControlAttentionQueue
         queue={queue}
@@ -239,8 +254,7 @@ export function ControlScreen() {
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
-                hideStop={quietMode}
-                hideStop={trainingWheels}
+                hideStop={quietMode || trainingWheels}
                 onSpotlight={() => setSpotlightDroneId(selectedVitals.droneId)}
               />
             ) : null
@@ -340,9 +354,8 @@ export function ControlScreen() {
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
-              hideStop={quietMode}
+              hideStop={quietMode || trainingWheels}
               softenAlerts={trainingWheels}
-              hideStop={trainingWheels}
               onSpotlight={() => setSpotlightDroneId(entry.droneId)}
             />
           ))}
@@ -379,7 +392,6 @@ function ScopeSelectedDock({
   onClear,
   onOpenCamera,
   hideStop = false,
-  hideStop,
   onSpotlight,
 }: {
   vitals: DroneVitals
@@ -536,7 +548,6 @@ function FlightStrip({
   onOpenCamera,
   hideStop = false,
   softenAlerts,
-  hideStop,
   onSpotlight,
 }: {
   vitals: DroneVitals
@@ -602,6 +613,7 @@ function FlightStrip({
         >
           {vitals.callsign}
         </Link>
+        {vitals.status === 'Offline' && <PresenceBadge kind="offline" />}
         <StudentField droneId={vitals.droneId} droneName={vitals.callsign} student={student} />
         {onSwap && swapTargetId !== null && (
           <button
@@ -755,7 +767,6 @@ function CommandRow({
   onReleaseStop,
   tracked,
   hideStop = false,
-  hideStop,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void

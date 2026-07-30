@@ -213,6 +213,8 @@ export interface Logbook {
   readonly trainerLessons: readonly TrainerLessonRecord[]
   readonly lessonDrones: readonly LessonDroneRecord[]
   readonly lessonAssignments: readonly LessonAssignmentRecord[]
+  /** Students marked absent for this session — roster members not in the room (#46). */
+  readonly absentStudentIds?: readonly string[]
   /** Students / Drones needing remedial follow-up after a lesson. */
   readonly remedialQueue?: readonly RemedialEntry[]
   /**
@@ -422,6 +424,9 @@ function load(): Logbook {
       trainerLessons: parsed.trainerLessons ?? [],
       lessonDrones: parsed.lessonDrones ?? [],
       lessonAssignments: parsed.lessonAssignments ?? [],
+      ...(Array.isArray(parsed.absentStudentIds)
+        ? { absentStudentIds: parsed.absentStudentIds }
+        : {}),
       ...(typeof parsed.revisedAt === 'number' ? { revisedAt: parsed.revisedAt } : {}),
     }
   } catch {
@@ -527,6 +532,33 @@ export function clearStudents(): void {
   save({ ...migrateRosterForward(readLogbook()), students: {} })
 }
 
+/** Whether a Student is marked absent — distinct from an Offline Drone (#46). */
+export function isStudentAbsent(book: Logbook, studentId: string): boolean {
+  return (book.absentStudentIds ?? []).includes(studentId)
+}
+
+/** Mark a roster Student absent or present. Does not remove them from the class. */
+export function setStudentAbsent(studentId: string, absent: boolean): void {
+  const book = migrateRosterForward(readLogbook())
+  if (!studentRecordOf(book, studentId)) return
+  const current = new Set(book.absentStudentIds ?? [])
+  if (absent) current.add(studentId)
+  else current.delete(studentId)
+  save({ ...book, absentStudentIds: [...current] })
+}
+
+/** Roster Students marked absent and not currently assigned to a Drone. */
+export function absentStudentsNotFlying(book: Logbook): readonly StudentRecord[] {
+  const flyingIds = new Set(
+    Object.values(book.students)
+      .map((value) => studentRecordOf(book, value)?.studentId ?? studentByName(book, value)?.studentId)
+      .filter((id): id is string => id !== undefined && id !== null),
+  )
+  return book.roster.filter(
+    (student) => isStudentAbsent(book, student.studentId) && !flyingIds.has(student.studentId),
+  )
+}
+
 /** Exchange who is flying two Drones without retyping names mid-lesson. */
 export function swapStudentAssignments(droneIdA: DroneId, droneIdB: DroneId): void {
   if (droneIdA === droneIdB) return
@@ -540,6 +572,8 @@ export function swapStudentAssignments(droneIdA: DroneId, droneIdB: DroneId): vo
   if (b === undefined) delete students[droneIdA]
   else students[droneIdA] = b
   save({ ...book, students })
+}
+
 /** Roster names not currently flying a Drone, in roster order. */
 export function unassignedRosterNames(book: Logbook): readonly string[] {
   const assigned = new Set<string>()
@@ -557,6 +591,7 @@ export function unassignedRosterNames(book: Logbook): readonly string[] {
 /** The next name `assignNextRosterName` would hand out, or null when the roster is full. */
 export function nextRosterNameForAssign(book: Logbook): string | null {
   return unassignedRosterNames(book)[0] ?? null
+}
 
 /** First Drone in board order with no Student, or null. */
 export function firstUnassignedDrone(
@@ -565,7 +600,9 @@ export function firstUnassignedDrone(
 ): DroneId | null {
   for (const droneId of droneIds) {
     if (studentOf(book, droneId) === null) return droneId
+  }
   return null
+}
 
 /**
  * Assign the next roster name to a Drone — one tap through the class list.
@@ -574,6 +611,7 @@ export function firstUnassignedDrone(
  * has someone.
  */
 export function assignNextRosterName(droneId: DroneId): string | null {
+  const book = migrateRosterForward(readLogbook())
   if (studentOf(book, droneId) !== null) return null
   const next = nextRosterNameForAssign(book)
   if (next === null) return null

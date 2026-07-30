@@ -378,7 +378,7 @@ function ScopeSelectedDock({
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 className="m-0 font-display text-body font-medium text-ink">{vitals.callsign}</h3>
-          {student && <span className="text-value text-ink-subtle">{student}</span>}
+          {student && <span className="font-display text-body font-medium text-ink">{student}</span>}
           <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
           <span className="tnum text-value text-ink-subtle">
             {vitals.batteryFraction === null
@@ -438,7 +438,24 @@ function StudentField({
   student: string | null
 }) {
   const [draft, setDraft] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
   const value = draft ?? student ?? ''
+
+  if (student && !editing) {
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation()
+          setEditing(true)
+        }}
+        className="min-h-11 cursor-pointer border-0 bg-transparent p-0 font-display text-body font-medium text-ink hover:underline"
+      >
+        <span className="visually-hidden">Who is flying {droneName}: </span>
+        {student}
+      </button>
+    )
+  }
 
   return (
     <label className="flex items-center">
@@ -446,14 +463,22 @@ function StudentField({
       <input
         value={value}
         placeholder="Add a name"
+        autoFocus={editing}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {
           if (draft !== null) assignStudent(droneId, draft)
           setDraft(null)
+          setEditing(false)
         }}
         onKeyDown={(event) => {
           if (event.key === 'Enter') event.currentTarget.blur()
+          if (event.key === 'Escape') {
+            setDraft(null)
+            setEditing(false)
+            event.currentTarget.blur()
+          }
         }}
+        onClick={(event) => event.stopPropagation()}
         className={cn(
           'min-h-11 w-28 rounded-pill border bg-canvas px-3 py-1 text-value',
           student ? 'border-hairline text-ink' : 'border-dashed border-hairline text-ink-muted',

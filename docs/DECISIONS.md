@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Maintenance flag is a strip badge
+
+- **Decision:** `MaintenanceFlag` badge; active state can bind to out-of-service later.
+- **Reason:** Feature 59.
 ## 2026-07-30 Spare inventory is grounded count
 
 - **Decision:** `SpareInventory` uses grounded vitals as spare.

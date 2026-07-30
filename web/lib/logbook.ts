@@ -1,4 +1,5 @@
 import type { DroneId, FleetEvent } from '@techtechflight/contract'
+import { scheduleLogbookCloudPush } from './logbook-sync'
 
 /**
  * What the Teacher knows that no Drone can report.
@@ -8,15 +9,13 @@ import type { DroneId, FleetEvent } from '@techtechflight/contract'
  * nowhere on the ground station to put them: the board is read-only by design and sends
  * nothing back over the socket.
  *
- * So the Logbook lives in this browser. That is a real limitation and worth being plain
- * about — it does not follow a Teacher to another laptop, and clearing site data clears
- * it. It is also the only option that keeps the board read-only, works in a school with
- * no internet, and needs no account. There is no export route: records stay in one
- * browser profile (Settings Export/Import/Clear were withdrawn).
+ * So the Logbook lives in this browser first. Dual-write (#93) may mirror a snapshot to
+ * Vercel when a sync secret is set — local save still happens first so the classroom works
+ * offline. Clearing site data clears the local copy; the cloud copy is last-write-wins.
  *
  * Trainer identity (Student / trainer Drone / prepared Lesson / LessonDrone /
  * LessonAssignment) lives here too — 3NF-shaped relations in the same browser store
- * (ADR-0005). Nothing about those rows rides the Telemetry socket.
+ * (ADR-0005 / ADR-0015). Nothing about those rows rides the Telemetry socket.
  */
 
 export type ServiceState = 'in-service' | 'watch' | 'out-of-service'
@@ -197,10 +196,13 @@ export interface Logbook {
   readonly trainerDrones: readonly TrainerDroneRecord[]
   /** Prepared Lessons in the Trainer DB (plans), not closed LessonRecords. */
   readonly trainerLessons: readonly TrainerLessonRecord[]
-  /** Lesson ↔ Drone membership for a prepared Lesson. */
   readonly lessonDrones: readonly LessonDroneRecord[]
-  /** Lesson ↔ Drone → Student for a prepared Lesson. */
   readonly lessonAssignments: readonly LessonAssignmentRecord[]
+  /**
+   * When this browser last revised the Logbook. Used for cloud last-write-wins (#93).
+   * Absent on records written before dual-write.
+   */
+  readonly revisedAt?: number
 }
 
 /**
@@ -403,6 +405,7 @@ function load(): Logbook {
       trainerLessons: parsed.trainerLessons ?? [],
       lessonDrones: parsed.lessonDrones ?? [],
       lessonAssignments: parsed.lessonAssignments ?? [],
+      ...(typeof parsed.revisedAt === 'number' ? { revisedAt: parsed.revisedAt } : {}),
     }
   } catch {
     // A locked-down school browser can refuse storage, and a half-written record is
@@ -413,12 +416,28 @@ function load(): Logbook {
 }
 
 function save(next: Logbook): void {
-  cache = next
+  const stamped: Logbook = { ...next, revisedAt: Date.now() }
+  cache = stamped
   cacheIsFresh = true
   try {
-    window.localStorage.setItem(LOGBOOK_KEY, JSON.stringify(next))
+    window.localStorage.setItem(LOGBOOK_KEY, JSON.stringify(stamped))
   } catch {
     // Kept in memory for this session even when it cannot be persisted.
+  }
+  for (const listener of listeners) listener()
+  // Dual-write: local already won; cloud push is best-effort and debounced (#93).
+  scheduleLogbookCloudPush(stamped)
+}
+
+/** Replace the local Logbook from a cloud snapshot (hydrate). Does not re-push. */
+export function replaceLogbookFromCloud(book: Logbook, revisedAt: number): void {
+  const stamped: Logbook = { ...book, revisedAt }
+  cache = stamped
+  cacheIsFresh = true
+  try {
+    window.localStorage.setItem(LOGBOOK_KEY, JSON.stringify(stamped))
+  } catch {
+    /* memory only */
   }
   for (const listener of listeners) listener()
 }

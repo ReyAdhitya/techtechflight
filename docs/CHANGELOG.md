@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Freeze scope on Control.** **Freeze scope** snapshots Drone positions, the scope window,
+  and conflict lines while Telemetry and flight strips keep updating — same discipline as
+  camera wall freeze. **Resume updates** catches up from the live Fleet.
 - **Ghost paths on the Scope (Control).** Optional **Ghost paths** toggle draws faint dashed
   recent trails on top-down view. Positions accumulate in a browser ring buffer — FleetHistory
   has no position trail yet, so the toggle works with empty paths until Drones move.

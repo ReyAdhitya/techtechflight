@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Proximity wall at `/walls/proximity`
+
+- **Decision:** `/walls/proximity` renders `ProximityWall` — one linked tile per unique pair
+  of airborne Drones closer than **`SEPARATION_WARNING_M` (1.5 m)** from vitals, deduped the
+  same way Scope draws conflict lines. Summary: `N close pairs`; distance readout uses one
+  decimal and ` m apart`. Click → `/drone?id=` on the lexicographically first id in the
+  pair. Empty when all clear. Display-only.
+- **Reason:** Feature 11 proximity risk wall — whole-class separation glance without Scope.
+- **Note:** Pair logic lives in `proximity-wall.ts`; hub link syncs in a later wave.
+
 ## 2026-07-30 Lost-link siren is visual pulse on Walls, not audio
 
 - **Decision:** `LostLinkSiren` mounts in `WallsShell` when any vitals entry is Offline,

@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Attention bar is a closed dropdown
+
+- **Decision:** Replace the single rotating “next alert” panel with a `<details>`
+  disclosure: summary shows count + worst line; body lists every queue item with
+  “I have this”. Empty state unchanged (count at zero + calm sentence).
+- **Reason:** Owner — the advancing single alert felt like the UI was moving and made
+  them dizzy.
+
 ## 2026-07-30 Fleet Details carries More details instruments
 
 - **Decision:** Keep Fleet tile **Details** as an on-board dialog. Add a **More details**

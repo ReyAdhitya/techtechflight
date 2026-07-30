@@ -38,6 +38,7 @@ import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { LessonStrip } from './LessonStrip'
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
 import { LiveHeadcount } from './LiveHeadcount'
+import { SimLandAllButton } from './SimLandAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
 import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { Scope } from './Scope'
@@ -248,6 +249,16 @@ export function ControlScreen() {
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+            {scenarios ? (
+              <SimLandAllButton
+                airborne={airborneCount}
+                onLandAll={() => {
+                  for (const entry of vitals) {
+                    if (entry.airborne) scenarios.setAltitude(entry.droneId, 0)
+                  }
+                }}
+              />
+            ) : null}
             <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
           </div>
           {Object.keys(book.students).length > 0 && (

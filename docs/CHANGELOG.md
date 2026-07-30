@@ -13,6 +13,8 @@ would notice.
 
 ### Changed
 
+- **Charge reading gets an iPhone-style battery glyph** on Control strips and the Scope
+  dock — fill tracks fraction; low charge uses the Not Ready colour.
 - **Dual wall: pick Drones from dropdowns.** Each camera pane has a select; choice updates
   `?a=` / `?b=` so the pair stays shareable. Defaults remain the first two.
 - **Lesson strip actions sit together.** Bookmark, Note incident, and End share one

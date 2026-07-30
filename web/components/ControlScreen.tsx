@@ -27,11 +27,10 @@ import {
   SEVERITY_PRESENTATION,
 } from '@/lib/vitals-presentation'
 import { formatAge } from '@/lib/age'
-import { formatBattery } from '@/lib/battery'
-import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
 import { AttentionBar } from './AttentionBar'
+import { BatteryChargeReading } from './BatteryChargeReading'
 import { CameraRecordAllButton } from './CameraRecordAllButton'
 import { CameraRecordingClip } from './CameraRecordingClip'
 import { CameraSlide } from './CameraSlide'
@@ -333,11 +332,7 @@ function ScopeSelectedDock({
           <h3 className="m-0 font-display text-body font-medium text-ink">{vitals.callsign}</h3>
           {student && <span className="font-display text-body font-medium text-ink">{student}</span>}
           <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
-          <span className="tnum text-value text-ink-subtle">
-            {vitals.batteryFraction === null
-              ? 'Charge not reported'
-              : `${formatBattery(vitals.batteryFraction)} · ${formatBatteryTimeBudget(vitals.batteryFraction)}`}
-          </span>
+          <BatteryChargeReading fraction={vitals.batteryFraction} />
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -545,11 +540,7 @@ function FlightStrip({
          * to "is it going up or down", which one height cannot give.
          */}
         <span className="tnum text-value text-ink-subtle">{formatVerticalMovement(vitals)}</span>
-        <span className="tnum text-value text-ink-subtle">
-          {vitals.batteryFraction === null
-            ? 'Charge not reported'
-            : `${formatBattery(vitals.batteryFraction)} · ${formatBatteryTimeBudget(vitals.batteryFraction)}`}
-        </span>
+        <BatteryChargeReading fraction={vitals.batteryFraction} />
         <span className="tnum ml-auto text-right text-value text-ink-muted min-[60rem]:ml-0">
           {vitals.responseAgeMs === null
             ? 'No response yet'

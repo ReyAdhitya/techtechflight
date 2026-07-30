@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Walls TV mode toggles Cameras and Status
+
+- **Decision:** `/walls/tv` mounts CameraWall or StatusWall with a toggle; Exit TV → `/walls`. No Settings link on this surface.
+- **Reason:** Feature 21.
+- **Note:** SiteHeader still present via app layout.
+
+
 ## 2026-07-30 End-lesson landed wall at `/walls/landed`
 
 - **Decision:** `/walls/landed` renders `LandedWall` — one linked tile per Drone in board

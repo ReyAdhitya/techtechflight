@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
+
 - **End-lesson landed wall (`/walls/landed`).** One tile per Drone — green when on the
   ground, red when still airborne; summary landed / still flying counts; tiles link to Drone
   detail. Read-only. Not on the Walls hub yet.
@@ -94,6 +96,8 @@ would notice.
   fitted” on Drone 2/4/6 in the default Fleet. Hardware may still omit the field.
 
 ### Added
+
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **Walls hub lists Proximity through Spotlight** after those walls landed.
 
@@ -214,6 +218,8 @@ would notice.
   behind route params and warm leftovers. Key `'watch'` and the five Status words untouched.
 
 ### Added
+
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **Walls hub lists Proximity through Spotlight** after those walls landed.
 
@@ -395,6 +401,8 @@ would notice.
   "TechTech Readyboard". Every tab now reads "… · Flight Deck · TechTech".
 
 ### Added
+
+- **Walls TV mode (`/walls/tv`).** Toggle Cameras or Status for a classroom display; Exit TV returns to the hub.
 
 - **Walls hub lists Proximity through Spotlight** after those walls landed.
 

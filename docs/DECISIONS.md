@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Live headcount is airborne vs grounded counts
+
+- **Decision:** `LiveHeadcount` shows `vitals.airborne` true/false tallies next to the Every Drone heading.
+- **Reason:** Feature 29 — glance how many are up without scanning strips.
+- **Note:** Board order of strips unchanged.
+
 ## 2026-07-30 End-period prompt lands via setAltitude(0)
 
 - **Decision:** `LessonTimerBanner.onExpire` opens `EndPeriodLandPrompt`. Sim land-all calls `scenarios.setAltitude(id, 0)` for airborne craft — not a hardware Command surface (ADR-0011 / C9).

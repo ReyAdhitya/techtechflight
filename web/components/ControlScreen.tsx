@@ -31,7 +31,11 @@ import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { LessonStrip } from './LessonStrip'
+<<<<<<< HEAD
 import { LessonTimerBanner } from './walls/LessonTimerBanner'
+=======
+import { LiveHeadcount } from './LiveHeadcount'
+>>>>>>> 72d8818 (feat: live headcount)
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
 import { useFleet } from './FleetProvider'
@@ -78,6 +82,8 @@ export function ControlScreen() {
   // Attention bar (`alertQueue`); reshuffling strips when alerts appear or clear is what
   // made this list dizzying. `FleetState.drones` (and thus `vitals`) are already that order.
   const strips = vitals
+  const airborneCount = vitals.filter((entry) => entry.airborne).length
+  const groundedCount = vitals.length - airborneCount
   const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
   const cameraDrone =
     cameraDroneId === null
@@ -190,6 +196,7 @@ export function ControlScreen() {
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
+          <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
           {Object.keys(book.students).length > 0 && (
             <button
               type="button"

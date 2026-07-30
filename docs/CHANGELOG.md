@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Class average strip on Control.** Mean airborne height and readiness percentage above the
+  scope — glanceable fleet summary without opening a wall.
 - **Live headcount on Control.** Airborne / grounded counts beside Every Drone.
 - **End-period land prompt.** When the Control lesson timer hits zero, a dialog offers sim land-all (altitude 0) or dismiss.
 - **Lesson warm-up.** After Start, a 60s countdown overlay on `/lesson` (Skip available); once per lesson id in sessionStorage.

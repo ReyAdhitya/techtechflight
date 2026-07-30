@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Scope layout presets.** Classroom / wide / tight presets under the Control scope.
 - **Battery swap checklist.** Five-step local checklist on Lesson prep.
 - **Maintenance grounding flag.** Badge for craft held for maintenance.
 - **Spare inventory.** Grounded count shown as spare beside headcount on Control.

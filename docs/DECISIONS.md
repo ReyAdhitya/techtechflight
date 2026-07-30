@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Camera Record is one session mark, many buttons
+
+- **Decision:** Shared `camera-recording` session store. Per-Drone **Record** on Control
+  strips, Scope dock, Camera wall tiles, and CameraPane; **Record all cameras** on
+  Control Every Drone and Cameras wall. Still not a Fleet Command (ADR-0011); no media
+  bytes captured yet — the mark is the product until clip download lands.
+- **Reason:** Owner — could not find the old school-stream-only “Save clip” stub; wants
+  one-by-one and all-Fleet recording controls.
+
 ## 2026-07-30 Lesson strip actions are one cluster
 
 - **Decision:** Group Bookmark / Note incident / End in a single flex on the Lesson strip;

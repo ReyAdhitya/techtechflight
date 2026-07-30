@@ -36,6 +36,7 @@ import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
 import { AttentionBar } from './AttentionBar'
 import { RemedialQueue } from './RemedialQueue'
 import { ClassAverageStrip } from './ClassAverageStrip'
+import { YoloLessonScoreStrip } from './YoloLessonScoreStrip'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
 import { CameraSlide } from './CameraSlide'
 import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
@@ -218,6 +219,7 @@ export function ControlScreen() {
         </section>
       )}
       <ClassAverageStrip vitals={vitals} />
+      <YoloLessonScoreStrip counts={vitals.map(() => 0)} />
       <ControlAttentionQueue
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}

@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Auto PDF after lesson.** Ending a lesson opens a confirm dialog to download the reports PDF.
 - **Before/after lesson scores.** Score pair formatter and strip for lesson summaries.
 - **YOLO lesson scoring.** Class average of detection counts on Control (stub zeros until detector tallies feed in).
 

@@ -7,6 +7,8 @@ would notice.
 
 ### Added
 
+- **Peer demo spotlight on Control.** Spotlight button on each strip opens a large watch-only
+  CameraPane for class demo; End spotlight dismisses. No Commands (C9).
 - **Class average strip on Control.** Mean airborne height and readiness percentage above the
   scope — glanceable fleet summary without opening a wall.
 - **Live headcount on Control.** Airborne / grounded counts beside Every Drone.

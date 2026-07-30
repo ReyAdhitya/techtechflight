@@ -5,6 +5,12 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **Classroom Walls hub (`/walls`).** SiteNav “Walls” after Control opens a hub with links
+  to Cameras, Status, Ready, and Battery subroutes. Shared `WallsShell` + `WallGrid`
+  primitives; subroutes ship placeholder tiles named from the Fleet until each wall lands.
+
 ### Fixed
 
 - **Front/Side Scope labels no longer double-print when marks stack (#86).** Coincident

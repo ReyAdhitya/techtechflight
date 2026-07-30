@@ -794,6 +794,31 @@ export function addIncident(id: string, incident: LessonIncident): void {
 }
 
 /**
+ * Teacher-written incident note on a running lesson — Logbook only (ADR-0011).
+ *
+ * Distinct from fleet events copied at lesson close; this is what the Teacher observed.
+ */
+export function addTeacherIncidentNote(
+  lessonId: string,
+  at: number,
+  note: string,
+  opts?: { readonly droneId?: DroneId; readonly droneName?: string },
+): void {
+  const trimmed = note.trim()
+  if (trimmed === '') return
+  const book = readLogbook()
+  const running = book.lessons.find((lesson) => lesson.id === lessonId && lesson.endedAt === null)
+  if (!running) return
+  addIncident(lessonId, {
+    at,
+    text: trimmed,
+    severity: 'attention',
+    ...(opts?.droneId !== undefined ? { droneId: opts.droneId } : {}),
+    ...(opts?.droneName !== undefined ? { droneName: opts.droneName } : {}),
+  })
+}
+
+/**
  * Which Exercise a Lesson is on, and how far through the sequence it is.
  *
  * Advances on the durations the Teacher gave. An Exercise with no duration has no end, so

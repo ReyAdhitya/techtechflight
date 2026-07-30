@@ -34,6 +34,7 @@ import {
 import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
 import { LessonBookmarkControl } from './LessonBookmarkControl'
+import { LessonIncidentNoteControl } from './LessonIncidentNoteControl'
 import { RemedialQueue } from './RemedialQueue'
 
 /**
@@ -320,6 +321,13 @@ function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) 
         startedAt={lesson.startedAt}
         now={now}
         bookmarks={lesson.bookmarks ?? []}
+      />
+
+      <LessonIncidentNoteControl
+        lessonId={lesson.id}
+        startedAt={lesson.startedAt}
+        now={now}
+        incidents={lesson.incidents}
       />
 
       <Link

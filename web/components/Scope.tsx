@@ -5,6 +5,8 @@ import {
   type ScopeLabelPlacement,
 } from '@/lib/scope-label-placement'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
+import type { GhostPathStore } from '@/lib/scope-ghost-paths'
+import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
 import { cn } from '@/lib/utils'
 
 /**
@@ -38,6 +40,7 @@ export function Scope({
   selected,
   onSelect,
   selectedPanel,
+  ghostPaths,
 }: {
   drones: readonly DroneState[]
   /**
@@ -58,6 +61,12 @@ export function Scope({
    * collapsed or when nothing is selected — Reports never passes one.
    */
   selectedPanel?: ReactNode
+  /**
+   * Recent east/north samples per Drone, accumulated on the board. FleetHistory does not
+   * carry position trails yet — when absent or empty, ghost paths toggle still works but
+   * draws nothing.
+   */
+  ghostPaths?: GhostPathStore
 }) {
   /*
    * The window already on screen — its size and where its middle sits. Held across renders
@@ -81,6 +90,7 @@ export function Scope({
    * browser Fullscreen API — classroom projectors and tablets are unreliable with the latter.
    */
   const [expanded, setExpanded] = useState(false)
+  const [showGhostPaths, setShowGhostPaths] = useState(false)
   const exitFullScreenRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -148,6 +158,7 @@ export function Scope({
 
   const elevation = isElevation(view)
   const showSelectedPanel = expanded && selected != null && selectedPanel != null
+  const pathsReady = ghostPaths !== undefined && ghostPathsAvailable(ghostPaths)
   const labelById = scopeLabelPlacements(
     drawn.map((drone) => {
       const point = at(drone)
@@ -217,6 +228,21 @@ export function Scope({
             </button>
           ))}
         </div>
+        {ghostPaths !== undefined && (
+          <button
+            type="button"
+            onClick={() => setShowGhostPaths((on) => !on)}
+            aria-pressed={showGhostPaths}
+            className={cn(
+              'min-h-11 cursor-pointer rounded-pill px-4 py-1.5 text-value',
+              showGhostPaths
+                ? 'border-0 bg-ink font-medium text-canvas'
+                : 'border border-hairline bg-transparent text-ink hover:border-ink',
+            )}
+          >
+            Ghost paths
+          </button>
+        )}
         <button
           ref={exitFullScreenRef}
           type="button"
@@ -404,6 +430,31 @@ export function Scope({
               />
             )
           })}
+
+          {view === 'top-down' &&
+            showGhostPaths &&
+            ghostPaths &&
+            [...ghostPaths.entries()].map(([droneId, points]) => {
+              if (points.length < 2) return null
+              const path = points
+                .map((point, index) => {
+                  const { x, y } = scope.project(point.eastM, point.northM)
+                  return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+                })
+                .join(' ')
+              return (
+                <path
+                  key={`ghost-${droneId}`}
+                  d={path}
+                  fill="none"
+                  className="stroke-ink-muted"
+                  strokeWidth="1.5"
+                  strokeDasharray="5 4"
+                  vectorEffect="non-scaling-stroke"
+                  opacity="0.65"
+                />
+              )
+            })}
         </svg>
 
         {drawn.map((drone) => (
@@ -445,6 +496,13 @@ export function Scope({
          * that is not there.
          */}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
+        {view === 'top-down' && showGhostPaths && (
+          <span>
+            {pathsReady
+              ? 'Faint dashed = recent path'
+              : 'Ghost paths on — waiting for movement history'}
+          </span>
+        )}
         {view === 'top-down' && conflicts.length > 0 && <span>Solid = too close</span>}
         {elevation && heightless.length > 0 && (
           /*

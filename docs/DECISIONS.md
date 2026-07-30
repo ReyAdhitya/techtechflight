@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Ghost paths on the Scope
+
+- **Decision:** **Ghost paths** are optional on Control's Scope (top-down only). Positions
+  accumulate client-side in `scope-ghost-paths.ts` (two-minute window, 40 points per Drone).
+  `FleetHistory` carries events and charge samples only — no wire trail yet — so Reports and
+  other Scope mounts omit the toggle; enabling with no movement shows caption copy only.
+- **Reason:** Teachers asked for recent trails without claiming Telemetry history that does
+  not exist.
+- **Note:** When position history lands on the ground station, this buffer can hydrate from
+  it; until then the stub toggle documents the gap honestly.
 ## 2026-07-30 Lesson bookmark moment on Control and Lesson
 
 - **Decision:** **Bookmark moment** appends `{ at, note? }` to the running lesson in the

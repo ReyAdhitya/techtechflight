@@ -7,6 +7,13 @@ would notice.
 
 ### Added
 
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
+
+- **Landing pad wall (`/walls/pads`).** One tile per Drone with landing-pad QR seen or not on
+  the camera picture; reuses the camera landing-target readout. Simulated streaming scans the
+  static fixture; idle cameras and hardware show an em dash until a school-frame scan path
+  lands. Summary seen count; tiles link to Drone detail. Read-only — never written into
+  Telemetry.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 
 - **Landing watch wall (`/walls/landing`).** When any Drone is descending or auto-landing,
@@ -66,6 +73,7 @@ would notice.
 
 ### Added
 
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
@@ -179,6 +187,7 @@ would notice.
 
 ### Added
 
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 
@@ -353,6 +362,7 @@ would notice.
 
 ### Added
 
+- **QR pad wall (/walls/pads).** Per-Drone pad Not seen until a sighting store exists.
 - **Landing watch (`/walls/landing`).** Focus descending/auto-landing/low airborne craft; else show all with height.
 - **Proximity risk wall (/walls/proximity).** Close pairs under SEPARATION_WARNING_M from vitals; display-only.
 

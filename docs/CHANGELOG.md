@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Camera wall freeze (`/walls/cameras`).** Freeze wall snapshots tile names and camera
+  labels while Telemetry and ScenarioControls keep running; Resume updates catches up.
+  CameraSlide stays live so Start/Stop still works during a freeze.
 - **Who's-who labels on the camera wall.** Each tile names the assigned student from the
   Logbook when one exists; otherwise the Drone callsign only. Simulated-feed overlays use
   the same label.

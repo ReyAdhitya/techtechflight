@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Drop Battery swap checklist
+
+- **Decision:** Remove `BatterySwapChecklist` from Lesson (and delete the component).
+- **Reason:** Owner — not needed; local checkbox chrome without Commands.
+
 ## 2026-07-30 No Camera button on Fleet Details
 
 - **Decision:** Drop the quiet **Camera** footer control (and Fleet `CameraSlide` host)

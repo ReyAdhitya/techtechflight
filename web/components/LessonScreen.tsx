@@ -18,7 +18,6 @@ import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { AssignmentColumn } from './AssignmentColumn'
-import { BatterySwapChecklist } from './BatterySwapChecklist'
 import { ExerciseList } from './ExerciseList'
 import { LessonPlanWizard } from './LessonPlanWizard'
 import { LessonPrepPanel } from './LessonPrepPanel'
@@ -232,7 +231,6 @@ function PreFlight({
         </p>
       )}
 
-      <BatterySwapChecklist />
       <LessonPrepPanel drones={drones} book={book} />
 
       <AssignmentColumn drones={drones} book={book} />

@@ -26,6 +26,8 @@ would notice.
 
 ### Removed
 
+- **Battery swap checklist.** Five-step Power off → Confirm charge list gone from Lesson
+  prep — Teachers already know the pack swap; it was chrome.
 - **Camera button on Fleet Details.** Dialog footer is only **Back to the Fleet**. Camera
   still lives under **More details** (and Walls / Control); no separate slide from Fleet.
 - **Spotlight.** Peer-demo Spotlight on Control strips/dock, `/walls/spotlight`, and hub

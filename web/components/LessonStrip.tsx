@@ -9,6 +9,7 @@ import {
   type LessonRecord,
 } from '@/lib/logbook'
 import { describeEvent } from '@/lib/telemetry-presentation'
+import { LessonBookmarkControl } from './LessonBookmarkControl'
 
 /**
  * The lesson, while it is running, above everything that needs watching.
@@ -50,6 +51,13 @@ export function LessonStrip({
           </span>
         )}
       </div>
+
+      <LessonBookmarkControl
+        lessonId={lesson.id}
+        startedAt={lesson.startedAt}
+        now={now}
+        bookmarks={lesson.bookmarks ?? []}
+      />
 
       <button
         type="button"

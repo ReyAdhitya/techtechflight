@@ -33,6 +33,7 @@ import {
 } from './walls/ready-mapping'
 import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
+import { LessonBookmarkControl } from './LessonBookmarkControl'
 import { RemedialQueue } from './RemedialQueue'
 
 /**
@@ -313,6 +314,13 @@ function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) 
         Monitor from the Flight Control Center. Every item requiring action is listed there, in
         the order it requires action, and the lesson is ended from there.
       </p>
+
+      <LessonBookmarkControl
+        lessonId={lesson.id}
+        startedAt={lesson.startedAt}
+        now={now}
+        bookmarks={lesson.bookmarks ?? []}
+      />
 
       <Link
         href="/control"

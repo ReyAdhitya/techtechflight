@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Ghost paths on the Scope (Control).** Optional **Ghost paths** toggle draws faint dashed
+  recent trails on top-down view. Positions accumulate in a browser ring buffer — FleetHistory
+  has no position trail yet, so the toggle works with empty paths until Drones move.
 - **Lesson bookmark moment on Control and Lesson.** While a lesson runs, **Bookmark moment**
   saves elapsed time plus an optional note into the Logbook — local only, no Command
   (ADR-0011). Recent bookmarks list under the control on Control and `/lesson`.

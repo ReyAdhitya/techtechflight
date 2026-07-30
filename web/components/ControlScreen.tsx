@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
 import Link from 'next/link'
 import {
   assignStudent,
@@ -27,6 +27,7 @@ import { formatAge } from '@/lib/age'
 import { formatBattery } from '@/lib/battery'
 import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
+import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
 import { AttentionBar } from './AttentionBar'
 import { RemedialQueue } from './RemedialQueue'
 import { ClassAverageStrip } from './ClassAverageStrip'
@@ -68,6 +69,7 @@ export function ControlScreen() {
   const [selected, setSelected] = useState<string | null>(null)
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
+  const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
 
@@ -75,6 +77,11 @@ export function ControlScreen() {
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
   const remedial = remedialQueueOf(book)
+
+  useEffect(() => {
+    if (!state) return
+    setGhostPaths((current) => recordGhostPaths(current, state.drones, now))
+  }, [state, now])
 
   if (!state) {
     return (
@@ -185,6 +192,7 @@ export function ControlScreen() {
         <Scope
           drones={state.drones}
           vitals={vitals}
+          ghostPaths={ghostPaths}
           selected={selected}
           onSelect={(droneId) => setSelected((current) => (current === droneId ? null : droneId))}
           selectedPanel={

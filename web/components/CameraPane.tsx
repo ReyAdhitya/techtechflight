@@ -1,4 +1,3 @@
-import { CameraRecordingClip } from './CameraRecordingClip'
 'use client'
 
 import {
@@ -8,6 +7,7 @@ import {
   useSyncExternalStore,
   type RefObject,
 } from 'react'
+import { CameraRecordingClip } from './CameraRecordingClip'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
 import { boardDetector } from '@/lib/board-detector'

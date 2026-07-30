@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Who's-who labels on the camera wall.** Each tile names the assigned student from the
+  Logbook when one exists; otherwise the Drone callsign only. Simulated-feed overlays use
+  the same label.
 - **Scope camera filmstrip on Control.** Horizontal row of watch-only camera thumbs under
   the scope in board order; click opens CameraSlide. The lit scope mark lights its thumb.
 

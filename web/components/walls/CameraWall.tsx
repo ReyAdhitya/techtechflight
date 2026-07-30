@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { useFleet } from '@/components/FleetProvider'
 import { CameraSlide } from '@/components/CameraSlide'
+import { readLogbook, readServerLogbook, studentOf, subscribeLogbook } from '@/lib/logbook'
 import { cn } from '@/lib/utils'
+import { cameraTileLabel } from './camera-wall'
 import { CameraTile } from './CameraTile'
 import { WallGrid, WallTile } from './WallGrid'
 
@@ -15,6 +17,7 @@ import { WallGrid, WallTile } from './WallGrid'
  */
 export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLabel?: string }) {
   const { snapshot, vitals, scenarios } = useFleet()
+  const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const drones = snapshot.state?.drones
 
@@ -32,6 +35,7 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
           const drone = drones.find((d) => d.id === entry.droneId)
           if (!drone) return null
           const name = drone.name
+          const label = cameraTileLabel(name, studentOf(book, entry.droneId))
           return (
             <WallTile key={entry.droneId} className="gap-0 p-0">
               <button
@@ -41,12 +45,13 @@ export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
                   'flex min-h-[6rem] w-full cursor-pointer flex-col gap-2 rounded-sm border-0 bg-transparent p-3 text-left text-ink',
                   'hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
                 )}
-                aria-label={`${name} camera`}
+                aria-label={`${label} camera`}
               >
-                <p className="m-0 font-display text-body font-medium text-ink">{name}</p>
+                <p className="m-0 font-display text-body font-medium text-ink">{label}</p>
                 <CameraTile
                   droneId={drone.id}
                   droneName={name}
+                  label={label}
                   drone={drone}
                   camera={drone.telemetry?.camera}
                   scenarios={scenarios}

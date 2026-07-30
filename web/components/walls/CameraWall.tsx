@@ -1,0 +1,71 @@
+'use client'
+
+import { useState } from 'react'
+import { useFleet } from '@/components/FleetProvider'
+import { CameraSlide } from '@/components/CameraSlide'
+import { cn } from '@/lib/utils'
+import { CameraTile } from './CameraTile'
+import { WallGrid, WallTile } from './WallGrid'
+
+/**
+ * Every fitted camera in the class at once — board order, watch-only tiles.
+ *
+ * Click a tile to open CameraSlide with the full CameraPane (Start/Stop, YOLO, QR).
+ * Stream URLs stay in the school map; Telemetry never carries one.
+ */
+export function CameraWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLabel?: string }) {
+  const { snapshot, vitals, scenarios } = useFleet()
+  const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
+  const drones = snapshot.state?.drones
+
+  if (!drones || drones.length === 0) {
+    return <p className="m-0 text-body text-ink-muted">{emptyLabel}</p>
+  }
+
+  const cameraDrone =
+    cameraDroneId === null ? null : (drones.find((drone) => drone.id === cameraDroneId) ?? null)
+
+  return (
+    <>
+      <WallGrid>
+        {vitals.map((entry) => {
+          const drone = drones.find((d) => d.id === entry.droneId)
+          if (!drone) return null
+          const name = drone.name
+          return (
+            <WallTile key={entry.droneId} className="gap-0 p-0">
+              <button
+                type="button"
+                onClick={() => setCameraDroneId(entry.droneId)}
+                className={cn(
+                  'flex min-h-[6rem] w-full cursor-pointer flex-col gap-2 rounded-sm border-0 bg-transparent p-3 text-left text-ink',
+                  'hover:bg-canvas focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
+                )}
+                aria-label={`${name} camera`}
+              >
+                <p className="m-0 font-display text-body font-medium text-ink">{name}</p>
+                <CameraTile
+                  droneId={drone.id}
+                  droneName={name}
+                  drone={drone}
+                  camera={drone.telemetry?.camera}
+                  scenarios={scenarios}
+                />
+              </button>
+            </WallTile>
+          )
+        })}
+      </WallGrid>
+
+      {cameraDrone ? (
+        <CameraSlide
+          droneId={cameraDrone.id}
+          droneName={cameraDrone.name}
+          camera={cameraDrone.telemetry?.camera}
+          scenarios={scenarios}
+          onClose={() => setCameraDroneId(null)}
+        />
+      ) : null}
+    </>
+  )
+}

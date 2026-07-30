@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Roster import paste.** Students screen accepts one-name-per-line paste.
 - **Reports student ids.** Helper joins lesson assignment names for report rows.
 - **Weekly teacher digest.** Reports shows finished/started lesson counts for the last 7 days.
 

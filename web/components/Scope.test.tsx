@@ -825,8 +825,8 @@ describe('ghost paths on the scope', () => {
       [
         'drone-1',
         [
-          { eastM: 0, northM: 0, at: 0 },
-          { eastM: 2, northM: 0, at: 1000 },
+          { eastM: 0, northM: 0, altitudeM: 1, at: 0 },
+          { eastM: 2, northM: 0, altitudeM: 1.5, at: 1000 },
         ],
       ],
     ])
@@ -840,6 +840,28 @@ describe('ghost paths on the scope', () => {
     expect(toggle).toHaveAttribute('aria-pressed', 'false')
     fireEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    expect(container.querySelector('path[d^="M"]')).not.toBeNull()
+    expect(screen.getByText('Faint dashed = recent path')).toBeInTheDocument()
+  })
+
+  it('draws ghost paths on Side when altitude history exists', () => {
+    const ghostPaths = new Map([
+      [
+        'drone-1',
+        [
+          { eastM: 0, northM: 0, altitudeM: 0.5, at: 0 },
+          { eastM: 0, northM: 2, altitudeM: 1.5, at: 1000 },
+        ],
+      ],
+    ])
+    const { container } = render(
+      <Scope
+        drones={[atHeight('Drone 1', 0, 2, 1.5)]}
+        ghostPaths={ghostPaths}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ghost paths' }))
     expect(container.querySelector('path[d^="M"]')).not.toBeNull()
     expect(screen.getByText('Faint dashed = recent path')).toBeInTheDocument()
   })

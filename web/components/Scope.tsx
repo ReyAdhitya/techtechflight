@@ -514,20 +514,51 @@ export function Scope({
             )
           })}
 
-          {view === 'top-down' &&
-            showGhostPaths &&
+          {showGhostPaths &&
             ghostPaths &&
             [...ghostPaths.entries()].map(([droneId, points]) => {
               if (points.length < 2) return null
-              const path = points
+              if (view === 'top-down') {
+                const path = points
+                  .map((point, index) => {
+                    const { x, y } = scope.project(point.eastM, point.northM)
+                    return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
+                  })
+                  .join(' ')
+                return (
+                  <path
+                    key={`ghost-${droneId}`}
+                    d={path}
+                    fill="none"
+                    className="stroke-ink-muted"
+                    strokeWidth="1.5"
+                    strokeDasharray="5 4"
+                    vectorEffect="non-scaling-stroke"
+                    opacity="0.65"
+                  />
+                )
+              }
+
+              // Side / Front: horizontal along the floor axis, vertical from altitude.
+              const usable = points.filter((point) => point.altitudeM !== null)
+              if (usable.length < 2) return null
+              const path = usable
                 .map((point, index) => {
-                  const { x, y } = scope.project(point.eastM, point.northM)
+                  const altitudeM = Math.min(ceilingM, Math.max(0, point.altitudeM!))
+                  const y = ceilingM - altitudeM
+                  const x =
+                    view === 'side'
+                      ? (() => {
+                          const { y: northY } = scope.project(point.eastM, point.northM)
+                          return scope.heightM - northY
+                        })()
+                      : scope.project(point.eastM, point.northM).x
                   return `${index === 0 ? 'M' : 'L'} ${x} ${y}`
                 })
                 .join(' ')
               return (
                 <path
-                  key={`ghost-${droneId}`}
+                  key={`ghost-${droneId}-${view}`}
                   d={path}
                   fill="none"
                   className="stroke-ink-muted"
@@ -586,7 +617,7 @@ export function Scope({
           </span>
         )}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
-        {view === 'top-down' && showGhostPaths && (
+        {showGhostPaths && (
           <span>
             {pathsReady
               ? 'Faint dashed = recent path'

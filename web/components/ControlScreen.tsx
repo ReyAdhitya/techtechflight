@@ -33,12 +33,12 @@ import { formatBattery } from '@/lib/battery'
 import { formatBatteryTimeBudget } from '@/lib/battery-budget'
 import { cn } from '@/lib/utils'
 import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
-import type { ScopeLayoutPreset } from '@/lib/scope-layout-presets'
 import { AttentionBar } from './AttentionBar'
 import { RemedialQueue } from './RemedialQueue'
 import { ClassAverageStrip } from './ClassAverageStrip'
 import { YoloLessonScoreStrip } from './YoloLessonScoreStrip'
 import { ControlAttentionQueue } from './ControlAttentionQueue'
+import { ControlDisclosure } from './ControlDisclosure'
 import { CameraSlide } from './CameraSlide'
 import { EndPeriodLandPrompt } from './EndPeriodLandPrompt'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
@@ -53,7 +53,6 @@ import { PeerDemoSpotlight } from './PeerDemoSpotlight'
 import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { ScopeCameraFilmstrip } from './ScopeCameraFilmstrip'
-import { ScopeLayoutPresets } from './ScopeLayoutPresets'
 import { StopAuditLog } from './StopAuditLog'
 import { VoiceReadyCallouts } from './VoiceReadyCallouts'
 import { MaintenanceFlag } from './MaintenanceFlag'
@@ -89,7 +88,6 @@ export function ControlScreen() {
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [spotlightDroneId, setSpotlightDroneId] = useState<string | null>(null)
   const [endPeriodOpen, setEndPeriodOpen] = useState(false)
-  const [layoutPreset, setLayoutPreset] = useState<ScopeLayoutPreset>('classroom')
   const [quietMode, setQuietMode] = useState(false)
 
   const lesson = runningLesson(book)
@@ -184,11 +182,6 @@ export function ControlScreen() {
           onClose={() => setSpotlightDroneId(null)}
         />
       )}
-      <LessonTimerBanner
-        initialSeconds={45 * 60}
-        onExpire={() => setEndPeriodOpen(true)}
-      />
-
       <EndPeriodLandPrompt
         open={endPeriodOpen}
         onClose={() => setEndPeriodOpen(false)}
@@ -203,40 +196,57 @@ export function ControlScreen() {
         }
       />
 
-      <div className="flex flex-col gap-2"><h2 className="label m-0">Stop audit</h2><StopAuditLog /></div>
+      {/*
+       * One urgent line stays visible. The rest of the attention chrome lives in a
+       * disclosure so a long NOW/SOON list cannot shove Scope and Every Drone off-screen.
+       */}
       <AttentionBar
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
+      <ControlDisclosure summary="Waiting queue" count={queue.length}>
+        <ControlAttentionQueue
+          queue={queue}
+          studentFor={(droneId) => studentOf(book, droneId)}
+          selected={selected}
+          onSelect={(entry) => focusStrip(entry.droneId)}
+        />
+        <HeightCeilingBanner vitals={vitals} />
+      </ControlDisclosure>
 
-      <RemedialQueue queue={remedial} />
-      {absentNotFlying.length > 0 && (
-        <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
-          <span className="label m-0">Absent</span>
-          {absentNotFlying.map((student) => (
-            <span key={student.studentId} className="inline-flex items-center gap-2">
-              <span className="font-display text-value font-medium text-ink">{student.name}</span>
-              <PresenceBadge kind="absent" />
-            </span>
-          ))}
-        </section>
-      )}
-      <ClassAverageStrip vitals={vitals} />
-      <VoiceReadyCallouts readyNames={vitals.filter((v) => !v.airborne && v.status === 'Ready').map((v) => v.callsign)} />
-      <YoloLessonScoreStrip counts={vitals.map(() => 0)} />
-      <ControlAttentionQueue
-        queue={queue}
-        studentFor={(droneId) => studentOf(book, droneId)}
-        selected={selected}
-        onSelect={(entry) => focusStrip(entry.droneId)}
-      />
-
-      <HeightCeilingBanner vitals={vitals} />
+      <ControlDisclosure summary="Lesson tools">
+        <LessonTimerBanner
+          initialSeconds={45 * 60}
+          onExpire={() => setEndPeriodOpen(true)}
+        />
+        <div className="flex flex-col gap-2">
+          <h2 className="label m-0">Stop audit</h2>
+          <StopAuditLog />
+        </div>
+        <RemedialQueue queue={remedial} />
+        {absentNotFlying.length > 0 && (
+          <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
+            <span className="label m-0">Absent</span>
+            {absentNotFlying.map((student) => (
+              <span key={student.studentId} className="inline-flex items-center gap-2">
+                <span className="font-display text-value font-medium text-ink">{student.name}</span>
+                <PresenceBadge kind="absent" />
+              </span>
+            ))}
+          </section>
+        )}
+        <ClassAverageStrip vitals={vitals} />
+        <VoiceReadyCallouts
+          readyNames={vitals
+            .filter((v) => !v.airborne && v.status === 'Ready')
+            .map((v) => v.callsign)}
+        />
+        <YoloLessonScoreStrip counts={vitals.map(() => 0)} />
+      </ControlDisclosure>
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
-        <ScopeLayoutPresets value={layoutPreset} onChange={setLayoutPreset} />
         <Scope
           drones={state.drones}
           vitals={vitals}
@@ -268,13 +278,15 @@ export function ControlScreen() {
             ) : null
           }
         />
-        <ScopeCameraFilmstrip
-          vitals={vitals}
-          drones={state.drones}
-          scenarios={scenarios}
-          selected={selected}
-          onOpenCamera={setCameraDroneId}
-        />
+        <ControlDisclosure summary="Camera glance">
+          <ScopeCameraFilmstrip
+            vitals={vitals}
+            drones={state.drones}
+            scenarios={scenarios}
+            selected={selected}
+            onOpenCamera={setCameraDroneId}
+          />
+        </ControlDisclosure>
       </section>
 
       <section className="flex flex-col gap-3">
@@ -282,7 +294,7 @@ export function ControlScreen() {
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
-          <SpareInventory grounded={groundedCount} total={vitals.length} />
+            <SpareInventory grounded={groundedCount} total={vitals.length} />
             <AssignNextButton
               nextName={nextRosterName}
               targetDroneId={assignTargetDroneId}
@@ -290,6 +302,10 @@ export function ControlScreen() {
                 if (assignTargetDroneId) assignNextRosterName(assignTargetDroneId)
               }}
             />
+          </div>
+        </div>
+        <ControlDisclosure summary="Class actions">
+          <div className="flex flex-wrap items-center gap-3">
             {scenarios ? (
               <SimLandAllButton
                 airborne={airborneCount}
@@ -301,17 +317,17 @@ export function ControlScreen() {
               />
             ) : null}
             <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
+            {Object.keys(book.students).length > 0 && (
+              <button
+                type="button"
+                onClick={clearStudents}
+                className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+              >
+                Clear all assignments
+              </button>
+            )}
           </div>
-          {Object.keys(book.students).length > 0 && (
-            <button
-              type="button"
-              onClick={clearStudents}
-              className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
-            >
-              Clear all assignments
-            </button>
-          )}
-        </div>
+        </ControlDisclosure>
         {/*
          * Fixed anatomy, and it has to be fixed across strips rather than within one.
          *

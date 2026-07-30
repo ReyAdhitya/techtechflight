@@ -4,6 +4,8 @@ import type { DroneState } from '@techtechflight/contract'
 export interface GhostPathPoint {
   readonly eastM: number
   readonly northM: number
+  /** Metres AGL when known — used for Side/Front ghost paths. */
+  readonly altitudeM: number | null
   readonly at: number
 }
 
@@ -33,6 +35,7 @@ export function recordGhostPaths(
     const sample: GhostPathPoint = {
       eastM: position.eastM,
       northM: position.northM,
+      altitudeM: drone.telemetry?.altitudeM ?? null,
       at,
     }
     if (

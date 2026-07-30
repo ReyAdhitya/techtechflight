@@ -1,17 +1,15 @@
 import type { Metadata } from 'next'
 import { CameraWall } from '@/components/walls/CameraWall'
-import { LessonTimerBanner } from '@/components/walls/LessonTimerBanner'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Cameras · Walls · Flight Deck · TechTech',
-  description: 'Every fitted camera in the class at once.',
+  title: 'Projector · Walls · Flight Deck · TechTech',
+  description: 'Cameras wall for the class projector.',
 }
 
-export default function CamerasWallPage() {
+export default function ProjectorWallPage() {
   return (
-    <WallsShell title="Cameras" description="Every fitted camera in the class at once.">
-      <LessonTimerBanner />
+    <WallsShell title="Projector" description="Cameras wall for the class projector.">
       <CameraWall />
     </WallsShell>
   )

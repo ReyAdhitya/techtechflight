@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Classroom Walls live under `/walls` after Control in SiteNav
+
+- **Decision:** Sixth workflow destination is **Walls** (`/walls`), placed immediately after
+  Control. Sub-walls are `/walls/*`. Shared `WallsShell` + `WallGrid`; hub lists every
+  wall as it lands. Nav active state matches `/walls` and any `/walls/…` child. Camera-like
+  tiles open CameraSlide; status-like tiles go to `/drone?id=`. Instrument frame (same
+  family as Control).
+- **Reason:** Owner classroom-walls plan — whole-class glance without crowding Control.
+- **Note:** Feature 1 is shell + placeholders only; feeds and vitals arrive per wall.
+
 ## 2026-07-30 Trainer Drones Model/Created stay optional behind Add details
 
 - **Decision:** Settings Trainer Drones lists name + id with a quiet summary; Model and

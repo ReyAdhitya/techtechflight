@@ -10,6 +10,8 @@ would notice.
 - **Classroom Walls hub (`/walls`).** SiteNav “Walls” after Control opens a hub with links
   to Cameras, Status, Ready, and Battery subroutes. Shared `WallsShell` + `WallGrid`
   primitives; subroutes ship placeholder tiles named from the Fleet until each wall lands.
+- **Camera wall (`/walls/cameras`).** Grid of watch-only camera tiles in board order; click
+  opens CameraSlide with the full CameraPane for that Drone.
 
 ### Fixed
 

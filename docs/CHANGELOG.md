@@ -7,6 +7,9 @@ would notice.
 
 ### Changed
 
+- **Fleet Details → More details.** Opening Details on a Fleet tile keeps you on the board
+  (dialog). Charge chart, height, camera, and attitude sit under **More details** —
+  same instruments as the old full `/drone` page, without leaving Fleet.
 - **Control is three beats again.** Attention → Scope → Every Drone. Lesson tools,
   waiting queue dock, camera filmstrip, YOLO/voice/class-average strips, timer, and
   end-period prompt are off Control. Secondary actions sit under **More actions**.

@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Fleet Details carries More details instruments
+
+- **Decision:** Keep Fleet tile **Details** as an on-board dialog. Add a **More details**
+  disclosure with Charge chart, Height/landing, CameraPane, and Attitude — the content
+  that used to push Teachers onto `/drone`. Full `/drone` remains for deep links.
+- **Reason:** Owner — prefer investigating from the Fleet grid rather than a separate page.
+
 ## 2026-07-30 Drop Spotlight entirely
 
 - **Decision:** Remove peer-demo Spotlight from Control (strip + scope dock +

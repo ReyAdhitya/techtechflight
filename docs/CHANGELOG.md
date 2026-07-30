@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Voice ready callouts.** Labels list Ready grounded craft for spoken cueing.
 - **Scope layout presets.** Classroom / wide / tight presets under the Control scope.
 - **Battery swap checklist.** Five-step local checklist on Lesson prep.
 - **Maintenance grounding flag.** Badge for craft held for maintenance.

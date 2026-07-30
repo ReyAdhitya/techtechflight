@@ -1,3 +1,4 @@
+import { VoiceReadyCallouts } from './VoiceReadyCallouts'
 import { ScopeLayoutPresets } from './ScopeLayoutPresets'
 import type { ScopeLayoutPreset } from '@/lib/scope-layout-presets'
 import { MaintenanceFlag } from './MaintenanceFlag'
@@ -224,6 +225,7 @@ export function ControlScreen() {
         </section>
       )}
       <ClassAverageStrip vitals={vitals} />
+      <VoiceReadyCallouts readyNames={vitals.filter((v) => !v.airborne && v.status === 'Ready').map((v) => v.callsign)} />
       <YoloLessonScoreStrip counts={vitals.map(() => 0)} />
       <ControlAttentionQueue
         queue={queue}

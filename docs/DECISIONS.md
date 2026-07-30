@@ -9,6 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Teacher incident notes during a lesson
+
+- **Decision:** `addTeacherIncidentNote` appends attention-severity incidents to the running
+  lesson. Control and `/lesson` expose **Note incident** beside bookmark — Logbook only
+  (ADR-0011).
+- **Reason:** Feature #48 — Teachers need to record what they saw without waiting for
+  lesson close or a fault event.
+- **Note:** Auto-copied fleet incidents at close are unchanged; teacher notes use the same
+  `incidents` array with `severity: 'attention'`.
 ## 2026-07-30 Absent Student versus Offline Drone badges
 
 - **Decision:** **Absent** is a Teacher-marked roster flag (`absentStudentIds` in the Logbook).

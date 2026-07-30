@@ -9,6 +9,10 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Landing pad workflow is a sim stepper
+
+- **Decision:** Local step UI on Pads route.
+- **Reason:** Feature 65c.
 ## 2026-07-30 Stop audit is sessionStorage
 
 - **Decision:** Local session only.

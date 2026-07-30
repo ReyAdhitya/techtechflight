@@ -1,3 +1,4 @@
+import { LandingPadWorkflowSim } from '../LandingPadWorkflowSim'
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -25,7 +26,7 @@ import { WallGrid, WallTile } from './WallGrid'
 const defaultQrDecoder = createJsQrDecoder()
 
 /**
- * Landing-pad QR at a glance — one tile per Drone in board order.
+ * Landing-pad QR at a glance â€” one tile per Drone in board order.
  *
  * Read-only; reuses the camera landing-target presentation. Never writes Telemetry.
  * Tap a tile for Drone detail.
@@ -37,7 +38,7 @@ export function PadWall({
   emptyLabel?: string
   /**
    * Injected in tests. When omitted, sim + streaming scans the static landing-pad
-   * fixture — same path as `CameraPane`.
+   * fixture â€” same path as `CameraPane`.
    */
   landingScannerForDrone?: (
     droneId: string,

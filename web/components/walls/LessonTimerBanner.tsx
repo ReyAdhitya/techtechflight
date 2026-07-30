@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react'
 /** Local lesson countdown banner for the camera wall. Persist later. */
 export function LessonTimerBanner({
   initialSeconds = 45 * 60,
+  onExpire,
 }: {
   initialSeconds?: number
+  onExpire?: () => void
 }) {
   const [seconds, setSeconds] = useState(initialSeconds)
   const [running, setRunning] = useState(false)
@@ -16,6 +18,13 @@ export function LessonTimerBanner({
     const id = window.setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000)
     return () => window.clearInterval(id)
   }, [running, seconds])
+
+  useEffect(() => {
+    if (seconds === 0 && running) {
+      setRunning(false)
+      onExpire?.()
+    }
+  }, [seconds, running, onExpire])
 
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')

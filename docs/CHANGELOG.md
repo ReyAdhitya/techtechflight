@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Height ceiling banner on Control.** Alert when any Drone exceeds the 3 m classroom ceiling default; reuses the height wall threshold.
 - **Freeze scope on Control.** **Freeze scope** snapshots Drone positions, the scope window,
   and conflict lines while Telemetry and flight strips keep updating — same discipline as
   camera wall freeze. **Resume updates** catches up from the live Fleet.

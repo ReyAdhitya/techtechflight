@@ -9,6 +9,12 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Classroom geofence is a fixed 8×6 m box on Scope
+
+- **Decision:** `CLASSROOM_GEOFENCE` in `web/lib/classroom-geofence.ts` — west −4, east 4, south −3, north 3 metres from setup. Scope top-down draws a dashed `stroke-status-not-ready` rect; elevation views omit it. Caption states extents.
+- **Reason:** Feature 39 — show a nominal classroom boundary without claiming it is the room (ADR-0012 / ADR-0014).
+- **Note:** No geofence alerts yet; the line is orientation only.
+
 ## 2026-07-30 Height ceiling banner reuses the wall threshold
 
 - **Decision:** `HeightCeilingBanner` on Control calls `isOverCeiling` from `height-wall.ts` (`CLASSROOM_CEILING_M = 3`). Read-only — no Command path (ADR-0011).

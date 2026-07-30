@@ -1,22 +1,27 @@
 'use client'
 
-import { useRef } from 'react'
-import { FleetReliability } from './MaintenanceScreen'
+import { useRef, useSyncExternalStore } from 'react'
+import { FleetReliability, rankFleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
 import { LogbookLocationNote } from './LogbookLocationNote'
+import { useFleet } from './FleetProvider'
+import {
+  downloadReportsPdf,
+  REPORTS_PDF_TITLE,
+} from '@/lib/reports-pdf'
+import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
-const PRINT_TITLE = 'TechTech Flight — Lesson records'
+const PRINT_TITLE = REPORTS_PDF_TITLE
 
 /**
  * Open the browser print dialog with a document title that belongs on paper.
  *
- * The URL and clock in the preview are the browser's own Headers and footers — CSS
- * cannot remove them. Clearing the tab title to the product line, and putting the
- * printed-at stamp in the page itself, is what we can control; Teachers turn the
- * browser chrome off under More settings.
+ * Secondary to Download PDF (#92). The URL and clock in the preview are the browser's
+ * own Headers and footers — CSS cannot remove them. Teachers who still Print should
+ * turn Headers and footers off under More settings.
  */
 function printReports(stamp: HTMLElement | null): void {
   if (stamp) {
@@ -51,6 +56,23 @@ function printReports(stamp: HTMLElement | null): void {
  */
 export function ReportsScreen() {
   const printedAtRef = useRef<HTMLTimeElement>(null)
+  const { snapshot } = useFleet()
+  const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+
+  function onDownloadPdf() {
+    const drones = snapshot.state?.drones ?? []
+    const events = snapshot.history?.events ?? []
+    const ranked = rankFleetReliability(drones, events, book)
+    downloadReportsPdf({
+      lessons: book.lessons,
+      defects: ranked.map((entry) => ({
+        name: entry.drone.name,
+        faults: entry.faults,
+        dropouts: entry.dropouts,
+        flights: entry.flights,
+      })),
+    })
+  }
 
   return (
     <main
@@ -60,19 +82,28 @@ export function ReportsScreen() {
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <h1 className="m-0 font-display text-summary font-medium">Reports</h1>
-        <button
-          type="button"
-          onClick={() => printReports(printedAtRef.current)}
-          className="print-hide min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-        >
-          Print
-        </button>
+        <div className="print-hide flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onDownloadPdf}
+            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-4 py-1.5 text-value font-medium text-canvas hover:opacity-90"
+          >
+            Download PDF
+          </button>
+          <button
+            type="button"
+            onClick={() => printReports(printedAtRef.current)}
+            className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          >
+            Print
+          </button>
+        </div>
       </div>
 
       <p className="print-hide m-0 max-w-prose text-value text-ink-subtle">
-        Print opens a paper copy of the Lessons and recurring defects. In the print dialog,
-        open More settings and turn off Headers and footers so the page URL and clock do
-        not appear on the sheet.
+        Download PDF saves a file with the Lessons and recurring defects — no browser page
+        URL or clock on the sheet. Print remains available; if you use it, turn off Headers
+        and footers under More settings.
       </p>
 
       <div className="print-hide">

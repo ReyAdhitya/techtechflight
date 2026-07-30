@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Lesson bookmark moment on Control and Lesson
+
+- **Decision:** **Bookmark moment** appends `{ at, note? }` to the running lesson in the
+  Logbook (`bookmarks`, capped at 50). Shown on the Control lesson strip and `/lesson` while
+  the lesson is under way. No Fleet message (ADR-0011).
+- **Reason:** Teachers need to mark a classroom moment without leaving Control.
+- **Note:** Closed lessons keep bookmarks on the record for reports later.
 ## 2026-07-30 Remedial queue on Control and Lesson
 
 - **Decision:** **Remedial queue** lives in the browser Logbook (`remedialQueue`). When a

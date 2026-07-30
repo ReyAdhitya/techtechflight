@@ -7,6 +7,9 @@ would notice.
 
 ### Added
 
+- **Lesson bookmark moment on Control and Lesson.** While a lesson runs, **Bookmark moment**
+  saves elapsed time plus an optional note into the Logbook — local only, no Command
+  (ADR-0011). Recent bookmarks list under the control on Control and `/lesson`.
 - **Remedial queue on Control and Lesson.** After a lesson ends, Drones with fault
   incidents are queued for remedial follow-up in the Logbook. Control and `/lesson` show a
   minimal list linking to `/drone?id=`; **Done** dismisses without sending a Command.

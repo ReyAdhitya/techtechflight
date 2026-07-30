@@ -9,6 +9,11 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-07-30 Before/after scores are a pair on the lesson summary
+
+- **Decision:** `formatScorePair` / `BeforeAfterScores` present before→after; storage on LessonRecord can follow.
+- **Reason:** Feature 51.
+- **Note:** Local presentation first.
 ## 2026-07-30 YOLO lesson score averages detection counts
 
 - **Decision:** `YoloLessonScoreStrip` shows mean detection count per craft; Control passes zeros until Detect wall tallies are wired live.

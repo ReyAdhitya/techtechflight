@@ -7,6 +7,7 @@ would notice.
 
 ### Added
 
+- **Before/after lesson scores.** Score pair formatter and strip for lesson summaries.
 - **YOLO lesson scoring.** Class average of detection counts on Control (stub zeros until detector tallies feed in).
 
 - **Incident note on running lessons (#48).** **Note incident** on Control and `/lesson`

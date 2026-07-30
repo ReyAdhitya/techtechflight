@@ -23,6 +23,7 @@ import { LessonPrepPanel } from './LessonPrepPanel'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { LogbookLocationNote } from './LogbookLocationNote'
+import { BeforeAfterScores } from './BeforeAfterScores'
 import { LessonWarmUp } from './LessonWarmUp'
 import { StatusGlyph } from './StatusBadge'
 import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
@@ -305,7 +306,8 @@ function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) 
       {warming ? <LessonWarmUp onDone={finishWarmUp} /> : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>
-        <h1 className="m-0 font-display text-heading font-medium">{lesson.label}</h1>
+        <h1 className="m-0 font-display text-heading font-medium">{lesson.label}
+          <BeforeAfterScores scores={{ before: null, after: null }} /></h1>
         <p className="tnum m-0 text-value text-ink-subtle">
           {formatElapsed(Math.max(0, now - lesson.startedAt))} so far
         </p>

@@ -48,6 +48,8 @@ describe('Walls hub', () => {
       '/walls/detect',
       '/walls/dual',
       '/walls/landed',
+      '/walls/assignments',
+      '/walls/objective',
     ])
     for (const wall of WALL_DESTINATIONS) {
       expect(document.querySelector(`a[href="${wall.href}"]`)).not.toBeNull()

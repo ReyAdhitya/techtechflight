@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { CLASSROOM_CEILING_M } from '@/components/walls/height-wall'
 import {
   CEILING_BREACH_COUNTS_KEY,
+  DEFAULT_CLASSROOM_CEILING_M,
   countBreachesInSeries,
   emptyCeilingBreachState,
   formatCeilingBreachCount,
@@ -17,7 +17,7 @@ afterEach(() => {
 
 describe('ceiling breach counting for the report', () => {
   it('uses the classroom ceiling default', () => {
-    expect(CLASSROOM_CEILING_M).toBe(3)
+    expect(DEFAULT_CLASSROOM_CEILING_M).toBe(3)
     expect(isOverClassroomCeiling(3)).toBe(false)
     expect(isOverClassroomCeiling(3.1)).toBe(true)
     expect(isOverClassroomCeiling(null)).toBe(false)

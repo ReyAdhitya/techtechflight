@@ -9,6 +9,27 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-03 Parallel waves write changelog fragments, not the changelog
+
+- **Decision:** During a multi-agent wave, no agent edits `docs/CHANGELOG.md` or this file.
+  Each writes `docs/changelog.d/<issue>.md`, and one serial Integrator merges them in issue
+  order at the end of the wave. Working alone, edit both files directly as always.
+- **Reason:** The standing "update the changelog after every task" rule assumes serial work.
+  Ten agents appending to the same two files at the same moment is a guaranteed three-way
+  conflict, and resolving it by hand is where a wave loses entries silently.
+
+## 2026-08-03 A stale test selector was realigned, not the live region restored
+
+- **Decision:** `ControlStripOrder.test.tsx` now queries the Attention queue by
+  `role="list"`. The `role="status"` that commit `1907523` removed was **not** put back.
+- **Reason:** That role was an ARIA live region — an announcement. The list it sat on now
+  lives inside a **closed** disclosure, where a live region announces nothing, so restoring
+  it there would look like a fix without being one. Whether a new fault should announce
+  itself at all, and from which element, is a design question; raised as #239 rather than
+  settled inside a test repair.
+- **Cost stated:** until #239 is answered, a screen-reader user is not told when a new item
+  joins the queue. That is a real gap, not a tidy outcome.
+
 ## 2026-07-30 Charge reading uses an iPhone-style battery glyph
 
 - **Decision:** Add `BatteryGlyph` (outline + nub + proportional fill) beside the

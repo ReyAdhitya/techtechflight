@@ -7,6 +7,11 @@ would notice.
 
 ### Fixed
 
+- **The gate is green again.** `ControlStripOrder.test.tsx` still looked for the Attention
+  queue by `role="status"` after it became a disclosure list, so `main` had been failing CI
+  since 30 July without anyone noticing. The query now matches the role the component
+  actually has. The live region that change removed is a separate question — see #239.
+
 - **Warm-up timer actually counts down.** Fleet’s 1s clock was recreating `onDone` each
   tick, which cleared the 60s timeout before it fired — stuck on 60. Callback is now
   held in a ref so re-renders cannot reset the countdown.

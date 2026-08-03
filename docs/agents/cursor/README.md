@@ -4,7 +4,8 @@ Four documents and one dataset. Read them in this order.
 
 | File | What it is |
 |---|---|
-| [MASTER-PROMPT.md](./MASTER-PROMPT.md) | **The thing you paste into Cursor.** Re-paste it for each batch. |
+| [MASTER-PROMPT-ALL.md](./MASTER-PROMPT-ALL.md) | **Paste once, walk away.** Loops through every batch until the backlog is empty. |
+| [MASTER-PROMPT.md](./MASTER-PROMPT.md) | One batch, then stops. Use when you want to look at each batch before the next. |
 | [WAVES.md](./WAVES.md) | Who may run at the same time, and the Integrator step that makes a wave into a product |
 | [AGENT-BRIEF.md](./AGENT-BRIEF.md) | The contract handed to every individual agent |
 | [DEPLOY.md](./DEPLOY.md) | How this repo actually deploys — route A is live |

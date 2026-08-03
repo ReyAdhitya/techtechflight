@@ -1,0 +1,351 @@
+num	section	title	size	wave	files	acceptance
+1	1	Charge-to-ready for the whole set in one line	S	1	web/components/FleetReadyCountdown.tsx|web/components/FleetReadyCountdown.test.tsx|web/lib/fleet-ready-countdown.ts|web/lib/fleet-ready-countdown.test.ts	Renders "6 ready in 12 minutes" from observed charge only; says nothing when no honest forecast exists (ADR-0007)
+2	1	Overnight charge plan for tomorrow's periods	M	4	web/lib/charge-plan.ts|web/components/ChargePlanPanel.tsx	Lists which packs go on charge tonight to meet tomorrow's first period
+3	1	Will this lesson fit? battery budget against planned length	M	4	web/lib/lesson-fit.ts|web/components/LessonFitNotice.tsx	Warns before the lesson starts when the budget cannot cover the planned minutes
+4	1	Pre-flight sweep of every craft that is not Ready	M	4	web/components/PreFlightSweep.tsx|web/lib/preflight-sweep.ts	One list, each row saying what to do about that craft
+5	1	Tomorrow's periods shown on the Fleet screen	M	4	web/components/TomorrowPeriods.tsx|web/lib/period-schedule.ts	Next day's periods render from the saved schedule
+6	1	Charger slot map	S	4	web/components/ChargerSlotMap.tsx|web/lib/charger-slots.ts	Which pack sits in which slot, editable
+7	1	Mark a craft as in the cupboard so it stops generating noise	S	1	web/lib/craft-stowed.ts|web/lib/craft-stowed.test.ts|web/components/StowCraftToggle.tsx|web/components/StowCraftToggle.test.tsx	A stowed craft is excluded from Not Ready counts and says why
+8	1	Room setup photo saved per room	S	4	web/lib/room-photo.ts|web/components/RoomPhotoPanel.tsx	One photo per room, stored locally
+9	1	Pad layout template per room	M	4	web/lib/pad-layout.ts|web/components/PadLayoutPanel.tsx	Layout recalled when that room is selected
+10	1	Fleet headcount before class	S	1	web/components/FleetHeadcountCheck.tsx|web/components/FleetHeadcountCheck.test.tsx|web/lib/fleet-headcount.ts|web/lib/fleet-headcount.test.ts	Tick each craft present; the count and the missing list are shown
+11	1	Missing-craft alert when one did not come back	S	1	web/lib/missing-craft.ts|web/lib/missing-craft.test.ts|web/components/MissingCraftNotice.tsx|web/components/MissingCraftNotice.test.tsx	Names any craft absent since the last closed lesson
+12	1	Nominate the spare craft	S	1	web/lib/spare-nomination.ts|web/lib/spare-nomination.test.ts|web/components/SpareNomination.tsx|web/components/SpareNomination.test.tsx	One craft can be marked the swap; shown during prep
+13	1	Cold-room charge note	XS	1	web/components/ColdRoomNote.tsx|web/components/ColdRoomNote.test.tsx	One quiet line explaining low winter readings; does not claim a temperature it cannot measure
+14	1	Link health check before the class walks in	S	1	web/components/LinkHealthCheck.tsx|web/components/LinkHealthCheck.test.tsx|web/lib/link-health.ts|web/lib/link-health.test.ts	Reports connected, connecting or unreachable in Teacher words
+15	1	Prep complete is one green line, not a form	S	4	web/components/PrepCompleteLine.tsx	A single derived sentence replaces the checklist
+16	1	Prep time estimate	S	4	web/lib/prep-estimate.ts|web/components/PrepEstimate.tsx	Minutes until the fleet can start, from observed charge
+17	1	Reorder alert when spares drop below a threshold	S	4	web/lib/spares-threshold.ts|web/components/SparesReorderNotice.tsx	Warns once below the configured level
+18	1	Friday prep digest for next week	M	4	web/lib/prep-digest.ts|web/components/PrepDigest.tsx	Printable summary of next week's needs
+19	1	Class size against fleet size warning	S	1	web/lib/class-size-warning.ts|web/lib/class-size-warning.test.ts|web/components/ClassSizeWarning.tsx|web/components/ClassSizeWarning.test.tsx	States pupils per craft and suggests rotations when over
+20	1	Rotation plan generated from class size and length	M	4	web/lib/rotation-plan.ts|web/components/RotationPlanPanel.tsx	Produces a fair rotation for the period
+21	1	Print the rotation plan	S	4	web/components/RotationPlanPrint.tsx	Prints without board chrome
+22	1	Last lesson's unfinished business surfaced at prep	S	1	web/components/PrepRemedialRecall.tsx|web/components/PrepRemedialRecall.test.tsx	Shows the remedial queue during prep, not only after
+23	1	Which room this period is in	S	4	web/lib/room-booking.ts|web/components/RoomBookingLine.tsx	Room name shown against the period
+24	1	Prep on a phone while walking to the room	M	4	web/components/PrepMobileLayout.tsx	Prep surface is usable at phone width
+25	2	Assign everyone in one tap in board order	S	1	web/components/AssignEveryoneButton.tsx|web/components/AssignEveryoneButton.test.tsx|web/lib/assign-everyone.ts|web/lib/assign-everyone.test.ts	Fills every free craft from the roster in board order; reports how many were assigned
+26	2	Assign by table or group	M	4	web/lib/group-assign.ts|web/components/GroupAssignPanel.tsx	A whole table is assigned in one action
+27	2	Drag a name onto a craft	M	4	web/components/AssignmentDragLayer.tsx	Pointer and keyboard both work
+28	2	Undo the last assignment	XS	1	web/lib/assignment-undo.ts|web/lib/assignment-undo.test.ts|web/components/AssignmentUndoButton.tsx|web/components/AssignmentUndoButton.test.tsx	One step of undo restores the previous assignment exactly
+29	2	Swap two pupils in one action	S	1	web/components/SwapPupilsControl.tsx|web/components/SwapPupilsControl.test.tsx	Uses the existing swapStudentAssignments; both strips update
+30	2	Absent pupil returns their craft to the waiting list	S	1	web/lib/absent-reassign.ts|web/lib/absent-reassign.test.ts|web/components/AbsentReassignNotice.tsx|web/components/AbsentReassignNotice.test.tsx	Marking absent frees the craft and names who is next
+31	2	Waiting list showing who flies next	S	1	web/components/WaitingList.tsx|web/components/WaitingList.test.tsx|web/lib/waiting-list.ts|web/lib/waiting-list.test.ts	Ordered list of unassigned pupils; empty state explains itself
+32	2	Assignment card for the wall	S	1	web/app/(app)/walls/assignments/page.tsx|web/components/walls/AssignmentWall.tsx|web/components/walls/AssignmentWall.test.tsx	Pupil to craft, readable across a room
+33	2	Read the assignments aloud	S	4	web/components/AssignmentReadout.tsx	Speaks the list; silent when the browser has no voice
+34	2	Pronunciation note per pupil	XS	1	web/lib/pupil-pronunciation.ts|web/lib/pupil-pronunciation.test.ts	A note field per StudentRecord, shown beside the name
+35	2	Preferred name field	XS	1	web/lib/pupil-preferred-name.ts|web/lib/pupil-preferred-name.test.ts	Preferred name displays everywhere the name displays
+36	2	Optional pupil photo on the strip	M	4	web/lib/pupil-photo.ts|web/components/PupilPhoto.tsx	Local only, opt-in, never leaves the laptop
+37	2	Today's objective in one sentence on the wall	S	1	web/app/(app)/walls/objective/page.tsx|web/components/walls/ObjectiveWall.tsx|web/components/walls/ObjectiveWall.test.tsx	One sentence, large, from the running lesson
+38	2	Safety brief checklist shown to the class	S	1	web/components/SafetyBriefPanel.tsx|web/components/SafetyBriefPanel.test.tsx|web/lib/safety-brief.ts|web/lib/safety-brief.test.ts	Fixed list of classroom rules, tickable, resets each lesson
+39	2	Countdown to launch on the wall	S	1	web/app/(app)/walls/launch/page.tsx|web/components/walls/LaunchCountdownWall.tsx|web/components/walls/LaunchCountdownWall.test.tsx	Counts down and says Go; reduced motion respected
+40	2	Hands off until the light goes green	S	4	web/components/HandsOffGate.tsx	A visible gate the Teacher releases
+41	2	First-flight pupils flagged	S	1	web/lib/first-flight-flag.ts|web/lib/first-flight-flag.test.ts|web/components/FirstFlightBadge.tsx|web/components/FirstFlightBadge.test.tsx	A pupil with no prior lesson record is marked
+42	2	Pupils back from absence flagged	S	1	web/lib/returning-pupil.ts|web/lib/returning-pupil.test.ts|web/components/ReturningPupilBadge.tsx|web/components/ReturningPupilBadge.test.tsx	Marks a pupil absent last lesson but present now
+43	2	Buddy pairing for a nervous flyer	S	4	web/lib/buddy-pairing.ts|web/components/BuddyPairingPanel.tsx	Two pupils can be tied to one craft
+44	2	Start the lesson from the wall	M	4	web/components/walls/StartLessonFromWall.tsx	Lesson starts without touching the laptop
+45	3	One line that answers is everything fine	S	1	web/components/FleetAllWellLine.tsx|web/components/FleetAllWellLine.test.tsx|web/lib/fleet-all-well.ts|web/lib/fleet-all-well.test.ts	One derived sentence; renders calmly at zero problems (DELIBERATE-POSITIONS 3)
+46	3	Each strip shows what that pupil should be doing now	M	4	web/lib/strip-intent.ts|web/components/StripIntent.tsx	Exercise name beside the flight phase (B6)
+47	3	Time left in the current exercise on every strip	S	1	web/lib/exercise-remaining.ts|web/lib/exercise-remaining.test.ts|web/components/ExerciseRemaining.tsx|web/components/ExerciseRemaining.test.tsx	Counts down per exercise; silent when no duration was set
+48	3	Who has not taken off yet	S	1	web/lib/not-yet-airborne.ts|web/lib/not-yet-airborne.test.ts|web/components/NotYetAirborneNotice.tsx|web/components/NotYetAirborneNotice.test.tsx	Names grounded craft with an assigned pupil after the lesson starts
+49	3	Who is hovering and doing nothing	M	4	web/lib/idle-hover.ts|web/components/IdleHoverNotice.tsx	Detects sustained position hold with no altitude change
+50	3	Who has been up longest	S	1	web/lib/longest-airborne.ts|web/lib/longest-airborne.test.ts|web/components/LongestAirborne.tsx|web/components/LongestAirborne.test.tsx	Names the craft airborne longest with its duration
+51	3	Live flight time per pupil this lesson	S	1	web/lib/pupil-airtime.ts|web/lib/pupil-airtime.test.ts|web/components/PupilAirtime.tsx|web/components/PupilAirtime.test.tsx	Accumulates airborne seconds per assigned pupil for the running lesson
+52	3	Fair-share warning when one pupil has double the airtime	M	4	web/lib/fair-share.ts|web/components/FairShareNotice.tsx	Warns once when the spread exceeds the configured ratio
+53	3	Scheduled quiet window	S	4	web/lib/quiet-schedule.ts|web/components/QuietSchedulePanel.tsx	Quiet mode turns itself on and off at set times
+54	3	One-hand mode with bigger targets	M	4	web/lib/one-hand-mode.ts|web/components/OneHandModeToggle.tsx	Touch targets grow without changing layout order
+55	3	Tablet layout for walking the room	M	4	web/components/TabletControlLayout.tsx	Control is usable at tablet width
+56	3	Phone layout for a pocket check	M	4	web/components/PhoneCheckLayout.tsx	A read-only summary at phone width
+57	3	Lock the screen so a pupil cannot press Stop	S	1	web/lib/screen-lock.ts|web/lib/screen-lock.test.ts|web/components/ScreenLockToggle.tsx|web/components/ScreenLockToggle.test.tsx	While locked every Command control is disabled and says why
+58	3	Teacher PIN to unlock Commands	M	4	web/lib/teacher-pin.ts|web/components/TeacherPinDialog.tsx	A local PIN gates unlocking; never sent anywhere
+59	3	Pin one craft to the top of Attention	S	1	web/lib/attention-pin.ts|web/lib/attention-pin.test.ts|web/components/AttentionPinButton.tsx|web/components/AttentionPinButton.test.tsx	One craft can be pinned; pinning never reorders the strips (DELIBERATE-POSITIONS 1)
+60	3	Follow mode centres the Scope on the pinned craft	M	4	web/lib/scope-follow.ts|web/components/ScopeFollowToggle.tsx	Opt-in only; the fixed window stays the default (ADR-0014)
+61	3	Class average height against the exercise target	M	4	web/lib/target-height.ts|web/components/TargetHeightStrip.tsx	Compares the class mean to the exercise target
+62	3	Praise prompt surfacing a pupil doing well	M	4	web/lib/praise-prompt.ts|web/components/PraisePrompt.tsx	Surfaces one pupil with a stated reason
+63	3	Struggling prompt surfacing a pupil who keeps drifting	M	4	web/lib/struggling-prompt.ts|web/components/StrugglingPrompt.tsx	Surfaces one pupil with a stated reason
+64	3	Live burn-down of when the class runs out of battery	M	4	web/lib/class-burndown.ts|web/components/ClassBurndown.tsx	Earliest forced landing across the fleet, from observed charge only
+65	3	Land in three minutes pre-warning	S	1	web/components/LandSoonWarning.tsx|web/components/LandSoonWarning.test.tsx|web/lib/land-soon.ts|web/lib/land-soon.test.ts	One warning at the configured lead time; not repeated
+66	3	Voice callout with the pupil's name	M	4	web/lib/voice-callout.ts|web/components/VoiceCalloutToggle.tsx	Speaks name plus instruction; silent without a voice
+67	3	Distinct alert tones per severity	S	4	web/lib/alert-tones.ts|web/components/AlertToneToggle.tsx	Two tones, distinguishable, off by default
+68	3	Wall flash for an urgent item	S	4	web/components/walls/UrgentFlash.tsx	Respects prefers-reduced-motion
+69	3	Audio-only mode for an earpiece	M	4	web/lib/audio-only-mode.ts|web/components/AudioOnlyToggle.tsx	Every alert is spoken; the screen is not required
+70	3	Voice note without leaving Control	M	4	web/lib/voice-note.ts|web/components/VoiceNoteButton.tsx	Records a note against the running lesson
+71	3	Voice note transcribed onto the incident	L	4	web/lib/voice-transcribe.ts	Transcription attaches to the incident text
+72	3	Bell at exercise change	S	1	web/lib/exercise-bell.ts|web/lib/exercise-bell.test.ts|web/components/ExerciseBellToggle.tsx|web/components/ExerciseBellToggle.test.tsx	One sound when the exercise changes; off by default
+73	3	Auto-advance to the next exercise with a confirm	M	4	web/lib/exercise-autoadvance.ts|web/components/ExerciseAutoAdvance.tsx	Never advances without the Teacher confirming
+74	3	Freeze the whole board for thirty seconds	M	4	web/lib/board-freeze.ts|web/components/BoardFreezeToggle.tsx	Strips freeze the way the Scope already can, and say they are frozen
+75	3	Choose which columns the strips carry	M	4	web/lib/strip-columns.ts|web/components/StripColumnsPanel.tsx	Column choice persists per laptop
+76	3	Strip density preference remembered	S	1	web/lib/strip-density.ts|web/lib/strip-density.test.ts|web/components/StripDensityToggle.tsx|web/components/StripDensityToggle.test.tsx	Comfortable or compact, persisted, rem sizes only (ADR-0008)
+77	4	Geofence breach alert	M	3	web/lib/geofence-breach.ts|web/lib/geofence-breach.test.ts|web/components/GeofenceBreachNotice.tsx|web/components/GeofenceBreachNotice.test.tsx	The drawn boundary now raises an Attention item when crossed
+78	4	Altitude floor warning over the desks	S	1	web/lib/altitude-floor.ts|web/lib/altitude-floor.test.ts|web/components/AltitudeFloorNotice.tsx|web/components/AltitudeFloorNotice.test.tsx	Warns below the configured floor while airborne
+79	4	Ceiling breaches counted into the report	S	1	web/lib/ceiling-breach-count.ts|web/lib/ceiling-breach-count.test.ts	Per-lesson count of ceiling breaches, readable afterwards
+80	4	Separation alarm thresholds you can tune	S	1	web/lib/separation-thresholds.ts|web/lib/separation-thresholds.test.ts|web/components/SeparationThresholdPanel.tsx|web/components/SeparationThresholdPanel.test.tsx	Threshold is configurable and defaults to today's value
+81	4	Near-miss log	M	4	web/lib/near-miss-log.ts|web/components/NearMissLog.tsx	Each close pass recorded with time and craft
+82	4	Land all now with hold to confirm	S	1	web/components/LandAllButton.tsx|web/components/LandAllButton.test.tsx|web/lib/land-all.ts|web/lib/land-all.test.ts	Requires a sustained press; issues land to every airborne craft (ADR-0011)
+83	4	Land one table at a time	S	1	web/components/LandTableButton.tsx|web/components/LandTableButton.test.tsx	Lands only the craft in the chosen group
+84	4	Stop latch shown plainly and released deliberately	S	4	web/components/StopLatchPanel.tsx	The latch state and its release are unmistakable
+85	4	Stop presses recorded onto the lesson	S	1	web/lib/stop-audit.ts|web/lib/stop-audit.test.ts	Every Stop is written to the lesson record with time and craft
+86	4	Runaway craft procedure card	S	1	web/components/RunawayProcedureCard.tsx|web/components/RunawayProcedureCard.test.tsx	Fixed steps, shown when a craft leaves the room box
+87	4	Lost link procedure card	S	1	web/components/LostLinkProcedureCard.tsx|web/components/LostLinkProcedureCard.test.tsx	Fixed steps, shown when contact is lost mid-flight
+88	4	Fly-away direction hint from the last heading	M	4	web/lib/flyaway-hint.ts|web/components/FlyawayHint.tsx	States a bearing and a distance, with its age
+89	4	Crash form in one tap prefilled	M	4	web/lib/crash-form.ts|web/components/CrashFormDialog.tsx	Time, craft, pupil and position are already filled in
+90	4	Photo of the damage on the incident	M	4	web/lib/incident-photo.ts|web/components/IncidentPhotoButton.tsx	A still attaches to the incident, stored locally
+91	4	Injury flag that escalates the record	M	4	web/lib/injury-flag.ts|web/components/InjuryFlagControl.tsx	An injured-party flag changes how the record prints
+92	4	Incident severity from a list	S	1	web/lib/incident-severity.ts|web/lib/incident-severity.test.ts|web/components/IncidentSeveritySelect.tsx|web/components/IncidentSeveritySelect.test.tsx	Fixed severities replace free text; old records stay readable
+93	4	Incident auto-drafted from what the board knew	M	4	web/lib/incident-autodraft.ts	Prefills the text from telemetry at that moment
+94	4	Witness field on an incident	XS	1	web/lib/incident-witness.ts|web/lib/incident-witness.test.ts	Optional witness name stored with the incident
+95	4	Parent notification draft from an incident	M	4	web/lib/parent-notice.ts|web/components/ParentNoticeDialog.tsx	Produces editable text; sends nothing itself
+96	4	Near-miss and incident kept distinct	S	4	web/lib/near-miss-kind.ts	Two kinds, filtered separately in reports
+97	4	Post-crash recovery checklist	M	4	web/lib/recovery-checklist.ts|web/components/RecoveryChecklist.tsx	A craft cannot be cleared until every step is ticked
+98	4	Auto-ground a craft after an incident	M	4	web/lib/auto-ground.ts|web/components/AutoGroundNotice.tsx	The craft reads Not Ready until cleared
+99	4	Escalation after three incidents in one lesson	S	4	web/lib/incident-escalation.ts|web/components/IncidentEscalationNotice.tsx	Suggests stopping; never stops on its own
+100	4	Debrief note captured at the moment	S	1	web/components/DebriefNoteControl.tsx|web/components/DebriefNoteControl.test.tsx	A note attaches to the running lesson without leaving the screen
+101	5	Record writes a real clip	M	3	web/lib/camera-recording.ts|web/lib/camera-clip.ts|web/lib/camera-clip.test.ts|web/components/CameraRecordingClip.tsx|web/components/CameraRecordingClip.test.tsx	captureStream to MediaRecorder to download; feature-detect and keep the mark-only fallback when unavailable, never pretending to record
+102	5	Clip library for the session	S	1	web/lib/clip-library.ts|web/lib/clip-library.test.ts|web/components/ClipLibrary.tsx|web/components/ClipLibrary.test.tsx	Lists clips captured this session and re-downloads them
+103	5	Snapshot gallery for stills already captured	S	1	web/lib/snapshot-gallery.ts|web/lib/snapshot-gallery.test.ts|web/components/SnapshotGallery.tsx|web/components/SnapshotGallery.test.tsx	Thumbnails of stills taken this session with their craft and time
+104	5	Record all cameras to one clip each	S	4	web/components/CameraRecordAllButton.tsx	Starts a separate clip per craft, not one merged file
+105	5	Trim a clip before saving	M	4	web/lib/clip-trim.ts|web/components/ClipTrimDialog.tsx	Start and end can be set before download
+106	5	Auto-clip thirty seconds either side of an incident	M	4	web/lib/incident-clip.ts	A clip is kept around the incident without being asked
+107	5	Detection log of what the model saw	M	4	web/lib/detection-log.ts|web/components/DetectionLog.tsx	Timestamped detections per craft
+108	5	Alert when a person enters frame mid-flight	M	4	web/lib/person-in-frame.ts|web/components/PersonInFrameNotice.tsx	Raises an Attention item, once per entry
+109	5	Frozen feed detector	S	1	web/lib/frozen-feed.ts|web/lib/frozen-feed.test.ts|web/components/FrozenFeedNotice.tsx|web/components/FrozenFeedNotice.test.tsx	Says the picture has stopped when no new frame arrives within the window
+110	5	Camera health board	M	4	web/components/CameraHealthBoard.tsx|web/lib/camera-health.ts	Which feeds deliver, which are idle, which are frozen
+111	5	Stream map editor in Settings	M	4	web/components/StreamMapEditor.tsx	Edits the map that is env or localStorage only today; sanitises to absolute http(s)
+112	5	Mirror and rotate per camera	S	1	web/lib/camera-orientation.ts|web/lib/camera-orientation.test.ts|web/components/CameraOrientationControl.tsx|web/components/CameraOrientationControl.test.tsx	Per-craft mirror and rotation, persisted, applied to the pane
+113	5	Picture in picture pop-out	S	1	web/components/CameraPipButton.tsx|web/components/CameraPipButton.test.tsx	Pops one feed out; hidden when the browser cannot
+114	5	Contact sheet onto the report	M	4	web/lib/contact-sheet.ts|web/components/ContactSheet.tsx	One still per craft, printable with the lesson
+115	5	Name each camera	XS	1	web/lib/camera-names.ts|web/lib/camera-names.test.ts	A label per camera, shown on the pane and the wall
+116	5	One camera full screen on the wall with a name overlay	S	1	web/app/(app)/walls/camera-solo/page.tsx|web/components/walls/CameraSoloWall.tsx|web/components/walls/CameraSoloWall.test.tsx	One feed filling the wall with the craft name legible across a room
+117	5	Camera grid density control	S	4	web/components/walls/CameraGridDensity.tsx	Two or three columns, chosen by the Teacher
+118	5	Zoom into a region of one feed	M	4	web/lib/camera-zoom.ts|web/components/CameraZoomControl.tsx	A region can be magnified without changing the source
+119	5	Timestamp burn-in for evidence clips	S	4	web/lib/clip-timestamp.ts	Optional burned-in clock on saved clips
+120	5	Face blur for safeguarding	L	4	web/lib/face-blur.ts	Faces blurred before a clip is written
+121	5	Per-pupil camera consent flag	M	4	web/lib/camera-consent.ts|web/components/CameraConsentPanel.tsx	A pupil marked no-camera is never recorded
+122	5	Recording stops when the lesson ends	XS	1	web/lib/recording-autostop.ts|web/lib/recording-autostop.test.ts	Every mark and clip stops at lesson close
+123	5	Storage guard before the disk fills	S	4	web/lib/storage-guard.ts|web/components/StorageGuardNotice.tsx	Warns before writing when space is short
+124	5	Clip retention policy stated	S	4	web/lib/clip-retention.ts	How long clips are kept is said, not implied
+125	5	Clips travel with the lesson report	M	4	web/lib/report-clips.ts	Clips are listed on the report and downloadable from it
+126	5	Landing target readout onto the strip	S	4	web/components/LandingTargetStripLine.tsx	The QR landing target shows on the strip, display only
+127	5	Landing accuracy scored from the QR target	M	4	web/lib/landing-accuracy.ts	Distance from the pad becomes a score
+128	5	Detection scoring extended to per-pupil	M	4	web/lib/yolo-pupil-score.ts	The existing lesson score is attributed per pupil
+129	6	No-fly zones drawn on the Scope	L	4	web/lib/no-fly-zones.ts|web/components/ScopeNoFlyZones.tsx	Zones drawn and breaches raised
+130	6	Room box measured from the real room	M	4	web/lib/room-box.ts|web/components/RoomBoxPanel.tsx	The geofence extents become editable, defaulting to today's values
+131	6	Furniture sketch under the grid	M	4	web/lib/room-furniture.ts|web/components/ScopeFurniture.tsx	Simple shapes drawn beneath the marks
+132	6	Named zones on the Scope	M	4	web/lib/scope-zones.ts|web/components/ScopeZoneLabels.tsx	Zones carry names shown on the picture
+133	6	Occupancy count per zone	M	4	web/lib/zone-occupancy.ts|web/components/ZoneOccupancy.tsx	How many craft are in each zone
+134	6	Trail length control	XS	1	web/lib/trail-length.ts|web/lib/trail-length.test.ts|web/components/TrailLengthControl.tsx|web/components/TrailLengthControl.test.tsx	The ghost path window is adjustable and persisted
+135	6	Trail colour per pupil	S	4	web/lib/trail-colour.ts	Colour never the sole channel; the name stays on the mark
+136	6	Show or hide grounded craft	XS	1	web/lib/scope-show-grounded.ts|web/lib/scope-show-grounded.test.ts|web/components/ScopeGroundedToggle.tsx|web/components/ScopeGroundedToggle.test.tsx	Grounded craft can be hidden; the count of hidden craft is stated
+137	6	Height ribbon per craft on the side view	M	4	web/components/ScopeHeightRibbon.tsx	A band showing height history on the elevation views
+138	6	Target box for the exercise	M	4	web/lib/exercise-target-box.ts|web/components/ScopeTargetBox.tsx	A square the class must hover inside, drawn on the Scope
+139	6	Distance from target readout	M	4	web/lib/target-distance.ts|web/components/TargetDistance.tsx	Metres from the target per craft
+140	6	Path accuracy scored against a drawn shape	L	4	web/lib/path-accuracy.ts	A score comparing flown path to intended shape
+141	6	Draw the shape the class has to fly	L	4	web/lib/shape-designer.ts|web/components/ShapeDesigner.tsx	A shape can be drawn and saved with the exercise
+142	6	Replay that shape as a demonstration	M	4	web/components/ShapeDemoPlayer.tsx	The intended shape animates on the Scope
+143	6	Distance between two chosen craft	S	4	web/lib/pair-distance.ts|web/components/PairDistanceReadout.tsx	Pick two craft, read the separation
+144	6	Snap the window to the room	S	4	web/lib/scope-room-window.ts	The Scope window can lock to the room box instead of the fleet
+145	6	North marker matched to the room	S	1	web/lib/scope-north.ts|web/lib/scope-north.test.ts|web/components/ScopeNorthMarker.tsx|web/components/ScopeNorthMarker.test.tsx	A configurable north offset drawn on the top-down view
+146	6	Scale bar toggle	XS	1	web/components/ScopeScaleBar.tsx|web/components/ScopeScaleBar.test.tsx	A metre scale bar that can be shown or hidden
+147	6	Scope on the wall at full size with names only	S	1	web/app/(app)/walls/scope/page.tsx|web/components/walls/ScopeWall.tsx|web/components/walls/ScopeWall.test.tsx	The picture fills the wall, names legible across a room
+148	6	Colour-blind-safe mark shapes	S	1	web/lib/scope-mark-shapes.ts|web/lib/scope-mark-shapes.test.ts	Each status carries a distinct shape as well as a colour (ADR-0004)
+149	6	Scope printed with the lesson report	S	4	web/components/ScopePrintFigure.tsx	The picture prints legibly on paper tokens
+150	6	Screenshot the Scope in one press	XS	1	web/lib/scope-screenshot.ts|web/lib/scope-screenshot.test.ts|web/components/ScopeScreenshotButton.tsx|web/components/ScopeScreenshotButton.test.tsx	Downloads a PNG of the current picture
+151	7	Land-all countdown announced on the wall	S	1	web/app/(app)/walls/landing-countdown/page.tsx|web/components/walls/LandingCountdownWall.tsx|web/components/walls/LandingCountdownWall.test.tsx	Counts the class down to landing, legible across a room
+152	7	Pack-down checklist per craft	S	1	web/lib/packdown-checklist.ts|web/lib/packdown-checklist.test.ts|web/components/PackdownChecklist.tsx|web/components/PackdownChecklist.test.tsx	One tickable row per craft, reset each lesson
+153	7	Battery back-on-charge tick	S	1	web/lib/battery-oncharge.ts|web/lib/battery-oncharge.test.ts|web/components/BatteryOnChargeTick.tsx|web/components/BatteryOnChargeTick.test.tsx	Records which packs went back on charge
+154	7	Craft returned tick	S	1	web/lib/craft-returned.ts|web/lib/craft-returned.test.ts|web/components/CraftReturnedTick.tsx|web/components/CraftReturnedTick.test.tsx	The headcount out, with any craft still missing named
+155	7	Damage check prompt per craft	S	1	web/lib/damage-check.ts|web/lib/damage-check.test.ts|web/components/DamageCheckPrompt.tsx|web/components/DamageCheckPrompt.test.tsx	Prompts once per craft at pack-down; a fail flags the craft
+156	7	Auto-summary of the lesson before closing	M	4	web/lib/lesson-autosummary.ts|web/components/LessonAutoSummary.tsx	A readable paragraph derived from what happened
+157	7	Confirm the lesson name at close	S	1	web/components/LessonNameConfirm.tsx|web/components/LessonNameConfirm.test.tsx	Closing prompts for a name so nothing is Untitled
+158	7	One-line reflection attached at close	S	1	web/lib/lesson-reflection.ts|web/lib/lesson-reflection.test.ts|web/components/LessonReflectionField.tsx|web/components/LessonReflectionField.test.tsx	A free-text line stored on the lesson record
+159	7	Next-lesson note	S	1	web/lib/next-lesson-note.ts|web/lib/next-lesson-note.test.ts|web/components/NextLessonNote.tsx|web/components/NextLessonNote.test.tsx	A note written at close and surfaced at the next prep
+160	7	Remedial queue surfaced at close	S	1	web/components/CloseRemedialSummary.tsx|web/components/CloseRemedialSummary.test.tsx	The queue built by closing is shown immediately, not only later
+161	7	Praise list captured while it is fresh	S	1	web/lib/praise-list.ts|web/lib/praise-list.test.ts|web/components/PraiseListField.tsx|web/components/PraiseListField.test.tsx	Names captured at close and carried onto the report
+162	7	Overrun warning when the period is up	S	4	web/lib/lesson-overrun.ts|web/components/OverrunWarning.tsx	Warns once past the planned end
+163	7	A forgotten running lesson closes itself at end of day	S	1	web/lib/lesson-autoclose.ts|web/lib/lesson-autoclose.test.ts	A lesson still open past the configured hour is closed and marked as auto-closed
+164	7	Recover a lesson closed by accident	M	4	web/lib/lesson-reopen.ts|web/components/LessonReopenControl.tsx	The most recent close can be undone
+165	7	End-of-day summary across every period	M	4	web/lib/end-of-day-summary.ts|web/components/EndOfDaySummary.tsx	Every lesson that day in one readable block
+166	7	Pack-down time estimate	S	4	web/lib/packdown-estimate.ts|web/components/PackdownEstimate.tsx	Minutes to clear the room, from the checklist
+167	8	Flight-track store with decimation and retention	M	2	web/lib/lesson-replay-store.ts|web/lib/lesson-replay-store.test.ts	Own localStorage key techtechflight:replay never synced; keeps status changes, heartbeats every 4s, caps at 4500 samples setting truncated, retains the running track plus the two most recently ended, survives QuotaExceededError, flushes at most every 10s
+168	8	Headless replay recorder mounted app-wide	S	2	web/components/LessonReplayRecorder.tsx|web/components/LessonReplayRecorder.test.tsx|web/app/(app)/layout.tsx	Records regardless of which screen is open; seals the track after endLesson
+169	8	Rebuild a Fleet frame from a track	M	2	web/lib/lesson-replay.ts|web/lib/lesson-replay.test.ts	replayFrameAt returns DroneState[] plus a GhostPathStore trail; a craft with no sample yet is omitted rather than shown Offline
+170	8	Replay dialog with a transport	L	2	web/components/LessonReplayDialog.tsx|web/components/LessonReplayDialog.test.tsx	Scope used unchanged with no vitals and no selectedPanel; play, pause and scrub; playhead steps on a 100ms interval so fake timers can test it
+171	8	Scrub marks from incidents bookmarks and Commands	S	2	web/lib/lesson-replay-marks.ts|web/lib/lesson-replay-marks.test.ts	Marks derived from the lesson record, each carrying a title so colour is never the only channel
+172	8	Jump to the next incident	XS	2	web/components/ReplayNextIncidentButton.tsx|web/components/ReplayNextIncidentButton.test.tsx	Moves the playhead to the next incident after the current position
+173	8	Playback speed one four and ten times	XS	2	web/components/ReplaySpeedControl.tsx|web/components/ReplaySpeedControl.test.tsx	Three speeds, current one announced to assistive technology
+174	8	Solo one craft in the replay	S	4	web/components/ReplaySoloControl.tsx	Only the chosen craft is drawn
+175	8	Replay entry from the Drone Details dialog	S	4	web/components/DroneReplayEntry.tsx	Opens the replay scoped to that craft
+176	8	Truncation honesty on a capped track	XS	2	web/components/ReplayTruncationNotice.tsx|web/components/ReplayTruncationNotice.test.tsx	Says Replay covers the first N minutes when the cap was hit
+177	8	Replay on the wall for the class debrief	S	4	web/app/(app)/walls/replay/page.tsx|web/components/walls/ReplayWall.tsx	The replay fills the wall with large transport controls
+178	8	Two pupils replayed side by side	M	4	web/components/ReplayCompare.tsx	Two tracks scrubbed on one playhead
+179	8	Export a replay as video or GIF	L	4	web/lib/replay-export.ts	Produces a file from the reconstructed frames
+180	8	Replay with the camera clip synced	L	4	web/lib/replay-clip-sync.ts	Clip time and track time advance together
+181	8	Bookmark during replay	S	4	web/components/ReplayBookmarkButton.tsx	A moment spotted afterwards is written to the lesson
+182	8	Annotate a replay frame	M	4	web/lib/replay-annotation.ts|web/components/ReplayAnnotation.tsx	A note pinned to a moment and a craft
+183	8	Share one replay moment	M	4	web/lib/replay-share.ts	A moment can be exported as a still with its caption
+184	8	Speed slider sized for the wall	XS	4	web/components/walls/ReplaySpeedSlider.tsx	Large enough to use from across the room
+185	8	Heat map of where craft actually flew	M	4	web/lib/replay-heatmap.ts|web/components/ReplayHeatmap.tsx	Density of positions over the lesson drawn on the Scope window
+186	8	Search the track for where a craft was	M	4	web/lib/replay-search.ts|web/components/ReplaySearch.tsx	Given a time, states where each craft was
+187	9	Term summary	M	4	web/lib/term-summary.ts|web/components/TermSummary.tsx	Deepens the one-sentence weekly digest into a term view
+188	9	Charts for incidents and readiness over time	M	4	web/lib/report-series.ts|web/components/ReportCharts.tsx	Two series over the chosen range, readable in print
+189	9	CSV export of lessons and incidents	S	1	web/lib/reports-csv.ts|web/lib/reports-csv.test.ts|web/components/ReportsCsvButton.tsx|web/components/ReportsCsvButton.test.tsx	Downloads a CSV a spreadsheet opens cleanly, quoting names with commas
+190	9	Reliability trend rather than today's ranking	M	4	web/lib/reliability-trend.ts|web/components/ReliabilityTrend.tsx	Shows direction over time, not only the current order
+191	9	Lifetime hours per craft	S	1	web/lib/craft-lifetime-hours.ts|web/lib/craft-lifetime-hours.test.ts|web/components/CraftLifetimeHours.tsx|web/components/CraftLifetimeHours.test.tsx	Accumulated airborne hours per craft across every closed lesson
+192	9	Report filters for range craft and pupil	M	4	web/lib/report-filters.ts|web/components/ReportFilters.tsx	Filters apply to every section of Reports
+193	9	Incident categories	S	1	web/lib/incident-categories.ts|web/lib/incident-categories.test.ts|web/components/IncidentCategorySelect.tsx|web/components/IncidentCategorySelect.test.tsx	A fixed vocabulary; records written before it stay readable
+194	9	Two lessons compared side by side	M	4	web/components/LessonCompare.tsx	Same fields, two columns
+195	9	One-page printable lesson summary	S	1	web/components/LessonOnePager.tsx|web/components/LessonOnePager.test.tsx	Fits one page with paper tokens under @media print
+196	9	Share a report as a file	S	1	web/lib/report-share.ts|web/lib/report-share.test.ts|web/components/ReportShareButton.tsx|web/components/ReportShareButton.test.tsx	Downloads a self-contained file; sends nothing anywhere
+197	9	Report template per school	M	4	web/lib/report-template.ts|web/components/ReportTemplatePanel.tsx	Heading and footer text configurable
+198	9	School logo on the report	S	1	web/lib/report-logo.ts|web/lib/report-logo.test.ts|web/components/ReportLogoPanel.tsx|web/components/ReportLogoPanel.test.tsx	A local image appears on printed reports only
+199	9	Signature line for the Teacher	XS	1	web/components/ReportSignatureLine.tsx|web/components/ReportSignatureLine.test.tsx	A ruled signature and date line that prints
+200	9	Weekly report scheduled for Friday	M	4	web/lib/report-schedule.ts|web/components/ReportSchedulePanel.tsx	A reminder, not an email; the board sends nothing
+201	9	Configurable automatic post-lesson PDF	S	1	web/lib/auto-pdf-setting.ts|web/lib/auto-pdf-setting.test.ts|web/components/AutoPdfSettingToggle.tsx|web/components/AutoPdfSettingToggle.test.tsx	The existing automatic PDF can be turned off and its default is stated
+202	9	Archive browser for old reports	M	4	web/components/ReportArchive.tsx	Older lessons than the summary shows, paged
+203	9	Search every lesson	M	4	web/lib/lesson-search.ts|web/components/LessonSearch.tsx	Free-text search over labels, incidents and notes
+204	9	Tags on lessons	S	1	web/lib/lesson-tags.ts|web/lib/lesson-tags.test.ts|web/components/LessonTagsField.tsx|web/components/LessonTagsField.test.tsx	Tags stored on the record and filterable
+205	9	Filter by exercise	S	4	web/lib/exercise-filter.ts	Reports narrowed to one exercise
+206	9	Attendance rate per class	M	4	web/lib/attendance-rate.ts|web/components/AttendanceRate.tsx	Present over expected across the term
+207	9	Flight hours per class	S	4	web/lib/class-flight-hours.ts	Total airborne hours per class
+208	9	Incident rate per hundred flights	M	4	web/lib/incident-rate.ts|web/components/IncidentRate.tsx	A normalised rate rather than a raw count
+209	9	Most and least reliable craft called out in words	S	1	web/lib/reliability-callout.ts|web/lib/reliability-callout.test.ts|web/components/ReliabilityCallout.tsx|web/components/ReliabilityCallout.test.tsx	Two sentences naming the extremes with their numbers
+210	9	Cost per flight hour	M	4	web/lib/cost-per-hour.ts	Derived from purchase price and hours, when both are known
+211	9	Battery cost tracking	M	4	web/lib/battery-cost.ts	Spend on packs over time
+212	9	Export shaped for the school MIS	L	4	web/lib/mis-export.ts	A documented column layout a school system can ingest
+213	9	Anonymised export for sharing	M	4	web/lib/anonymised-export.ts	Pupil names replaced with stable ids
+214	9	Retention policy with automatic purge	M	4	web/lib/retention-policy.ts|web/components/RetentionPolicyPanel.tsx	Records older than the set period are removed, after a confirm
+215	10	A page per pupil	L	4	web/app/(app)/students/[studentId]/page.tsx|web/components/StudentDetailScreen.tsx	History, incidents and hours for one pupil
+216	10	Skill checklist per pupil	M	4	web/lib/skill-checklist.ts|web/components/SkillChecklist.tsx	A fixed list of classroom skills, tickable per pupil
+217	10	Progress chart across the term	M	4	web/lib/pupil-progress.ts|web/components/PupilProgressChart.tsx	One series per pupil over the term
+218	10	Milestones for first solo and clean landings	M	4	web/lib/pupil-milestones.ts|web/components/PupilMilestones.tsx	Milestones derived from records, never awarded by hand
+219	10	Rotation fairness across lessons	M	4	web/lib/rotation-fairness.ts|web/components/RotationFairness.tsx	Shows who has flown which craft and suggests the next pairing
+220	10	Table map to craft assignment	M	4	web/lib/table-map.ts|web/components/TableMapPanel.tsx	A room layout that assigns by seat
+221	10	Attendance over time	S	1	web/lib/attendance-history.ts|web/lib/attendance-history.test.ts|web/components/AttendanceHistory.tsx|web/components/AttendanceHistory.test.tsx	Per-pupil present and absent counts from the records already kept
+222	10	Report card PDF per pupil	M	4	web/lib/pupil-report-card.ts|web/components/PupilReportCardButton.tsx	One page per pupil, printable without browser chrome
+223	10	Notes per pupil	S	1	web/lib/pupil-notes.ts|web/lib/pupil-notes.test.ts|web/components/PupilNotesField.tsx|web/components/PupilNotesField.test.tsx	Free-text notes per StudentRecord, mirroring how craft notes already work
+224	10	Teams assigned to a craft	M	4	web/lib/teams.ts|web/components/TeamsPanel.tsx	A group of pupils shares one craft
+225	10	Pupil QR badges	M	4	web/lib/pupil-qr.ts|web/components/PupilQrSheet.tsx	Printable badges that assign on scan
+226	10	Roster CSV import	S	1	web/lib/roster-csv.ts|web/lib/roster-csv.test.ts|web/components/RosterCsvImport.tsx|web/components/RosterCsvImport.test.tsx	Validates before writing; a malformed file changes nothing and says why
+227	10	Class list printed for a cover teacher	S	1	web/components/ClassListPrint.tsx|web/components/ClassListPrint.test.tsx	Names and craft, printable, paper tokens under @media print
+228	10	Move a pupil between classes	S	4	web/lib/pupil-move-class.ts	Reassigns without losing history
+229	10	Several classes on one laptop	M	4	web/lib/class-profiles.ts|web/components/ClassProfilePicker.tsx	Each class has its own roster and lessons
+230	10	Year group and class as real fields	S	1	web/lib/pupil-year-class.ts|web/lib/pupil-year-class.test.ts	Structured fields on StudentRecord rather than name conventions
+231	10	Flight hours per pupil	S	1	web/lib/pupil-flight-hours.ts|web/lib/pupil-flight-hours.test.ts|web/components/PupilFlightHours.tsx|web/components/PupilFlightHours.test.tsx	Accumulated airborne time per pupil across closed lessons
+232	10	First-flight date remembered	XS	1	web/lib/pupil-first-flight.ts|web/lib/pupil-first-flight.test.ts	The earliest lesson a pupil appears in, shown on their row
+233	10	Pupil confidence self-rating	M	4	web/lib/pupil-confidence.ts|web/components/PupilConfidenceField.tsx	A pupil-entered rating stored with the lesson
+234	10	Peer feedback captured	M	4	web/lib/peer-feedback.ts|web/components/PeerFeedbackField.tsx	One pupil's note about another, moderated by the Teacher
+235	10	Pupil-facing progress card for the wall	M	4	web/app/(app)/walls/progress/page.tsx|web/components/walls/ProgressWall.tsx	Progress shown to the class without exposing sensitive notes
+236	10	Certificate printed on a milestone	M	4	web/components/MilestoneCertificate.tsx	One page, printable, named
+237	10	Accommodation note field	S	1	web/lib/pupil-accommodation.ts|web/lib/pupil-accommodation.test.ts|web/components/PupilAccommodationField.tsx|web/components/PupilAccommodationField.test.tsx	A support note per pupil, never shown on a wall
+238	10	Sensitive notes handled differently	M	4	web/lib/sensitive-notes.ts	Marked notes are excluded from walls, prints and exports
+239	10	Leaver archive	M	4	web/lib/pupil-archive.ts|web/components/PupilArchivePanel.tsx	A pupil can be archived without deleting their history
+240	10	Delete one pupil completely	S	1	web/lib/pupil-delete.ts|web/lib/pupil-delete.test.ts|web/components/PupilDeleteControl.tsx|web/components/PupilDeleteControl.test.tsx	Removes the pupil and their identifiable rows after a confirm naming what goes
+241	10	First-name-only display on walls	XS	1	web/lib/wall-name-display.ts|web/lib/wall-name-display.test.ts	Walls show first names only when the preference is set
+242	10	Configurable pupil id scheme	S	4	web/lib/pupil-id-scheme.ts	The id format a school already uses can be adopted
+243	11	Battery register with cycles age and retire-by	M	4	web/lib/battery-register.ts|web/components/BatteryRegisterPanel.tsx	One row per pack with its history
+244	11	Cycles counted automatically from lesson use	M	4	web/lib/battery-cycles.ts	A charge-and-use pair increments the count
+245	11	Spares consumption log	S	1	web/lib/spares-log.ts|web/lib/spares-log.test.ts|web/components/SparesLog.tsx|web/components/SparesLog.test.tsx	Props and guards used are recorded with a date and a craft
+246	11	Service due list	M	4	web/lib/service-due.ts|web/components/ServiceDueList.tsx	Craft due for service, soonest first
+247	11	Asset QR tags	M	4	web/lib/asset-qr.ts|web/components/AssetQrSheet.tsx	Printable tags that open the craft page on scan
+248	11	Check-out and check-in	M	4	web/lib/craft-checkout.ts|web/components/CraftCheckoutPanel.tsx	Craft leaving the room are logged out and back
+249	11	Repair log with photos	M	4	web/lib/repair-log.ts|web/components/RepairLog.tsx	Each repair carries a date, a description and an optional photo
+250	11	Pre-term fleet audit checklist	S	1	web/lib/fleet-audit.ts|web/lib/fleet-audit.test.ts|web/components/FleetAuditChecklist.tsx|web/components/FleetAuditChecklist.test.tsx	One pass over every craft, recorded with a date
+251	11	Supplier and warranty fields	S	1	web/lib/craft-warranty.ts|web/lib/craft-warranty.test.ts|web/components/CraftWarrantyFields.tsx|web/components/CraftWarrantyFields.test.tsx	Supplier, purchase date and warranty end on the Trainer Drone record
+252	11	Deepen the spare inventory past its stub	S	1	web/components/SpareInventory.tsx|web/components/SpareInventory.test.tsx|web/lib/spare-inventory.ts|web/lib/spare-inventory.test.ts	Names which craft are spare and why, rather than a bare count
+253	11	Retire a craft properly	S	1	web/lib/craft-retire.ts|web/lib/craft-retire.test.ts|web/components/CraftRetireControl.tsx|web/components/CraftRetireControl.test.tsx	A retired craft leaves the board but keeps its history
+254	11	Firmware version per craft	S	4	web/lib/craft-firmware.ts	A recorded version, editable, shown on the craft page
+255	11	Propeller change reminder by hours	M	4	web/lib/propeller-reminder.ts	Reminds after the configured airborne hours
+256	11	Motor hours per craft	M	4	web/lib/motor-hours.ts	Hours accumulated per craft from lesson records
+257	11	Fault pattern detection	M	4	web/lib/fault-patterns.ts|web/components/FaultPatternNotice.tsx	Names a recurring shape such as faults on take-off
+258	11	Predicted next failure	L	4	web/lib/failure-forecast.ts	States a prediction only when the record supports one
+259	11	Battery health from the charge curve	M	4	web/lib/battery-health.ts	Health inferred from observed charge behaviour only
+260	11	Battery swaps logged during a lesson	S	1	web/lib/battery-swap-log.ts|web/lib/battery-swap-log.test.ts|web/components/BatterySwapLog.tsx|web/components/BatterySwapLog.test.tsx	Each swap recorded against the craft and the lesson
+261	11	Charger inventory	S	4	web/lib/charger-inventory.ts	How many chargers and where they are
+262	11	Rename a craft	XS	1	web/lib/craft-rename.ts|web/lib/craft-rename.test.ts|web/components/CraftRenameControl.tsx|web/components/CraftRenameControl.test.tsx	A local display name overrides the telemetry name without changing it
+263	11	Photo of each craft	S	4	web/lib/craft-photo.ts|web/components/CraftPhoto.tsx	One photo per craft, stored locally
+264	11	Purchase date and age	XS	1	web/lib/craft-age.ts|web/lib/craft-age.test.ts	Age in months derived from a recorded purchase date
+265	11	Replacement budget planner	M	4	web/lib/replacement-budget.ts|web/components/ReplacementBudget.tsx	What needs replacing this year and the rough cost
+266	11	Borrow a craft from another room	M	4	web/lib/craft-loan.ts|web/components/CraftLoanPanel.tsx	A loaned craft is marked and returns on a date
+267	11	Fleet value summary	S	4	web/lib/fleet-value.ts	Total from recorded purchase prices
+268	11	Export for insurance	S	4	web/lib/insurance-export.ts	Serials, dates and values in one file
+269	12	Wall rotation carousel	M	4	web/lib/wall-rotation.ts|web/components/walls/WallCarousel.tsx	Cycles chosen walls on a timer, pausable
+270	12	Wall builder	L	4	web/lib/wall-builder.ts|web/components/walls/WallBuilder.tsx	Tiles chosen and saved as a custom wall
+271	12	Countdown wall for the period	S	1	web/app/(app)/walls/countdown/page.tsx|web/components/walls/CountdownWall.tsx|web/components/walls/CountdownWall.test.tsx	Time left in the period, legible across a room
+272	12	Clean-landing leaderboard	M	4	web/app/(app)/walls/leaderboard/page.tsx|web/components/walls/LeaderboardWall.tsx	Ranks by clean landings, never by fault count
+273	12	Your drone wall facing the pupils	M	4	web/app/(app)/walls/your-drone/page.tsx|web/components/walls/YourDroneWall.tsx	Pupil to craft, pupil-facing, no sensitive fields
+274	12	Per-room wall presets	S	1	web/lib/wall-presets.ts|web/lib/wall-presets.test.ts|web/components/walls/WallPresetPicker.tsx|web/components/walls/WallPresetPicker.test.tsx	The wall chosen for a room is recalled on that laptop
+275	12	Pop-out window for a second screen	M	4	web/lib/wall-popout.ts|web/components/walls/WallPopoutButton.tsx	Opens a wall in its own window
+276	12	Projector brightness and contrast profile	S	1	web/lib/projector-profile.ts|web/lib/projector-profile.test.ts|web/components/walls/ProjectorProfileToggle.tsx|web/components/walls/ProjectorProfileToggle.test.tsx	A higher-contrast token set for washed-out projectors, semantic layer only
+277	12	Wall font size control	XS	1	web/lib/wall-font-scale.ts|web/lib/wall-font-scale.test.ts|web/components/walls/WallFontScale.tsx|web/components/walls/WallFontScale.test.tsx	Scales wall type in rem, persisted per room (ADR-0008)
+278	12	Chrome auto-hides on a wall	XS	1	web/lib/wall-chrome.ts|web/lib/wall-chrome.test.ts|web/components/walls/WallChromeAutoHide.tsx|web/components/walls/WallChromeAutoHide.test.tsx	Header and nav fade after inactivity and return on movement
+279	12	QR on the wall to open the board on a phone	S	4	web/components/walls/WallQrCode.tsx	Encodes the board URL, display only
+280	12	Post a message to the room	S	1	web/lib/wall-message.ts|web/lib/wall-message.test.ts|web/components/walls/WallMessage.tsx|web/components/walls/WallMessage.test.tsx	A short message shown large on every wall until cleared
+281	12	Wall emergency mode	S	1	web/app/(app)/walls/emergency/page.tsx|web/components/walls/EmergencyWall.tsx|web/components/walls/EmergencyWall.test.tsx	Enormous LAND NOW, readable from anywhere in the room
+282	12	Clock and period name on every wall	XS	1	web/components/walls/WallClock.tsx|web/components/walls/WallClock.test.tsx	Time and the running lesson label on each wall
+283	12	Attendance on the wall	S	4	web/components/walls/AttendanceWall.tsx	Present count, no names when the preference says first names only
+284	12	Exercise instructions on the wall	S	1	web/app/(app)/walls/exercise/page.tsx|web/components/walls/ExerciseWall.tsx|web/components/walls/ExerciseWall.test.tsx	The current exercise shown large with its intended duration
+285	12	Safety rules rotating between periods	S	4	web/components/walls/SafetyRulesWall.tsx	A fixed set of rules cycling slowly
+286	12	The wall celebrates a milestone	M	4	web/components/walls/MilestoneWall.tsx	Announces a milestone when one is reached, respecting reduced motion
+287	12	Honest offline notice on the wall	S	1	web/components/walls/WallOfflineNotice.tsx|web/components/walls/WallOfflineNotice.test.tsx	States that the picture is stale and how old it is, never showing stale data as live
+288	12	Screensaver between periods	S	4	web/components/walls/WallScreensaver.tsx	A quiet surface when no lesson is running
+289	13	Risk assessment prefilled from the fleet	M	4	web/lib/risk-assessment.ts|web/components/RiskAssessmentDoc.tsx	A printable document with fleet facts already filled in
+290	13	Incident report in the school's format	M	4	web/lib/school-incident-format.ts	Fields mapped to a configurable layout
+291	13	Camera policy stated in plain words	S	1	web/components/CameraPolicyNote.tsx|web/components/CameraPolicyNote.test.tsx	States what is recorded, where it is kept and who can see it
+292	13	Consent register per pupil	M	4	web/lib/consent-register.ts|web/components/ConsentRegister.tsx	One row per pupil with consent state and date
+293	13	Deepen the data-location note	S	1	web/components/LogbookLocationNote.tsx|web/components/LogbookLocationNote.test.tsx	Says exactly which store holds what, and what leaves the laptop
+294	13	Retention and deletion policy page	S	1	web/app/(app)/settings/policy/page.tsx|web/components/DataPolicyScreen.tsx|web/components/DataPolicyScreen.test.tsx	One page a school can read and act on
+295	13	Audit log of what was done on this laptop	M	4	web/lib/audit-log.ts|web/components/AuditLogPanel.tsx	Local only; records actions, not keystrokes
+296	13	Evidence pack for an inspection	M	4	web/lib/evidence-pack.ts	One download gathering plans, reports and maintenance
+297	13	Curriculum mapped to standards	L	4	web/lib/curriculum-map.ts|web/components/CurriculumMap.tsx	Exercises linked to named standards
+298	13	Assessment evidence per pupil	M	4	web/lib/assessment-evidence.ts	Evidence rows tied to a pupil and a skill
+299	13	Accident book export	S	4	web/lib/accident-book.ts	Injuries and incidents in a single printable list
+300	13	Maintenance evidence for insurance	S	4	web/lib/maintenance-evidence.ts	Service and repair history in one file
+301	13	Pre-flight checklist kept as evidence	S	4	web/lib/preflight-evidence.ts	Each completed checklist is retained with its date
+302	13	Indoor flight policy note	XS	1	web/components/IndoorPolicyNote.tsx|web/components/IndoorPolicyNote.test.tsx	States the indoor-only teaching position in plain words
+303	13	Teacher competence record	S	4	web/lib/teacher-competence.ts	Who is signed off to run a lesson, and when
+304	13	Annual review report	M	4	web/lib/annual-review.ts|web/components/AnnualReview.tsx	A year of lessons, incidents and maintenance in one document
+305	14	Cover-teacher run sheet	M	4	web/lib/cover-run-sheet.ts|web/components/CoverRunSheet.tsx	Read-only, printable, enough to run the lesson without training
+306	14	Handover note between two teachers	S	1	web/lib/handover-note.ts|web/lib/handover-note.test.ts|web/components/HandoverNote.tsx|web/components/HandoverNote.test.tsx	A note written by one Teacher and surfaced to the next
+307	14	Head of department view across classes	L	4	web/lib/department-view.ts|web/components/DepartmentScreen.tsx	Every class on the laptop summarised together
+308	14	Read-only link for a colleague	M	4	web/lib/readonly-share.ts	A snapshot that carries no Commands
+309	14	How to run this lesson printed sheet	S	1	web/components/LessonRunSheetPrint.tsx|web/components/LessonRunSheetPrint.test.tsx	One page a substitute can follow, paper tokens under @media print
+310	14	Second laptop mirroring the board read-only	L	4	web/lib/board-mirror.ts	A second screen follows without being able to command
+311	14	Import another teacher's lesson plan	M	4	web/lib/lesson-plan-import.ts	Validates before writing; a bad file changes nothing
+312	14	Department-wide lesson library	L	4	web/lib/lesson-library.ts|web/components/LessonLibrary.tsx	Plans shared between teachers on the same laptop
+313	14	Export a classroom setup for another room	M	4	web/lib/classroom-export.ts	Room box, pads and wall presets in one file
+314	14	End-of-term handover checklist	S	4	web/lib/term-handover.ts|web/components/TermHandoverChecklist.tsx	What to pass on, tickable
+315	14	Parent-facing summary	M	4	web/lib/parent-summary.ts|web/components/ParentSummary.tsx	What a pupil did this term, with nothing sensitive
+316	14	Trainee-teacher mode with extra guidance	M	4	web/lib/trainee-mode.ts	Extra explanation shown on every control, opt-in
+317	15	Export and import the whole Logbook	M	3	web/lib/logbook-transfer.ts|web/lib/logbook-transfer.test.ts|web/components/LogbookTransferPanel.tsx|web/components/LogbookTransferPanel.test.tsx	Export downloads the whole Logbook; import validates the shape and confirms counts before replacing anything, and a malformed file changes nothing
+318	15	Automatic local backups	M	4	web/lib/logbook-backup.ts|web/components/BackupPanel.tsx	Seven daily snapshots kept locally and restorable
+319	15	First-run setup wizard	M	4	web/lib/setup-wizard.ts|web/components/SetupWizard.tsx	Room, fleet and roster in one guided pass
+320	15	Diagnostics page	M	4	web/app/(app)/settings/diagnostics/page.tsx|web/components/DiagnosticsScreen.tsx	Link, storage, camera and model each reporting honestly
+321	15	Restore from the cloud copy	M	4	web/lib/logbook-restore.ts|web/components/CloudRestorePanel.tsx	Pulls the synced snapshot onto a fresh laptop after a confirm
+322	15	Several classroom profiles on one laptop	L	4	web/lib/classroom-profiles.ts|web/components/ProfilePicker.tsx	Each profile has its own Logbook key
+323	15	Onboarding tour for a new teacher	M	4	web/lib/onboarding-tour.ts|web/components/OnboardingTour.tsx	Skippable, never blocking, remembers it was seen
+324	15	Support bundle	S	1	web/lib/support-bundle.ts|web/lib/support-bundle.test.ts|web/components/SupportBundleButton.tsx|web/components/SupportBundleButton.test.tsx	One download with versions, settings and recent errors, and no pupil names
+325	15	Notice when a newer board is available	S	4	web/lib/version-check.ts|web/components/UpdateNotice.tsx	Compares the built version with a published one
+326	15	Version shown in Settings	XS	1	web/lib/build-version.ts|web/lib/build-version.test.ts|web/components/VersionLine.tsx|web/components/VersionLine.test.tsx	The build version and date on the Settings screen
+327	15	Storage usage meter	S	1	web/lib/storage-usage.ts|web/lib/storage-usage.test.ts|web/components/StorageUsageMeter.tsx|web/components/StorageUsageMeter.test.tsx	How much of the browser quota the board is using, per store
+328	15	Delete one lesson rather than everything	S	1	web/lib/lesson-delete.ts|web/lib/lesson-delete.test.ts|web/components/LessonDeleteControl.tsx|web/components/LessonDeleteControl.test.tsx	One record removed after a confirm naming it; nothing else changes
+329	15	Desktop shortcut and auto-open from the launcher	S	4	scripts/launcher-shortcut.mjs	The batch launcher can create a desktop shortcut
+330	15	Start on boot for a fixed classroom machine	M	4	scripts/start-on-boot.mjs	Documented opt-in for a permanent classroom laptop
+331	16	Empty stale and disconnected sweep	M	4	web/components/screen-states.test.tsx	Every screen covered for no state, stale telemetry and lost connection
+332	16	Keyboard shortcuts and a sheet listing them	S	1	web/lib/keyboard-shortcuts.ts|web/lib/keyboard-shortcuts.test.ts|web/components/ShortcutSheet.tsx|web/components/ShortcutSheet.test.tsx	Shortcuts registered once and discoverable; nothing shadows browser defaults
+333	16	Screen-reader pass over Control and the Scope	M	4	web/components/a11y-control.test.tsx	Live regions announce what changed, not everything
+334	16	High-contrast variant	M	4	web/lib/high-contrast.ts	A semantic token override, not a second stylesheet
+335	16	Offline banner and a service worker	L	4	web/lib/offline-state.ts|web/public/sw.js	A Wi-Fi drop leaves the board usable and honest about its age
+336	16	Reduced-data mode	M	4	web/lib/reduced-data.ts|web/components/ReducedDataToggle.tsx	Camera and model work is dropped first, and says so
+337	16	Focus-visible audit and dialog tab order	S	1	web/components/focus-order.test.tsx|web/lib/focus-trap.ts|web/lib/focus-trap.test.ts	Every dialog traps focus and returns it; focus is always visible
+338	16	Remember the display-scale preference	XS	1	web/lib/display-scale.ts|web/lib/display-scale.test.ts	The chosen scale survives a reload
+339	16	Glare mode for a sunlit classroom	S	1	web/lib/glare-mode.ts|web/lib/glare-mode.test.ts|web/components/GlareModeToggle.tsx|web/components/GlareModeToggle.test.tsx	Raises contrast through the semantic layer only, never per-component colours
+340	16	Reach-friendly layout for the hand you use	M	4	web/lib/reach-side.ts	Primary controls move to the chosen side
+341	17	CommandableSource over MAVLink	L	4	fleet-adapters/src/mavlink-commandable.ts|docs/adr/0019-commands-reach-hardware.md	The ADR-0011 revision, written before the code, with Stop meaning land now
+342	17	ArduPilot SITL development loop documented	M	4	docs/mavlink-sitl.md	A developer can run the loop from the document alone
+343	17	Arming and mode safety semantics written down	M	4	docs/adr/0020-arming-and-modes.md	States what the board may and may not do to an armed craft
+344	17	Link quality on the strip	S	4	web/components/LinkQualityLine.tsx	Signal strength shown with its age, never as a bare bar
+345	17	Which positioning source is trusted	S	4	web/components/PositionSourceLine.tsx	Names the source so a Teacher knows what the coordinates mean
+346	17	Telemetry rate control	M	4	fleet-adapters/src/telemetry-rate.ts	Request rate configurable per link
+347	17	Multi-vehicle MAVLink routing	L	4	fleet-adapters/src/mavlink-routing.ts	Several craft on one link, addressed correctly
+348	17	Radio setup wizard in Settings	M	4	web/components/RadioSetupWizard.tsx	Plain-words setup for the Radio fleet choice
+349	17	Hardware fault codes translated into Teacher words	M	4	fleet-adapters/src/fault-translation.ts	Every code maps to an instruction, never a number
+350	17	Real Stop proven against SITL	M	4	fleet-adapters/src/mavlink-stop.test.ts	An automated test showing Stop lands a SITL craft before any hardware is trusted

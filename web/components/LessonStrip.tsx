@@ -7,12 +7,20 @@ import {
   addIncident,
   currentExercise,
   endLesson,
+  readLogbook,
+  renameLesson,
   tallyEvents,
   type LessonRecord,
 } from '@/lib/logbook'
+import { sealAttendanceFromBook } from '@/lib/attendance-history'
+import {
+  airborneMsFromEvents,
+  sealPupilFlightHours,
+} from '@/lib/pupil-flight-hours'
 import { describeEvent } from '@/lib/telemetry-presentation'
 import { LessonBookmarkControl } from './LessonBookmarkControl'
 import { LessonIncidentNoteControl } from './LessonIncidentNoteControl'
+import { LessonNameConfirm, needsLessonName } from './LessonNameConfirm'
 import { AutoPdfAfterLesson } from './AutoPdfAfterLesson'
 
 /**
@@ -34,10 +42,45 @@ export function LessonStrip({
   readonly now: number
 }) {
   const [pdfOpen, setPdfOpen] = useState(false)
+  const [nameConfirmOpen, setNameConfirmOpen] = useState(false)
   const elapsed = Math.max(0, now - lesson.startedAt)
   const onNow = currentExercise(lesson, now)
   const sinceStart = events.filter((event) => event.at >= lesson.startedAt)
   const incidents = sinceStart.filter((event) => event.severity !== 'routine')
+
+  const closeLesson = (labelOverride?: string) => {
+    const at = now || Date.now()
+    if (labelOverride !== undefined) {
+      renameLesson(lesson.id, labelOverride)
+    }
+    for (const event of incidents) {
+      addIncident(lesson.id, {
+        at: event.at,
+        text: `${describeEvent(event)}${event.detail ? ` — ${event.detail}` : ''}`,
+        severity: event.severity === 'fault' ? 'fault' : 'attention',
+        droneId: event.droneId,
+        droneName: event.droneName,
+      })
+    }
+    const tally = tallyEvents(sinceStart)
+    endLesson(lesson.id, at, tally)
+    const book = readLogbook()
+    sealAttendanceFromBook(lesson.id, book, at)
+    const assignments = lesson.assignments ?? {}
+    sealPupilFlightHours({
+      lessonId: lesson.id,
+      airborneMsByStudent: airborneMsFromEvents(sinceStart, assignments, at),
+    })
+    setPdfOpen(true)
+  }
+
+  const requestEnd = () => {
+    if (needsLessonName(lesson.label)) {
+      setNameConfirmOpen(true)
+      return
+    }
+    closeLesson()
+  }
 
   return (
     <section className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
@@ -85,35 +128,21 @@ export function LessonStrip({
            * ending on time is the normal path rather than a fault.
            */
           className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
-          onClick={() => {
-            const at = now || Date.now()
-            /*
-             * Written into the record as the lesson closes rather than recomputed later. The
-             * ground station's history is bounded, so by next week these events will have
-             * aged out of it — and a lesson summary that quietly emptied itself would be
-             * worse than no summary at all.
-             */
-            for (const event of incidents) {
-              addIncident(lesson.id, {
-                at: event.at,
-                text: `${describeEvent(event)}${event.detail ? ` — ${event.detail}` : ''}`,
-                severity: event.severity === 'fault' ? 'fault' : 'attention',
-                droneId: event.droneId,
-                droneName: event.droneName,
-              })
-            }
-            /*
-             * The counts go in at the same moment and for the same reason: this is the last
-             * point at which the events still exist. Maintenance reads them back so "which
-             * Drone keeps giving trouble" survives the ground station being restarted.
-             */
-            endLesson(lesson.id, at, tallyEvents(sinceStart))
-            setPdfOpen(true)
-          }}
+          onClick={requestEnd}
         >
           End the lesson
         </button>
       </div>
+
+      <LessonNameConfirm
+        open={nameConfirmOpen}
+        initialName={lesson.label === 'Untitled lesson' ? '' : lesson.label}
+        onConfirm={(name) => {
+          setNameConfirmOpen(false)
+          closeLesson(name)
+        }}
+        onCancel={() => setNameConfirmOpen(false)}
+      />
 
       <AutoPdfAfterLesson
         open={pdfOpen}

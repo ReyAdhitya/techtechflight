@@ -4,6 +4,7 @@ import { useFleet } from './FleetProvider'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
+import { SeparationThresholdPanel } from './SeparationThresholdPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
 import { cn } from '@/lib/utils'
@@ -36,6 +37,8 @@ export function SettingsScreen() {
       <LogbookLocationNote />
 
       <ClassroomSetupPanel />
+
+      <SeparationThresholdPanel />
 
       <Panel title="The ground station">
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">

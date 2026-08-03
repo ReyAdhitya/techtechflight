@@ -9,6 +9,57 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-03 — Record is inside Camera, not beside it.
+
+- **Decision / notes:** Per-Drone Record is session chrome for the feed, so it only appears
+  in CameraPane / the Camera dialog. Control strips keep the Camera opener alone; putting
+  Record next to Camera made it look like a Command sibling of Land / Hover. Fleet-wide
+  **Record all cameras** stays on Control / Walls as a board action.
+
+## 2026-08-03 #119 — Charge-to-ready for the set.
+
+- **Decision / notes:** The minutes figure is the longest `timeToReadyMs` among forecasted craft, and the count is already-Ready plus every craft carrying a forecast. Partial horizons ("4 ready in 5 minutes" while two more still charge) would need a second line; one line for the whole set answers when the forecasted pack is in.
+
+## 2026-08-03 #129 — Missing since last Lesson.
+
+- **Decision / notes:** "Absent" means Offline or missing from the Fleet — not the Teacher's physical headcount tick (#128). The notice is silent when the last closed Lesson left no tally/assignments/commands to compare against.
+
+## 2026-08-03 #146 — Undo last assignment.
+
+- **Decision / notes:** Undo depth is one snapshot of the whole live assignment map, captured before a mutation (`captureAssignmentUndoPoint` / `withAssignmentUndo`). The Integrator wraps assign paths; the button only restores. A second capture replaces the first — no multi-step stack.
+
+## 2026-08-03 #148 — Absent frees a craft.
+
+- **Decision / notes:** Marking absent clears their live assignment but does not auto-assign the next waiting name — the Teacher still chooses who takes the freed craft. The notice only names who is next.
+
+## 2026-08-03 #156 — Safety brief.
+
+- **Decision / notes:** Persist ticks in localStorage keyed to the running Lesson id (`techtechflight:safety-brief`), not on the Logbook — the brief is period chrome, not a Student record, and must not ride Telemetry or the optional Blob sync.
+
+## 2026-08-03 #230 — Camera orientation.
+
+- **Decision / notes:** Orientation lives in `localStorage` (`techtechflight:camera-orientation`), never on Telemetry — same class of school preference as the stream map. CSS `scaleX` + `rotate` is applied by the Integrator to the video element.
+
+## 2026-08-03 #310 — Lifetime hours per craft on Reports.
+
+- **Decision / notes:** The Logbook has no per-flight airborne clock. A craft with `tally.flights > 0` in a closed Lesson is charged that Lesson's wall-clock (`endedAt − startedAt`). Open Lessons and crafts that never took off do not accumulate. Order is by `droneId`, not by hours.
+
+## 2026-08-03 #340 — Attendance over time.
+
+- **Decision / notes:** Attendance history lives in a side localStorage key (`techtechflight:attendance-history`), not inside the Logbook shape. Parallel wave tickets cannot extend `Logbook` without colliding. The Integrator should call `sealAttendanceFromBook(lessonId, book, at)` when a Lesson closes so the open `absentStudentIds` marks become a lasting session. Counts stay at zero until something is sealed — inventing absence from "not assigned" would misread rotations as truancy.
+
+## 2026-08-03 #342 — Notes per pupil.
+
+- **Decision / notes:** Pupil notes live in `techtechflight:pupil-notes`, not on `Logbook`, because this wave cannot extend the Logbook shape without colliding. Behaviour mirrors `writeNote`: trim, empty clears, `updatedAt` on save.
+
+## 2026-08-03 #345 — Roster CSV import.
+
+- **Decision / notes:** Name-only CSV replaces the class via `saveRoll`. CSV with studentId upserts those rows and leaves other roster members alone. Validation runs to completion before any write.
+
+## 2026-08-03 #350 — Flight hours per pupil.
+
+- **Decision / notes:** True takeoff/land timestamps are not kept on `LessonRecord`. Prefer `sealPupilFlightHours` from live events via `airborneMsFromEvents`. Without a seal, attribute Lesson wall-clock only when `tally.flights > 0` for that assignment, and label the readout approximate. Zero stays zero when nothing applies.
+
 ## 2026-08-03 Parallel waves write changelog fragments, not the changelog
 
 - **Decision:** During a multi-agent wave, no agent edits `docs/CHANGELOG.md` or this file.

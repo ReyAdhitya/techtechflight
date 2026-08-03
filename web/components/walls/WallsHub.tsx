@@ -20,6 +20,8 @@ export const WALL_DESTINATIONS = [
   { href: '/walls/detect', label: 'Detect', hint: 'Detection counts across the class' },
   { href: '/walls/dual', label: 'Dual', hint: 'Two cameras side by side' },
   { href: '/walls/landed', label: 'Landed', hint: 'Who is down at end of lesson' },
+  { href: '/walls/assignments', label: 'Assignments', hint: 'Who flies which craft' },
+  { href: '/walls/objective', label: 'Objective', hint: "Today's lesson objective" },
 ] as const
 
 export type WallDestination = (typeof WALL_DESTINATIONS)[number]

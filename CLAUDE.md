@@ -94,6 +94,22 @@ answer where to land and stay display-only unless a Teacher presses sim **Place 
 pad (demo)**. Do not write QR into Telemetry. On the sim feed the scanner reads
 `/qr/landing-pad-a.png`.
 
+**`AirborneTracker.observe` must not `setState` on every vitals tick.** `vitals` is often a
+fresh array each render; an effect that observes then bumps a tick state will hang Control
+under jsdom. Observe inside `useMemo` (or only setState when the since-map actually changes).
+
+**Parallel-wave changelog fragments.** During a multi-agent wave, agents write
+`docs/changelog.d/<issue>.md` instead of editing `CHANGELOG.md` / `DECISIONS.md`. The
+Integrator merges those fragments in issue order and deletes them — leftovers mean the wave
+never integrated.
+
+**Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
+seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
+nomination, screen lock, and ceiling-breach counts each live in their own `localStorage`
+key (`techtechflight:…`). Closing a Lesson must call `sealAttendanceFromBook` (and preferably
+`sealPupilFlightHours`) — the marks do not persist into history by themselves. Do not fold
+these into the Logbook shape without an ADR.
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

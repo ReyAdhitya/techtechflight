@@ -1,18 +1,24 @@
 'use client'
 
 import { useRef, useSyncExternalStore } from 'react'
-import { studentIdsForLesson } from '@/lib/reports-student-id'
 import { WeeklyDigest } from './WeeklyDigest'
 import { EndOfDayExportButton } from './EndOfDayExportButton'
 import { FleetReliability, rankFleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
 import { LogbookLocationNote } from './LogbookLocationNote'
+import { ReportsCsvButton } from './ReportsCsvButton'
+import { CraftLifetimeHours } from './CraftLifetimeHours'
+import { LessonOnePager } from './LessonOnePager'
 import { useFleet } from './FleetProvider'
 import {
   downloadReportsPdf,
   REPORTS_PDF_TITLE,
 } from '@/lib/reports-pdf'
+import {
+  formatCeilingBreachCount,
+  readLessonCeilingBreachCount,
+} from '@/lib/ceiling-breach-count'
 import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
@@ -61,6 +67,8 @@ export function ReportsScreen() {
   const printedAtRef = useRef<HTMLTimeElement>(null)
   const { snapshot } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+  const closed = book.lessons.filter((lesson) => lesson.endedAt !== null)
+  const latestClosed = closed[0] ?? null
 
   function onDownloadPdf() {
     const drones = snapshot.state?.drones ?? []
@@ -93,6 +101,7 @@ export function ReportsScreen() {
           >
             Download PDF
           </button>
+          <ReportsCsvButton lessons={book.lessons} />
           <button
             type="button"
             onClick={() => printReports(printedAtRef.current)}
@@ -127,6 +136,34 @@ export function ReportsScreen() {
 
       <LessonReports />
 
+      {closed.length > 0 && (
+        <section className="print-hide flex flex-col gap-2 border-t border-hairline pt-8">
+          <h2 className="label m-0">Ceiling breaches</h2>
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
+            {closed.slice(0, 12).map((lesson) => {
+              const count = readLessonCeilingBreachCount(lesson.id)
+              return (
+                <li key={lesson.id} className="text-value text-ink-subtle">
+                  <span className="font-medium text-ink">{lesson.label}</span>
+                  {' — '}
+                  <span className="tnum">{formatCeilingBreachCount(count)}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
+
+      <div className="print-hide border-t border-hairline pt-8">
+        <CraftLifetimeHours lessons={book.lessons} />
+      </div>
+
+      {latestClosed && (
+        <div className="print-hide border-t border-hairline pt-8">
+          <LessonOnePager lesson={latestClosed} />
+        </div>
+      )}
+
       <div className="border-t border-hairline pt-8">
         <FleetReliability />
       </div>
@@ -134,8 +171,8 @@ export function ReportsScreen() {
       <div className="print-hide flex flex-col gap-3 border-t border-hairline pt-8">
         <HistorySections />
       </div>
-          <EndOfDayExportButton lessons={book.lessons} />
-          <WeeklyDigest lessons={book.lessons} />
+      <EndOfDayExportButton lessons={book.lessons} />
+      <WeeklyDigest lessons={book.lessons} />
     </main>
   )
 }

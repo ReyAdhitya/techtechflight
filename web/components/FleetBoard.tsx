@@ -12,6 +12,7 @@ import { ConnectionBanner } from './ConnectionBanner'
 import { DroneDetailDialog } from './DroneDetailDialog'
 import { DroneTile } from './DroneTile'
 import { FleetSummary } from './FleetSummary'
+import { FleetReadyCountdown } from './FleetReadyCountdown'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 export interface FleetBoardProps {
@@ -119,6 +120,7 @@ export function FleetBoard({
         transition={reduced ? { duration: 0 } : { duration: 0.55, ease: EASE }}
       >
         <FleetSummary drones={state.drones} />
+        <FleetReadyCountdown drones={state.drones} className="mt-2" />
       </motion.div>
 
       {/*

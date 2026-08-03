@@ -60,6 +60,10 @@ would notice.
 
 ### Fixed
 
+- **Record lives inside Camera.** Control strips keep only the Camera entry; per-Drone
+  Record sits in the Camera dialog next to the feed (where CameraPane already had it), not
+  as a sibling pill beside Camera. **Record all cameras** stays above Every Drone.
+
 - **The gate is green again.** `ControlStripOrder.test.tsx` still looked for the Attention
   queue by `role="status"` after it became a disclosure list, so `main` had been failing CI
   since 30 July without anyone noticing. The query now matches the role the component

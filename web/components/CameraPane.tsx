@@ -135,9 +135,15 @@ export function CameraPane({
           />
         )}
 
-        {simulated && (
-          <div className="flex flex-wrap gap-2">
-            {camera.streaming ? (
+        {/*
+         * Record is camera-session chrome — it lives with the feed controls, not on
+         * Control strips beside Camera. Always offered when a camera is fitted so the
+         * Teacher does not have to Start first just to find Record.
+         */}
+        <div className="flex flex-wrap gap-2">
+          <CameraRecordingClip droneId={droneId} />
+          {simulated &&
+            (camera.streaming ? (
               <button
                 type="button"
                 onClick={() => scenarios.stopCamera(droneId)}
@@ -153,9 +159,8 @@ export function CameraPane({
               >
                 Start camera
               </button>
-            )}
-          </div>
-        )}
+            ))}
+        </div>
       </div>
     </InstrumentPanel>
   )
@@ -307,7 +312,6 @@ function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName:
         <FrozenFeedNotice lastFrameAt={lastFrameAt} now={now} streaming={streaming} />
       </div>
       <div className="flex flex-wrap gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
-        <CameraRecordingClip droneId={droneId} />
         <PhotoEvidenceButton droneId={droneId} droneName={droneName} videoRef={videoRef} />
         <p className="m-0 self-center text-value text-ink-subtle">
           School stream — from the stream map, not Telemetry
@@ -471,7 +475,6 @@ function SimulatedFeed({
         <DetectionOverlay detections={detections} detector={detector} />
       </div>
       <div className="flex flex-wrap items-center gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
-        <CameraRecordingClip droneId={droneId} />
         <PhotoEvidenceButton
           droneId={droneId}
           droneName={droneName}

@@ -95,7 +95,23 @@ describe('opening a camera popup from Control', () => {
     expect(within(strip).getByRole('button', { name: 'Hover' })).toBeInTheDocument()
     expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
     expect(within(strip).getByRole('button', { name: 'Camera' })).toBeInTheDocument()
-    expect(within(strip).getByRole('button', { name: 'Record' })).toBeInTheDocument()
+    // Record is camera-session chrome — it opens with the feed, not beside Camera on the strip.
+    expect(within(strip).queryByRole('button', { name: 'Record' })).not.toBeInTheDocument()
+  })
+
+  it('puts Record inside the Camera dialog, not on the strip', () => {
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+
+    const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
+    fireEvent.click(within(strip).getByRole('button', { name: 'Camera' }))
+
+    const popup = screen.getByRole('dialog', { name: 'Drone 1 camera' })
+    expect(within(popup).getByRole('button', { name: 'Record' })).toBeInTheDocument()
   })
 
   it('offers Record all cameras above Every Drone', () => {

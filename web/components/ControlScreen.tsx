@@ -47,7 +47,6 @@ import { AttentionBar } from './AttentionBar'
 import { AltitudeFloorNotice } from './AltitudeFloorNotice'
 import { BatteryChargeReading } from './BatteryChargeReading'
 import { CameraRecordAllButton } from './CameraRecordAllButton'
-import { CameraRecordingClip } from './CameraRecordingClip'
 import { CameraSlide } from './CameraSlide'
 import { ExerciseRemaining } from './ExerciseRemaining'
 import { FleetAllWellLine } from './FleetAllWellLine'
@@ -476,7 +475,6 @@ function ScopeSelectedDock({
           >
             Camera
           </button>
-          <CameraRecordingClip droneId={vitals.droneId} />
           <button
             type="button"
             onClick={onClear}
@@ -725,6 +723,7 @@ function FlightStrip({
         {/*
          * Camera is watch chrome beside the strip, not a Command. Kept out of CommandRow
          * so Land / Hover / Stop stay the only things that ask an aircraft to act (C9).
+         * Record lives inside the Camera dialog (CameraPane) — not a sibling of Camera here.
          */}
         <div className="flex flex-wrap gap-2">
           <button
@@ -737,7 +736,6 @@ function FlightStrip({
           >
             Camera
           </button>
-          <CameraRecordingClip droneId={vitals.droneId} />
         </div>
 
         <CommandRow

@@ -5,7 +5,7 @@ import { ExerciseRemaining } from './ExerciseRemaining'
 
 const startedAt = 1_000_000
 
-function lesson(exercises: LessonRecord['exercises']): LessonRecord {
+function lesson(exercises: NonNullable<LessonRecord['exercises']>): LessonRecord {
   return {
     id: 'L-1',
     label: 'Hover',

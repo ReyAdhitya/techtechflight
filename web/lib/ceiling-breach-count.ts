@@ -1,5 +1,10 @@
 import type { DroneId } from '@techtechflight/contract'
-import { CLASSROOM_CEILING_M } from '@/components/walls/height-wall'
+
+/**
+ * Same number as `CLASSROOM_CEILING_M` on the height wall — duplicated here so lib never
+ * imports components (import-boundaries). Keep both in step when the classroom height changes.
+ */
+export const DEFAULT_CLASSROOM_CEILING_M = 3
 
 /**
  * Per-lesson ceiling breach counts for the report afterwards.
@@ -30,7 +35,7 @@ export function emptyCeilingBreachState(): CeilingBreachState {
 
 export function isOverClassroomCeiling(
   altitudeM: number | null,
-  ceilingM: number = CLASSROOM_CEILING_M,
+  ceilingM: number = DEFAULT_CLASSROOM_CEILING_M,
 ): boolean {
   if (altitudeM === null) return false
   return altitudeM > ceilingM
@@ -42,7 +47,7 @@ export function isOverClassroomCeiling(
 export function observeCeilingBreaches(
   previous: CeilingBreachState,
   samples: readonly CeilingSample[],
-  ceilingM: number = CLASSROOM_CEILING_M,
+  ceilingM: number = DEFAULT_CLASSROOM_CEILING_M,
 ): CeilingBreachState {
   const nextOver = new Set<DroneId>()
   let count = previous.count
@@ -59,7 +64,7 @@ export function observeCeilingBreaches(
 /** Rising edges in an ordered altitude series for one craft — useful in unit tests. */
 export function countBreachesInSeries(
   altitudes: readonly (number | null)[],
-  ceilingM: number = CLASSROOM_CEILING_M,
+  ceilingM: number = DEFAULT_CLASSROOM_CEILING_M,
 ): number {
   let count = 0
   let wasOver = false

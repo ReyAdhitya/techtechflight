@@ -73,7 +73,10 @@ describe('Every Drone on Control', () => {
       'Drone 6',
     ])
 
-    const attention = screen.getByRole('status', { name: 'Items requiring action' })
+    // The queue became a disclosure list rather than a live region when the Attention bar
+    // stopped swapping a single line. What this test pins is unchanged — the worst item is
+    // reachable there while the strips above it stay put.
+    const attention = screen.getByRole('list', { name: 'Items requiring action' })
     expect(attention).toHaveTextContent('Drone 6')
   })
 })

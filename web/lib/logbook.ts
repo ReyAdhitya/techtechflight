@@ -677,6 +677,19 @@ export function startLesson(
   return id
 }
 
+/** Rename a Lesson before close so the record is never left Untitled (#276). */
+export function renameLesson(id: string, label: string): void {
+  const trimmed = label.trim()
+  if (trimmed === '') return
+  const book = readLogbook()
+  save({
+    ...book,
+    lessons: book.lessons.map((lesson) =>
+      lesson.id === id ? { ...lesson, label: trimmed } : lesson,
+    ),
+  })
+}
+
 export function endLesson(
   id: string,
   at: number,

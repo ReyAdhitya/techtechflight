@@ -5,6 +5,59 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **Wave 1A mounted on shared screens.** Fleet, Lesson, Control, Settings, Reports,
+  Students, and Walls hub wire the batch components; camera session chrome lives in the
+  Camera dialog; lesson close asks for a name and seals attendance / pupil hours.
+
+### Added (Wave 1A)
+
+- **Charge-to-ready for the set.** One line under the Fleet summary — "6 ready in 12 minutes" — built only from charge the board has watched go in; silent when no honest forecast exists.
+- **Fleet headcount before class.** Tick each craft on the bench; the present count (including zero) and the missing list stay on the prep screen.
+- **Missing since last Lesson.** Prep names any craft that flew the last closed Lesson and has not come back (Offline or gone from the Fleet).
+- **Nominate the spare.** Mark one craft as the swap during prep; the board remembers it on this laptop.
+- **Assign everyone.** One tap fills every free craft from the roster in board order and says how many were handed out.
+- **Undo last assignment.** One step puts the previous Student ↔ Drone pairings back exactly.
+- **Swap Students.** One action exchanges who is flying two craft, using the same swap the Control strips already know.
+- **Absent frees a craft.** Marking a Student absent returns their Drone to the waiting list and names who is next.
+- **Waiting list.** Lesson screen can show who flies next — unassigned Students in roll order, with an empty state that explains itself.
+- **Assignment wall.** Classroom Wall cards show each Student next to their craft, large enough to read across the room.
+- **Objective wall.** One large sentence from the running Lesson — the Exercise under way, or the Lesson label — for the class to see.
+- **Safety brief.** Fixed classroom rules the Teacher can tick with the class; ticks reset when a new Lesson starts.
+- **Everything fine?** One line on Control / Fleet that answers whether anything needs attention — calm at zero, never vanishing.
+- **Exercise time left.** Every Control strip counts down the current Exercise — quiet when no duration was set.
+- **Not yet airborne.** Control names grounded craft that still have an assigned Student after the Lesson starts.
+- **Up longest.** Control names the craft that has been airborne longest, with how long.
+- **Screen lock.** The Teacher can lock Control so a pupil at the laptop cannot press Stop — every Command control disables and says why.
+- **Altitude floor over the desks.** Control can warn when an airborne Drone is skimming
+  below the configured floor (default 0.5 m) — grounded craft on desks stay quiet.
+- **Ceiling breaches on the report.** Each time a Drone climbs above the classroom ceiling
+  during a lesson is counted once, and the total stays readable afterwards.
+- **Tunable separation alarm.** Settings can change how close two craft may get before the
+  board warns — default stays today's 1.5 m.
+- **Land all now.** One control lands every airborne craft, held down to confirm.
+- **Land one table.** A control lands only the airborne craft in the chosen group, not the whole Fleet.
+- **Stop on the lesson.** Every Stop press is written onto the lesson record with time and craft.
+- **Incident severity from a list.** New incident notes pick Needs attention or Fault;
+  older free-text severities still print as written on Reports.
+- **Clip library.** Clips captured this session stay listed so the Teacher can download them again without re-recording.
+- **Snapshot gallery.** Stills taken this session show as thumbnails with craft and time in the Camera dialog.
+- **Frozen feed.** When the camera picture stops updating, the board says so instead of leaving a still frame that looks live.
+- **Camera orientation.** Each craft can be mirrored and rotated; the choice sticks on this laptop and applies to the camera pane.
+- **Pack-down checklist.** At lesson close, one tickable row per craft — packed or still out — and a fresh list every lesson.
+- **Battery back on charge.** At pack-down, tick which packs went back on charge — and see which still need placing.
+- **Craft returned.** At pack-down, the headcount out — how many are back, with any craft still missing named.
+- **Lesson name at close.** Closing asks for a name so the record is never left as Untitled lesson.
+- **Download CSV on Reports.** Lessons and incidents as a spreadsheet file — names with commas quote cleanly.
+- **Lifetime hours per craft on Reports.** Accumulated Lesson time for each airframe that took off, across every closed Lesson.
+- **Incident categories.** A fixed vocabulary for what went wrong — collision, battery, link, control, hardware, other. Notes written before categories stay readable as Uncategorised or their original words.
+- **One-page printable Lesson summary.** A single A4 sheet for one closed Lesson — paper tokens under print, kept together with `break-inside: avoid`.
+- **Attendance over time.** Present and absent counts per Student, sealed from the marks the Teacher already keeps.
+- **Notes per pupil.** Free-text notes on each Student, saved when focus leaves the field — the same habit as craft notes.
+- **Roster CSV import.** Choose a class list file — a bad spreadsheet changes nothing and says why.
+- **Flight hours per pupil.** Accumulated airborne time across closed Lessons — sealed intervals when available, otherwise Lesson length when a takeoff was recorded.
+
 ### Fixed
 
 - **The gate is green again.** `ControlStripOrder.test.tsx` still looked for the Attention

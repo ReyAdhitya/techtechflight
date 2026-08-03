@@ -17,9 +17,26 @@ import {
   studentOf,
   subscribeLogbook,
 } from '@/lib/logbook'
+import {
+  attendanceCountsFor,
+  readAttendanceHistory,
+  readServerAttendanceHistory,
+  subscribeAttendanceHistory,
+} from '@/lib/attendance-history'
+import {
+  pupilNoteOf,
+  readPupilNotes,
+  readServerPupilNotes,
+  subscribePupilNotes,
+} from '@/lib/pupil-notes'
+import { pupilAirborneMs } from '@/lib/pupil-flight-hours'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 import { AssignNextButton } from './AssignNextButton'
+import { AttendanceHistory } from './AttendanceHistory'
+import { PupilFlightHours } from './PupilFlightHours'
+import { PupilNotesField } from './PupilNotesField'
+import { RosterCsvImport } from './RosterCsvImport'
 import { useFleet } from './FleetProvider'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { PresenceBadge } from './PresenceBadge'
@@ -44,6 +61,12 @@ import { READING_FRAME } from '@/lib/frame'
 export function StudentsScreen() {
   const { snapshot } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+  const attendance = useSyncExternalStore(
+    subscribeAttendanceHistory,
+    readAttendanceHistory,
+    readServerAttendanceHistory,
+  )
+  const notes = useSyncExternalStore(subscribePupilNotes, readPupilNotes, readServerPupilNotes)
   const drones = snapshot.state?.drones ?? []
   const [name, setName] = useState('')
 
@@ -71,6 +94,8 @@ export function StudentsScreen() {
         <h1 className="m-0 font-display text-summary font-medium">Students</h1>
         <LogbookLocationNote />
       </div>
+
+      <RosterCsvImport />
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
@@ -161,47 +186,81 @@ export function StudentsScreen() {
           <h2 className="label m-0">The class</h2>
           <p className="m-0 text-value text-ink-subtle">
             Type a name — the board assigns an ID for records. Strips and Alerts still show
-            the name. Nothing else is stored against them.
+            the name. Notes and attendance stay on this laptop.
           </p>
         </div>
 
         {roster.length > 0 && (
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {roster.map((student) => (
-              <li
-                key={student.studentId || student.name}
-                className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-3 py-2"
-              >
-                <span className="font-display text-body font-medium text-ink">{student.name}</span>
-                {student.studentId !== '' && isStudentAbsent(book, student.studentId) && (
-                  <PresenceBadge kind="absent" />
-                )}
-                {student.studentId !== '' && (
-                  <span className="tnum text-value text-ink-subtle">{student.studentId}</span>
-                )}
-                {student.studentId !== '' && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setStudentAbsent(student.studentId, !isStudentAbsent(book, student.studentId))
-                    }
-                    className="cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
-                  >
-                    {isStudentAbsent(book, student.studentId) ? 'Mark present' : 'Mark absent'}
-                  </button>
-                )}
-                {student.studentId !== '' && (
-                  <button
-                    type="button"
-                    aria-label={`Remove ${student.name} from the class`}
-                    onClick={() => removeStudent(student.studentId)}
-                    className="ml-auto cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
-                  >
-                    ×
-                  </button>
-                )}
-              </li>
-            ))}
+          <ul className="m-0 flex list-none flex-col gap-4 p-0">
+            {roster.map((student) => {
+              const counts = student.studentId
+                ? attendanceCountsFor(attendance, student.studentId)
+                : { present: 0, absent: 0 }
+              const noteText =
+                student.studentId !== ''
+                  ? (pupilNoteOf(notes, student.studentId)?.text ?? '')
+                  : ''
+              const hours =
+                student.studentId !== ''
+                  ? pupilAirborneMs(book, student.studentId)
+                  : { studentKey: student.name, airborneMs: 0, lessonCount: 0 }
+
+              return (
+                <li
+                  key={student.studentId || student.name}
+                  className="flex flex-col gap-3 rounded-surface border border-hairline bg-surface-1 px-3 py-3"
+                >
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="font-display text-body font-medium text-ink">
+                      {student.name}
+                    </span>
+                    {student.studentId !== '' && isStudentAbsent(book, student.studentId) && (
+                      <PresenceBadge kind="absent" />
+                    )}
+                    {student.studentId !== '' && (
+                      <span className="tnum text-value text-ink-subtle">{student.studentId}</span>
+                    )}
+                    {student.studentId !== '' && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setStudentAbsent(
+                            student.studentId,
+                            !isStudentAbsent(book, student.studentId),
+                          )
+                        }
+                        className="cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
+                      >
+                        {isStudentAbsent(book, student.studentId) ? 'Mark present' : 'Mark absent'}
+                      </button>
+                    )}
+                    {student.studentId !== '' && (
+                      <button
+                        type="button"
+                        aria-label={`Remove ${student.name} from the class`}
+                        onClick={() => removeStudent(student.studentId)}
+                        className="ml-auto cursor-pointer border-0 bg-transparent text-value text-ink-muted hover:text-ink"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  {student.studentId !== '' && (
+                    <div className="grid gap-3 min-[40rem]:grid-cols-2">
+                      <AttendanceHistory studentName={student.name} counts={counts} />
+                      <PupilFlightHours studentName={student.name} hours={hours} />
+                    </div>
+                  )}
+                  {student.studentId !== '' && (
+                    <PupilNotesField
+                      studentId={student.studentId}
+                      studentName={student.name}
+                      text={noteText}
+                    />
+                  )}
+                </li>
+              )
+            })}
           </ul>
         )}
 

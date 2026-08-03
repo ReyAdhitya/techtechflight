@@ -94,6 +94,13 @@ answer where to land and stay display-only unless a Teacher presses sim **Place 
 pad (demo)**. Do not write QR into Telemetry. On the sim feed the scanner reads
 `/qr/landing-pad-a.png`.
 
+**Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
+seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
+nomination, screen lock, and ceiling-breach counts each live in their own `localStorage`
+key (`techtechflight:…`). Closing a Lesson must call `sealAttendanceFromBook` (and preferably
+`sealPupilFlightHours`) — the marks do not persist into history by themselves. Do not fold
+these into the Logbook shape without an ADR.
+
 ## Standing rule: save after every task
 
 The session can end without warning. After EVERY completed task, before starting the next:

@@ -2,9 +2,18 @@
 
 import { useState } from 'react'
 import type { DroneId } from '@techtechflight/contract'
-import { addTeacherIncidentNote, type LessonIncident } from '@/lib/logbook'
-import { formatClock } from '@/lib/telemetry-presentation'
+import { addIncident, type LessonIncident } from '@/lib/logbook'
+import {
+  defaultIncidentSeverity,
+  type IncidentSeverity,
+} from '@/lib/incident-severity'
+import {
+  labelIncidentCategory,
+  type IncidentCategoryId,
+} from '@/lib/incident-categories'
 import { formatElapsed } from './LessonStrip'
+import { IncidentCategorySelect } from './IncidentCategorySelect'
+import { IncidentSeveritySelect } from './IncidentSeveritySelect'
 
 /**
  * Record what the Teacher saw — written to the Logbook, not sent to the Fleet (ADR-0011).
@@ -29,14 +38,25 @@ export function LessonIncidentNoteControl({
 }) {
   const [note, setNote] = useState('')
   const [draftOpen, setDraftOpen] = useState(false)
-  const teacherNotes = incidents.filter((incident) => incident.severity === 'attention')
+  const [severity, setSeverity] = useState<IncidentSeverity>(() => defaultIncidentSeverity())
+  const [category, setCategory] = useState<IncidentCategoryId | ''>('')
+  const teacherNotes = incidents.filter((incident) => incident.severity === 'attention' || incident.severity === 'fault')
 
   const save = () => {
-    addTeacherIncidentNote(lessonId, now || Date.now(), note, {
+    const trimmed = note.trim()
+    if (trimmed === '') return
+    const categoryLabel = category === '' ? null : labelIncidentCategory(category)
+    const text = categoryLabel ? `${categoryLabel}: ${trimmed}` : trimmed
+    addIncident(lessonId, {
+      at: now || Date.now(),
+      text,
+      severity,
       ...(droneId !== undefined ? { droneId } : {}),
       ...(droneName !== undefined ? { droneName } : {}),
     })
     setNote('')
+    setCategory('')
+    setSeverity(defaultIncidentSeverity())
     setDraftOpen(false)
   }
 
@@ -66,6 +86,8 @@ export function LessonIncidentNoteControl({
                 }}
               />
             </label>
+            <IncidentSeveritySelect value={severity} onChange={setSeverity} />
+            <IncidentCategorySelect value={category} onChange={setCategory} />
             <button
               type="button"
               onClick={save}

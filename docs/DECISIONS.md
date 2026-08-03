@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-03 — Record is inside Camera, not beside it.
+
+- **Decision / notes:** Per-Drone Record is session chrome for the feed, so it only appears
+  in CameraPane / the Camera dialog. Control strips keep the Camera opener alone; putting
+  Record next to Camera made it look like a Command sibling of Land / Hover. Fleet-wide
+  **Record all cameras** stays on Control / Walls as a board action.
+
 ## 2026-08-03 #119 — Charge-to-ready for the set.
 
 - **Decision / notes:** The minutes figure is the longest `timeToReadyMs` among forecasted craft, and the count is already-Ready plus every craft carrying a forecast. Partial horizons ("4 ready in 5 minutes" while two more still charge) would need a second line; one line for the whole set answers when the forecasted pack is in.

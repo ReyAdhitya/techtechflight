@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { DroneId } from '@techtechflight/contract'
 import { assignEveryone } from '@/lib/assign-everyone'
+import { withAssignmentUndo } from '@/lib/assignment-undo'
 
 /**
  * One tap hands every free craft to the next names on the roster, in board order.
@@ -23,7 +24,7 @@ export function AssignEveryoneButton({
       <button
         type="button"
         onClick={() => {
-          setAssignedCount(assignEveryone(droneIds))
+          setAssignedCount(withAssignmentUndo(() => assignEveryone(droneIds)))
           setHasRun(true)
         }}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"

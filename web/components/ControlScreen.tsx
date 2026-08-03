@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useSyncExternalStore, useEffect } from 'react'
+import { useMemo, useState, useSyncExternalStore, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import {
   assignStudent,
@@ -29,16 +29,38 @@ import {
 import { formatAge } from '@/lib/age'
 import { cn } from '@/lib/utils'
 import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
+import { AirborneTracker } from '@/lib/longest-airborne'
+import { recordStopOnLesson } from '@/lib/stop-audit'
+import {
+  emptyCeilingBreachState,
+  observeCeilingBreaches,
+  writeLessonCeilingBreachCount,
+  type CeilingBreachState,
+} from '@/lib/ceiling-breach-count'
+import {
+  commandLockState,
+  lockedCommandLabel,
+  readScreenLocked,
+  writeScreenLocked,
+} from '@/lib/screen-lock'
 import { AttentionBar } from './AttentionBar'
+import { AltitudeFloorNotice } from './AltitudeFloorNotice'
 import { BatteryChargeReading } from './BatteryChargeReading'
 import { CameraRecordAllButton } from './CameraRecordAllButton'
 import { CameraRecordingClip } from './CameraRecordingClip'
 import { CameraSlide } from './CameraSlide'
+import { ExerciseRemaining } from './ExerciseRemaining'
+import { FleetAllWellLine } from './FleetAllWellLine'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
+import { LandAllButton } from './LandAllButton'
+import { LandTableButton } from './LandTableButton'
 import { LessonStrip } from './LessonStrip'
+import { LongestAirborne } from './LongestAirborne'
+import { NotYetAirborneNotice } from './NotYetAirborneNotice'
 import { AssignNextButton } from './AssignNextButton'
 import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
+import { ScreenLockToggle } from './ScreenLockToggle'
 import { SimLandAllButton } from './SimLandAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
 import { PresenceBadge } from './PresenceBadge'
@@ -71,15 +93,56 @@ export function ControlScreen() {
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [quietMode, setQuietMode] = useState(false)
+  const [screenLocked, setScreenLocked] = useState(false)
+  const airborneTracker = useRef(new AirborneTracker())
+  const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
+  const ceilingLessonId = useRef<string | null>(null)
 
   const lesson = runningLesson(book)
   const state = snapshot.state
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
 
+  // Observe takeoff clocks without setState — vitals is a fresh array each Fleet tick,
+  // and a tick+setState loop hung Control under jsdom.
+  const longestAirborneCraft = useMemo(() => {
+    airborneTracker.current.observe(
+      vitals.map((entry) => ({ droneId: entry.droneId, airborne: entry.airborne })),
+      now,
+    )
+    return vitals.map((entry) => ({
+      droneId: entry.droneId,
+      callsign: entry.callsign,
+      airborne: entry.airborne,
+      airborneSince: airborneTracker.current.sinceOf(entry.droneId),
+    }))
+  }, [vitals, now])
+
+  useEffect(() => {
+    setScreenLocked(readScreenLocked())
+  }, [])
+
   useEffect(() => {
     if (!state) return
     setGhostPaths((current) => recordGhostPaths(current, state.drones, now))
   }, [state, now])
+
+  useEffect(() => {
+    if (!lesson) {
+      ceilingRef.current = emptyCeilingBreachState()
+      ceilingLessonId.current = null
+      return
+    }
+    if (ceilingLessonId.current !== lesson.id) {
+      ceilingRef.current = emptyCeilingBreachState()
+      ceilingLessonId.current = lesson.id
+    }
+    const next = observeCeilingBreaches(
+      ceilingRef.current,
+      vitals.map((entry) => ({ droneId: entry.droneId, altitudeM: entry.altitudeM })),
+    )
+    ceilingRef.current = next
+    writeLessonCeilingBreachCount(lesson.id, next.count)
+  }, [lesson, vitals])
 
   if (!state) {
     return (
@@ -108,21 +171,23 @@ export function ControlScreen() {
       : firstUnassignedDrone(book, boardDroneIds)
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
+    if (screenLocked) return
     command(droneId, kind)
     /*
      * Noted against the Lesson as it is sent (C7), not when it resolves.
-     * What the report is a record of is what the Teacher asked for — a
-     * Command that produced nothing is still a thing that happened, and
-     * arguably the more interesting one.
+     * Stop presses use recordStopOnLesson so they are not double-written (#203).
      */
-    if (lesson) {
-      recordCommand(lesson.id, {
-        at: now,
-        droneId,
-        droneName: callsign,
-        kind,
-      })
+    if (!lesson) return
+    if (kind === 'emergency-stop') {
+      recordStopOnLesson(lesson.id, { at: now, droneId, droneName: callsign })
+      return
     }
+    recordCommand(lesson.id, {
+      at: now,
+      droneId,
+      droneName: callsign,
+      kind,
+    })
   }
 
   const releaseStop = (_droneId: string, reset: () => void) => {
@@ -139,7 +204,18 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
-      <TrainingWheelsBanner />
+      <FleetAllWellLine drones={state.drones} />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TrainingWheelsBanner />
+        <ScreenLockToggle
+          locked={screenLocked}
+          onChange={(locked) => {
+            setScreenLocked(locked)
+            writeScreenLocked(locked)
+          }}
+        />
+      </div>
 
       <AttentionBar
         queue={queue}
@@ -147,6 +223,17 @@ export function ControlScreen() {
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
       />
       <HeightCeilingBanner vitals={vitals} />
+      <AltitudeFloorNotice vitals={vitals} />
+      <NotYetAirborneNotice
+        lessonStarted={lesson !== null}
+        craft={vitals.map((entry) => ({
+          droneId: entry.droneId,
+          callsign: entry.callsign,
+          airborne: entry.airborne,
+          studentName: studentOf(book, entry.droneId),
+        }))}
+      />
+      <LongestAirborne now={now} craft={longestAirborneCraft} />
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
@@ -176,6 +263,7 @@ export function ControlScreen() {
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
                 hideStop={quietMode || trainingWheels}
+                commandsLocked={screenLocked}
               />
             ) : null
           }
@@ -200,6 +288,29 @@ export function ControlScreen() {
         </div>
         <ControlDisclosure summary="More actions">
           <div className="flex flex-wrap items-center gap-3">
+            <LandAllButton
+              fleet={vitals.map((entry) => ({
+                droneId: entry.droneId,
+                airborne: entry.airborne,
+              }))}
+              onLand={(droneId) => {
+                const entry = vitals.find((v) => v.droneId === droneId)
+                if (entry) issueCommand(droneId, 'land', entry.callsign)
+              }}
+            />
+            {tableGroups(state.drones, vitals).map((group) => (
+              <LandTableButton
+                key={group.label}
+                tableLabel={group.label}
+                members={group.members}
+                onLand={(droneIds) => {
+                  for (const droneId of droneIds) {
+                    const entry = vitals.find((v) => v.droneId === droneId)
+                    if (entry) issueCommand(droneId, 'land', entry.callsign)
+                  }
+                }}
+              />
+            ))}
             {scenarios ? (
               <SimLandAllButton
                 airborne={airborneCount}
@@ -276,6 +387,8 @@ export function ControlScreen() {
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
               hideStop={quietMode || trainingWheels}
               softenAlerts={trainingWheels}
+              lesson={lesson}
+              commandsLocked={screenLocked}
             />
           ))}
         </ul>
@@ -301,6 +414,25 @@ export function ControlScreen() {
  * Same Land / Hover / Stop as the strip — not a second command language. A Teacher who
  * picked a mark in full screen still has to act without exiting.
  */
+function tableGroups(
+  drones: readonly { readonly id: string; readonly telemetry?: { readonly linkGroupId?: string | null } | null }[],
+  vitals: readonly DroneVitals[],
+): readonly { label: string; members: readonly { droneId: string; airborne: boolean }[] }[] {
+  const groups = new Map<string, { droneId: string; airborne: boolean }[]>()
+  for (const drone of drones) {
+    const groupId = drone.telemetry?.linkGroupId
+    if (groupId == null || groupId === '') continue
+    const entry = vitals.find((v) => v.droneId === drone.id)
+    const list = groups.get(groupId) ?? []
+    list.push({ droneId: drone.id, airborne: entry?.airborne ?? false })
+    groups.set(groupId, list)
+  }
+  return [...groups.entries()].map(([id, members]) => ({
+    label: id.startsWith('group-') ? `Table ${id.slice('group-'.length).toUpperCase()}` : id,
+    members,
+  }))
+}
+
 function ScopeSelectedDock({
   vitals,
   student,
@@ -310,6 +442,7 @@ function ScopeSelectedDock({
   onClear,
   onOpenCamera,
   hideStop = false,
+  commandsLocked = false,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -320,6 +453,7 @@ function ScopeSelectedDock({
   onOpenCamera: () => void
   /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
+  commandsLocked?: boolean
 }) {
   return (
     <div
@@ -358,6 +492,7 @@ function ScopeSelectedDock({
         onReleaseStop={onReleaseStop}
         tracked={tracked}
         hideStop={hideStop}
+        commandsLocked={commandsLocked}
       />
     </div>
   )
@@ -454,6 +589,8 @@ function FlightStrip({
   onOpenCamera,
   hideStop = false,
   softenAlerts,
+  lesson,
+  commandsLocked = false,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -476,6 +613,8 @@ function FlightStrip({
   /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
   softenAlerts?: boolean
+  lesson: ReturnType<typeof runningLesson>
+  commandsLocked?: boolean
 }) {
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
@@ -571,6 +710,7 @@ function FlightStrip({
           // would raise alerts on a guess.
           <p className="m-0 text-value text-ink-subtle">Meant to be: {exercise}</p>
         )}
+        <ExerciseRemaining lesson={lesson} now={now} />
 
         {separation && (
           <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
@@ -606,6 +746,7 @@ function FlightStrip({
           onReleaseStop={onReleaseStop}
           tracked={tracked}
           hideStop={hideStop}
+          commandsLocked={commandsLocked}
         />
 
         {vitals.alerts.length > 0 && (
@@ -687,6 +828,7 @@ function CommandRow({
   onReleaseStop,
   tracked,
   hideStop = false,
+  commandsLocked = false,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void
@@ -694,16 +836,20 @@ function CommandRow({
   tracked: TrackedCommand | null
   /** Quiet mode — hide Stop and Release stop (local UI only). */
   hideStop?: boolean
+  commandsLocked?: boolean
 }) {
   const grounded = !vitals.airborne
   const stopHeld = vitals.phase === 'emergency'
   const showTracked = showCommandReceipt(tracked, stopHeld)
+  const lock = commandLockState(commandsLocked)
+  const commandsDisabled = grounded || lock.disabled
 
   return (
     <div className="flex flex-wrap items-center gap-2 min-[60rem]:flex-nowrap">
       <button
         type="button"
-        disabled={grounded}
+        disabled={commandsDisabled}
+        aria-label={lockedCommandLabel('Land', commandsLocked)}
         onClick={() => command(vitals.droneId, 'land')}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
@@ -711,7 +857,8 @@ function CommandRow({
       </button>
       <button
         type="button"
-        disabled={grounded}
+        disabled={commandsDisabled}
+        aria-label={lockedCommandLabel('Hover', commandsLocked)}
         onClick={() => command(vitals.droneId, 'hold')}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
@@ -722,8 +869,10 @@ function CommandRow({
           onReleaseStop ? (
             <button
               type="button"
+              disabled={lock.disabled}
+              aria-label={lockedCommandLabel('Release stop', commandsLocked)}
               onClick={onReleaseStop}
-              className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+              className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink disabled:cursor-default disabled:text-ink-muted"
             >
               Release stop
             </button>
@@ -744,14 +893,19 @@ function CommandRow({
         ) : (
           <button
             type="button"
+            disabled={lock.disabled}
+            aria-label={lockedCommandLabel('Stop', commandsLocked)}
             onClick={() => command(vitals.droneId, 'emergency-stop')}
-            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink disabled:cursor-default disabled:text-ink-muted"
           >
             Stop
           </button>
         )
       ) : (
         <span className="ml-auto text-value text-ink-muted">Stop hidden — training wheels</span>
+      )}
+      {lock.reason && (
+        <span className="text-value text-ink-muted">{lock.reason}</span>
       )}
       {showTracked && (
         <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>

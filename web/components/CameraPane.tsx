@@ -32,7 +32,16 @@ import {
   type LandingTargetScanner,
 } from '@/lib/qr/scan-landing-target'
 import { SIM_LANDING_QR_URL } from '@/lib/qr/sim-fixture'
+import {
+  getCameraOrientationMap,
+  orientationFor,
+  orientationTransform,
+  readServerCameraOrientationMap,
+  subscribeCameraOrientation,
+} from '@/lib/camera-orientation'
+import { createFrameClock } from '@/lib/frozen-feed'
 import { cn } from '@/lib/utils'
+import { FrozenFeedNotice } from './FrozenFeedNotice'
 import { InstrumentPanel } from './FlightInstruments'
 import { PhotoEvidenceButton } from './PhotoEvidenceButton'
 
@@ -273,11 +282,20 @@ function HardwareStreamingNotice() {
  */
 function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName: string; src: string }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const orientationMap = useSyncExternalStore(
+    subscribeCameraOrientation,
+    getCameraOrientationMap,
+    readServerCameraOrientationMap,
+  )
+  const transform = orientationTransform(orientationFor(droneId, orientationMap))
+  const { lastFrameAt, streaming, now } = useFeedFrameClock(videoRef, true)
+
   return (
-    <div className="overflow-hidden rounded-surface border border-hairline bg-ink">
+    <div className="relative overflow-hidden rounded-surface border border-hairline bg-ink">
       <video
         ref={videoRef}
         className="aspect-video w-full bg-ink"
+        style={{ transform }}
         src={src}
         controls
         playsInline
@@ -285,6 +303,9 @@ function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName:
         autoPlay
         aria-label={`Live camera stream for ${droneName}`}
       />
+      <div className="pointer-events-none absolute inset-x-3 bottom-14 z-10">
+        <FrozenFeedNotice lastFrameAt={lastFrameAt} now={now} streaming={streaming} />
+      </div>
       <div className="flex flex-wrap gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
         <CameraRecordingClip droneId={droneId} />
         <PhotoEvidenceButton droneId={droneId} droneName={droneName} videoRef={videoRef} />
@@ -294,6 +315,36 @@ function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName:
       </div>
     </div>
   )
+}
+
+/** Tick last-frame time from the video element for FrozenFeedNotice. */
+function useFeedFrameClock(videoRef: RefObject<HTMLVideoElement | null>, streaming: boolean) {
+  const clock = useRef(createFrameClock())
+  const [lastFrameAt, setLastFrameAt] = useState<number | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (!streaming) {
+      clock.current.reset()
+      setLastFrameAt(null)
+      return
+    }
+    const video = videoRef.current
+    if (!video) return
+    const note = () => {
+      clock.current.noteFrame()
+      setLastFrameAt(clock.current.lastFrameAt())
+    }
+    note()
+    video.addEventListener('timeupdate', note)
+    const tick = window.setInterval(() => setNow(Date.now()), 500)
+    return () => {
+      video.removeEventListener('timeupdate', note)
+      window.clearInterval(tick)
+    }
+  }, [streaming, videoRef])
+
+  return { lastFrameAt, streaming, now }
 }
 
 /**
@@ -315,6 +366,13 @@ function SimulatedFeed({
   const videoRef = useRef<HTMLVideoElement>(null)
   const [live, setLive] = useState(false)
   const [detector, setDetector] = useState<ObjectDetector>(injected ?? demoDetector)
+  const orientationMap = useSyncExternalStore(
+    subscribeCameraOrientation,
+    getCameraOrientationMap,
+    readServerCameraOrientationMap,
+  )
+  const transform = orientationTransform(orientationFor(droneId, orientationMap))
+  const { lastFrameAt, streaming, now } = useFeedFrameClock(videoRef, live)
 
   useEffect(() => {
     if (injected) {
@@ -366,11 +424,15 @@ function SimulatedFeed({
             'absolute inset-0 h-full w-full object-cover',
             live ? 'opacity-100' : 'opacity-0',
           )}
+          style={{ transform }}
           muted
           playsInline
           autoPlay
           aria-hidden={!live}
         />
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 z-10">
+          <FrozenFeedNotice lastFrameAt={lastFrameAt} now={now} streaming={streaming} />
+        </div>
         {!live && (
           <div
             className="absolute inset-0 flex flex-col justify-between p-4"

@@ -4,7 +4,10 @@ import { useId, useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
+import { CameraOrientationControl } from './CameraOrientationControl'
 import { CameraPane } from './CameraPane'
+import { ClipLibrary } from './ClipLibrary'
+import { SnapshotGallery } from './SnapshotGallery'
 
 /**
  * A large centered popup that hosts the existing CameraPane for one Drone.
@@ -67,12 +70,17 @@ export function CameraSlide({
             </Dialog.Close>
           </div>
 
+          <CameraOrientationControl droneId={droneId} />
+
           <CameraPane
             droneId={droneId}
             droneName={droneName}
             camera={camera}
             scenarios={scenarios}
           />
+
+          <ClipLibrary droneId={droneId} />
+          <SnapshotGallery droneId={droneId} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

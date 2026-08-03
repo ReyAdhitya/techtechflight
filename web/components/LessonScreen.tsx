@@ -4,24 +4,44 @@ import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { isUsable, needsAttention, type DroneState } from '@techtechflight/contract'
 import {
+  isStudentAbsent,
   readLogbook,
   readServerLogbook,
   remedialQueueOf,
   runningLesson,
   serviceStateOf,
   startLesson,
+  studentOf,
   subscribeLogbook,
   type Exercise,
   type LessonRecord,
 } from '@/lib/logbook'
+import {
+  canUndoAssignment,
+  undoLastAssignment,
+  withAssignmentUndo,
+} from '@/lib/assignment-undo'
+import {
+  markAbsentAndFreeCraft,
+  type AbsentReassignResult,
+} from '@/lib/absent-reassign'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
+import { AbsentReassignNotice } from './AbsentReassignNotice'
+import { AssignEveryoneButton } from './AssignEveryoneButton'
 import { AssignmentColumn } from './AssignmentColumn'
+import { AssignmentUndoButton } from './AssignmentUndoButton'
+import { BatteryOnChargeTick } from './BatteryOnChargeTick'
+import { CraftReturnedTick } from './CraftReturnedTick'
 import { ExerciseList } from './ExerciseList'
 import { LessonPlanWizard } from './LessonPlanWizard'
 import { LessonPrepPanel } from './LessonPrepPanel'
 import { LessonTemplatesPack } from './LessonTemplatesPack'
+import { PackdownChecklist } from './PackdownChecklist'
+import { SafetyBriefPanel } from './SafetyBriefPanel'
+import { SwapPupilsControl } from './SwapPupilsControl'
+import { WaitingList } from './WaitingList'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { LogbookLocationNote } from './LogbookLocationNote'
@@ -76,7 +96,7 @@ export function LessonScreen() {
       </div>
 
       {lesson ? (
-        <LessonUnderWay lesson={lesson} now={now} />
+        <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
       ) : (
         <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
       )}
@@ -108,6 +128,9 @@ function PreFlight({
 }) {
   const [label, setLabel] = useState('')
   const [exercises, setExercises] = useState<readonly Exercise[]>([])
+  const [absentNotice, setAbsentNotice] = useState<AbsentReassignResult | null>(null)
+  const [undoTick, setUndoTick] = useState(0)
+  void undoTick
 
   const withheld = drones.filter((drone) => serviceStateOf(book, drone.id) === 'out-of-service')
   const withheldIds = new Set(withheld.map((drone) => drone.id))
@@ -233,7 +256,61 @@ function PreFlight({
 
       <LessonPrepPanel drones={drones} book={book} />
 
-      <AssignmentColumn drones={drones} book={book} />
+      <SafetyBriefPanel lessonId={null} />
+
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <AssignEveryoneButton
+            droneIds={drones.map((drone) => drone.id)}
+          />
+          <AssignmentUndoButton
+            canUndo={canUndoAssignment()}
+            onUndo={() => {
+              undoLastAssignment()
+              setUndoTick((n) => n + 1)
+            }}
+          />
+        </div>
+        <SwapPupilsControl
+          options={drones.map((drone) => ({
+            droneId: drone.id,
+            droneName: drone.name,
+            studentName: studentOf(book, drone.id),
+          }))}
+          onSwapped={() => setUndoTick((n) => n + 1)}
+        />
+        <AssignmentColumn drones={drones} book={book} />
+        <WaitingList book={book} />
+        {book.roster.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <h2 className="label m-0">Mark absent</h2>
+            <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+              {book.roster.map((student) =>
+                student.studentId === '' || isStudentAbsent(book, student.studentId) ? null : (
+                  <li key={student.studentId}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        withAssignmentUndo(() => {
+                          setAbsentNotice(markAbsentAndFreeCraft(student.studentId))
+                        })
+                        setUndoTick((n) => n + 1)
+                      }}
+                      className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+                    >
+                      {student.name} absent
+                    </button>
+                  </li>
+                ),
+              )}
+            </ul>
+            <AbsentReassignNotice
+              result={absentNotice}
+              droneNames={Object.fromEntries(drones.map((d) => [d.id, d.name]))}
+            />
+          </div>
+        )}
+      </div>
 
       <LessonPlanWizard
         label={label}
@@ -292,7 +369,17 @@ function PreFlight({
  * rather than offering a second, quieter version of the same thing to be watched by
  * mistake.
  */
-function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) {
+function LessonUnderWay({
+  lesson,
+  now,
+  drones,
+  book,
+}: {
+  lesson: LessonRecord
+  now: number
+  drones: readonly DroneState[]
+  book: ReturnType<typeof readLogbook>
+}) {
   const storageKey = `lesson-warmup-done:${lesson.id}`
   const [warming, setWarming] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -303,6 +390,11 @@ function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) 
     sessionStorage.setItem(storageKey, '1')
     setWarming(false)
   }
+
+  const packdownCrafts = drones.map((drone) => ({
+    droneId: drone.id,
+    droneName: drone.name,
+  }))
 
   return (
     <section className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5">
@@ -320,6 +412,17 @@ function LessonUnderWay({ lesson, now }: { lesson: LessonRecord; now: number }) 
         Monitor from the Flight Control Center. Every item requiring action is listed there, in
         the order it requires action, and the lesson is ended from there.
       </p>
+
+      <SafetyBriefPanel lessonId={lesson.id} />
+
+      <WaitingList book={book} />
+
+      <div className="flex flex-col gap-4 border-t border-hairline pt-4">
+        <h2 className="label m-0">Pack-down</h2>
+        <PackdownChecklist lessonId={lesson.id} crafts={packdownCrafts} />
+        <BatteryOnChargeTick lessonId={lesson.id} packs={packdownCrafts} />
+        <CraftReturnedTick lessonId={lesson.id} crafts={packdownCrafts} />
+      </div>
 
       <LessonBookmarkControl
         lessonId={lesson.id}

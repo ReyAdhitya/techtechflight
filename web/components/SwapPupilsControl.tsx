@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { DroneId } from '@techtechflight/contract'
+import { withAssignmentUndo } from '@/lib/assignment-undo'
 import { swapStudentAssignments } from '@/lib/logbook'
 
 export interface SwapPupilOption {
@@ -68,7 +69,7 @@ export function SwapPupilsControl({
         disabled={!canSwap}
         onClick={() => {
           if (!canSwap) return
-          swapStudentAssignments(firstId, secondId)
+          withAssignmentUndo(() => swapStudentAssignments(firstId, secondId))
           onSwapped?.()
         }}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline"

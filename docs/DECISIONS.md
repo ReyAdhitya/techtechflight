@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — YOLO letterboxes to 416, not 640, on the board.
+
+- **Decision / notes:** Classroom detection is mostly "is there a person / laptop / bottle".
+  Dropping the letterbox from 640 to 416 roughly halves wasm work per frame with little
+  loss on those classes, and the CameraPane loop now waits for each inference to finish
+  before starting the next — which fixed more lag than the input size ever caused.
+- **Could have gone differently:** Keeping 640 for maximum accuracy. Rejected: a box that
+  arrives a second late is less useful to a Teacher than a slightly looser one that keeps
+  up with the Student moving.
+
 ## 2026-08-04 — Wave M2 mounts mission prep on Lesson; Control gets Recall first.
 
 - **Decision / notes:** Photo 3's twelve steps already map onto Lesson / Control / Reports,

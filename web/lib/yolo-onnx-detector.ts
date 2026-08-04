@@ -10,8 +10,16 @@ import type { Detection, DetectionFrame, ObjectDetector } from './object-detecti
 import { COCO_LABELS } from './coco-labels'
 
 const MODEL_URL = '/models/yolov8n.onnx'
-const INPUT = 640
-const CONF = 0.45
+/**
+ * Model input edge length.
+ *
+ * 416 rather than 640: roughly twice as fast on a single-threaded wasm laptop, and still
+ * accurate enough for a classroom person / desk object. The weights are the same —
+ * YOLOv8n letterboxes to whatever square we feed it.
+ */
+const INPUT = 416
+/** Keep boxes that clear this — a touch lower than 0.45 so a distant person still registers. */
+const CONF = 0.35
 const IOU = 0.45
 /**
  * Where the WebAssembly runtime is served from.
@@ -99,16 +107,22 @@ async function loadSession(): Promise<InferenceSession | null> {
   return sessionPromise
 }
 
+/** One letterbox canvas for the whole board — allocating 416² every frame was free lag. */
+let letterboxCanvas: HTMLCanvasElement | null = null
+let tensorScratch: Float32Array | null = null
+
 function letterbox(source: CanvasImageSource, size: number): {
   canvas: HTMLCanvasElement
   scale: number
   padX: number
   padY: number
 } {
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d')
+  const canvas = (letterboxCanvas ??= document.createElement('canvas'))
+  if (canvas.width !== size || canvas.height !== size) {
+    canvas.width = size
+    canvas.height = size
+  }
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })
   if (!ctx) throw new Error('no 2d context')
 
   const w =
@@ -141,11 +155,16 @@ function letterbox(source: CanvasImageSource, size: number): {
 
 function imageDataToTensor(data: ImageData, ort: OrtModule) {
   const { data: px, width, height } = data
-  const float = new Float32Array(3 * width * height)
-  for (let i = 0; i < width * height; i++) {
-    float[i] = px[i * 4]! / 255
-    float[width * height + i] = px[i * 4 + 1]! / 255
-    float[2 * width * height + i] = px[i * 4 + 2]! / 255
+  const cells = 3 * width * height
+  const float = tensorScratch && tensorScratch.length === cells
+    ? tensorScratch
+    : (tensorScratch = new Float32Array(cells))
+  const plane = width * height
+  for (let i = 0; i < plane; i++) {
+    const o = i * 4
+    float[i] = px[o]! / 255
+    float[plane + i] = px[o + 1]! / 255
+    float[2 * plane + i] = px[o + 2]! / 255
   }
   return new ort.Tensor('float32', float, [1, 3, height, width])
 }
@@ -348,4 +367,7 @@ export async function createYoloOnnxDetector(): Promise<ObjectDetector | null> {
 export function resetYoloSessionForTests(): void {
   ortPromise = null
   sessionPromise = null
+  letterboxCanvas = null
+  tensorScratch = null
+  lastError = null
 }

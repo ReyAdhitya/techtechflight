@@ -410,8 +410,8 @@ export function ControlScreen() {
 /**
  * Commands for the selected mark while the scope covers the strip list.
  *
- * Same Land / Hover / Stop as the strip — not a second command language. A Teacher who
- * picked a mark in full screen still has to act without exiting.
+ * Same Land / Hover / Recall / Stop as the strip — not a second command language. A Teacher
+ * who picked a mark in full screen still has to act without exiting.
  */
 function tableGroups(
   drones: readonly { readonly id: string; readonly telemetry?: { readonly linkGroupId?: string | null } | null }[],
@@ -722,7 +722,7 @@ function FlightStrip({
 
         {/*
          * Camera is watch chrome beside the strip, not a Command. Kept out of CommandRow
-         * so Land / Hover / Stop stay the only things that ask an aircraft to act (C9).
+         * so Land / Hover / Recall / Stop stay the only things that ask an aircraft to act (C9).
          * Record lives inside the Camera dialog (CameraPane) — not a sibling of Camera here.
          */}
         <div className="flex flex-wrap gap-2">
@@ -812,9 +812,9 @@ function FlightStrip({
 /**
  * What a Teacher can ask of this aircraft.
  *
- * Land and Hover are always here because they are what gets reached for. Every Command in
- * this row takes energy out of the Drone; there is nothing here that makes one do more
- * than it is already doing, which is what makes a mistaken press survivable.
+ * Land, Hover and Recall are always here because they are what gets reached for. Every
+ * Command in this row takes energy out of the Drone; there is nothing here that makes one
+ * do more than it is already doing, which is what makes a mistaken press survivable.
  *
  * Nothing said here is optimistic. "Sent" means sent, "waiting" means the Fleet took it
  * and the aircraft has not visibly done it yet, and a Command that produced no change
@@ -861,6 +861,15 @@ function CommandRow({
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
         Hover
+      </button>
+      <button
+        type="button"
+        disabled={commandsDisabled}
+        aria-label={lockedCommandLabel('Recall', commandsLocked)}
+        onClick={() => command(vitals.droneId, 'return-home')}
+        className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
+      >
+        Recall
       </button>
       {!hideStop ? (
         stopHeld ? (

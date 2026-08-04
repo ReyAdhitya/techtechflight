@@ -1,4 +1,5 @@
 import type { DroneId, FleetEvent } from '@techtechflight/contract'
+import { emptyMission, type Mission } from './mission.ts'
 import { scheduleLogbookCloudPush } from './logbook-sync'
 import {
   mergeRemedialQueue,
@@ -109,7 +110,15 @@ export interface LessonRecord {
    * under way, and on records saved before the board kept them.
    */
   readonly tally?: Readonly<Record<DroneId, DroneTally>>
-  /** The sequence this Lesson runs through. Absent on a Lesson started without a plan. */
+  /**
+   * The Missions this Lesson runs through (ADR-0018). Absent on a Lesson started without
+   * a plan, and on records saved before the board kept them.
+   */
+  readonly missions?: readonly Mission[]
+  /**
+   * Legacy sequence field — pre-Mission plans. Still read; migrate forward to `missions`
+   * on write. Absent once migrated.
+   */
   readonly exercises?: readonly Exercise[]
   /** Who was flying what when it began, captured rather than looked up later. */
   readonly assignments?: Readonly<Record<DroneId, string>>
@@ -238,6 +247,50 @@ interface StoredLogbook extends Partial<Logbook> {
 /** Whatever an older or newer build called it. */
 export function studentsFrom(stored: StoredLogbook): Readonly<Record<DroneId, string>> {
   return stored.students ?? stored.pilots ?? {}
+}
+
+/**
+ * Legacy Exercise → Mission on read.
+ *
+ * `id` and `name` carry over; `minutes` becomes `limitMinutes`; `scenarioId` is
+ * `legacy-exercise` because old plans had no Scenario — only a label and optional timer.
+ */
+function missionFromExercise(exercise: Exercise): Mission {
+  return {
+    ...emptyMission(exercise.id, 'legacy-exercise', exercise.name),
+    ...(exercise.minutes !== undefined ? { limitMinutes: exercise.minutes } : {}),
+  }
+}
+
+/** Missions on a Lesson, including ones migrated from legacy `exercises` on read. */
+export function missionsFrom(lesson: Pick<LessonRecord, 'missions' | 'exercises'>): readonly Mission[] {
+  if (lesson.missions !== undefined) return lesson.missions
+  return (lesson.exercises ?? []).map(missionFromExercise)
+}
+
+function migrateLessonMissionsForward(lesson: LessonRecord): LessonRecord {
+  if (lesson.missions !== undefined) return lesson
+  const exercises = lesson.exercises
+  if (exercises === undefined || exercises.length === 0) return lesson
+  const missions = exercises.map(missionFromExercise)
+  const { exercises: _legacy, ...rest } = lesson
+  return { ...rest, missions }
+}
+
+/**
+ * Promote legacy Exercise plans into Mission rows on write.
+ *
+ * Called from `save`, not on load — a Teacher who never touches the Logbook still keeps
+ * their exercise-only file readable forever, the same way name-only rolls do (#48).
+ */
+export function migrateMissionsForward(book: Logbook): Logbook {
+  let changed = false
+  const lessons = book.lessons.map((lesson) => {
+    const next = migrateLessonMissionsForward(lesson)
+    if (next !== lesson) changed = true
+    return next
+  })
+  return changed ? { ...book, lessons } : book
 }
 
 const EMPTY: Logbook = {
@@ -438,7 +491,7 @@ function load(): Logbook {
 }
 
 function save(next: Logbook): void {
-  const stamped: Logbook = { ...next, revisedAt: Date.now() }
+  const stamped: Logbook = { ...migrateMissionsForward(next), revisedAt: Date.now() }
   cache = stamped
   cacheIsFresh = true
   try {
@@ -658,6 +711,7 @@ export function startLesson(
     const name = studentOf(book, droneId)
     if (name !== null) assignments[droneId] = name
   }
+  const missions = exercises.length > 0 ? exercises.map(missionFromExercise) : undefined
   const lesson: LessonRecord = {
     id,
     label: label.trim() || 'Untitled lesson',
@@ -667,6 +721,7 @@ export function startLesson(
     fleetSize,
     incidents: [],
     exercises,
+    ...(missions !== undefined ? { missions } : {}),
     // Captured as it begins. A Drone reassigned mid-lesson must not rewrite who was
     // flying it at the start, which is what the report is a record of.
     assignments,

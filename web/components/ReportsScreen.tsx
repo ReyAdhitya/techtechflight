@@ -10,6 +10,7 @@ import { LogbookLocationNote } from './LogbookLocationNote'
 import { ReportsCsvButton } from './ReportsCsvButton'
 import { CraftLifetimeHours } from './CraftLifetimeHours'
 import { LessonOnePager } from './LessonOnePager'
+import { MissionReport } from './MissionReport'
 import { useFleet } from './FleetProvider'
 import {
   downloadReportsPdf,
@@ -19,7 +20,12 @@ import {
   formatCeilingBreachCount,
   readLessonCeilingBreachCount,
 } from '@/lib/ceiling-breach-count'
-import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
+import {
+  missionsFrom,
+  readLogbook,
+  readServerLogbook,
+  subscribeLogbook,
+} from '@/lib/logbook'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -135,6 +141,22 @@ export function ReportsScreen() {
       </header>
 
       <LessonReports />
+
+      {closed.some((lesson) => missionsFrom(lesson).length > 0) && (
+        <section className="flex flex-col gap-3 border-t border-hairline pt-8">
+          <h2 className="label m-0">Missions</h2>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {closed
+              .filter((lesson) => missionsFrom(lesson).length > 0)
+              .slice(0, 20)
+              .map((lesson) => (
+                <li key={lesson.id}>
+                  <MissionReport lesson={lesson} />
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
       {closed.length > 0 && (
         <section className="print-hide flex flex-col gap-2 border-t border-hairline pt-8">

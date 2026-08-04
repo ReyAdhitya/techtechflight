@@ -20,6 +20,7 @@ const vitals = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
   airborne: true,
   altitudeM: 1.5,
   verticalRateMps: 0,
+  groundSpeedMps: null,
   batteryFraction: 0.7,
   enduranceMs: 600_000,
   responseAgeMs: 1_000,

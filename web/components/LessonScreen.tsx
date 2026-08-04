@@ -59,6 +59,16 @@ import type { DroneVitals } from '@/lib/vitals'
 import { LessonBookmarkControl } from './LessonBookmarkControl'
 import { LessonIncidentNoteControl } from './LessonIncidentNoteControl'
 import { RemedialQueue } from './RemedialQueue'
+import { ScenarioPicker } from './ScenarioPicker'
+import { MissionAreaEditor } from './MissionAreaEditor'
+import { TeamsPanel } from './TeamsPanel'
+import { PreFlightSeven } from './PreFlightSeven'
+import { MissionBriefing } from './MissionBriefing'
+import { TeamBriefPrint } from './TeamBriefPrint'
+import { enclosesAnything, type Zone } from '@/lib/airspace'
+import { emptyMission, type ScenarioId } from '@/lib/mission'
+import { readTeams } from '@/lib/teams'
+import type { FleetSnapshot } from '@/lib/fleet-link'
 
 /**
  * The lesson, from the check before it to the summary after it.
@@ -98,7 +108,7 @@ export function LessonScreen() {
       {lesson ? (
         <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
       ) : (
-        <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
+        <PreFlight drones={drones} vitals={vitals} book={book} now={now} snapshot={snapshot} />
       )}
 
       <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
@@ -120,11 +130,13 @@ function PreFlight({
   vitals,
   book,
   now,
+  snapshot,
 }: {
   drones: readonly DroneState[]
   vitals: readonly DroneVitals[]
   book: ReturnType<typeof readLogbook>
   now: number
+  snapshot: FleetSnapshot
 }) {
   const [label, setLabel] = useState('')
   const [exercises, setExercises] = useState<readonly Exercise[]>([])
@@ -253,6 +265,8 @@ function PreFlight({
           {withheld.map((drone) => drone.name).join(', ')}.
         </p>
       )}
+
+      <MissionPrep drones={drones} book={book} snapshot={snapshot} lessonId={null} />
 
       <LessonPrepPanel drones={drones} book={book} />
 
@@ -415,6 +429,8 @@ function LessonUnderWay({
 
       <SafetyBriefPanel lessonId={lesson.id} />
 
+      <MissionBriefing lessonId={lesson.id} scenarioId={null} />
+
       <WaitingList book={book} />
 
       <div className="flex flex-col gap-4 border-t border-hairline pt-4">
@@ -448,6 +464,118 @@ function LessonUnderWay({
   )
 }
 
+
+function NextStepHint({ children }: { readonly children: string }) {
+  return (
+    <p className="m-0 text-value text-ink-muted">
+      <span className="label">Next — </span>
+      {children}
+    </p>
+  )
+}
+
+/**
+ * Mission prep on the Lesson screen — Scenario through team briefs in workflow order.
+ *
+ * Each block states what follows so a Teacher can work down the list before takeoff.
+ * PreFlightSeven mounts once teams exist so it does not share a heading with the Ready
+ * wall summary above.
+ */
+function MissionPrep({
+  drones,
+  book,
+  snapshot,
+  lessonId,
+}: {
+  readonly drones: readonly DroneState[]
+  readonly book: ReturnType<typeof readLogbook>
+  readonly snapshot: FleetSnapshot
+  readonly lessonId: string | null
+}) {
+  const [scenarioId, setScenarioId] = useState<ScenarioId | null>(null)
+  const [zones, setZones] = useState<readonly Zone[]>([])
+
+  const teams = readTeams()
+  const hasScenario = scenarioId !== null
+  const hasMissionZone = zones.some((zone) => zone.kind === 'mission' && enclosesAnything(zone))
+  const hasTeams = teams.some((team) => team.studentIds.length > 0 || team.droneId !== null)
+
+  const focusDroneId = drones[0]?.id ?? null
+  const telemetry =
+    focusDroneId === null
+      ? null
+      : (snapshot.state?.drones.find((drone) => drone.id === focusDroneId)?.telemetry ?? null)
+
+  const draftMission =
+    scenarioId === null
+      ? null
+      : {
+          ...emptyMission('mission-prep-draft', scenarioId, ''),
+          zones,
+        }
+
+  return (
+    <div className="flex flex-col gap-5 border-t border-hairline pt-5">
+      <div className="flex flex-col gap-1">
+        <h2 className="label m-0">Mission prep</h2>
+        <p className="m-0 text-value text-ink-subtle">
+          Work through Scenario, area, teams, pre-flight and briefing before the class takes
+          off.
+        </p>
+      </div>
+
+      <ScenarioPicker
+        selectedScenarioId={scenarioId}
+        onSelect={setScenarioId}
+        locked={false}
+      />
+      <NextStepHint>Draw the Mission area and any no-fly zones.</NextStepHint>
+
+      {hasScenario ? (
+        <>
+          <MissionAreaEditor zones={zones} onChange={setZones} />
+          <NextStepHint>Assign each team to a craft.</NextStepHint>
+        </>
+      ) : null}
+
+      {hasScenario && hasMissionZone ? (
+        <>
+          <TeamsPanel book={book} drones={drones} />
+          <NextStepHint>Tick each craft’s pre-flight check when it is ready.</NextStepHint>
+        </>
+      ) : null}
+
+      {hasScenario && hasMissionZone && hasTeams && focusDroneId !== null ? (
+        <>
+          <PreFlightSeven
+            droneId={focusDroneId}
+            lessonId={lessonId}
+            telemetry={telemetry}
+          />
+          <NextStepHint>Walk the class through the Mission rules and safety brief.</NextStepHint>
+        </>
+      ) : null}
+
+      {hasScenario && hasMissionZone && hasTeams ? (
+        <>
+          <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} />
+          <NextStepHint>Print a team brief for each group before granting clearance.</NextStepHint>
+        </>
+      ) : null}
+
+      {draftMission !== null && teams.length > 0 ? (
+        <div className="flex flex-col gap-4">
+          <h2 className="label m-0">Team briefs to print</h2>
+          <div className="grid grid-cols-1 gap-4 min-[48rem]:grid-cols-2">
+            {teams.map((team) => (
+              <TeamBriefPrint key={team.id} team={team} mission={draftMission} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 function PastLessons({ lessons }: { lessons: readonly LessonRecord[] }) {
   if (lessons.length === 0) return null

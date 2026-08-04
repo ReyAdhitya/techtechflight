@@ -25,6 +25,7 @@ const flying = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
   airborne: true,
   altitudeM: 2,
   verticalRateMps: 0.8,
+  groundSpeedMps: null,
   batteryFraction: 0.6,
   enduranceMs: null,
   responseAgeMs: 500,

@@ -5,12 +5,29 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **Vision boxes work again.** In-browser YOLO letterboxes at 640 to match the fixed ONNX
+  graph (416 made every frame fail silently). Concurrent surfaces no longer share one
+  scratch canvas. Vision names the last detector error when frames fail.
+
+### Added
+
+- **Local YOLO11x AI service.** Optional FastAPI service (`ai-service/`) runs Ultralytics
+  YOLO11x with CUDA when available and CPU otherwise — REST `/detect`, WebSocket `/stream`
+  with ByteTrack, Docker CPU/GPU profiles. The board prefers it when
+  `http://127.0.0.1:8090` is healthy, else YOLOv8n wasm, else the demo detector (ADR-0023).
+
 ### Changed
 
+- **Control is calm Mission Running.** Attention shows one focused Alert card with
+  recommended responses and Acknowledge; the rest of the queue stays in a disclosure.
+  Land all · Hover all · Stop all sit under the Scope. Per-Drone Commands and dense
+  Telemetry open only on the selected strip.
 - **Detection boxes are readable and class-coloured.** Each recognised class gets its own
   border and chip colour (`person` is purple); the label sits on a solid chip with large
-  type so it stays legible on a dark hoodie. Inference runs one frame at a time at 416 px
-  instead of queuing overlapping 640 px frames, so the boxes keep up with the picture.
+  type so it stays legible on a dark hoodie. The camera loop waits for each inference to
+  finish before starting the next.
 
 ### Added (Wave M2 — Search and Rescue end-to-end)
 

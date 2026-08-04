@@ -5,9 +5,11 @@ import { boardDetector } from '@/lib/board-detector'
 import type { Detection, ObjectDetector } from '@/lib/object-detection'
 import { detectorLabel, verdictFor, type Verdict } from '@/lib/detector-verdict'
 import { runSelfTest, selfTestWords, type SelfTestResult } from '@/lib/detector-selftest'
+import { lastDetectorError } from '@/lib/yolo-onnx-detector'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 import { DetectionBoxes } from './DetectionBoxes'
+import type { AiServiceHealth } from '@/lib/http-yolo-detector'
 
 /**
  * Does the camera and the detection model actually work on this machine?
@@ -53,6 +55,8 @@ export function VisionCheckScreen() {
   const [latencyMs, setLatencyMs] = useState<number | null>(null)
   const [selfTest, setSelfTest] = useState<SelfTestResult | null>(null)
   const [selfTesting, setSelfTesting] = useState(false)
+  const [frameError, setFrameError] = useState<string | null>(null)
+  const [runsOn, setRunsOn] = useState('WebAssembly, in this browser')
 
   /*
    * `window.isSecureContext` is the browser's own answer to the question, rather than us
@@ -67,7 +71,20 @@ export function VisionCheckScreen() {
   useEffect(() => {
     let cancelled = false
     void boardDetector().then((loaded) => {
-      if (!cancelled) setDetector(loaded)
+      if (cancelled) return
+      setDetector(loaded)
+      const health = (loaded as ObjectDetector & { aiHealth?: AiServiceHealth }).aiHealth
+      if (health) {
+        setRunsOn(
+          health.device === 'cuda'
+            ? 'AI service (CUDA)'
+            : health.device === 'cpu'
+              ? 'AI service (CPU)'
+              : `AI service (${health.device})`,
+        )
+      } else {
+        setRunsOn('WebAssembly, in this browser')
+      }
     })
     return () => {
       cancelled = true
@@ -148,9 +165,16 @@ export function VisionCheckScreen() {
           setDetections(found)
           setFramesRun((count) => count + 1)
           if (found.length > 0) setDetectionsSeen((count) => count + found.length)
+          /*
+           * A loaded model that fails every frame used to look like an empty room. Prefer
+           * the detector's own last error; otherwise stay quiet when the room is genuinely empty.
+           */
+          setFrameError(lastDetectorError())
         })
-        .catch(() => {
-          // A frame that failed is a frame that failed. It is not evidence of anything.
+        .catch((error: unknown) => {
+          if (stopped) return
+          const message = error instanceof Error ? error.message : String(error)
+          setFrameError(message)
         })
         .finally(() => {
           // Only now is the next one scheduled. This is what stops the pile-up.
@@ -254,7 +278,7 @@ export function VisionCheckScreen() {
         <h2 className="m-0 font-display text-section font-medium">What is running</h2>
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
           <Row label="Model" value={detectorLabel(detector)} />
-          <Row label="Runs on" value="WebAssembly, in this browser" />
+          <Row label="Runs on" value={runsOn} />
           <Row
             label="Frames checked"
             value={framesRun === 0 ? 'None yet' : String(framesRun)}
@@ -274,10 +298,15 @@ export function VisionCheckScreen() {
               detections.length === 0
                 ? 'Nothing'
                 : detections
-                    .map((d) => `${d.label} ${Math.round(d.confidence * 100)}%`)
+                    .map((d) =>
+                      d.trackId
+                        ? `${d.label} #${d.trackId} ${Math.round(d.confidence * 100)}%`
+                        : `${d.label} ${Math.round(d.confidence * 100)}%`,
+                    )
                     .join(', ')
             }
           />
+          {frameError ? <Row label="Last error" value={frameError} /> : null}
         </dl>
       </section>
     </main>

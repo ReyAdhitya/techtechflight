@@ -9,8 +9,8 @@ import { ControlScreen } from './ControlScreen'
 /**
  * Recall on the command row — sent, waiting and done from Telemetry alone.
  *
- * Nothing here is optimistic: the receipt line follows what the Fleet reports, not the
- * moment the button was pressed.
+ * Grounded strips stay compact; airborne strips show Commands. Nothing here is
+ * optimistic: the receipt line follows what the Fleet reports.
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
@@ -45,31 +45,29 @@ afterEach(() => {
 })
 
 describe('Recall on the command row', () => {
-  it('joins Land, Hover and Stop on every flight strip', () => {
+  it('stays off grounded strips and joins Land, Hover and Stop once airborne', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
-        <ControlScreen />
+        <ControlWithScenarios />
       </FleetProvider>,
     )
     settle()
 
-    expect(screen.getAllByRole('button', { name: /^Land$/ })).toHaveLength(6)
-    expect(screen.getAllByRole('button', { name: /^Hover$/ })).toHaveLength(6)
-    expect(screen.getAllByRole('button', { name: /^Recall$/ })).toHaveLength(6)
-    expect(screen.getAllByRole('button', { name: /^Stop$/ })).toHaveLength(6)
-  })
+    expect(screen.queryByRole('button', { name: /^Recall$/ })).not.toBeInTheDocument()
 
-  it('is disabled while a Drone is on the ground', () => {
-    render(
-      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
-        <ControlScreen />
-      </FleetProvider>,
-    )
-    settle()
+    act(() => {
+      scenarios?.takeOff('ttf-0001')
+      scenarios?.setAltitude('ttf-0001', 2)
+    })
+    act(() => {
+      vi.advanceTimersByTime(1_000)
+    })
 
-    for (const button of screen.getAllByRole('button', { name: /^Recall$/ })) {
-      expect(button).toBeDisabled()
-    }
+    const strip = stripFor('ttf-0001')
+    expect(within(strip).getByRole('button', { name: /^Land$/ })).toBeInTheDocument()
+    expect(within(strip).getByRole('button', { name: /^Hover$/ })).toBeInTheDocument()
+    expect(within(strip).getByRole('button', { name: /^Recall$/ })).toBeInTheDocument()
+    expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
   })
 
   it('is enabled only while airborne', () => {
@@ -90,7 +88,6 @@ describe('Recall on the command row', () => {
 
     const strip = stripFor('ttf-0001')
     expect(within(strip).getByRole('button', { name: /^Recall$/ })).toBeEnabled()
-    expect(within(stripFor('ttf-0002')).getByRole('button', { name: /^Recall$/ })).toBeDisabled()
   })
 
   it('reads sent before the Fleet answers', () => {

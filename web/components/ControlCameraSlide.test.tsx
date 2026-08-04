@@ -41,6 +41,7 @@ describe('opening a camera popup from Control', () => {
 
     const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')
     expect(strip).not.toBeNull()
+    fireEvent.click(strip as HTMLElement)
     fireEvent.click(within(strip as HTMLElement).getByRole('button', { name: 'Camera' }))
 
     const popup = screen.getByRole('dialog', { name: 'Drone 1 camera' })
@@ -75,6 +76,7 @@ describe('opening a camera popup from Control', () => {
     })
 
     const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
+    fireEvent.click(strip)
     fireEvent.click(within(strip).getByRole('button', { name: 'Camera' }))
     expect(screen.getByRole('dialog', { name: 'Drone 1 camera' })).toBeInTheDocument()
 
@@ -91,6 +93,7 @@ describe('opening a camera popup from Control', () => {
     settle()
 
     const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
+    fireEvent.click(strip)
     expect(within(strip).getByRole('button', { name: 'Land' })).toBeInTheDocument()
     expect(within(strip).getByRole('button', { name: 'Hover' })).toBeInTheDocument()
     expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
@@ -98,6 +101,7 @@ describe('opening a camera popup from Control', () => {
     // Record is camera-session chrome — it opens with the feed, not beside Camera on the strip.
     expect(within(strip).queryByRole('button', { name: 'Record' })).not.toBeInTheDocument()
   })
+
 
   it('puts Record inside the Camera dialog, not on the strip', () => {
     render(
@@ -108,13 +112,14 @@ describe('opening a camera popup from Control', () => {
     settle()
 
     const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
+    fireEvent.click(strip)
     fireEvent.click(within(strip).getByRole('button', { name: 'Camera' }))
 
     const popup = screen.getByRole('dialog', { name: 'Drone 1 camera' })
     expect(within(popup).getByRole('button', { name: 'Record' })).toBeInTheDocument()
   })
 
-  it('offers Record all cameras above Every Drone', () => {
+  it('offers Record all cameras under More actions', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />

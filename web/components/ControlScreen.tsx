@@ -68,9 +68,7 @@ import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { MaintenanceFlag } from './MaintenanceFlag'
 import { ControlDisclosure } from './ControlDisclosure'
-import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import { useFleet } from './FleetProvider'
-import { useTrainingWheelsOptional } from '@/lib/training-wheels'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 /**
@@ -83,7 +81,6 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
     useFleet()
-  const trainingWheels = useTrainingWheelsOptional()?.enabled ?? false
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
   // Which Drone the Teacher is looking at. Choosing a mark on the scope lights its strip
@@ -209,16 +206,13 @@ export function ControlScreen() {
         <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TrainingWheelsBanner />
-        <ScreenLockToggle
-          locked={screenLocked}
-          onChange={(locked) => {
-            setScreenLocked(locked)
-            writeScreenLocked(locked)
-          }}
-        />
-      </div>
+      <ScreenLockToggle
+        locked={screenLocked}
+        onChange={(locked) => {
+          setScreenLocked(locked)
+          writeScreenLocked(locked)
+        }}
+      />
 
       <AttentionBar
         queue={queue}
@@ -275,7 +269,7 @@ export function ControlScreen() {
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
-                hideStop={quietMode || trainingWheels}
+                hideStop={quietMode}
                 commandsLocked={screenLocked}
               />
             ) : null
@@ -308,7 +302,7 @@ export function ControlScreen() {
               if (entry) issueCommand(droneId, 'hold', entry.callsign)
             }}
           />
-          {!(quietMode || trainingWheels) ? (
+          {!quietMode ? (
             <StopAllButton
               fleet={vitals.map((entry) => ({
                 droneId: entry.droneId,
@@ -364,7 +358,6 @@ export function ControlScreen() {
               />
             ) : null}
             <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
-            <TrainingWheelsToggle />
             {Object.keys(book.students).length > 0 && (
               <button
                 type="button"
@@ -427,8 +420,7 @@ export function ControlScreen() {
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
-              hideStop={quietMode || trainingWheels}
-              softenAlerts={trainingWheels}
+              hideStop={quietMode}
               lesson={lesson}
               commandsLocked={screenLocked}
             />
@@ -629,7 +621,6 @@ function FlightStrip({
   exercise,
   onOpenCamera,
   hideStop = false,
-  softenAlerts,
   lesson,
   commandsLocked = false,
 }: {
@@ -653,7 +644,6 @@ function FlightStrip({
   onOpenCamera: () => void
   /** Quiet mode — Stop is hidden on strips (local UI only). */
   hideStop?: boolean
-  softenAlerts?: boolean
   lesson: ReturnType<typeof runningLesson>
   commandsLocked?: boolean
 }) {
@@ -669,7 +659,7 @@ function FlightStrip({
         // The strip keeps its own box — rail, ground, selection outline — and takes the
         // list's columns rather than inventing its own.
         'min-[60rem]:col-span-full min-[60rem]:grid min-[60rem]:grid-cols-subgrid min-[60rem]:items-center min-[60rem]:gap-x-6 min-[60rem]:gap-y-1.5',
-        vitals.alerts[0] && !softenAlerts
+        vitals.alerts[0]
           ? SEVERITY_PRESENTATION[vitals.alerts[0].severity].className
           : 'border-hairline',
         // An outline rather than a fill: the tile's own severity colour has to keep
@@ -802,14 +792,10 @@ function FlightStrip({
               <span
                 className={cn(
                   'label rounded-pill border px-2 py-0.5',
-                  softenAlerts
-                    ? 'border-hairline text-ink-muted'
-                    : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].className,
+                  SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].className,
                 )}
               >
-                {softenAlerts
-                  ? 'Note'
-                  : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].label}
+                {SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].label}
               </span>
               <span className="font-medium">
                 {vitals.alerts.length === 1 ? '1 alert' : `${vitals.alerts.length} alerts`}
@@ -822,12 +808,10 @@ function FlightStrip({
                   <span
                     className={cn(
                       'label rounded-pill border px-2 py-0.5',
-                      softenAlerts
-                        ? 'border-hairline text-ink-muted'
-                        : SEVERITY_PRESENTATION[alert.severity].className,
+                      SEVERITY_PRESENTATION[alert.severity].className,
                     )}
                   >
-                    {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
+                    {SEVERITY_PRESENTATION[alert.severity].label}
                   </span>
                   <span className="text-value text-ink">{alert.text}</span>
                   {/*
@@ -952,7 +936,7 @@ function CommandRow({
           </button>
         )
       ) : (
-        <span className="ml-auto text-value text-ink-muted">Stop hidden — training wheels</span>
+        <span className="ml-auto text-value text-ink-muted">Stop hidden — Quiet mode</span>
       )}
       {lock.reason && (
         <span className="text-value text-ink-muted">{lock.reason}</span>

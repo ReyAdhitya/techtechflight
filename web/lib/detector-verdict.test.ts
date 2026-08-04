@@ -89,6 +89,18 @@ describe('the verdict', () => {
     expect(verdict.fixes.join(' ')).toMatch(/point the camera/i)
   })
 
+  it('tells the Teacher which button to press rather than blaming a delay', () => {
+    /*
+     * A loaded model and a camera nobody has started is not a wait — it is a screen that
+     * has not been told to begin. "Waiting for the camera" would be the console reporting
+     * its own idleness as a condition.
+     */
+    const verdict = verdictFor(input({ cameraState: 'idle' }))
+    expect(verdict.state).toBe('not-started')
+    expect(verdict.headline).toMatch(/start the camera/i)
+    expect(verdict.headline).toMatch(/model is loaded/i)
+  })
+
   it('waits rather than judging before there is anything to judge', () => {
     expect(verdictFor(input({ detector: null })).state).toBe('checking')
     expect(verdictFor(input({ cameraState: 'requesting' })).state).toBe('checking')

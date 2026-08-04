@@ -9,6 +9,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — Wave M2 mounts mission prep on Lesson; Control gets Recall first.
+
+- **Decision / notes:** Photo 3's twelve steps already map onto Lesson / Control / Reports,
+  so M2 adds no new nav item. The Run bar lives on the app layout and derives its step
+  from Logbook + localStorage + Fleet vitals until every flag has a dedicated store.
+  ClearanceQueue, MissionPhaseBadge, CheckpointProgress, AlertResponseOptions,
+  AssignTargetControl, InstructionControls and ConfirmMissionComplete ship as tested
+  components; Control mounts Recall in this wave because it is a Command on an existing
+  row. The rest wait for a thin wiring pass once Mission state is held in one place —
+  mounting them with stub props would invent a second source of truth.
+- **Could have gone differently:** Mounting every Control panel with local-only state in
+  the same PR. Rejected because two Mission stores would drift on the first Lesson that
+  both Lesson and Control touch.
+
 ## 2026-08-04 — The Vision check reports a missing model before a bad origin.
 
 - **Decision / notes:** Both can be true at once — a fresh checkout opened at the laptop's

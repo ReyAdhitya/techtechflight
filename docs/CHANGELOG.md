@@ -5,6 +5,78 @@ would notice.
 
 ## Unreleased
 
+### Added (Wave M2 — Search and Rescue end-to-end)
+
+- **The Run bar.** While a Mission runs, the board names which of twelve steps you are on
+  and the single thing to do next — from Mission records, not a tour script. It sits on
+  the shared layout above Lesson, Control and Reports, and is hidden when no Lesson is open.
+- **Mission Scenario picker.** Three cards — Search and Rescue, Delivery and Building
+  Inspection — each show objective, success criteria and common risks. The choice stays
+  changeable until the first Clearance.
+- **Mission area editor.** Draw one Mission Zone and any number of No-fly Zones as
+  polygons in metres, with undo; an empty editor says what to do rather than showing a
+  blank box.
+- **Zones on the Scope.** Mission Zone outlined and No-fly Zones hatched on the plan view
+  only; on a hardware Fleet the caption says they are not surveyed against this aircraft.
+- **Checkpoints on the Scope.** Ordered marks; reached ones read as filled circles and
+  unreached ones as diamonds, with the status said in words as well as colour.
+- **Mission teams.** Students group into named teams and each team can take a Drone —
+  beside the Logbook's who-is-flying assignments, not instead of them.
+- **Seven-item pre-flight check.** Battery, sensors, Wi-Fi, camera, altitude hold and
+  obstacle sensing read from Telemetry; propellers is the one item a Teacher ticks.
+- **Mission rules and safety briefing.** Tickable per Lesson, with Scenario objective and
+  risks from the catalogue.
+- **Printable team brief.** One A4 sheet per team with objective, map, checkpoints, time
+  limit and four what-if responses.
+- **Lesson screen mission prep.** Scenario picker, area editor, teams, pre-flight,
+  briefing and team briefs mount in workflow order with next-step hints.
+- **The clearance queue.** Ready, assigned teams past pre-flight enter by themselves; the
+  Teacher grants or holds, and the count stays visible at zero when nobody is waiting.
+- **Mission phase and checkpoint progress on the strip.** Phase in words with a distinct
+  shape; checkpoints as "2 of 4" or "No checkpoints" in words.
+- **The no-fly Alert.** Entering a No-fly Zone raises one critical Alert from the
+  playbook — what to do — and stays silent until the craft leaves and crosses again.
+- **Alert response options.** Pressable playbook choices in safety-priority order, with
+  the recommended action named first.
+- **Recall on the command row.** Joins Land, Hover and Stop; enabled only while airborne;
+  receipt reads sent → waiting → done from Telemetry alone.
+- **Assign target, Reroute and Reprioritise.** Instructions recorded on the Mission —
+  never Commands — so they work on real hardware (ADR-0021).
+- **Alert log.** Alerts persist on the Lesson with raised-at, cleared-at, kind, craft and
+  what the Teacher did; acknowledgement stays in memory only.
+- **Confirm mission complete.** Seals the Mission and its score once every craft is down;
+  refuses while any Mission craft is still airborne.
+- **Mission report in Reports.** Per-Lesson mission log, score against stated criteria,
+  incidents by category, and the sealed debrief — print-friendly.
+
+### Added (Wave M1 foundations — remainder)
+
+- **Classroom Fleet size.** Configurable from one to twenty Drones; six remains the default.
+- **Ground speed.** Horizontal speed derived from position over time, beside climb rate.
+- **Missions in the Logbook.** Legacy Lesson `exercises` migrate forward to `missions` on
+  write; old records still read.
+- **Zone breaches as a rising edge.** Hovering on a boundary raises one alert, not one
+  every tick; leaving and crossing again raises a second.
+- **Mission score.** Graded against the five lifecycle success criteria and five failure
+  conditions — met, not met, or unknown — with an overall score only when enough was measured.
+- **Clearances.** A Ready, assigned craft past pre-flight enters the queue by itself;
+  granting records who and when; clearances end with the Mission (ADR-0021).
+- **Mission clock.** Counts down from the Scenario limit; no limit says so rather than
+  showing zero; crossing zero raises `mission-timeout` once.
+- **Route coverage.** Fraction of the Mission Zone flown from the trail — or "Not enough
+  track yet" when the board cannot tell.
+
+### Added (Wave M3 vision — remainder)
+
+- **Camera device picker.** Lists cameras, remembers the choice, and names a non-secure
+  origin that blocks the camera.
+- **Detector timing.** Frames per second and per-frame latency, in words until enough
+  frames exist to average.
+- **Detect wall counts honestly.** Feeds real pixels, or says it cannot count rather than
+  showing a zero it did not measure.
+- **Search and Rescue target found.** A person above confidence inside the search area
+  satisfies the find-the-target criterion; the Teacher can overrule it.
+
 ### Added (the mission layer — Wave M1 and M3)
 
 - **Vision check.** A new **Vision** screen answers one question with a word: does object

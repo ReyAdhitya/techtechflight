@@ -1,9 +1,9 @@
 /**
  * YOLOv8n (COCO) via onnxruntime-web — real person/object boxes in the browser.
  *
- * Weights: /models/yolov8n.onnx (fetch with `node scripts/fetch-yolo-model.mjs`).
- * Wasm binaries load from jsDelivr so the static export stays lean.
- * Telemetry still carries only `camera.streaming` — detections never go on the wire.
+ * Weights and the wasm runtime both come from the board itself — fetch both with
+ * `node scripts/fetch-yolo-model.mjs`. Telemetry still carries only `camera.streaming`;
+ * detections never go on the wire.
  */
 
 import type { Detection, DetectionFrame, ObjectDetector } from './object-detection'
@@ -33,10 +33,49 @@ type InferenceSession = import('onnxruntime-web').InferenceSession
 let ortPromise: Promise<OrtModule> | null = null
 let sessionPromise: Promise<InferenceSession | null> | null = null
 
+/**
+ * The last thing that went wrong, in the detector's own words.
+ *
+ * This exists because the alternative was worse than a crash. `detect()` used to swallow
+ * every error and return no boxes, which is indistinguishable from an empty room — so a
+ * model that failed on every single frame produced a screen saying "loaded" and "nothing
+ * recognised", forever, with nothing to go on. Diagnosing it meant opening the console.
+ *
+ * Kept as a value rather than thrown, because the camera pane calls this on a timer and a
+ * rejected promise every 250 ms is its own problem. `/vision` reads it and says it out loud.
+ */
+let lastError: string | null = null
+
+export function lastDetectorError(): string | null {
+  return lastError
+}
+
+function record(stage: string, error: unknown): null {
+  const message = error instanceof Error ? error.message : String(error)
+  lastError = `${stage}: ${message}`
+  return null
+}
+
 async function loadOrt(): Promise<OrtModule> {
   if (!ortPromise) {
     ortPromise = import('onnxruntime-web').then((ort) => {
       ort.env.wasm.wasmPaths = WASM_PATH
+
+      /*
+       * Single-threaded, deliberately, and this is the setting that decides whether
+       * detection works at all on a normal host.
+       *
+       * The multi-threaded runtime needs `SharedArrayBuffer`, which a browser only grants
+       * to a cross-origin-isolated page — one served with COOP and COEP headers. Vercel
+       * does not send those by default and neither does the classroom ground station, so
+       * the default configuration is the one that cannot run here. Asking for one thread
+       * sidesteps SharedArrayBuffer entirely.
+       *
+       * `proxy` stays off for the same reason: it moves inference to a worker that has to
+       * be fetched by a name we do not vendor.
+       */
+      ort.env.wasm.numThreads = 1
+      ort.env.wasm.proxy = false
       return ort
     })
   }
@@ -52,8 +91,8 @@ async function loadSession(): Promise<InferenceSession | null> {
           executionProviders: ['wasm'],
           graphOptimizationLevel: 'all',
         })
-      } catch {
-        return null
+      } catch (error) {
+        return record('loading the model', error)
       }
     })()
   }
@@ -294,8 +333,11 @@ export async function createYoloOnnxDetector(): Promise<ObjectDetector | null> {
         if (!outName) return []
         const tensor = results[outName]
         if (!tensor) return []
+        // A frame that ran is a frame that cleared whatever went wrong last time.
+        lastError = null
         return decodeYolo(tensor, { scale, padX, padY, srcW, srcH })
-      } catch {
+      } catch (error) {
+        record('running a frame', error)
         return []
       }
     },

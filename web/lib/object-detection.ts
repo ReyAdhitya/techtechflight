@@ -21,6 +21,11 @@ export interface Detection {
   /** Confidence in [0, 1]. */
   readonly confidence: number
   readonly box: DetectionBox
+  /**
+   * Persistent tracker id from the AI service (ByteTrack / BoT-SORT), when present.
+   * Absent on the in-browser wasm path. Session-only — never written to Telemetry.
+   */
+  readonly trackId?: string | null
 }
 
 /**

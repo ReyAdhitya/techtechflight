@@ -33,6 +33,9 @@ before building anything twice.
 **Classroom (Windows, no terminal):** double-click **`Start TechTech Flight.bat`**.
 That starts the ground station on **:4321** and opens the board. Default Fleet is the
 **Simulator**. Radio (MAVLink) is advanced / monitoring-only — see ADR-0011.
+If `ai-service/.venv` exists, the launcher also starts the optional **YOLO11x** AI
+service on **:8090** (CUDA when available, otherwise CPU) — see
+[`ai-service/README.md`](./ai-service/README.md) and ADR-0023.
 
 **Developers:**
 
@@ -40,6 +43,9 @@ That starts the ground station on **:4321** and opens the board. Default Fleet i
 npm install
 npm run dev:ground-station   # simulated Fleet + WebSocket on :4321
 npm run dev:web              # the board on :3000
+# optional accuracy path:
+# cd ai-service && python -m venv .venv && .venv\Scripts\activate
+# pip install -r requirements.txt && uvicorn app.main:app --port 8090
 ```
 
 The ground station prints a set of demo keys on start — press `f` for a Fault, `l` to
@@ -57,6 +63,8 @@ npm run typecheck
 
 - **`contract/`** — the types both programs share, and nothing else. `Drone`, `Status`,
   `Telemetry`, `FleetState`, `TelemetrySource`, `Clock`.
+- **`ai-service/`** — optional local YOLO11x FastAPI detector (CUDA/CPU). Not part of the
+  npm workspaces; the board probes it and falls back to in-browser YOLOv8n.
 - **`fleet-core/`** — owns the Fleet: derives Status, ages Telemetry into Stale and then
   Offline, forecasts a return to Ready, records what happened, and ships the simulated
   Telemetry Source (ADR-0001). No Node APIs, so the same code runs on a laptop and in a

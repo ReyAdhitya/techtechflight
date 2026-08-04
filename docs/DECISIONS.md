@@ -9,15 +9,30 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
-## 2026-08-04 — YOLO letterboxes to 416, not 640, on the board.
+## 2026-08-04 — Control calm Mission Running restores one-Alert Attention.
 
-- **Decision / notes:** Classroom detection is mostly "is there a person / laptop / bottle".
-  Dropping the letterbox from 640 to 416 roughly halves wasm work per frame with little
-  loss on those classes, and the CameraPane loop now waits for each inference to finish
-  before starting the next — which fixed more lag than the input size ever caused.
-- **Could have gone differently:** Keeping 640 for maximum accuracy. Rejected: a box that
-  arrives a second late is less useful to a Teacher than a slightly looser one that keeps
-  up with the Student moving.
+- **Decision / notes:** AttentionBar returns to DESIGN §4.2 — always-visible worst Alert
+  plus playbook responses — instead of a closed disclosure-only queue. Fleet actions use
+  existing domain words (Land all · Hover all · Stop all), not Pause/Return. Per-strip
+  Commands stay available on selection so Scope full-screen dock and muscle memory remain;
+  they are not deleted. Fleet-wide Stop uses hold-to-confirm like Land all; per-strip Stop
+  stays a single press.
+- **Could have gone differently:** Renaming to Pause/Return/Emergency, or keeping Commands
+  on every strip. Rejected — CONTEXT vocabulary and progressive disclosure beat a second
+  command language.
+
+## 2026-08-04 — Browser YOLO stays at 640; accuracy-heavy work moves to ai-service.
+
+- **Decision / notes:** The Hyuto YOLOv8n ONNX is fixed-shape 640. Feeding 416 broke every
+  frame while the UI still said the model was loaded. Wasm stays at 640; YOLO11x / high
+  imgsz / ByteTrack live in the optional local AI service (ADR-0023), with CUDA or CPU.
+- **Could have gone differently:** Re-exporting a dynamic ONNX for 416. Rejected for the
+  hotfix — classroom recovery mattered more than a second export pipeline.
+
+## 2026-08-04 — YOLO letterboxes to 416, not 640, on the board. (superseded)
+
+- **Superseded** the same day — see the entry above. Kept so the mistaken 416 change remains
+  visible in the log.
 
 ## 2026-08-04 — Wave M2 mounts mission prep on Lesson; Control gets Recall first.
 

@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { DroneId } from '@techtechflight/contract'
 import { alertQueue, type DroneVitals } from '@/lib/vitals'
+import { playbookFor } from '@/lib/incident-playbook'
 import { AttentionBar } from './AttentionBar'
 
 const aVitals = (overrides: Partial<DroneVitals> = {}): DroneVitals => ({
@@ -66,12 +67,19 @@ describe('when several things need the Teacher', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('3')
   })
 
-  it('keeps the full list inside a closed disclosure, with the worst on the summary', () => {
+  it('puts the worst Alert on a focused card, not only in a disclosure summary', () => {
     bar(busy)
 
-    const summary = screen.getByText(/items require action/i).closest('summary')
-    expect(summary).toHaveTextContent(/Separate it from Drone 1/)
-    expect(summary).toHaveTextContent('Now')
+    const card = screen.getByRole('article')
+    expect(card).toHaveTextContent(/Separate it from Drone 1/)
+    expect(card).toHaveTextContent('Now')
+    expect(card).toHaveTextContent('Drone 3')
+  })
+
+  it('keeps the full queue inside a closed disclosure', () => {
+    bar(busy)
+
+    expect(screen.getByText(/2 more in the queue/i)).toBeInTheDocument()
 
     const list = screen.getByRole('list', { name: /items requiring action/i })
     expect(within(list).getByText(/Separate it from Drone 1/)).toBeInTheDocument()
@@ -89,7 +97,7 @@ describe('when several things need the Teacher', () => {
     expect(screen.queryByText(/Flown by/)).not.toBeInTheDocument()
   })
 
-  it('offers to take an item from the list, and hands back which one that was', async () => {
+  it('offers to take the focused item, and hands back which one that was', async () => {
     const taken: string[] = []
     render(
       <AttentionBar
@@ -99,11 +107,41 @@ describe('when several things need the Teacher', () => {
       />,
     )
 
+    const card = screen.getByRole('article')
     await userEvent.click(
-      screen.getByRole('button', { name: /I have this — Drone 3, Separate it from Drone 1/i }),
+      within(card).getByRole('button', { name: /I have this — Drone 3, Separate it from Drone 1/i }),
     )
 
     expect(taken).toEqual(['ttf-0003:separation'])
+  })
+
+  it('offers playbook responses on the focused Alert', async () => {
+    const entry = playbookFor('separation')!
+    const onResponse = vi.fn()
+    render(
+      <AttentionBar
+        queue={alertQueue(busy)}
+        studentFor={nobody}
+        onResponse={onResponse}
+      />,
+    )
+
+    const card = screen.getByRole('article')
+    await userEvent.click(within(card).getByRole('button', { name: /Hold position/i }))
+
+    expect(onResponse).toHaveBeenCalledOnce()
+    expect(onResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ droneId: 'ttf-0003', kind: 'separation' }),
+      entry.responses[0],
+      0,
+    )
+  })
+
+  it('links to the focused Drone for details', () => {
+    bar(busy)
+    expect(
+      within(screen.getByRole('article')).getByRole('link', { name: /View Drone details/i }),
+    ).toHaveAttribute('href', '/drone?id=ttf-0003')
   })
 
   it('offers nothing to take when there is nothing to take', () => {

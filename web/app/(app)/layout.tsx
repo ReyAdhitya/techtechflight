@@ -4,7 +4,6 @@ import { useMemo, useSyncExternalStore, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import type { DroneId, Telemetry } from '@techtechflight/contract'
 import { FleetProvider, useFleet } from '@/components/FleetProvider'
-import { TrainingWheelsProvider } from '@/lib/training-wheels'
 import { CommandPalette } from '@/components/CommandPalette'
 import { SiteHeader } from '@/components/SiteHeader'
 import { RunBar } from '@/components/RunBar'
@@ -207,15 +206,13 @@ function AppRunBar() {
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <FleetProvider>
-      <TrainingWheelsProvider>
-        <a className="skip-link" href="#content">
-          Skip to the Fleet
-        </a>
-        <SiteHeader />
-        <AppRunBar />
-        {children}
-        <CommandPalette />
-      </TrainingWheelsProvider>
+      <a className="skip-link" href="#content">
+        Skip to the Fleet
+      </a>
+      <SiteHeader />
+      <AppRunBar />
+      {children}
+      <CommandPalette />
     </FleetProvider>
   )
 }

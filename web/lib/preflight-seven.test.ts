@@ -1,0 +1,172 @@
+import { aTelemetry } from '@techtechflight/contract/fixtures'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import {
+  emptyPreFlightSeven,
+  evaluatePreFlightSeven,
+  isPreFlightSevenDone,
+  PRE_FLIGHT_SEVEN_ITEMS,
+  PRE_FLIGHT_SEVEN_KEY,
+  preFlightSevenDoneCount,
+  preFlightSevenStatusWord,
+  propellersTicked,
+  readPreFlightSeven,
+  resetPreFlightSeven,
+  togglePropellersTick,
+} from './preflight-seven'
+
+beforeEach(() => {
+  window.localStorage.removeItem(PRE_FLIGHT_SEVEN_KEY)
+})
+
+afterEach(() => {
+  window.localStorage.removeItem(PRE_FLIGHT_SEVEN_KEY)
+})
+
+describe('pre-flight seven items', () => {
+  it('has a fixed list of seven checks in board order', () => {
+    expect(PRE_FLIGHT_SEVEN_ITEMS).toHaveLength(7)
+    expect(PRE_FLIGHT_SEVEN_ITEMS.map((item) => item.id)).toEqual([
+      'battery',
+      'propellers',
+      'sensors',
+      'wifi',
+      'camera',
+      'altitude-hold',
+      'obstacle-sensing',
+    ])
+    expect(PRE_FLIGHT_SEVEN_ITEMS.filter((item) => item.manual)).toEqual([
+      { id: 'propellers', label: 'Propellers', manual: true },
+    ])
+  })
+
+  it('reads battery, sensors and obstacle from Telemetry', () => {
+    const readings = evaluatePreFlightSeven(
+      aTelemetry({
+        batteryFraction: 0.82,
+        orientation: { pitchDegrees: 0, rollDegrees: 0, yawDegrees: 0 },
+        camera: { streaming: false },
+        proximity: null,
+        linkQuality: 0.9,
+        extra: { altitudeHold: true },
+      }),
+      false,
+    )
+
+    expect(readings.find((item) => item.id === 'battery')).toMatchObject({
+      status: 'pass',
+    })
+    expect(readings.find((item) => item.id === 'sensors')).toMatchObject({
+      status: 'pass',
+    })
+    expect(readings.find((item) => item.id === 'wifi')).toMatchObject({
+      status: 'pass',
+      detail: expect.stringContaining('90%'),
+    })
+    expect(readings.find((item) => item.id === 'camera')).toMatchObject({
+      status: 'pass',
+    })
+    expect(readings.find((item) => item.id === 'altitude-hold')).toMatchObject({
+      status: 'pass',
+    })
+    expect(readings.find((item) => item.id === 'obstacle-sensing')).toMatchObject({
+      status: 'pass',
+      detail: expect.stringContaining('Nothing close'),
+    })
+    expect(readings.find((item) => item.id === 'propellers')).toMatchObject({
+      status: 'pending',
+    })
+  })
+
+  it('says when an item cannot be reported', () => {
+    const readings = evaluatePreFlightSeven(
+      aTelemetry({
+        batteryFraction: 0.82,
+        orientation: { pitchDegrees: 0, rollDegrees: 0, yawDegrees: 0 },
+      }),
+      false,
+    )
+
+    expect(readings.find((item) => item.id === 'wifi')?.detail).toMatch(
+      /cannot report signal strength/i,
+    )
+    expect(readings.find((item) => item.id === 'camera')?.detail).toBe('No camera fitted.')
+    expect(readings.find((item) => item.id === 'altitude-hold')?.detail).toMatch(
+      /cannot report altitude hold/i,
+    )
+    expect(readings.find((item) => item.id === 'obstacle-sensing')?.detail).toMatch(
+      /no obstacle sensor fitted/i,
+    )
+  })
+
+  it('flags low charge and weak link as not ready', () => {
+    const lowCharge = evaluatePreFlightSeven(
+      aTelemetry({ batteryFraction: 0.12 }),
+      true,
+    )
+    expect(lowCharge.find((item) => item.id === 'battery')).toMatchObject({ status: 'fail' })
+
+    const weakLink = evaluatePreFlightSeven(
+      aTelemetry({ linkQuality: 0.1, orientation: { pitchDegrees: 0, rollDegrees: 0, yawDegrees: 0 } }),
+      true,
+    )
+    expect(weakLink.find((item) => item.id === 'wifi')).toMatchObject({ status: 'fail' })
+  })
+
+  it('is done only when all seven pass including the hand tick', () => {
+    const partial = evaluatePreFlightSeven(
+      aTelemetry({
+        batteryFraction: 0.82,
+        orientation: { pitchDegrees: 0, rollDegrees: 0, yawDegrees: 0 },
+        camera: { streaming: true },
+        proximity: null,
+        linkQuality: 0.8,
+        extra: { altitudeHold: true },
+      }),
+      false,
+    )
+    expect(preFlightSevenDoneCount(partial)).toBe(6)
+    expect(isPreFlightSevenDone(partial)).toBe(false)
+
+    const complete = evaluatePreFlightSeven(
+      aTelemetry({
+        batteryFraction: 0.82,
+        orientation: { pitchDegrees: 0, rollDegrees: 0, yawDegrees: 0 },
+        camera: { streaming: true },
+        proximity: null,
+        linkQuality: 0.8,
+        extra: { altitudeHold: true },
+      }),
+      true,
+    )
+    expect(isPreFlightSevenDone(complete)).toBe(true)
+  })
+
+  it('maps every status to a word', () => {
+    expect(preFlightSevenStatusWord('pass')).toBe('OK')
+    expect(preFlightSevenStatusWord('fail')).toBe('Not ready')
+    expect(preFlightSevenStatusWord('unreportable')).toBe('Cannot report')
+    expect(preFlightSevenStatusWord('pending')).toBe('Still open')
+  })
+})
+
+describe('propeller ticks', () => {
+  it('persists for the same Lesson and resets for a new one', () => {
+    togglePropellersTick('lesson-1', 'ttf-0001')
+    expect(propellersTicked(readPreFlightSeven('lesson-1'), 'ttf-0001')).toBe(true)
+
+    expect(readPreFlightSeven('lesson-2')).toEqual(emptyPreFlightSeven('lesson-2'))
+    expect(propellersTicked(readPreFlightSeven('lesson-2'), 'ttf-0001')).toBe(false)
+  })
+
+  it('toggling twice clears the tick', () => {
+    togglePropellersTick('lesson-1', 'ttf-0001')
+    togglePropellersTick('lesson-1', 'ttf-0001')
+    expect(propellersTicked(readPreFlightSeven('lesson-1'), 'ttf-0001')).toBe(false)
+  })
+
+  it('resetPreFlightSeven clears every tick for the Lesson', () => {
+    togglePropellersTick('lesson-1', 'ttf-0001')
+    resetPreFlightSeven('lesson-1')
+    expect(readPreFlightSeven('lesson-1')).toEqual(emptyPreFlightSeven('lesson-1'))
+  })
+})

@@ -71,8 +71,7 @@ CONTEXT.md                   The domain glossary — authoritative vocabulary
 ### Documentation that is *not* product documentation
 
 The instruction is to treat documentation as the source of truth, so it matters which
-documents are which. Authoritative: **`CONTEXT.md`**, **`docs/adr/*`**, **`README.md`**,
-**`docs/questions-for-drone-team.md`**.
+documents are which. Authoritative: **`CONTEXT.md`**, **`docs/adr/*`**, **`README.md`**.
 
 Not authoritative, and easy to mistake for it:
 
@@ -237,7 +236,7 @@ documented, thrice-defended decision (§3 above).
 Overseeing and controlling are different products. Adding a command path — especially for
 emergency stop and auto-landing, on real aircraft, in a room with children — is a safety
 and architecture decision that belongs to you and the drone team, not to an implementation
-pass. `docs/questions-for-drone-team.md` has an open tier for exactly this.
+pass. The command-protocol questions in `docs/adr/0022-…` cover exactly this.
 
 Phase 2 cannot be written without an answer. Three coherent options exist, and they produce
 genuinely different requirements documents:
@@ -332,8 +331,9 @@ Worth a decision, not urgent. It has value as a design argument — deleting it 
   documented, and correct — noted so nobody "fixes" it later.
 - **No first-run state.** A Teacher opening the board with no ground station and no records
   sees "Waiting for the first Fleet State" and nothing that teaches them what to do.
-- **`docs/questions-for-drone-team.md` has a Tier 0 question still open.** Any requirement
-  that depends on real hardware behaviour should cite it rather than assume an answer.
+- **The command-protocol questions are still open** (recorded in `docs/adr/0022-…`). Any
+  requirement that depends on real hardware behaviour should cite them rather than assume
+  an answer.
 
 ## 9. What I need from you before Phase 2
 

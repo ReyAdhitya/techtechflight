@@ -12,8 +12,9 @@ Built by TechTech Technology, who sell STEM curriculum and drones to schools.
   the ones it deliberately avoids. Read this first.
 - **[docs/adr/](./docs/adr/)** — architecture decision records. Why the system is shaped
   the way it is, including the decisions that look wrong until you know the reason.
-- **[docs/questions-for-drone-team.md](./docs/questions-for-drone-team.md)** — open
-  hardware questions. None of them block dashboard work; that is the point of ADR-0001.
+- **[docs/adr/0022](./docs/adr/0022-return-home-is-a-terminating-command.md)** — the open
+  hardware questions, kept with the decision they gate. None of them block dashboard work;
+  that is the point of ADR-0001.
 - **[design.md](./design.md)** — the design system: Tech Tech Technology's warm paper
   neutrals and two-step marigold, shared with the Proposal Console. Sections 1–8 are the
   shared system; section 9 records what the Fleet board adds. See ADR-0009 for why we

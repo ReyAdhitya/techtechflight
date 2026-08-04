@@ -451,7 +451,7 @@ What changes: one new file, one line choosing it.
 What does not change: `contract/`, `fleet-core/`, every component, every screen, every test in
 `web/`.
 
-Gated on `docs/questions-for-drone-team.md`, which still has an open Tier 0 question. The
+Gated on the command-protocol questions recorded in `docs/adr/0022-…`, all still open. The
 observation shape a hardware source must produce is already specified by `Telemetry`, and its
 absent-versus-null rule is the part most likely to be got wrong: **a value the airframe cannot
 report is `undefined`; a value it can report and has nothing to say about is `null`.** A source

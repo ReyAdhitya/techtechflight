@@ -17,7 +17,8 @@ Three reasons, and they are not the same reason:
 
 1. **No protocol exists.** Nobody has told us how a command is addressed to an aircraft,
    what acknowledges it, or what happens to one in flight when the link drops.
-   `docs/questions-for-drone-team.md` still has an open Tier 0 question.
+   All three questions are still open, and are recorded in
+   [ADR-0022](./0022-return-home-is-a-terminating-command.md).
 2. **Safety.** These are real aircraft, flown by children, in a room. Emergency stop and
    auto-landing are not features; they are the behaviour of a machine that can hurt someone.
 3. **Architectural drift.** A command path is exactly the kind of thing that arrives as a

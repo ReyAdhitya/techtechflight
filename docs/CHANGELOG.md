@@ -7,6 +7,8 @@ would notice.
 
 ### Removed
 
+- **Training wheels.** Banner, toggle, and practice-mode Stop hiding are gone from Control
+  and Lesson. Quiet mode still hides Stop when a Teacher asks for it.
 - **Mission run rail (left).** Reverted — Teachers keep the top SiteNav and the Run bar
   while a Lesson is open; no left step wizard.
 

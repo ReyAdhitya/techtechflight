@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — Training wheels leave the board.
+
+- **Decision / notes:** Remove the Training wheels toggle, banner, provider, and
+  soften-alerts path. The mode hid Stop and diluted alert chrome for practice; Teachers
+  found the control itself as clutter. Quiet mode remains for deliberately hiding Stop.
+- **Could have gone differently:** Leaving it under More actions only. Rejected — unused
+  practice chrome still asks a decision every glance.
+
 ## 2026-08-04 — Mission run rail withdrawn.
 
 - **Decision / notes:** The left twelve-step rail shipped and was removed the same day.

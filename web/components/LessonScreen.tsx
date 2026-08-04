@@ -48,7 +48,6 @@ import { LogbookLocationNote } from './LogbookLocationNote'
 import { BeforeAfterScores } from './BeforeAfterScores'
 import { LessonWarmUp } from './LessonWarmUp'
 import { StatusGlyph } from './StatusBadge'
-import { TrainingWheelsBanner, TrainingWheelsToggle } from './TrainingWheelsBanner'
 import {
   readyBoardLabel,
   readyBoardSummary,
@@ -99,11 +98,6 @@ export function LessonScreen() {
       className={cn(READING_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
       <LogbookLocationNote />
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TrainingWheelsBanner className="flex-1" />
-        <TrainingWheelsToggle />
-      </div>
 
       {lesson ? (
         <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />

@@ -1,5 +1,5 @@
 /**
- * Validate the 350-feature dataset before it becomes 350 GitHub issues.
+ * Validate the feature dataset before it becomes GitHub issues.
  *
  * The load-bearing check is the last one: two tickets in the same wave must never own the
  * same file. That single rule is what lets a wave of agents run at the same time without
@@ -38,11 +38,14 @@ const features = rows.map((line, index) => {
   }
 })
 
-// Every number from 1 to 350, exactly once.
+// Every number from 1 to however many there are, exactly once. The dataset grows — it was
+// 350 when it was written and section 18 took it to 426 — so the run is derived rather than
+// pinned. A gap still fails; only the ceiling moved.
 const seen = new Set(features.map((f) => f.num))
-for (let n = 1; n <= 350; n += 1) if (!seen.has(n)) problems.push(`feature ${n} is missing`)
+for (let n = 1; n <= features.length; n += 1) {
+  if (!seen.has(n)) problems.push(`feature ${n} is missing`)
+}
 if (seen.size !== features.length) problems.push('duplicate feature numbers')
-if (features.length !== 350) problems.push(`${features.length} features, expected 350`)
 
 // The rule everything else rests on: one owner per file per wave.
 const ownerOf = new Map()

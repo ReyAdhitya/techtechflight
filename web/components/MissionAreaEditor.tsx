@@ -184,7 +184,15 @@ export function MissionAreaEditor({ zones, onChange }: MissionAreaEditorProps) {
     addPoint({ eastM, northM })
   }
 
-  const canAddMissionPoint = mode === 'mission' && !missionComplete
+  /*
+   * The typed path and the tapped path have to agree. `addPoint` lets a Teacher keep
+   * extending the Mission Zone they are still drawing even once it encloses something —
+   * three points is the fewest that encloses an area, not the most a classroom needs — so
+   * the fieldset must stay live for exactly that case, or a fourth corner is reachable by
+   * tapping and impossible by typing.
+   */
+  const canAddMissionPoint =
+    mode === 'mission' && (!missionComplete || activeZone?.kind === 'mission')
   const canAddNoFlyPoint = mode === 'no-fly'
   const canAddPoint = canAddMissionPoint || canAddNoFlyPoint
 
@@ -251,11 +259,110 @@ export function MissionAreaEditor({ zones, onChange }: MissionAreaEditorProps) {
         ) : null}
       </div>
 
-      {!hasAnyGeometry ? (
-        <div
-          className="rounded-surface border border-dashed border-hairline bg-canvas px-4 py-6 text-center"
-          data-testid="mission-area-empty"
+      {/*
+       * The grid is always here, empty or not. It used to be swapped out for the sentence
+       * below, which left "Tap the grid" as an instruction pointing at nothing — the one
+       * state every Teacher starts in, and the only way in was to type two numbers.
+       *
+       * That sentence sits *under* the surface rather than over it so that the surface
+       * cannot move: it goes away on the first point, and above the grid that shifts the
+       * grid out from under the finger that is drawing on it, between tap one and tap two.
+       *
+       * Capped rather than `w-full`: this sits in the Lesson column, and a square that
+       * tracks the column width pushes Add point and the zone list off the screen.
+       */}
+      <div className="mx-auto w-full max-w-[26rem] overflow-hidden rounded-surface border border-hairline bg-canvas">
+        <svg
+          role="img"
+          aria-label="Mission area drawing surface in metres east and north"
+          viewBox={`0 0 ${GRID_SIZE_M} ${GRID_SIZE_M}`}
+          className="block aspect-square w-full cursor-crosshair touch-none"
+          onClick={onCanvasClick}
         >
+          {Array.from({ length: GRID_SIZE_M + 1 }, (_, index) => (
+            <g key={index}>
+              <line
+                x1={index}
+                y1={0}
+                x2={index}
+                y2={GRID_SIZE_M}
+                className="stroke-hairline"
+                strokeWidth={0.05}
+              />
+              <line
+                x1={0}
+                y1={index}
+                x2={GRID_SIZE_M}
+                y2={index}
+                className="stroke-hairline"
+                strokeWidth={0.05}
+              />
+            </g>
+          ))}
+
+          {zones.map((zone) => {
+            if (zone.points.length === 0) return null
+            const closed = enclosesAnything(zone)
+            const pointList = closed ? pointsToPolygon(zone.points) : polylinePoints(zone.points)
+            if (zone.kind === 'mission') {
+              return closed ? (
+                <polygon
+                  key={zone.id}
+                  points={pointList}
+                  className="fill-ink/10 stroke-ink"
+                  strokeWidth={0.15}
+                  data-zone-kind="mission"
+                />
+              ) : (
+                <polyline
+                  key={zone.id}
+                  points={pointList}
+                  fill="none"
+                  className="stroke-ink"
+                  strokeWidth={0.15}
+                  strokeDasharray="0.4 0.3"
+                  data-zone-kind="mission"
+                />
+              )
+            }
+            return closed ? (
+              <polygon
+                key={zone.id}
+                points={pointList}
+                className="fill-status-fault/15 stroke-status-fault"
+                strokeWidth={0.15}
+                strokeDasharray="0.3 0.25"
+                data-zone-kind="no-fly"
+              />
+            ) : (
+              <polyline
+                key={zone.id}
+                points={pointList}
+                fill="none"
+                className="stroke-status-fault"
+                strokeWidth={0.15}
+                strokeDasharray="0.4 0.3"
+                data-zone-kind="no-fly"
+              />
+            )
+          })}
+
+          {zones.flatMap((zone) =>
+            zone.points.map((point, index) => (
+              <circle
+                key={`${zone.id}-${index}`}
+                cx={point.eastM}
+                cy={svgY(point.northM)}
+                r={0.2}
+                className={zone.kind === 'mission' ? 'fill-ink' : 'fill-status-fault'}
+              />
+            )),
+          )}
+        </svg>
+      </div>
+
+      {!hasAnyGeometry ? (
+        <div className="text-center" data-testid="mission-area-empty">
           <p className="m-0 text-body text-ink">
             {mode === 'mission'
               ? 'Tap the grid or add points to outline where this Mission happens.'
@@ -266,97 +373,7 @@ export function MissionAreaEditor({ zones, onChange }: MissionAreaEditorProps) {
             last zone.
           </p>
         </div>
-      ) : (
-        <div className="overflow-hidden rounded-surface border border-hairline bg-canvas">
-          <svg
-            role="img"
-            aria-label="Mission area drawing surface in metres east and north"
-            viewBox={`0 0 ${GRID_SIZE_M} ${GRID_SIZE_M}`}
-            className="block aspect-square w-full cursor-crosshair touch-none"
-            onClick={onCanvasClick}
-          >
-            {Array.from({ length: GRID_SIZE_M + 1 }, (_, index) => (
-              <g key={index}>
-                <line
-                  x1={index}
-                  y1={0}
-                  x2={index}
-                  y2={GRID_SIZE_M}
-                  className="stroke-hairline"
-                  strokeWidth={0.05}
-                />
-                <line
-                  x1={0}
-                  y1={index}
-                  x2={GRID_SIZE_M}
-                  y2={index}
-                  className="stroke-hairline"
-                  strokeWidth={0.05}
-                />
-              </g>
-            ))}
-
-            {zones.map((zone) => {
-              if (zone.points.length === 0) return null
-              const closed = enclosesAnything(zone)
-              const pointList = closed ? pointsToPolygon(zone.points) : polylinePoints(zone.points)
-              if (zone.kind === 'mission') {
-                return closed ? (
-                  <polygon
-                    key={zone.id}
-                    points={pointList}
-                    className="fill-ink/10 stroke-ink"
-                    strokeWidth={0.15}
-                    data-zone-kind="mission"
-                  />
-                ) : (
-                  <polyline
-                    key={zone.id}
-                    points={pointList}
-                    fill="none"
-                    className="stroke-ink"
-                    strokeWidth={0.15}
-                    strokeDasharray="0.4 0.3"
-                    data-zone-kind="mission"
-                  />
-                )
-              }
-              return closed ? (
-                <polygon
-                  key={zone.id}
-                  points={pointList}
-                  className="fill-status-fault/15 stroke-status-fault"
-                  strokeWidth={0.15}
-                  strokeDasharray="0.3 0.25"
-                  data-zone-kind="no-fly"
-                />
-              ) : (
-                <polyline
-                  key={zone.id}
-                  points={pointList}
-                  fill="none"
-                  className="stroke-status-fault"
-                  strokeWidth={0.15}
-                  strokeDasharray="0.4 0.3"
-                  data-zone-kind="no-fly"
-                />
-              )
-            })}
-
-            {zones.flatMap((zone) =>
-              zone.points.map((point, index) => (
-                <circle
-                  key={`${zone.id}-${index}`}
-                  cx={point.eastM}
-                  cy={svgY(point.northM)}
-                  r={0.2}
-                  className={zone.kind === 'mission' ? 'fill-ink' : 'fill-status-fault'}
-                />
-              )),
-            )}
-          </svg>
-        </div>
-      )}
+      ) : null}
 
       <fieldset
         disabled={!canAddPoint}

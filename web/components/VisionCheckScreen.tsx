@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { boardDetector } from '@/lib/board-detector'
 import type { Detection, ObjectDetector } from '@/lib/object-detection'
 import { detectorLabel, verdictFor, type Verdict } from '@/lib/detector-verdict'
+import { runSelfTest, selfTestWords, type SelfTestResult } from '@/lib/detector-selftest'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -31,8 +32,13 @@ import { READING_FRAME } from '@/lib/frame'
 
 type CameraState = 'idle' | 'requesting' | 'live' | 'denied' | 'unavailable'
 
-/** Fast enough to feel live, slow enough that the model keeps up on a school laptop. */
-const FRAME_INTERVAL_MS = 250
+/**
+ * How long to breathe between frames — *after* the previous one has finished, not a rate.
+ *
+ * Short, because the real limit is how long inference takes (most of a second, single
+ * threaded), and the loop is self-scheduling so it can never run faster than the model.
+ */
+const FRAME_GAP_MS = 60
 
 export function VisionCheckScreen() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -44,6 +50,8 @@ export function VisionCheckScreen() {
   const [framesRun, setFramesRun] = useState(0)
   const [detectionsSeen, setDetectionsSeen] = useState(0)
   const [latencyMs, setLatencyMs] = useState<number | null>(null)
+  const [selfTest, setSelfTest] = useState<SelfTestResult | null>(null)
+  const [selfTesting, setSelfTesting] = useState(false)
 
   /*
    * `window.isSecureContext` is the browser's own answer to the question, rather than us
@@ -104,9 +112,31 @@ export function VisionCheckScreen() {
     if (!detector || cameraState !== 'live') return
 
     let stopped = false
-    const timer = window.setInterval(() => {
+
+    /*
+     * One frame at a time, scheduled after the last one finished — not on a fixed timer.
+     *
+     * A single-threaded YOLOv8n frame takes the better part of a second on a normal
+     * laptop. A 250 ms interval therefore queued three inferences for every one it
+     * completed: memory climbed, the browser got slower, and the boxes drifted further
+     * behind the picture every second. It read exactly like a model that could not see
+     * anything, which is the worst possible way for a performance bug to present on a
+     * screen whose entire job is to say whether the model works.
+     */
+    const runFrame = () => {
       const video = videoRef.current
       if (!video || stopped) return
+
+      /*
+       * A `<video>` reports 0×0 until it has metadata, and letterboxing a zero-sized
+       * source draws nothing — so the first frames after Start would be scored against a
+       * blank canvas and found, correctly, to contain nothing. Skipping them keeps the
+       * "recognised so far" count honest.
+       */
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        timer = window.setTimeout(runFrame, FRAME_GAP_MS)
+        return
+      }
 
       const startedAt = performance.now()
       void detector
@@ -121,11 +151,17 @@ export function VisionCheckScreen() {
         .catch(() => {
           // A frame that failed is a frame that failed. It is not evidence of anything.
         })
-    }, FRAME_INTERVAL_MS)
+        .finally(() => {
+          // Only now is the next one scheduled. This is what stops the pile-up.
+          if (!stopped) timer = window.setTimeout(runFrame, FRAME_GAP_MS)
+        })
+    }
+
+    let timer = window.setTimeout(runFrame, 0)
 
     return () => {
       stopped = true
-      window.clearInterval(timer)
+      window.clearTimeout(timer)
     }
   }, [detector, cameraState])
 
@@ -153,6 +189,43 @@ export function VisionCheckScreen() {
       <VerdictPanel verdict={verdict} />
 
       <section className="flex flex-col gap-3">
+        <h2 className="m-0 font-display text-section font-medium">
+          Does the model run at all?
+        </h2>
+        <p className="m-0 max-w-[60ch] text-body text-ink-subtle">
+          This needs no camera and no permission. It feeds the model one frame this page
+          draws itself, and reports whether inference ran. Press it first if you are not
+          sure whether the camera is the problem.
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={selfTesting}
+            onClick={() => {
+              setSelfTesting(true)
+              void runSelfTest()
+                .then(setSelfTest)
+                .finally(() => setSelfTesting(false))
+            }}
+            className="rounded-[12px] border border-hairline bg-surface-1 px-4 py-2 text-body font-medium disabled:opacity-60"
+          >
+            {selfTesting ? 'Running…' : 'Run a self-test'}
+          </button>
+          {selfTest && (
+            <span
+              className={cn(
+                'text-body',
+                selfTest.ok ? 'text-ink' : 'text-[color:var(--color-fault)]',
+              )}
+            >
+              {selfTest.ok ? 'Passed' : 'Failed'} — {selfTestWords(selfTest)}
+            </span>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="m-0 font-display text-section font-medium">Does it see people?</h2>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"

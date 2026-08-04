@@ -18,17 +18,24 @@ import { cn } from '@/lib/utils'
  * workflow itself: one click per Photo 3 step, current step derived from records (same as
  * the Run bar), so a Teacher can walk the day without hunting across screens.
  *
- * Shown only while a Lesson is open. On a narrow board it becomes a horizontal strip so
- * the steps stay reachable without eating the instrument.
+ * Always mounted on the app frame — hiding it until a Lesson started made the board look
+ * unchanged on Vercel. Without a Lesson, step 1 stays current and the copy sends the
+ * Teacher to Lesson first. On a narrow board it becomes a horizontal strip.
  */
 export function MissionRunRail({
   state,
+  lessonOpen = true,
   className,
 }: {
   readonly state: RunStepInput
+  /** False before any Lesson is open — next-action copy points at Lesson. */
+  readonly lessonOpen?: boolean
   readonly className?: string
 }) {
   const reading = runStep(state)
+  const nextAction = lessonOpen
+    ? reading.nextAction
+    : 'Open Lesson and start one — then work these steps top to bottom.'
 
   return (
     <nav
@@ -36,7 +43,7 @@ export function MissionRunRail({
       className={cn(
         'mission-run-rail flex flex-col gap-3 border-hairline bg-surface-1',
         'max-[59.99rem]:border-b max-[59.99rem]:px-3 max-[59.99rem]:py-3',
-        'min-[60rem]:sticky min-[60rem]:top-[4.5rem] min-[60rem]:h-[calc(100dvh-5rem)] min-[60rem]:w-[16.5rem] min-[60rem]:shrink-0 min-[60rem]:overflow-y-auto min-[60rem]:border-r min-[60rem]:px-3 min-[60rem]:py-4',
+        'min-[60rem]:sticky min-[60rem]:top-[4.5rem] min-[60rem]:h-[calc(100dvh-5rem)] min-[60rem]:w-[17rem] min-[60rem]:shrink-0 min-[60rem]:overflow-y-auto min-[60rem]:border-r min-[60rem]:px-3 min-[60rem]:py-4',
         className,
       )}
     >
@@ -45,8 +52,19 @@ export function MissionRunRail({
         <p className="m-0 font-display text-heading font-medium text-ink">
           Step <span className="tnum">{reading.step}</span> of{' '}
           <span className="tnum">{reading.totalSteps}</span>
+          {' — '}
+          {reading.label}
         </p>
-        <p className="m-0 text-value text-ink-subtle">{reading.nextAction}</p>
+        <p className="m-0 text-value text-ink-subtle">{nextAction}</p>
+        {!lessonOpen ? (
+          <Link
+            href="/lesson"
+            prefetch={false}
+            className="mt-1 inline-flex min-h-11 items-center justify-center rounded-pill border-0 bg-ink px-4 py-1.5 text-value font-medium text-canvas no-underline hover:opacity-90"
+          >
+            Go to Lesson
+          </Link>
+        ) : null}
       </div>
 
       <ol className="m-0 flex list-none flex-col gap-4 p-0 max-[59.99rem]:flex-row max-[59.99rem]:gap-3 max-[59.99rem]:overflow-x-auto">

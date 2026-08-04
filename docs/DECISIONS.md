@@ -9,12 +9,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — Mission run rail stays visible even before a Lesson.
+
+- **Decision / notes:** The left rail mounts on every app screen. Hiding it until
+  `runningLesson` made production look unchanged. Idle copy + “Go to Lesson” send the
+  Teacher into the workflow; once a Lesson is open, `runStep` advances as before.
+- **Could have gone differently:** Keep the rail Lesson-gated. Rejected — Teachers could
+  not tell anything shipped.
+
 ## 2026-08-04 — Mission steps live in a left rail; SiteNav stays rooms.
 
-- **Decision / notes:** Photo 3’s twelve steps become a left Mission run rail while a
-  Lesson is open. SiteNav (Control / Lesson / Reports / …) stays the horizontal room
-  switcher. The top Run bar is dropped when the rail is present — one place names the
-  step. Step hrefs deep-link into Lesson / Control / Reports anchors.
+- **Decision / notes:** Photo 3’s twelve steps become a left Mission run rail. SiteNav
+  (Control / Lesson / Reports / …) stays the horizontal room switcher. The top Run bar is
+  dropped when the rail is present — one place names the step. Step hrefs deep-link into
+  Lesson / Control / Reports anchors.
 - **Could have gone differently:** Replacing SiteNav entirely during a Mission, or keeping
   only the Run bar. Rejected — Teachers still need rooms; the rail is the workflow, not
   the whole board.

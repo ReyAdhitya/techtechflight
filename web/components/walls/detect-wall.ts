@@ -2,11 +2,10 @@ import type { CameraState } from '@techtechflight/contract'
 import type { ScenarioControls } from '@/lib/fleet-link'
 import type { ObjectDetector } from '@/lib/object-detection'
 
-/** Shown when a tile cannot report a detection tally. */
-export const DETECTION_COUNT_UNAVAILABLE = '—'
+/** Shown when a tile cannot report a detection tally — never an invented zero. */
+export const DETECTION_COUNT_UNAVAILABLE = 'Cannot count'
 
 export function detectorExposesCounts(_detector: ObjectDetector): boolean {
-  // ObjectDetector has no count API yet — DetectWall still mounts tiles with "—".
   return true
 }
 
@@ -25,6 +24,31 @@ export function canRunWallDetection(
   if (scenarios === null) return false
   if (camera === undefined || !camera.streaming) return false
   return true
+}
+
+/** Whether a video element has real pixels ready for inference. */
+export function hasReadyPixelSource(
+  source: CanvasImageSource | undefined,
+): source is CanvasImageSource {
+  if (source === undefined) return false
+  if (source instanceof HTMLVideoElement) {
+    return source.readyState >= 2 && source.videoWidth > 0 && source.videoHeight > 0
+  }
+  return true
+}
+
+/**
+ * Turn detections into a tally only when pixels were actually measured.
+ *
+ * Null means the wall must say it cannot count — including when inference never ran on
+ * a real frame.
+ */
+export function detectionCountFromDetections(
+  detections: readonly unknown[],
+  hadPixels: boolean,
+): number | null {
+  if (!hadPixels) return null
+  return detections.length
 }
 
 export function formatDetectionCount(count: number | null | undefined): string {

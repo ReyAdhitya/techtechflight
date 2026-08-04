@@ -21,10 +21,10 @@ describe('where a Teacher can go', () => {
      * answers a question no other screen can: whether this machine can see.
      */
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Lesson',
       'Control',
       'Walls',
       'Fleet',
-      'Lesson',
       'Students',
       'Reports',
       'Vision',
@@ -68,10 +68,10 @@ describe('where a Teacher can go', () => {
 
   it('every destination is a real route', () => {
     expect(DESTINATIONS.map((destination) => destination.href)).toEqual([
+      '/lesson',
       '/control',
       '/walls',
       '/',
-      '/lesson',
       '/students',
       '/reports',
       '/vision',

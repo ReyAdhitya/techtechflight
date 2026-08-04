@@ -12,6 +12,12 @@ would notice.
 - **Quiet mode / training wheels.** Stop-hiding practice chrome is gone; Stop stays on strips.
 - **Mission run rail (left).** Already withdrawn — top SiteNav only.
 
+### Changed
+
+- **Lesson leads the navigation.** Order is now Lesson · Control · Walls · Fleet · Students ·
+  Reports · Vision — a Teacher's day starts by planning and starting a Lesson, and Control is
+  where they go once it runs.
+
 ### Added
 
 - **Local YOLO11x AI service.** Optional FastAPI service (`ai-service/`) runs Ultralytics

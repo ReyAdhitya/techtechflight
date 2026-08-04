@@ -12,10 +12,15 @@ import { cn } from '@/lib/utils'
  * reasoning holds and this is what changed: there are genuinely four other places to be,
  * each answering a question the board cannot.
  *
- * Six, ordered by a Teacher's day rather than alphabetically: Control while a lesson
+ * Seven, ordered by a Teacher's day rather than alphabetically: Control while a lesson
  * runs, Walls for the whole-class glance, Fleet and Lesson and Students before one,
  * Reports after. Settings is not here — it is a room-and-records screen rather than a
  * place in the workflow, so it sits in the header.
+ *
+ * Vision sits last and is the odd one out: it is a check rather than a destination in the
+ * day. It earns a place anyway because it answers a question nothing else can — whether
+ * this machine can see — and a check nobody can find is a check nobody runs. It is at the
+ * end because it is used on the day a School sets up and rarely after.
  *
  * The Fleet remains the default landing screen. A Teacher who only ever wants "which
  * Drones can I hand out" never has to learn the rest, which is the part of ADR-0004's
@@ -28,6 +33,7 @@ export const DESTINATIONS = [
   { href: '/lesson', label: 'Lesson', hint: 'Plan it, then start it' },
   { href: '/students', label: 'Students', hint: 'The class, and Drone assignment' },
   { href: '/reports', label: 'Reports', hint: 'What happened, and which Drone keeps doing it' },
+  { href: '/vision', label: 'Vision', hint: 'Whether the camera and the model actually work' },
 ] as const
 
 export function SiteNav() {

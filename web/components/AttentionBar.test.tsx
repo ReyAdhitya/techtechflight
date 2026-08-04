@@ -67,13 +67,21 @@ describe('when several things need the Teacher', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('3')
   })
 
-  it('puts the worst Alert on a focused card, not only in a disclosure summary', () => {
+  it('puts the worst Alert on a compact focused card, not only in a disclosure summary', () => {
     bar(busy)
 
     const card = screen.getByRole('article')
     expect(card).toHaveTextContent(/Separate it from Drone 1/)
     expect(card).toHaveTextContent('Now')
     expect(card).toHaveTextContent('Drone 3')
+    expect(within(card).getByRole('button', { name: /Respond/i })).toBeInTheDocument()
+  })
+
+  it('keeps playbook responses out of the board until Respond opens a dialog', () => {
+    bar(busy)
+
+    expect(screen.queryByRole('button', { name: /Hold position/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('keeps the full queue inside a closed disclosure', () => {
@@ -115,7 +123,7 @@ describe('when several things need the Teacher', () => {
     expect(taken).toEqual(['ttf-0003:separation'])
   })
 
-  it('offers playbook responses on the focused Alert', async () => {
+  it('offers playbook responses in a dialog after Respond', async () => {
     const entry = playbookFor('separation')!
     const onResponse = vi.fn()
     render(
@@ -126,8 +134,15 @@ describe('when several things need the Teacher', () => {
       />,
     )
 
-    const card = screen.getByRole('article')
-    await userEvent.click(within(card).getByRole('button', { name: /Hold position/i }))
+    await userEvent.click(
+      within(screen.getByRole('article')).getByRole('button', {
+        name: /Respond — Drone 3, Separate it from Drone 1/i,
+      }),
+    )
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAccessibleName(/Respond — Drone 3/i)
+    await userEvent.click(within(dialog).getByRole('button', { name: /Hold position/i }))
 
     expect(onResponse).toHaveBeenCalledOnce()
     expect(onResponse).toHaveBeenCalledWith(
@@ -135,12 +150,18 @@ describe('when several things need the Teacher', () => {
       entry.responses[0],
       0,
     )
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('links to the focused Drone for details', () => {
+  it('links to the focused Drone for details from the Respond dialog', async () => {
     bar(busy)
+
+    await userEvent.click(
+      within(screen.getByRole('article')).getByRole('button', { name: /Respond/i }),
+    )
+
     expect(
-      within(screen.getByRole('article')).getByRole('link', { name: /View Drone details/i }),
+      within(screen.getByRole('dialog')).getByRole('link', { name: /View Drone details/i }),
     ).toHaveAttribute('href', '/drone?id=ttf-0003')
   })
 

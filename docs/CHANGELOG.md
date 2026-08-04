@@ -7,10 +7,10 @@ would notice.
 
 ### Removed
 
-- **Training wheels.** Banner, toggle, and practice-mode Stop hiding are gone from Control
-  and Lesson. Quiet mode still hides Stop when a Teacher asks for it.
-- **Mission run rail (left).** Reverted — Teachers keep the top SiteNav and the Run bar
-  while a Lesson is open; no left step wizard.
+- **Run bar (“Step N of 12”).** Gone from the app frame — no step banner above Control.
+- **Lock screen.** Toggle and command lock are gone; Commands stay available.
+- **Quiet mode / training wheels.** Stop-hiding practice chrome is gone; Stop stays on strips.
+- **Mission run rail (left).** Already withdrawn — top SiteNav only.
 
 ### Added
 
@@ -31,7 +31,11 @@ would notice.
 
 ### Changed
 
-- **Control Attention is one focused Alert.** Attention shows the worst Alert card with
+- **Control Attention stays compact; responses open in a dialog.** The bar keeps the count
+  and one-line worst Alert so Scope and strips do not jump when something needs you.
+  **Respond** opens the playbook (Recall / Land now / …) as a popup over the board;
+  Acknowledge stays on the compact line. The rest of the queue stays in a disclosure.
+- **Control Attention is one focused Alert.** Attention shows the worst Alert with
   recommended responses and Acknowledge; the rest of the queue stays in a disclosure.
   Land all · Hover all · Stop all sit under the Scope. Per-strip Commands stay on every
   strip (not selection-gated).
@@ -42,9 +46,6 @@ would notice.
 
 ### Added (Wave M2 — Search and Rescue end-to-end)
 
-- **The Run bar.** While a Mission runs, the board names which of twelve steps you are on
-  and the single thing to do next — from Mission records, not a tour script. It sits on
-  the shared layout above Lesson, Control and Reports, and is hidden when no Lesson is open.
 - **Mission Scenario picker.** Three cards — Search and Rescue, Delivery and Building
   Inspection — each show objective, success criteria and common risks. The choice stays
   changeable until the first Clearance.

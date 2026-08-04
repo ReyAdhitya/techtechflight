@@ -9,29 +9,42 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
-## 2026-08-04 — Training wheels leave the board.
+## 2026-08-04 — Run bar, Quiet mode and Screen lock leave the board.
 
-- **Decision / notes:** Remove the Training wheels toggle, banner, provider, and
-  soften-alerts path. The mode hid Stop and diluted alert chrome for practice; Teachers
-  found the control itself as clutter. Quiet mode remains for deliberately hiding Stop.
-- **Could have gone differently:** Leaving it under More actions only. Rejected — unused
-  practice chrome still asks a decision every glance.
+- **Decision / notes:** Teachers asked the Step banner, Lock screen, and practice
+  Stop-hiding (Quiet mode / Training wheels) removed. Drop `RunBar` / `runStep`, the
+  Quiet and Screen-lock toggles, and the Training-wheels path. Control stays Attention +
+  Scope + Commands; Photo 3 steps live on Lesson / Control / Reports, not a second chrome
+  strip. Stop stays visible and Commands stay pressable.
+- **Could have gone differently:** Keep the Run bar after withdrawing the left rail.
+  Rejected — the Step line was the noise they pointed at.
+
+## 2026-08-04 — Attention playbook opens in a dialog; the bar stays compact.
+
+- **Decision / notes:** The focused Alert on Control is a one-line card (severity, callsign,
+  text, Respond, I have this). Playbook responses and View Drone details live in a
+  centered dialog so an arriving Alert does not shove Scope and Every Drone down the page.
+  Same owner dizziness that made the July 30 closed-dropdown call — the inline playbook
+  panel grew the bar enough to feel like the board was shaking.
+- **Could have gone differently:** Put responses back behind a `<details>` on the bar.
+  Rejected — opening that still grows the page under the Teacher's eyes; a dialog keeps
+  the board still.
 
 ## 2026-08-04 — Mission run rail withdrawn.
 
 - **Decision / notes:** The left twelve-step rail shipped and was removed the same day.
-  The board stays on top SiteNav + Run bar (Lesson-gated). Photo 3 steps remain as Run bar
-  copy via `runStep`, not a second nav.
+  The board stays on top SiteNav. Photo 3 steps are not a second nav.
 - **Could have gone differently:** Keep iterating the rail. Rejected — product call was
   “gajadi”; restore the calmer chrome.
 
 ## 2026-08-04 — Control strips stay fully open; Attention stays one focused Alert.
 
 - **Decision / notes:** AttentionBar keeps DESIGN §4.2 — worst Alert plus playbook
-  responses, queue in a disclosure. Fleet actions use Land all · Hover all · Stop all
-  under the Scope. Per-strip coordinates and Commands stay on every strip (DESIGN §4.4);
-  gating them on selection/airborne was an accidental ship with the YOLO PR and broke CI.
-  Fleet-wide Stop uses hold-to-confirm like Land all; per-strip Stop stays a single press.
+  responses (now via Respond dialog — see entry above), queue in a disclosure. Fleet
+  actions use Land all · Hover all · Stop all under the Scope. Per-strip coordinates and
+  Commands stay on every strip (DESIGN §4.4); gating them on selection/airborne was an
+  accidental ship with the YOLO PR and broke CI. Fleet-wide Stop uses hold-to-confirm like
+  Land all; per-strip Stop stays a single press.
 - **Could have gone differently:** Compact grounded strips for calmer Mission Running.
   Rejected — the scan path and existing strip tests are the product contract.
 

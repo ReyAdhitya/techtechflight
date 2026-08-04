@@ -54,6 +54,27 @@ turn them off in the print dialog.
 **`--text-value` is deliberately the same size as `--text-body`.** Data is not small print
 here. And every size is `rem` — a `px` font-size on this surface is a defect (ADR-0008).
 
+**Mission is now a first-class word (ADR-0018), and it used to be banned.** `CONTEXT.md`
+listed it under Lesson's `_Avoid_` and `docs/DESIGN.md` banned it on screen; both were
+amended on 2026-08-04. A **Mission** is one run of a **Mission Scenario** inside a Lesson,
+and Mission Scenario is what a Teacher picks where they used to pick an Exercise. *Sortie*,
+*pilot*, *callsign* and *UAV* are still banned — the admission was narrow and reasoned.
+
+**Zones are drawn in the Fleet's own local frame, and that is the safety argument
+(ADR-0019).** A zone shares its origin with the Drone positions, so "inside this polygon" is
+a *relative* claim and survives an origin that is wrong — the same way separation alerts
+already do. This supersedes ADR-0012's deferral. Never anchor a zone to a latitude; there is
+no GPS, no map tile and no network anywhere in this feature, deliberately.
+
+**Three state vocabularies, and they stay apart (ADR-0020).** `Status` (ground station, "can
+I hand this out"), `FlightPhase` (board, "what is the aircraft doing"), `MissionPhase`
+(board, "how is the Mission going"). Do not collapse any pair.
+
+**Most of what a Teacher does is not a Command (ADR-0021).** Approve takeoff, assign a new
+target, reprioritise and reroute are **records**, because the Students fly the aircraft by
+hand. They work on real hardware. Only Land, Hover, Auto-land, Stop and Recall are Commands,
+and those still reach the simulated Fleet only.
+
 **`docs/DELIBERATE-POSITIONS.md` lists six positions that look like bugs.** Tiles never
 reorder, counts render at zero, elevation is lightness only, the amber/coral hue split.
 Argue with them in an ADR or leave them alone.
@@ -84,10 +105,23 @@ sim ignores the map. Sanitize to absolute http(s) only — no `javascript:` / cr
 Teaching entry is the Control/Fleet **Camera** dialog (`CameraSlide`). Camera on a strip is
 not a Command (C9).
 
-**YOLOv8n weights are not in git.** Run `node scripts/fetch-yolo-model.mjs` (or
-`npm run fetch:yolo`) so `web/public/models/yolov8n.onnx` exists (~12 MB). Without it the
-board falls back to the demo detector. Wasm loads from jsDelivr. Sim Start camera asks for
-the laptop webcam so the model has real pixels.
+**YOLOv8n weights and the wasm runtime are not in git.** Run `node scripts/fetch-yolo-model.mjs`
+(or `npm run fetch:yolo`) so `web/public/models/yolov8n.onnx` (~12 MB) **and**
+`web/public/ort/` (~26 MB) exist. Without either, the board falls back to the demo detector
+— which draws two confident invented boxes, so it looks like it is working. `/vision` is the
+screen that says otherwise. The Vercel build runs the fetch before building. Sim Start camera
+asks for the laptop webcam so the model has real pixels.
+
+**Which onnxruntime wasm to vendor is not a preference.** The package ships four builds
+(plain, `jsep`, `asyncify`, `jspi`, 77 MB together) and the *main entry point* decides which
+one is loaded — at 1.27 it is **`jsep`**, even though the board only ever asks for
+`executionProviders: ['wasm']`. Vendoring the wrong one 404s, throws inside session creation,
+and silently falls back to the demo detector. After an `onnxruntime-web` upgrade, build and
+run `grep -rho "ort-wasm[a-z0-9.-]*" web/out/_next/static/chunks | sort -u`.
+
+**A camera needs a secure origin.** `getUserMedia` is refused on a plain `http://` address
+other than `localhost`, so opening the board at the laptop's LAN address breaks the camera in
+a way that reads as a permissions problem. `/vision` says so explicitly.
 
 **Camera QR is a landing target, not a scanner.** Only `ttf-land:…` payloads count; they
 answer where to land and stay display-only unless a Teacher presses sim **Place at landing

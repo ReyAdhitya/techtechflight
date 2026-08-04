@@ -9,6 +9,47 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — The Vision check reports a missing model before a bad origin.
+
+- **Decision / notes:** Both can be true at once — a fresh checkout opened at the laptop's
+  network address has no weights *and* no camera. The model is reported first because it is
+  fatal however the page was opened, and because it is the one thing establishable with no
+  camera at all. Reporting the origin first would send a Teacher to fix their URL and land
+  them back on the same screen with the same problem.
+- **Could have gone differently:** Listing every applicable failure at once. Rejected as a
+  wall of text on a screen whose value is a single word.
+
+## 2026-08-04 — Only one onnxruntime variant is vendored, and which one is not a preference.
+
+- **Decision / notes:** The package ships four WebAssembly builds totalling 77 MB. Which is
+  needed is decided by the package's main entry point, not by the execution providers the
+  board asks for — at 1.27 it is the **jsep** build even though we only ever request
+  `wasm`. Copying the plain build looked reasonable, passed every test, built cleanly, and
+  broke detection in the browser: the file 404s, session creation throws, and the board
+  falls back to the demo detector, which draws confident invented boxes. It looks like it
+  is working. Found by taking a screenshot, which is why that rule exists.
+- **How to check after an upgrade:** build, then
+  `grep -rho "ort-wasm[a-z0-9.-]*" web/out/_next/static/chunks | sort -u`.
+
+## 2026-08-04 — Mission phase gains a twelfth state the customer's diagram does not have.
+
+- **Decision / notes:** Their lifecycle goes straight from Await Takeoff Approval to
+  Takeoff. That is right when a machine launches itself and wrong here, because a Student
+  flies the aircraft — approval and launch are separated by however long a team takes to be
+  ready. Without **Cleared**, a team that has permission and has not moved is
+  indistinguishable from one still waiting on the Teacher, which is the queue the Teacher
+  is working through.
+- **Could have gone differently:** Staying at eleven and letting Awaiting clearance cover
+  both. Rejected because the word would then be false for half the Drones showing it.
+
+## 2026-08-04 — Alerts are ranked by safety priority, not by severity.
+
+- **Decision / notes:** A `critical` low charge and a no-fly breach are not in the order
+  their severities suggest. The customer's five priorities — people, airspace, recovery,
+  mission, logging — order the playbook instead, because one of those two is about where an
+  aircraft is relative to a room full of children. Equal priorities keep arrival order, so
+  the list does not reshuffle under a Teacher mid-glance.
+
 ## 2026-08-03 — Record is inside Camera, not beside it.
 
 - **Decision / notes:** Per-Drone Record is session chrome for the feed, so it only appears

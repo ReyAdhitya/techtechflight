@@ -67,15 +67,21 @@ if (!existsSync(ortDist)) {
 mkdirSync(ortOut, { recursive: true })
 
 /*
- * Only the plain SIMD build, and its loader.
+ * One variant, and its loader.
  *
- * `onnxruntime-web` ships four variants — plain, jsep (WebGPU), asyncify and jspi —
- * totalling 77 MB. The board asks for `executionProviders: ['wasm']` and never for
- * WebGPU, so the other three are 64 MB nobody downloads on purpose. If a future execution
- * provider is added, this list is the thing that has to grow with it, and the symptom of
- * forgetting is a 404 for a file named after the variant.
+ * `onnxruntime-web` ships four — plain, jsep, asyncify and jspi — totalling 77 MB, and
+ * copying all of them is 64 MB nobody downloads on purpose. Which one is needed is **not**
+ * a matter of taste: the package's main entry point decides, and at 1.27 it is the jsep
+ * build even when the board asks only for `executionProviders: ['wasm']`.
+ *
+ * Getting this wrong fails in the worst available way — the missing file 404s, session
+ * creation throws, `boardDetector()` falls back to the demo detector, and the board draws
+ * confident invented boxes. It looks like it is working.
+ *
+ * To check after an upgrade, build the board and read what it asks for:
+ *   grep -rho "ort-wasm[a-z0-9.-]*" web/out/_next/static/chunks | sort -u
  */
-const BASE = 'ort-wasm-simd-threaded'
+const BASE = 'ort-wasm-simd-threaded.jsep'
 const wanted = readdirSync(ortDist).filter(
   (name) => name === `${BASE}.wasm` || name === `${BASE}.mjs`,
 )

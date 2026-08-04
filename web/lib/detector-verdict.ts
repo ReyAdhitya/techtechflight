@@ -115,6 +115,19 @@ export function verdictFor(input: VerdictInput): Verdict {
     }
   }
 
+  /*
+   * Nothing is wrong yet — the Teacher simply has not started. Saying "waiting for the
+   * camera" here would be the screen blaming a delay on itself, when what it needs to do
+   * is say which button to press.
+   */
+  if (cameraState === 'idle') {
+    return {
+      state: 'not-started',
+      headline: 'The model is loaded. Start the camera to check it against real pixels.',
+      fixes: [],
+    }
+  }
+
   if (cameraState !== 'live') {
     return { state: 'checking', headline: 'Waiting for the camera…', fixes: [] }
   }

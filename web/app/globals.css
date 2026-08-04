@@ -982,7 +982,11 @@
  * the page is one that makes a Teacher lose their place at exactly the wrong moment.
  */
 .attention-bar {
-  min-height: 4.5rem;
+  /*
+   * Holds the compact focused line (count + one Alert + Respond) so empty → alert does
+   * not shove Scope. Playbook lives in a dialog — never grow this for response chrome.
+   */
+  min-height: 7.5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

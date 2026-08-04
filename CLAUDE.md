@@ -150,7 +150,7 @@ never integrated.
 
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
-nomination, screen lock, and ceiling-breach counts each live in their own `localStorage`
+nomination, and ceiling-breach counts each live in their own `localStorage`
 key (`techtechflight:…`). Closing a Lesson must call `sealAttendanceFromBook` (and preferably
 `sealPupilFlightHours`) — the marks do not persist into history by themselves. Do not fold
 these into the Logbook shape without an ADR.

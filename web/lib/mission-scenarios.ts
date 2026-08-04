@@ -22,7 +22,7 @@ export interface MissionScenario {
   readonly name: string
   /** One sentence. What the class is trying to achieve. */
   readonly objective: string
-  /** The shape of the run, in order. Shown in the brief and on the Run bar. */
+  /** The shape of the run, in order. Shown in the Mission brief. */
   readonly flow: readonly string[]
   /** In the Teacher's words, not the identifiers. */
   readonly successCriteria: readonly string[]

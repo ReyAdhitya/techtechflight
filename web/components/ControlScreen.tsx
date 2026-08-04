@@ -37,12 +37,6 @@ import {
   writeLessonCeilingBreachCount,
   type CeilingBreachState,
 } from '@/lib/ceiling-breach-count'
-import {
-  commandLockState,
-  lockedCommandLabel,
-  readScreenLocked,
-  writeScreenLocked,
-} from '@/lib/screen-lock'
 import { AttentionBar } from './AttentionBar'
 import { AltitudeFloorNotice } from './AltitudeFloorNotice'
 import { BatteryChargeReading } from './BatteryChargeReading'
@@ -60,10 +54,8 @@ import { NotYetAirborneNotice } from './NotYetAirborneNotice'
 import { AssignNextButton } from './AssignNextButton'
 import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
-import { ScreenLockToggle } from './ScreenLockToggle'
 import { SimLandAllButton } from './SimLandAllButton'
 import { StopAllButton } from './StopAllButton'
-import { QuietModeToggle } from './QuietModeToggle'
 import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { MaintenanceFlag } from './MaintenanceFlag'
@@ -89,8 +81,6 @@ export function ControlScreen() {
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
-  const [quietMode, setQuietMode] = useState(false)
-  const [screenLocked, setScreenLocked] = useState(false)
   const airborneTracker = useRef(new AirborneTracker())
   const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
   const ceilingLessonId = useRef<string | null>(null)
@@ -113,10 +103,6 @@ export function ControlScreen() {
       airborneSince: airborneTracker.current.sinceOf(entry.droneId),
     }))
   }, [vitals, now])
-
-  useEffect(() => {
-    setScreenLocked(readScreenLocked())
-  }, [])
 
   useEffect(() => {
     if (!state) return
@@ -168,7 +154,6 @@ export function ControlScreen() {
       : firstUnassignedDrone(book, boardDroneIds)
 
   const issueCommand = (droneId: string, kind: CommandKind, callsign: string) => {
-    if (screenLocked) return
     command(droneId, kind)
     /*
      * Noted against the Lesson as it is sent (C7), not when it resolves.
@@ -205,14 +190,6 @@ export function ControlScreen() {
         <FleetAllWellLine drones={state.drones} />
         <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
       </div>
-
-      <ScreenLockToggle
-        locked={screenLocked}
-        onChange={(locked) => {
-          setScreenLocked(locked)
-          writeScreenLocked(locked)
-        }}
-      />
 
       <AttentionBar
         queue={queue}
@@ -269,8 +246,6 @@ export function ControlScreen() {
                 tracked={commandFor(selectedVitals.droneId)}
                 onClear={() => setSelected(null)}
                 onOpenCamera={() => setCameraDroneId(selectedVitals.droneId)}
-                hideStop={quietMode}
-                commandsLocked={screenLocked}
               />
             ) : null
           }
@@ -302,18 +277,16 @@ export function ControlScreen() {
               if (entry) issueCommand(droneId, 'hold', entry.callsign)
             }}
           />
-          {!quietMode ? (
-            <StopAllButton
-              fleet={vitals.map((entry) => ({
-                droneId: entry.droneId,
-                airborne: entry.airborne,
-              }))}
-              onStop={(droneId) => {
-                const entry = vitals.find((v) => v.droneId === droneId)
-                if (entry) issueCommand(droneId, 'emergency-stop', entry.callsign)
-              }}
-            />
-          ) : null}
+          <StopAllButton
+            fleet={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              airborne: entry.airborne,
+            }))}
+            onStop={(droneId) => {
+              const entry = vitals.find((v) => v.droneId === droneId)
+              if (entry) issueCommand(droneId, 'emergency-stop', entry.callsign)
+            }}
+          />
         </section>
       )}
 
@@ -357,7 +330,6 @@ export function ControlScreen() {
                 }}
               />
             ) : null}
-            <QuietModeToggle enabled={quietMode} onChange={setQuietMode} />
             {Object.keys(book.students).length > 0 && (
               <button
                 type="button"
@@ -420,9 +392,7 @@ export function ControlScreen() {
               tracked={commandFor(entry.droneId)}
               exercise={lesson ? (currentExercise(lesson, now)?.exercise.name ?? null) : null}
               onOpenCamera={() => setCameraDroneId(entry.droneId)}
-              hideStop={quietMode}
               lesson={lesson}
-              commandsLocked={screenLocked}
             />
           ))}
         </ul>
@@ -475,8 +445,6 @@ function ScopeSelectedDock({
   tracked,
   onClear,
   onOpenCamera,
-  hideStop = false,
-  commandsLocked = false,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -485,9 +453,6 @@ function ScopeSelectedDock({
   tracked: TrackedCommand | null
   onClear: () => void
   onOpenCamera: () => void
-  /** Quiet mode — Stop is hidden on strips (local UI only). */
-  hideStop?: boolean
-  commandsLocked?: boolean
 }) {
   return (
     <div
@@ -524,8 +489,6 @@ function ScopeSelectedDock({
         command={command}
         onReleaseStop={onReleaseStop}
         tracked={tracked}
-        hideStop={hideStop}
-        commandsLocked={commandsLocked}
       />
     </div>
   )
@@ -620,9 +583,7 @@ function FlightStrip({
   tracked,
   exercise,
   onOpenCamera,
-  hideStop = false,
   lesson,
-  commandsLocked = false,
 }: {
   vitals: DroneVitals
   student: string | null
@@ -642,10 +603,7 @@ function FlightStrip({
   exercise: string | null
   /** Opens the camera slide — watch only, not a Command (C9). */
   onOpenCamera: () => void
-  /** Quiet mode — Stop is hidden on strips (local UI only). */
-  hideStop?: boolean
   lesson: ReturnType<typeof runningLesson>
-  commandsLocked?: boolean
 }) {
   const separation = formatSeparation(vitals)
   const coordinates = formatCoordinates(vitals)
@@ -776,8 +734,6 @@ function FlightStrip({
           command={command}
           onReleaseStop={onReleaseStop}
           tracked={tracked}
-          hideStop={hideStop}
-          commandsLocked={commandsLocked}
         />
 
         {vitals.alerts.length > 0 && (
@@ -852,29 +808,23 @@ function CommandRow({
   command,
   onReleaseStop,
   tracked,
-  hideStop = false,
-  commandsLocked = false,
 }: {
   vitals: DroneVitals
   command: (droneId: string, kind: CommandKind) => void
   onReleaseStop: (() => void) | null
   tracked: TrackedCommand | null
-  /** Quiet mode — hide Stop and Release stop (local UI only). */
-  hideStop?: boolean
-  commandsLocked?: boolean
 }) {
   const grounded = !vitals.airborne
   const stopHeld = vitals.phase === 'emergency'
   const showTracked = showCommandReceipt(tracked, stopHeld)
-  const lock = commandLockState(commandsLocked)
-  const commandsDisabled = grounded || lock.disabled
+  const commandsDisabled = grounded
 
   return (
     <div className="flex flex-wrap items-center gap-2 min-[60rem]:flex-nowrap">
       <button
         type="button"
         disabled={commandsDisabled}
-        aria-label={lockedCommandLabel('Land', commandsLocked)}
+        aria-label="Land"
         onClick={() => command(vitals.droneId, 'land')}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
@@ -883,7 +833,7 @@ function CommandRow({
       <button
         type="button"
         disabled={commandsDisabled}
-        aria-label={lockedCommandLabel('Hover', commandsLocked)}
+        aria-label="Hover"
         onClick={() => command(vitals.droneId, 'hold')}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
@@ -892,54 +842,45 @@ function CommandRow({
       <button
         type="button"
         disabled={commandsDisabled}
-        aria-label={lockedCommandLabel('Recall', commandsLocked)}
+        aria-label="Recall"
         onClick={() => command(vitals.droneId, 'return-home')}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
         Recall
       </button>
-      {!hideStop ? (
-        stopHeld ? (
-          onReleaseStop ? (
+      {stopHeld ? (
+        onReleaseStop ? (
+          <button
+            type="button"
+            aria-label="Release stop"
+            onClick={onReleaseStop}
+            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+          >
+            Release stop
+          </button>
+        ) : (
+          <span className="ml-auto flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={lock.disabled}
-              aria-label={lockedCommandLabel('Release stop', commandsLocked)}
-              onClick={onReleaseStop}
-              className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink disabled:cursor-default disabled:text-ink-muted"
+              disabled
+              className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
             >
               Release stop
             </button>
-          ) : (
-            <span className="ml-auto flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                disabled
-                className="min-h-11 cursor-default rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted"
-              >
-                Release stop
-              </button>
-              <span className="text-value text-ink-muted">
-                Stop is held — this Fleet cannot release it from here
-              </span>
+            <span className="text-value text-ink-muted">
+              Stop is held — this Fleet cannot release it from here
             </span>
-          )
-        ) : (
-          <button
-            type="button"
-            disabled={lock.disabled}
-            aria-label={lockedCommandLabel('Stop', commandsLocked)}
-            onClick={() => command(vitals.droneId, 'emergency-stop')}
-            className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink disabled:cursor-default disabled:text-ink-muted"
-          >
-            Stop
-          </button>
+          </span>
         )
       ) : (
-        <span className="ml-auto text-value text-ink-muted">Stop hidden — Quiet mode</span>
-      )}
-      {lock.reason && (
-        <span className="text-value text-ink-muted">{lock.reason}</span>
+        <button
+          type="button"
+          aria-label="Stop"
+          onClick={() => command(vitals.droneId, 'emergency-stop')}
+          className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink"
+        >
+          Stop
+        </button>
       )}
       {showTracked && (
         <span className="text-value text-ink-muted">{describeCommand(tracked)}</span>

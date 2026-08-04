@@ -143,9 +143,10 @@ Hover / Recall / Stop in the flow (DESIGN §4.4) — do not gate those on select
 Land all · Hover all · Stop all may sit under the Scope; Attention is one focused card plus
 a disclosure queue. Compacting grounded strips broke CI and hid Commands from the scan path.
 
-**Mission run rail ≠ SiteNav.** While a Lesson is open, `MissionRunRail` lists the twelve
-ATC steps on the left (derived via `runStep`, same as the old Run bar). Top `SiteNav` still
-switches rooms. Do not fold the twelve steps into SiteNav or delete the room links.
+**Mission run rail ≠ SiteNav.** `MissionRunRail` always lists the twelve ATC steps on the
+left (derived via `runStep` when a Lesson is open; idle → step 1 + Go to Lesson). Top
+`SiteNav` still switches rooms. Do not hide the rail behind `runningLesson` again — that
+made deploys look like a no-op.
 
 **Parallel-wave changelog fragments.** During a multi-agent wave, agents write
 `docs/changelog.d/<issue>.md` instead of editing `CHANGELOG.md` / `DECISIONS.md`. The

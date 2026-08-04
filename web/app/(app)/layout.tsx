@@ -160,12 +160,26 @@ function deriveRunStepInput({
   }
 }
 
+const IDLE_RUN_STEP: RunStepInput = {
+  hasScenario: false,
+  hasZones: false,
+  hasTeams: false,
+  preFlightDone: false,
+  briefingDone: false,
+  hasPendingClearance: false,
+  missionStarted: false,
+  hasAlerts: false,
+  allDown: false,
+  confirmedComplete: false,
+  onReports: false,
+}
+
 /**
- * Mission chrome on the app frame — left step rail while a Lesson runs.
+ * Mission chrome on the app frame — left step rail on every Teacher screen.
  *
- * Replaces the top-only Run bar for the Photo 3 workflow: Teachers walk twelve steps
- * top-to-bottom on the left; SiteNav stays the room switcher. Hidden when no Lesson is
- * open so Fleet setup days stay uncluttered.
+ * Always visible so the board does not look unchanged until someone starts a Lesson.
+ * Without a Lesson the rail sits on step 1 and points at Lesson; with a Lesson the
+ * derived step advances as before. SiteNav stays the room switcher.
  */
 function AppMissionChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname()
@@ -174,7 +188,7 @@ function AppMissionChrome({ children }: { children: ReactNode }) {
   const lesson = runningLesson(book)
 
   const state = useMemo(() => {
-    if (!lesson) return null
+    if (!lesson) return IDLE_RUN_STEP
     const mission = focusMission(lesson)
     const telemetryFor = (droneId: DroneId) =>
       snapshot.state?.drones.find((drone) => drone.id === droneId)?.telemetry ?? null
@@ -189,11 +203,9 @@ function AppMissionChrome({ children }: { children: ReactNode }) {
     })
   }, [book, isAcknowledged, lesson, pathname, snapshot.state, vitals])
 
-  if (!lesson || state === null) return <>{children}</>
-
   return (
     <div className="flex min-h-0 flex-col min-[60rem]:flex-row">
-      <MissionRunRail state={state} />
+      <MissionRunRail state={state} lessonOpen={lesson !== null} />
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   )

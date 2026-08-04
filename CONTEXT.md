@@ -102,6 +102,12 @@ _Avoid_: feed, provider, backend, connection
 The **nouns** here are education-first, and stay that way: Lesson, Exercise, Teacher, Student
 are what a classroom actually contains, and they are not aviation's to rename.
 
+One word was admitted from the other side on 2026-08-04 —
+[ADR-0018](./docs/adr/0018-a-mission-is-a-first-class-record.md) adds **Mission**. The test it
+passed is narrow and stays narrow: aviation's vocabulary is admitted only where it names
+something education has no word for, never where it renames something education already owns.
+A Lesson is still a Lesson.
+
 **The register is not.** Superseded on 2026-07-28 by
 [ADR-0015](./docs/adr/0015-a-professional-register.md): the board speaks in the register of
 aviation and risk management. It reads *"5 of 6 serviceable"* rather than *"5 of 6 ready to
@@ -116,19 +122,61 @@ was; the register moved, not the language.
 
 **Lesson**:
 One period of teaching, from the check before it to the summary after it. The unit
-everything else in this section belongs to. A Lesson contains one or more Exercises.
-_Avoid_: session, class, flight, sortie, mission
+everything else in this section belongs to. A Lesson contains one or more Missions.
+_Avoid_: session, class, flight, sortie
+
+**Mission**:
+One run of a Mission Scenario inside a Lesson. Carries an objective, an airspace, ordered
+Checkpoints, a time limit, and a score against stated success criteria. The thing a Teacher
+sets up and a team flies.
+_Avoid_: sortie, op, run, task
+
+**Mission Scenario**:
+The template a Mission is made from — Search and Rescue, Delivery, Building Inspection, or
+one a Teacher writes. Holds the objective, the flow, the success criteria, the common risks,
+and what each side watches. **A Lesson runs one Scenario at a time.** This is what a Teacher
+picks, and it is what an Exercise used to be.
+_Avoid_: mode, mission type, template, preset
 
 **Exercise**:
-One task within a Lesson — hovering, flying a square, landing on a mark. What a Student is
-meant to be doing right now, which is the thing no Telemetry can report and the thing a
-teacher compares behaviour against.
+One step within a Mission's flow — hovering, flying a square, landing on a mark. What a
+Student is meant to be doing right now, which is the thing no Telemetry can report and the
+thing a teacher compares behaviour against. A Teacher no longer picks these directly; the
+Scenario supplies them.
 _Avoid_: task, activity, manoeuvre, waypoint, objective
 
+**Checkpoint**:
+A place a Mission requires a Drone to reach, in order. Reaching one is progress; missing one
+is a failure condition the Mission is scored on.
+_Avoid_: waypoint, node, gate, marker
+
+**Mission Zone**:
+The area a Mission is meant to happen inside, drawn by the Teacher in metres from where the
+Fleet was set up. A boundary in the Fleet's own frame and never a survey of the room
+([ADR-0019](./docs/adr/0019-the-flight-area-is-drawn-in-the-local-frame.md)).
+_Avoid_: geofence, boundary, perimeter, operating area
+
+**No-fly Zone**:
+An area inside or beside the Mission Zone that a Drone must stay out of. Entering one raises
+an Alert and costs the Mission its score.
+_Avoid_: exclusion zone, restricted airspace, keep-out, hazard area
+
+**Clearance**:
+The Teacher's permission for a team to take off. Granted per team per Mission and recorded
+with who granted it and when. A Clearance is addressed to a Student, never to an aircraft,
+which is why it is not a Command
+([ADR-0021](./docs/adr/0021-clearances-and-instructions-are-records-not-commands.md)).
+_Avoid_: approval, permission, authorisation, go-ahead
+
+**Instruction**:
+Something the Teacher tells a team to do mid-Mission — a new target, a new route, a changed
+order of work. Recorded so a debrief can say when it was given. Also addressed to a Student
+and also not a Command.
+_Avoid_: order, directive, tasking, message
+
 **Mission Planner**:
-Where a teacher prepares a Lesson before it runs: which Students are flying, which Drone
-each one takes, and the sequence of Exercises. Lesson preparation — nothing about the word
-is military, and nothing in it plans a flight path.
+Where a teacher prepares a Lesson before it runs: which Scenario it runs, where the Mission
+Zone and No-fly Zones are, which Students are flying, and which Drone each one takes.
 _Avoid_: mission control, flight plan, ops plan, itinerary
 
 **Assignment**:

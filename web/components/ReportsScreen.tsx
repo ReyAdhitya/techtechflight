@@ -140,25 +140,23 @@ export function ReportsScreen() {
         </p>
       </header>
 
-      <div id="mission-review" className="scroll-mt-24 flex flex-col gap-8">
-        <LessonReports />
+      <LessonReports />
 
-        {closed.some((lesson) => missionsFrom(lesson).length > 0) && (
-          <section className="flex flex-col gap-3 border-t border-hairline pt-8">
-            <h2 className="label m-0">Missions</h2>
-            <ul className="m-0 flex list-none flex-col gap-3 p-0">
-              {closed
-                .filter((lesson) => missionsFrom(lesson).length > 0)
-                .slice(0, 20)
-                .map((lesson) => (
-                  <li key={lesson.id}>
-                    <MissionReport lesson={lesson} />
-                  </li>
-                ))}
-            </ul>
-          </section>
-        )}
-      </div>
+      {closed.some((lesson) => missionsFrom(lesson).length > 0) && (
+        <section className="flex flex-col gap-3 border-t border-hairline pt-8">
+          <h2 className="label m-0">Missions</h2>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {closed
+              .filter((lesson) => missionsFrom(lesson).length > 0)
+              .slice(0, 20)
+              .map((lesson) => (
+                <li key={lesson.id}>
+                  <MissionReport lesson={lesson} />
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
 
       {closed.length > 0 && (
         <section className="print-hide flex flex-col gap-2 border-t border-hairline pt-8">

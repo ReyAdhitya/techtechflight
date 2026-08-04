@@ -138,6 +138,11 @@ pad (demo)**. Do not write QR into Telemetry. On the sim feed the scanner reads
 fresh array each render; an effect that observes then bumps a tick state will hang Control
 under jsdom. Observe inside `useMemo` (or only setState when the since-map actually changes).
 
+**Control strip anatomy stays open.** Every strip keeps its coordinate line and Land /
+Hover / Recall / Stop in the flow (DESIGN §4.4) — do not gate those on selection. Fleet-wide
+Land all · Hover all · Stop all may sit under the Scope; Attention is one focused card plus
+a disclosure queue. Compacting grounded strips broke CI and hid Commands from the scan path.
+
 **Parallel-wave changelog fragments.** During a multi-agent wave, agents write
 `docs/changelog.d/<issue>.md` instead of editing `CHANGELOG.md` / `DECISIONS.md`. The
 Integrator merges those fragments in issue order and deletes them — leftovers mean the wave

@@ -10,6 +10,10 @@ would notice.
 - **Vision boxes work again.** In-browser YOLO letterboxes at 640 to match the fixed ONNX
   graph (416 made every frame fail silently). Concurrent surfaces no longer share one
   scratch canvas. Vision names the last detector error when frames fail.
+- **Control strips keep coordinates and Commands on every row.** An accidental compact-
+  strip change shipped with the YOLO11x PR and hid Land / Hover / Recall / Stop (and the
+  coordinate line) on grounded unselected craft — CI failed. Anatomy restored; fleet-wide
+  Hover all / Stop all and the Attention focused card remain.
 
 ### Added
 
@@ -20,10 +24,10 @@ would notice.
 
 ### Changed
 
-- **Control is calm Mission Running.** Attention shows one focused Alert card with
+- **Control Attention is one focused Alert.** Attention shows the worst Alert card with
   recommended responses and Acknowledge; the rest of the queue stays in a disclosure.
-  Land all · Hover all · Stop all sit under the Scope. Per-Drone Commands and dense
-  Telemetry open only on the selected strip.
+  Land all · Hover all · Stop all sit under the Scope. Per-strip Commands stay on every
+  strip (not selection-gated).
 - **Detection boxes are readable and class-coloured.** Each recognised class gets its own
   border and chip colour (`person` is purple); the label sits on a solid chip with large
   type so it stays legible on a dark hoodie. The camera loop waits for each inference to

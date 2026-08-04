@@ -105,6 +105,12 @@ sim ignores the map. Sanitize to absolute http(s) only — no `javascript:` / cr
 Teaching entry is the Control/Fleet **Camera** dialog (`CameraSlide`). Camera on a strip is
 not a Command (C9).
 
+**Optional YOLO11x AI service** lives in `ai-service/` (FastAPI, default
+`http://127.0.0.1:8090`). CUDA when an NVIDIA GPU is present, CPU otherwise. The board
+probes it from `boardDetector()` and falls back to in-browser YOLOv8n wasm, then the demo
+detector. See `ai-service/README.md` and ADR-0023. Do not put detection boxes on Telemetry.
+`Start TechTech Flight.bat` starts the service when `ai-service/.venv` exists.
+
 **YOLOv8n weights and the wasm runtime are not in git.** Run `node scripts/fetch-yolo-model.mjs`
 (or `npm run fetch:yolo`) so `web/public/models/yolov8n.onnx` (~12 MB) **and**
 `web/public/ort/` (~26 MB) exist. Without either, the board falls back to the demo detector

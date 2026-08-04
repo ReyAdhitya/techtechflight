@@ -51,6 +51,7 @@ import { CameraSlide } from './CameraSlide'
 import { ExerciseRemaining } from './ExerciseRemaining'
 import { FleetAllWellLine } from './FleetAllWellLine'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
+import { HoverAllButton } from './HoverAllButton'
 import { LandAllButton } from './LandAllButton'
 import { LandTableButton } from './LandTableButton'
 import { LessonStrip } from './LessonStrip'
@@ -61,6 +62,7 @@ import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
 import { ScreenLockToggle } from './ScreenLockToggle'
 import { SimLandAllButton } from './SimLandAllButton'
+import { StopAllButton } from './StopAllButton'
 import { QuietModeToggle } from './QuietModeToggle'
 import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
@@ -72,12 +74,11 @@ import { useTrainingWheelsOptional } from '@/lib/training-wheels'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 
 /**
- * The Flight Control Center: the whole lesson at once, the way a controller reads a
- * sector.
+ * The Flight Control Center: calm while the Mission runs.
  *
- * Order is fixed and short: what needs you, where everything is, then every strip.
- * Lesson extras live on Lesson / Walls — not stacked here — so a Teacher glancing up
- * for two seconds is not hunting past chrome.
+ * Order is fixed and short: what needs you (one Alert), where everything is (Scope),
+ * three fleet actions, then compact strips. Per-Drone Commands and dense Telemetry stay
+ * behind selection so a Teacher glancing up for two seconds is not hunting past chrome.
  */
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
@@ -203,7 +204,10 @@ export function ControlScreen() {
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
 
-      <FleetAllWellLine drones={state.drones} />
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <FleetAllWellLine drones={state.drones} />
+        <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <TrainingWheelsBanner />
@@ -220,19 +224,29 @@ export function ControlScreen() {
         queue={queue}
         studentFor={(droneId) => studentOf(book, droneId)}
         onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+        onResponse={(entry, response) => {
+          if (response.command !== null) {
+            issueCommand(entry.droneId, response.command, entry.callsign)
+          }
+          acknowledge(entry.droneId, entry)
+        }}
       />
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
-      <NotYetAirborneNotice
-        lessonStarted={lesson !== null}
-        craft={vitals.map((entry) => ({
-          droneId: entry.droneId,
-          callsign: entry.callsign,
-          airborne: entry.airborne,
-          studentName: studentOf(book, entry.droneId),
-        }))}
-      />
-      <LongestAirborne now={now} craft={longestAirborneCraft} />
+      <ControlDisclosure summary="Also noting">
+        <div className="flex flex-col gap-3">
+          <NotYetAirborneNotice
+            lessonStarted={lesson !== null}
+            craft={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              callsign: entry.callsign,
+              airborne: entry.airborne,
+              studentName: studentOf(book, entry.droneId),
+            }))}
+          />
+          <LongestAirborne now={now} craft={longestAirborneCraft} />
+        </div>
+      </ControlDisclosure>
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
@@ -269,13 +283,50 @@ export function ControlScreen() {
         />
       </section>
 
+      {airborneCount > 0 && (
+        <section
+          className="flex flex-wrap items-center gap-3"
+          aria-label="Fleet actions"
+        >
+          <LandAllButton
+            fleet={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              airborne: entry.airborne,
+            }))}
+            onLand={(droneId) => {
+              const entry = vitals.find((v) => v.droneId === droneId)
+              if (entry) issueCommand(droneId, 'land', entry.callsign)
+            }}
+          />
+          <HoverAllButton
+            fleet={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              airborne: entry.airborne,
+            }))}
+            onHover={(droneId) => {
+              const entry = vitals.find((v) => v.droneId === droneId)
+              if (entry) issueCommand(droneId, 'hold', entry.callsign)
+            }}
+          />
+          {!(quietMode || trainingWheels) ? (
+            <StopAllButton
+              fleet={vitals.map((entry) => ({
+                droneId: entry.droneId,
+                airborne: entry.airborne,
+              }))}
+              onStop={(droneId) => {
+                const entry = vitals.find((v) => v.droneId === droneId)
+                if (entry) issueCommand(droneId, 'emergency-stop', entry.callsign)
+              }}
+            />
+          ) : null}
+        </section>
+      )}
+
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <CameraRecordAllButton droneIds={vitals.map((entry) => entry.droneId)} />
-            <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
-            <SpareInventory grounded={groundedCount} total={vitals.length} />
             <AssignNextButton
               nextName={nextRosterName}
               targetDroneId={assignTargetDroneId}
@@ -287,16 +338,8 @@ export function ControlScreen() {
         </div>
         <ControlDisclosure summary="More actions">
           <div className="flex flex-wrap items-center gap-3">
-            <LandAllButton
-              fleet={vitals.map((entry) => ({
-                droneId: entry.droneId,
-                airborne: entry.airborne,
-              }))}
-              onLand={(droneId) => {
-                const entry = vitals.find((v) => v.droneId === droneId)
-                if (entry) issueCommand(droneId, 'land', entry.callsign)
-              }}
-            />
+            <CameraRecordAllButton droneIds={vitals.map((entry) => entry.droneId)} />
+            <SpareInventory grounded={groundedCount} total={vitals.length} />
             {tableGroups(state.drones, vitals).map((group) => (
               <LandTableButton
                 key={group.label}
@@ -683,128 +726,130 @@ function FlightStrip({
             ? 'No response yet'
             : `Response ${formatAge(vitals.responseAgeMs)}`}
         </span>
+        {!selected && vitals.alerts.length > 0 && (
+          <span
+            className={cn(
+              'label rounded-pill border px-2 py-0.5',
+              softenAlerts
+                ? 'border-hairline text-ink-muted'
+                : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].className,
+            )}
+          >
+            {softenAlerts
+              ? 'Note'
+              : vitals.alerts.length === 1
+                ? '1 alert'
+                : `${vitals.alerts.length} alerts`}
+          </span>
+        )}
       </div>
 
       {/*
-       * Everything below the fixed top row spans the whole strip rather than a column.
-       * The row above lays its five cells into the shared columns by subgrid; these lines —
-       * Exercise, separation, Commands, Alerts — are full-width prose and controls, so
-       * they take the whole width beneath it and keep their own vertical rhythm.
+       * Calm on the ground: head row only. Airborne, selected, mid-Command, or a latched
+       * Stop: open the detail. Flying craft keep Land / Hover / Recall / Stop in reach;
+       * emergency keeps Release stop reachable after the tracker drops the receipt.
        */}
-      <div className="flex flex-col gap-1.5 min-[60rem]:col-span-full">
-        {/*
-         * On its own line, never in the head row above.
-         *
-         * §4.4's whole argument is that the eye learns fixed positions. Threading three
-         * numbers into the head row would push charge and response age sideways and break
-         * the scan path every Teacher has already learned, for a value they read far less
-         * often than either.
-         */}
-        {coordinates && <p className="m-0 tnum text-value text-ink-subtle">{coordinates}</p>}
+      {(selected ||
+        vitals.airborne ||
+        tracked !== null ||
+        vitals.phase === 'emergency') && (
+        <div className="flex flex-col gap-1.5 min-[60rem]:col-span-full">
+          {selected && coordinates && (
+            <p className="m-0 tnum text-value text-ink-subtle">{coordinates}</p>
+          )}
 
-        {exercise && (
-          // Intent beside behaviour. B7 was dropped, so the Teacher makes the comparison —
-          // an Exercise does not declare which flight phase it expects, and inventing one
-          // would raise alerts on a guess.
-          <p className="m-0 text-value text-ink-subtle">Meant to be: {exercise}</p>
-        )}
-        <ExerciseRemaining lesson={lesson} now={now} />
+          {selected && exercise && (
+            <p className="m-0 text-value text-ink-subtle">Meant to be: {exercise}</p>
+          )}
+          {selected && <ExerciseRemaining lesson={lesson} now={now} />}
 
-        {separation && (
-          <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
-        )}
+          {selected && separation && (
+            <p className="m-0 tnum text-value text-ink-subtle">Nearest aircraft: {separation}</p>
+          )}
 
-        {vitals.alerts.length > 0 && student && (
-          // Repeated under the alerts on purpose. The alert is the thing being read, and
-          // "go and speak to Priya" is more use than "go and look at Drone 3".
-          <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
-        )}
+          {selected && vitals.alerts.length > 0 && student && (
+            <p className="m-0 text-value text-ink-subtle">Flown by {student}.</p>
+          )}
 
-        {/*
-         * Camera is watch chrome beside the strip, not a Command. Kept out of CommandRow
-         * so Land / Hover / Recall / Stop stay the only things that ask an aircraft to act (C9).
-         * Record lives inside the Camera dialog (CameraPane) — not a sibling of Camera here.
-         */}
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              onOpenCamera()
-            }}
-            className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
-          >
-            Camera
-          </button>
-        </div>
-
-        <CommandRow
-          vitals={vitals}
-          command={command}
-          onReleaseStop={onReleaseStop}
-          tracked={tracked}
-          hideStop={hideStop}
-          commandsLocked={commandsLocked}
-        />
-
-        {vitals.alerts.length > 0 && (
-          <details
-            className="rounded-surface border border-hairline bg-canvas open:pb-2 [&[open]>summary>span:first-child]:rotate-90"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-1.5 text-value text-ink marker:content-none [&::-webkit-details-marker]:hidden">
-              <span className="text-ink-muted" aria-hidden="true">
-                ▸
-              </span>
-              <span
-                className={cn(
-                  'label rounded-pill border px-2 py-0.5',
-                  softenAlerts
-                    ? 'border-hairline text-ink-muted'
-                    : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].className,
-                )}
+          {selected && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onOpenCamera()
+                }}
+                className="min-h-11 cursor-pointer rounded-pill border border-dashed border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
               >
-                {softenAlerts
-                  ? 'Note'
-                  : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].label}
-              </span>
-              <span className="font-medium">
-                {vitals.alerts.length === 1 ? '1 alert' : `${vitals.alerts.length} alerts`}
-              </span>
-              <span className="min-w-0 truncate text-ink-subtle">{vitals.alerts[0]!.text}</span>
-            </summary>
-            <ul className="m-0 flex list-none flex-col gap-1 border-t border-hairline px-3 pt-2">
-              {vitals.alerts.map((alert) => (
-                <li key={alert.kind} className="flex flex-wrap items-baseline gap-2">
-                  <span
-                    className={cn(
-                      'label rounded-pill border px-2 py-0.5',
-                      softenAlerts
-                        ? 'border-hairline text-ink-muted'
-                        : SEVERITY_PRESENTATION[alert.severity].className,
-                    )}
-                  >
-                    {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
-                  </span>
-                  <span className="text-value text-ink">{alert.text}</span>
-                  {/*
-                    * Still here after it has been taken off the queue, and quieter. A Teacher
-                    * having seen a problem is not the same as the problem having stopped.
-                    */}
-                  {isAcknowledged(vitals.droneId, alert) && (
-                    <span className="tnum text-value text-ink-muted">
-                      Acknowledged —{' '}
-                      {formatAge(
-                        Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)),
-                      )}
-                    </span>
+                Camera
+              </button>
+            </div>
+          )}
+
+          <CommandRow
+            vitals={vitals}
+            command={command}
+            onReleaseStop={onReleaseStop}
+            tracked={tracked}
+            hideStop={hideStop}
+            commandsLocked={commandsLocked}
+          />
+
+          {selected && vitals.alerts.length > 0 && (
+            <details
+              className="rounded-surface border border-hairline bg-canvas open:pb-2 [&[open]>summary>span:first-child]:rotate-90"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 py-1.5 text-value text-ink marker:content-none [&::-webkit-details-marker]:hidden">
+                <span className="text-ink-muted" aria-hidden="true">
+                  ▸
+                </span>
+                <span
+                  className={cn(
+                    'label rounded-pill border px-2 py-0.5',
+                    softenAlerts
+                      ? 'border-hairline text-ink-muted'
+                      : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].className,
                   )}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </div>
+                >
+                  {softenAlerts
+                    ? 'Note'
+                    : SEVERITY_PRESENTATION[vitals.alerts[0]!.severity].label}
+                </span>
+                <span className="font-medium">
+                  {vitals.alerts.length === 1 ? '1 alert' : `${vitals.alerts.length} alerts`}
+                </span>
+                <span className="min-w-0 truncate text-ink-subtle">{vitals.alerts[0]!.text}</span>
+              </summary>
+              <ul className="m-0 flex list-none flex-col gap-1 border-t border-hairline px-3 pt-2">
+                {vitals.alerts.map((alert) => (
+                  <li key={alert.kind} className="flex flex-wrap items-baseline gap-2">
+                    <span
+                      className={cn(
+                        'label rounded-pill border px-2 py-0.5',
+                        softenAlerts
+                          ? 'border-hairline text-ink-muted'
+                          : SEVERITY_PRESENTATION[alert.severity].className,
+                      )}
+                    >
+                      {softenAlerts ? 'Note' : SEVERITY_PRESENTATION[alert.severity].label}
+                    </span>
+                    <span className="text-value text-ink">{alert.text}</span>
+                    {isAcknowledged(vitals.droneId, alert) && (
+                      <span className="tnum text-value text-ink-muted">
+                        Acknowledged —{' '}
+                        {formatAge(
+                          Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)),
+                        )}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      )}
     </li>
   )
 }
@@ -842,13 +887,18 @@ function CommandRow({
   const lock = commandLockState(commandsLocked)
   const commandsDisabled = grounded || lock.disabled
 
+  const keepSelected = (event: { stopPropagation(): void }, run: () => void) => {
+    event.stopPropagation()
+    run()
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-2 min-[60rem]:flex-nowrap">
       <button
         type="button"
         disabled={commandsDisabled}
         aria-label={lockedCommandLabel('Land', commandsLocked)}
-        onClick={() => command(vitals.droneId, 'land')}
+        onClick={(event) => keepSelected(event, () => command(vitals.droneId, 'land'))}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
         Land
@@ -857,7 +907,7 @@ function CommandRow({
         type="button"
         disabled={commandsDisabled}
         aria-label={lockedCommandLabel('Hover', commandsLocked)}
-        onClick={() => command(vitals.droneId, 'hold')}
+        onClick={(event) => keepSelected(event, () => command(vitals.droneId, 'hold'))}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
         Hover
@@ -866,7 +916,7 @@ function CommandRow({
         type="button"
         disabled={commandsDisabled}
         aria-label={lockedCommandLabel('Recall', commandsLocked)}
-        onClick={() => command(vitals.droneId, 'return-home')}
+        onClick={(event) => keepSelected(event, () => command(vitals.droneId, 'return-home'))}
         className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-default disabled:text-ink-muted"
       >
         Recall
@@ -878,7 +928,7 @@ function CommandRow({
               type="button"
               disabled={lock.disabled}
               aria-label={lockedCommandLabel('Release stop', commandsLocked)}
-              onClick={onReleaseStop}
+              onClick={(event) => keepSelected(event, onReleaseStop)}
               className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink disabled:cursor-default disabled:text-ink-muted"
             >
               Release stop
@@ -902,7 +952,9 @@ function CommandRow({
             type="button"
             disabled={lock.disabled}
             aria-label={lockedCommandLabel('Stop', commandsLocked)}
-            onClick={() => command(vitals.droneId, 'emergency-stop')}
+            onClick={(event) =>
+              keepSelected(event, () => command(vitals.droneId, 'emergency-stop'))
+            }
             className="ml-auto min-h-11 cursor-pointer rounded-pill border border-status-fault bg-transparent px-4 py-1.5 text-value text-status-fault hover:border-ink hover:text-ink disabled:cursor-default disabled:text-ink-muted"
           >
             Stop

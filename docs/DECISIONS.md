@@ -9,6 +9,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — The Mission area grid is always on screen, and the guidance sits under it.
+
+- **Decision / notes:** The editor swapped its drawing surface for a "here is what to do"
+  box while nothing was drawn — deliberately, so an empty editor was not a blank square.
+  But the sentence in that box said *Tap the grid*, and there was no grid to tap: the only
+  way out of the state every Teacher starts in was to type two numbers into Add point.
+  Show the grid always and keep the sentence, as a caption underneath. Underneath matters:
+  above the grid, the sentence vanishing on the first point drags the grid up by its own
+  height, and tap two lands somewhere the Teacher did not aim. Capped at `26rem` because a
+  square that tracks the Lesson column is 900px tall and buries Add point below the fold.
+- **Could have gone differently:** Keep the swap and reword the copy to "Add a point to
+  start". Rejected — tapping is the natural way to draw a shape, and the editor already
+  supported it; the copy was right and the surface was missing.
+
 ## 2026-08-04 — Run bar, Quiet mode and Screen lock leave the board.
 
 - **Decision / notes:** Teachers asked the Step banner, Lock screen, and practice

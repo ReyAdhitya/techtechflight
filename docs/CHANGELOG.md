@@ -27,6 +27,13 @@ would notice.
 
 ### Fixed
 
+- **You can now draw the Mission area by drawing.** The Mission area editor showed its
+  grid only once a zone already had a point, so "Tap the grid" pointed at nothing and the
+  only way in was to type two numbers into Add point. The grid is always there now, capped
+  at 26rem so it does not push Add point off the screen, and the guidance sits under it so
+  the surface cannot move between the first tap and the second. Add point also stays live
+  while the Mission Zone is still being drawn — a fourth corner was reachable by tapping
+  and impossible by typing.
 - **Vision boxes work again.** In-browser YOLO letterboxes at 640 to match the fixed ONNX
   graph (416 made every frame fail silently). Concurrent surfaces no longer share one
   scratch canvas. Vision names the last detector error when frames fail.

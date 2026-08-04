@@ -19,13 +19,42 @@ async function addPoint(user: ReturnType<typeof userEvent.setup>, east: string, 
 }
 
 describe('Mission area editor', () => {
-  it('tells a Teacher what to do when nothing is drawn yet', () => {
+  it('tells a Teacher what to do when nothing is drawn yet, and shows the grid to do it on', () => {
     render(<Harness />)
 
     expect(screen.getByTestId('mission-area-empty')).toBeInTheDocument()
     expect(screen.getByText(/outline where this Mission happens/i)).toBeInTheDocument()
     expect(screen.getByText(/at least three points/i)).toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: /drawing surface/i })).not.toBeInTheDocument()
+    // "Tap the grid" needs a grid. It used to be swapped out for the sentence, so the only
+    // way into an empty editor was to type two numbers.
+    expect(screen.getByRole('img', { name: /drawing surface/i })).toBeInTheDocument()
+  })
+
+  it('keeps typing points open while the Mission Zone is still being drawn', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+
+    await addPoint(user, '0', '0')
+    await addPoint(user, '8', '0')
+    await addPoint(user, '8', '6')
+
+    // Three points enclose an area, but they are not the most a classroom needs — and
+    // tapping the grid would still add a fourth, so typing one must work too.
+    expect(screen.getByRole('button', { name: 'Add point' })).toBeEnabled()
+    await addPoint(user, '0', '6')
+    expect(screen.getByRole('listitem')).toHaveTextContent('4 points')
+  })
+
+  it('closes the Mission Zone to further points once it is finished', async () => {
+    const user = userEvent.setup()
+    render(<Harness />)
+
+    await addPoint(user, '0', '0')
+    await addPoint(user, '8', '0')
+    await addPoint(user, '8', '6')
+    await user.click(screen.getByRole('button', { name: 'Finish zone' }))
+
+    expect(screen.getByRole('button', { name: 'Add point' })).toBeDisabled()
   })
 
   it('draws one Mission Zone through onChange', async () => {

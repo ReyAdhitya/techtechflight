@@ -7,6 +7,7 @@ import { detectorLabel, verdictFor, type Verdict } from '@/lib/detector-verdict'
 import { runSelfTest, selfTestWords, type SelfTestResult } from '@/lib/detector-selftest'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
+import { DetectionBoxes } from './DetectionBoxes'
 
 /**
  * Does the camera and the detection model actually work on this machine?
@@ -356,34 +357,15 @@ function DetectionOverlay({
   detections: readonly Detection[]
   demo: boolean
 }) {
-  if (detections.length === 0) return null
-
   return (
-    <div
-      className="pointer-events-none absolute inset-0"
-      aria-label={
+    <DetectionBoxes
+      detections={detections}
+      ariaLabel={
         demo
           ? `${detections.length} invented boxes from the demo detector, not a loaded model`
           : `${detections.length} recognised`
       }
-    >
-      {detections.map((detection) => (
-        <div
-          key={detection.id}
-          className="absolute border-2 border-[color:var(--color-marigold)]"
-          style={{
-            left: `${detection.box.x * 100}%`,
-            top: `${detection.box.y * 100}%`,
-            width: `${detection.box.width * 100}%`,
-            height: `${detection.box.height * 100}%`,
-          }}
-        >
-          <span className="absolute left-0 top-0 -translate-y-full bg-[color:var(--color-marigold)] px-1 text-caption text-[color:var(--color-canvas)]">
-            {detection.label} {Math.round(detection.confidence * 100)}%
-          </span>
-        </div>
-      ))}
-    </div>
+    />
   )
 }
 

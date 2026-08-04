@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils'
 import { FrozenFeedNotice } from './FrozenFeedNotice'
 import { InstrumentPanel } from './FlightInstruments'
 import { PhotoEvidenceButton } from './PhotoEvidenceButton'
+import { DetectionBoxes } from './DetectionBoxes'
 
 /** One decoder for the board — avoid allocating jsQR options every render. */
 const defaultQrDecoder = createJsQrDecoder()
@@ -496,6 +497,16 @@ function SimulatedFeed({
   )
 }
 
+/**
+ * Gap after a finished frame before starting the next one.
+ *
+ * Real YOLO is scheduled after the previous inference completes — never on a fixed
+ * interval. A 250 ms timer used to queue three frames for every one that finished, which
+ * made the boxes lag further behind every second and read as a model that could not see.
+ */
+const DETECTION_GAP_MS = 40
+const DEMO_GAP_MS = 1000
+
 function useDetectionLoop(
   surfaceId: string,
   detector: ObjectDetector,
@@ -505,8 +516,11 @@ function useDetectionLoop(
 
   useEffect(() => {
     let cancelled = false
+    let timer = 0
+    const gap = detector.demo ? DEMO_GAP_MS : DETECTION_GAP_MS
 
     const run = async () => {
+      if (cancelled) return
       try {
         const video = videoRef.current
         const source =
@@ -517,17 +531,16 @@ function useDetectionLoop(
         if (!cancelled) setDetections(next)
       } catch {
         if (!cancelled) setDetections([])
+      } finally {
+        if (!cancelled) timer = window.setTimeout(() => void run(), gap)
       }
     }
 
     void run()
-    const timer = window.setInterval(() => {
-      void run()
-    }, detector.demo ? 1000 : 250)
 
     return () => {
       cancelled = true
-      window.clearInterval(timer)
+      window.clearTimeout(timer)
     }
   }, [surfaceId, detector, videoRef])
 
@@ -541,37 +554,14 @@ function DetectionOverlay({
   detections: readonly Detection[]
   detector: ObjectDetector
 }) {
-  if (detections.length === 0) return null
-
   return (
-    <ul
-      className="pointer-events-none absolute inset-0 m-0 list-none p-0"
-      aria-label={
+    <DetectionBoxes
+      detections={detections}
+      ariaLabel={
         detector.demo
           ? `Demo detections from ${detector.displayName}`
           : `Detections from ${detector.displayName}`
       }
-    >
-      {detections.map((detection) => (
-        <li
-          key={detection.id}
-          className="absolute border-2 border-canvas"
-          style={{
-            left: `${detection.box.x * 100}%`,
-            top: `${detection.box.y * 100}%`,
-            width: `${detection.box.width * 100}%`,
-            height: `${detection.box.height * 100}%`,
-          }}
-          data-detection-label={detection.label}
-        >
-          <span className="absolute bottom-full left-0 mb-0.5 bg-ink/80 px-1 text-value text-canvas">
-            {detection.label}{' '}
-            <span className="tnum text-canvas/80">
-              {Math.round(detection.confidence * 100)}%
-            </span>
-          </span>
-        </li>
-      ))}
-    </ul>
+    />
   )
 }

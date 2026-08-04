@@ -5,6 +5,13 @@ would notice.
 
 ## Unreleased
 
+### Changed
+
+- **Detection boxes are readable and class-coloured.** Each recognised class gets its own
+  border and chip colour (`person` is purple); the label sits on a solid chip with large
+  type so it stays legible on a dark hoodie. Inference runs one frame at a time at 416 px
+  instead of queuing overlapping 640 px frames, so the boxes keep up with the picture.
+
 ### Added (Wave M2 — Search and Rescue end-to-end)
 
 - **The Run bar.** While a Mission runs, the board names which of twelve steps you are on

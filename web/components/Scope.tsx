@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Pause, Play } from 'lucide-react'
 import type { DroneState } from '@techtechflight/contract'
 import {
@@ -9,6 +9,7 @@ import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
 import type { GhostPathStore } from '@/lib/scope-ghost-paths'
 import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
+import { enclosesAnything, type Zone } from '@/lib/airspace'
 import { cn } from '@/lib/utils'
 
 /**
@@ -54,6 +55,8 @@ export function Scope({
   onSelect,
   selectedPanel,
   ghostPaths,
+  zones,
+  zonesUnsurveyed = false,
 }: {
   drones: readonly DroneState[]
   /**
@@ -80,6 +83,13 @@ export function Scope({
    * draws nothing.
    */
   ghostPaths?: GhostPathStore
+  /** Mission and No-fly Zones in the Fleet frame — plan view only (ADR-0019). */
+  zones?: readonly Zone[]
+  /**
+   * On a hardware Fleet the geometry is honest but not surveyed against the room; say so
+   * beside the zone keys rather than letting a line read as measured (ADR-0019).
+   */
+  zonesUnsurveyed?: boolean
 }) {
   /*
    * The window already on screen — its size and where its middle sits. Held across renders
@@ -107,6 +117,7 @@ export function Scope({
   const frozen = frozenFrame !== null
   const [showGhostPaths, setShowGhostPaths] = useState(false)
   const exitFullScreenRef = useRef<HTMLButtonElement>(null)
+  const noFlyHatchId = `scope-no-fly-hatch-${useId().replace(/:/g, '')}`
 
   useEffect(() => {
     if (!expanded) return
@@ -198,6 +209,9 @@ export function Scope({
   const elevation = isElevation(view)
   const showSelectedPanel = expanded && selected != null && selectedPanel != null
   const pathsReady = ghostPaths !== undefined && ghostPathsAvailable(ghostPaths)
+  const drawableZones = zones?.filter(enclosesAnything) ?? []
+  const hasMissionZone = drawableZones.some((zone) => zone.kind === 'mission')
+  const hasNoFlyZone = drawableZones.some((zone) => zone.kind === 'no-fly')
   const labelById = scopeLabelPlacements(
     drawn.map((drone) => {
       const point = at(drone)
@@ -497,6 +511,13 @@ export function Scope({
             )
           })()}
 
+          <ScopeZones
+            zones={drawableZones}
+            project={scope.project}
+            view={view}
+            noFlyHatchId={noFlyHatchId}
+          />
+
           {view === 'top-down' && conflicts.map((pair) => {
             const from = scope.project(pair.from.eastM, pair.from.northM)
             const to = scope.project(pair.to.eastM, pair.to.northM)
@@ -615,6 +636,11 @@ export function Scope({
             {CLASSROOM_GEOFENCE.eastM} m east, {CLASSROOM_GEOFENCE.southM} to{' '}
             {CLASSROOM_GEOFENCE.northM} m north)
           </span>
+        )}
+        {view === 'top-down' && hasMissionZone && <span>Outline = Mission Zone</span>}
+        {view === 'top-down' && hasNoFlyZone && <span>Hatched = No-fly Zone</span>}
+        {view === 'top-down' && zonesUnsurveyed && drawableZones.length > 0 && (
+          <span>Not surveyed against this aircraft</span>
         )}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
         {showGhostPaths && (
@@ -840,6 +866,90 @@ export const WINDOW_SIDES_M = [8, 12, 16, 24, 32] as const
 
 /** Which picture the scope is drawing. */
 export type ScopeView = 'top-down' | 'side' | 'front'
+
+export type ScopeZonesProps = {
+  readonly zones: readonly Zone[]
+  readonly project: (eastM: number, northM: number) => { x: number; y: number }
+  readonly view: ScopeView
+  readonly noFlyHatchId: string
+}
+
+/**
+ * Mission and No-fly Zones on the Scope SVG layer.
+ *
+ * A zone is a plan-view fact — nothing draws on Side or Front, where a horizontal boundary
+ * would look like it had a vertical extent nobody drew (ADR-0019). The Mission Zone is an
+ * outline only; No-fly Zones are hatched so they read differently from colour alone
+ * (ADR-0004).
+ */
+export function ScopeZones({ zones, project, view, noFlyHatchId }: ScopeZonesProps) {
+  if (view !== 'top-down' || zones.length === 0) return null
+
+  const hasNoFly = zones.some((zone) => zone.kind === 'no-fly')
+
+  return (
+    <g data-scope-zones="" aria-hidden="true">
+      {hasNoFly ? (
+        <defs>
+          <pattern
+            id={noFlyHatchId}
+            width="0.6"
+            height="0.6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
+          >
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="0.6"
+              className="stroke-status-fault"
+              strokeWidth="0.1"
+            />
+          </pattern>
+        </defs>
+      ) : null}
+
+      {zones.map((zone) => {
+        const points = zone.points
+          .map((point) => {
+            const { x, y } = project(point.eastM, point.northM)
+            return `${x},${y}`
+          })
+          .join(' ')
+
+        if (zone.kind === 'mission') {
+          return (
+            <polygon
+              key={zone.id}
+              points={points}
+              fill="none"
+              className="stroke-ink"
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+              data-zone-kind="mission"
+              data-zone-id={zone.id}
+            />
+          )
+        }
+
+        return (
+          <polygon
+            key={zone.id}
+            points={points}
+            fill={`url(#${noFlyHatchId})`}
+            className="stroke-status-fault"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+            data-zone-kind="no-fly"
+            data-zone-id={zone.id}
+            data-zone-hatched=""
+          />
+        )
+      })}
+    </g>
+  )
+}
 
 const SCOPE_VIEWS = ['top-down', 'side', 'front'] as const satisfies readonly ScopeView[]
 

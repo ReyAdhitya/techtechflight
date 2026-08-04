@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { RUN_STEP_COUNT, runStep, runStepLabel, type RunStepInput } from './run-step.ts'
+import {
+  RUN_STEP_COUNT,
+  RUN_STEPS,
+  runStep,
+  runStepHref,
+  runStepLabel,
+  runStepMark,
+  type RunStepInput,
+} from './run-step.ts'
 
 /**
  * The Run bar step — derived from Mission records, never from a tour counter.
@@ -119,5 +127,20 @@ describe('runStepLabel', () => {
     for (let step = 1; step <= RUN_STEP_COUNT; step += 1) {
       expect(runStepLabel(step)).toMatch(/^[A-Z]/)
     }
+  })
+})
+
+describe('runStepHref and runStepMark', () => {
+  it('keeps twelve hrefs that cover Lesson, Control and Reports', () => {
+    expect(RUN_STEPS).toHaveLength(RUN_STEP_COUNT)
+    expect(runStepHref(1)).toBe('/lesson#mission-scenario')
+    expect(runStepHref(7)).toBe('/control#mission-map')
+    expect(runStepHref(12)).toBe('/reports#mission-review')
+  })
+
+  it('marks steps before the current one done', () => {
+    expect(runStepMark(3, 4)).toBe('done')
+    expect(runStepMark(4, 4)).toBe('current')
+    expect(runStepMark(5, 4)).toBe('upcoming')
   })
 })

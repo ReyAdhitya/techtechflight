@@ -9,17 +9,15 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
-## 2026-08-04 — Control calm Mission Running restores one-Alert Attention.
+## 2026-08-04 — Control strips stay fully open; Attention stays one focused Alert.
 
-- **Decision / notes:** AttentionBar returns to DESIGN §4.2 — always-visible worst Alert
-  plus playbook responses — instead of a closed disclosure-only queue. Fleet actions use
-  existing domain words (Land all · Hover all · Stop all), not Pause/Return. Per-strip
-  Commands stay available on selection so Scope full-screen dock and muscle memory remain;
-  they are not deleted. Fleet-wide Stop uses hold-to-confirm like Land all; per-strip Stop
-  stays a single press.
-- **Could have gone differently:** Renaming to Pause/Return/Emergency, or keeping Commands
-  on every strip. Rejected — CONTEXT vocabulary and progressive disclosure beat a second
-  command language.
+- **Decision / notes:** AttentionBar keeps DESIGN §4.2 — worst Alert plus playbook
+  responses, queue in a disclosure. Fleet actions use Land all · Hover all · Stop all
+  under the Scope. Per-strip coordinates and Commands stay on every strip (DESIGN §4.4);
+  gating them on selection/airborne was an accidental ship with the YOLO PR and broke CI.
+  Fleet-wide Stop uses hold-to-confirm like Land all; per-strip Stop stays a single press.
+- **Could have gone differently:** Compact grounded strips for calmer Mission Running.
+  Rejected — the scan path and existing strip tests are the product contract.
 
 ## 2026-08-04 — Browser YOLO stays at 640; accuracy-heavy work moves to ai-service.
 

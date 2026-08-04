@@ -18,6 +18,7 @@ const vitals = (
     airborne: true,
     altitudeM: 1,
     verticalRateMps: 0,
+  groundSpeedMps: null,
     batteryFraction: 0.8,
     enduranceMs: 60_000,
     responseAgeMs: 0,

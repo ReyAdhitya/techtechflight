@@ -10,6 +10,7 @@ function vitals(partial: Partial<DroneVitals> & Pick<DroneVitals, 'droneId'>): D
     airborne: partial.airborne ?? false,
     altitudeM: partial.altitudeM ?? null,
     verticalRateMps: partial.verticalRateMps ?? null,
+    groundSpeedMps: partial.groundSpeedMps ?? null,
     batteryFraction: partial.batteryFraction ?? 1,
     enduranceMs: partial.enduranceMs ?? null,
     responseAgeMs: partial.responseAgeMs ?? 100,

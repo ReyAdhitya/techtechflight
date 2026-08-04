@@ -47,6 +47,16 @@ export type AlertKind =
   | 'low-endurance'
   | 'uneven-motors'
   | 'battery-low'
+  /*
+   * Raised by the mission layer rather than by `alertsFor` below, because each needs a
+   * Mission to mean anything — there is no such thing as leaving a zone nobody drew.
+   * They live in this union so that one Attention queue ranks everything a Teacher has
+   * to deal with, rather than two queues competing for the same glance.
+   */
+  | 'no-fly'
+  | 'crash'
+  | 'missed-checkpoint'
+  | 'mission-timeout'
 
 export interface VitalsAlert {
   readonly kind: AlertKind

@@ -108,10 +108,16 @@ classroom words.
 
 Words that appear on screen, from `CONTEXT.md`: Teacher, Student, School, Fleet, Drone,
 Drone Name, Drone ID, Status, Offline, Ready, Not Ready, Fault, Flying, Needs Attention,
-Telemetry, Last Contact, Stale, Lesson, Exercise, Assignment, Alert, Command.
+Telemetry, Last Contact, Stale, Lesson, Exercise, Assignment, Alert, Command, Mission,
+Mission Scenario, Mission Zone, No-fly Zone, Checkpoint, Clearance, Instruction.
 
-Words that never appear: pilot, callsign, user, operator, mission, sortie, UAV, unit,
-vehicle, error, warning, notification.
+Words that never appear: pilot, callsign, user, operator, sortie, UAV, unit, vehicle,
+error, warning, notification.
+
+*Mission* left this list on 2026-08-04 — see
+[ADR-0018](./adr/0018-a-mission-is-a-first-class-record.md). It names a thing education has
+no word for, which is the only ground on which aviation's vocabulary is admitted here. The
+rest of the list is unaffected.
 
 Severity is spoken as time, not as danger: **Now · Soon · Later**. A Teacher deciding what to
 do next needs an ordering, and "critical/warning/info" is a developer's vocabulary.

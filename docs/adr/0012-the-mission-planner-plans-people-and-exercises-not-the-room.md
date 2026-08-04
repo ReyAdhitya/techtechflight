@@ -1,5 +1,11 @@
 # The Mission Planner plans people and exercises, and does not model the room
 
+> **Superseded in part by [ADR-0019](./0019-the-flight-area-is-drawn-in-the-local-frame.md).**
+> The flight area is now drawn — as polygons in the Fleet's own local frame, which makes them
+> *relative* claims rather than the *absolute* ones this ADR correctly refused. Everything else
+> here stands, including the vocabulary questions, which
+> [ADR-0018](./0018-a-mission-is-a-first-class-record.md) answers.
+
 The Mission Planner covers three things: which Student flies, which Drone they fly, and what
 sequence of exercises the lesson runs through. It does not model the flight area — zones,
 boundaries, no-fly regions — and nothing in its data model should be shaped around eventually
@@ -41,8 +47,8 @@ able to report against, which is the same mistake ADR-0007 declined to make abou
 building a feature on a hardware capability nobody has confirmed exists.
 
 `LocalPosition` is deliberately metres from where the Fleet was set up rather than a
-coordinate on the planet, and `docs/questions-for-drone-team.md` has not established how
-accurate that origin is, how it survives a power cycle, or whether two Drones agree about it.
+coordinate on the planet, and nobody has established how accurate that origin is, how it
+survives a power cycle, or whether two Drones agree about it.
 Separation alerts survive that uncertainty because they are *relative* — two Drones being 0.4m
 apart is true whatever the origin. A no-fly zone is *absolute*, and is wrong by exactly as
 much as the origin is.

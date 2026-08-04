@@ -11,9 +11,9 @@ to mean something. Nothing asks a Drone whether it is on a charger.
 ## Considered options
 
 **Ask the aircraft.** A `charging` flag in Telemetry would be simpler and more accurate.
-Rejected because no Telemetry Source is known to be able to answer it — question 7 of
-`docs/questions-for-drone-team.md` is still open on whether there is even a current
-sensor — and a feature resting on a question the hardware may not be able to answer is a
+Rejected because no Telemetry Source is known to be able to answer it — it is still open
+whether the aircraft has a current sensor at all, or only a voltage reading — and a
+feature resting on a question the hardware may not be able to answer is a
 feature that gets deleted. Inference costs nothing and makes no new hardware demand.
 
 **Learn from history.** Where a School swaps packs rather than charging in place, the
@@ -25,8 +25,8 @@ aircraft's state. Worth reopening if swapping turns out to be how Schools actual
 ## Why this shape survives either answer
 
 We do not yet know whether Schools charge in place or swap packs — the question was
-added to `docs/questions-for-drone-team.md` alongside this decision, and it does not
-block anything, which is the point.
+raised alongside this decision and has never been answered, and it does not block
+anything, which is the point.
 
 Where batteries charge in place, the readings climb and a forecast appears. Where they
 are swapped, the readings show a step rather than a slope, no rate is ever derived, and

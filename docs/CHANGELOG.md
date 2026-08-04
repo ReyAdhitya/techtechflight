@@ -5,6 +5,33 @@ would notice.
 
 ## Unreleased
 
+### Added (the mission layer — Wave M1 and M3)
+
+- **Vision check.** A new **Vision** screen answers one question with a word: does object
+  detection actually work on this machine. It refuses to be fooled by the demo detector,
+  which draws two confident invented boxes when no weights are present, and names the two
+  failures a Teacher will actually hit — missing weights, and a camera the browser will
+  not open on a network address.
+- **Detection works with no internet.** The WebAssembly runtime is served by the board
+  instead of a CDN. It used to mean detection quietly degraded to the demo detector in any
+  classroom without a connection. `npm run fetch:yolo` now fetches the runtime as well as
+  the weights, and the Vercel build runs it.
+- **Recall.** A Teacher can send an airborne Drone back to where it took off. It flies
+  there and lands; it is not instant, so a Drone that ignored a Recall still looks like one
+  (simulated Fleet only, ADR-0011).
+- **Signal strength.** Where the radio reports it, each Drone carries how well the link is
+  carrying — a different fact from Last Contact. Where it does not, the board says so
+  rather than drawing an empty bar.
+- **Mission Scenarios.** The three a class runs — Search and Rescue, Delivery, Building
+  Inspection — as data, with the objective, flow, success criteria, risks, and what each
+  side watches.
+- **The flight area.** Mission Zones and No-fly Zones as polygons in the Fleet's own frame,
+  with the geometry to tell a Teacher what a Drone has breached and how much room is left.
+- **Mission phase.** Where a Drone has got to in its Mission, derived from Telemetry and
+  the Teacher's own records — never from a Command having been sent.
+- **The incident playbook.** Every Alert now has advice attached: what the aircraft is
+  already doing, what the board has done, what to do about it, and how to know it is over.
+
 ### Added
 
 - **Wave 1A mounted on shared screens.** Fleet, Lesson, Control, Settings, Reports,

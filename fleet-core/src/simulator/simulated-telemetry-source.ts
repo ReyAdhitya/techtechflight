@@ -82,6 +82,7 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
           rollDegrees: 0,
           emergencyStopTriggered: false,
           autoLanding: false,
+          returningHome: false,
           streaming: false,
           linkGroupId: null,
         },
@@ -111,8 +112,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
    * a Fleet at all (ADR-0011). A hardware Telemetry Source does not implement it, so a
    * hardware Fleet refuses Commands structurally rather than by remembering to.
    *
-   * Every one of these takes energy out of the aircraft. There is no case here that makes
-   * a Drone do more than it is already doing.
+   * Every one of these ends with the aircraft down or exactly where it is. None of them
+   * takes off, climbs, goes faster, or picks a new destination (ADR-0022).
    */
   command(command: DroneCommand): void {
     // A Command for a Drone this Fleet does not have is dropped, the same way Telemetry
@@ -132,7 +133,32 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       case 'emergency-stop':
         this.triggerEmergencyStop(command.droneId)
         return
+      case 'return-home':
+        this.returnHome(command.droneId)
+        return
     }
+  }
+
+  /**
+   * Fly back to where this Drone took off, then land there.
+   *
+   * Deliberately not instant, and deliberately not a teleport to the ground. A Teacher
+   * presses Recall and then *watches* — which is the only way a Drone that ignored the
+   * Command can look different from one that obeyed it (ADR-0011). The board is told
+   * nothing; it learns what happened from the Telemetry that follows.
+   *
+   * Home is the take-off point rather than a chosen destination, which is what keeps this
+   * inside the rule that no Command picks where an aircraft goes.
+   */
+  returnHome(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    // Nothing to recall from the bench, and a cut aircraft is not going anywhere.
+    if (!drone.airborne || drone.emergencyStopTriggered) return
+    drone.returningHome = true
+    drone.autoLanding = false
+    // It keeps its height until it is over home. Descending on the way would put it into
+    // the room it is trying to cross.
+    drone.targetAltitudeM = drone.altitudeM
   }
 
   /**
@@ -178,6 +204,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     if (drone.emergencyStopTriggered) return
     // Nothing takes off on a charger.
     drone.charging = false
+    // A fresh take-off is not the tail end of a Recall.
+    drone.returningHome = false
     drone.airborne = true
     drone.targetAltitudeM = round(1.5 + this.#random() * 2, 2)
   }
@@ -194,6 +222,7 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     drone.emergencyStopTriggered = true
     drone.airborne = false
     drone.autoLanding = false
+    drone.returningHome = false
     drone.targetAltitudeM = 0
   }
 
@@ -242,6 +271,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     const drone = this.#drone(droneId)
     drone.airborne = false
     drone.autoLanding = false
+    // Land outranks a Recall in progress: down here beats down over there.
+    drone.returningHome = false
     drone.targetAltitudeM = 0
   }
 
@@ -280,6 +311,7 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     } else {
       drone.airborne = false
       drone.autoLanding = false
+      drone.returningHome = false
     }
   }
 
@@ -297,6 +329,7 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       drone.targetAltitudeM = 0
       drone.emergencyStopTriggered = false
       drone.autoLanding = false
+      drone.returningHome = false
       drone.streaming = false
       drone.linkGroupId = null
     }
@@ -393,9 +426,42 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     // Down and settled: the auto-landing has finished, whoever asked for it.
     if (drone.altitudeM === 0 && drone.targetAltitudeM === 0) drone.autoLanding = false
 
+    /*
+     * A Recall that has touched down is over, and the aircraft stops being airborne here
+     * rather than at the moment the Command was sent. That ordering is the whole point:
+     * until the ground says otherwise, a recalled Drone is still a flying Drone.
+     */
+    if (drone.returningHome && drone.altitudeM === 0) {
+      drone.returningHome = false
+      drone.airborne = false
+    }
+
     if (drone.airborne) {
-      const driftEast = (this.#random() - 0.5) * 0.6
-      const driftNorth = (this.#random() - 0.5) * 0.6
+      let driftEast: number
+      let driftNorth: number
+
+      if (drone.returningHome) {
+        /*
+         * Steer for home instead of wandering. The step is capped at the same magnitude
+         * as an ordinary drift, so a Recall crosses the room at the speed everything else
+         * moves — a Drone that flew home faster than it could fly anywhere else would
+         * make the picture lie about what the aircraft can do.
+         */
+        const toEast = drone.homeEastM - drone.eastM
+        const toNorth = drone.homeNorthM - drone.northM
+        const distance = Math.hypot(toEast, toNorth)
+        const step = Math.min(distance, RECALL_SPEED_MPS * seconds)
+        driftEast = distance === 0 ? 0 : (toEast / distance) * step
+        driftNorth = distance === 0 ? 0 : (toNorth / distance) * step
+
+        // Over home, and only then, it comes down. Descending on the way would put it
+        // into the room it is crossing.
+        if (distance <= RECALL_ARRIVED_M) drone.targetAltitudeM = 0
+      } else {
+        driftEast = (this.#random() - 0.5) * 0.6
+        driftNorth = (this.#random() - 0.5) * 0.6
+      }
+
       drone.eastM = round(clampTo(drone.eastM + driftEast, ROOM.westM, ROOM.eastM), 2)
       drone.northM = round(clampTo(drone.northM + driftNorth, ROOM.southM, ROOM.northM), 2)
       // A multirotor leans in the direction it is travelling. Small angles — this is a
@@ -529,6 +595,16 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
  */
 const ROOM = { westM: -2, eastM: 8, southM: -3, northM: 3 } as const
 
+/**
+ * How fast a recalled Drone crosses the room, and how near home counts as arrived.
+ *
+ * The speed matches an ordinary drift's magnitude on purpose. The arrival radius is
+ * generous because a Drone that hunted for a perfect centre would hover over the bench
+ * indefinitely, which reads as a Recall that did not work.
+ */
+const RECALL_SPEED_MPS = 0.6
+const RECALL_ARRIVED_M = 0.15
+
 const clampTo = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value))
 
@@ -571,6 +647,8 @@ interface SimulatedDrone {
   rollDegrees: number
   emergencyStopTriggered: boolean
   autoLanding: boolean
+  /** Recalled: flying back to where it took off, and landing once it arrives. */
+  returningHome: boolean
   streaming: boolean
   linkGroupId: string | null
 }

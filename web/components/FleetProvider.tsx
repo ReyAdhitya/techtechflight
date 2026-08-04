@@ -21,6 +21,7 @@ import { CommandTracker, type TrackedCommand } from '@/lib/command-tracker'
 import {
   AlertTracker,
   AltitudeTracker,
+  GroundSpeedTracker,
   fleetVitals,
   type DroneVitals,
   type VitalsAlert,
@@ -281,6 +282,8 @@ function useVitals(
 ): readonly DroneVitals[] {
   const altitudes = useRef<AltitudeTracker | null>(null)
   altitudes.current ??= new AltitudeTracker()
+  const groundSpeeds = useRef<GroundSpeedTracker | null>(null)
+  groundSpeeds.current ??= new GroundSpeedTracker()
   const alerts = useRef<AlertTracker | null>(null)
   alerts.current ??= new AlertTracker()
 
@@ -295,13 +298,21 @@ function useVitals(
    * collapsed into the last of them. In production those usually coincide; under load, or
    * anywhere React decides to batch, a Drone climbing steadily produced no rate at all.
    *
+   * Ground speed uses the same subscription for the same reason — horizontal metres per
+   * second need consecutive contact moments, not consecutive renders.
+   *
    * The tracker rejects repeats of the same contact moment, so the one snapshot that
    * arrives both here and through the render is recorded once.
    */
   useEffect(() => {
-    altitudes.current?.observe(link.snapshot.state ?? { drones: [], generatedAt: 0 })
+    const stateNow = link.snapshot.state ?? { drones: [], generatedAt: 0 }
+    altitudes.current?.observe(stateNow)
+    groundSpeeds.current?.observe(stateNow)
     return link.subscribe((published) => {
-      if (published.state) altitudes.current?.observe(published.state)
+      if (published.state) {
+        altitudes.current?.observe(published.state)
+        groundSpeeds.current?.observe(published.state)
+      }
     })
   }, [link])
 
@@ -313,6 +324,7 @@ function useVitals(
       now,
       batteries: snapshot.history?.batteries ?? [],
       rates: altitudes.current?.rates() ?? new Map(),
+      groundSpeeds: groundSpeeds.current?.speeds() ?? new Map(),
       firstSeen: alerts.current?.firstSeen ?? new Map(),
     })
   }, [state, snapshot.receivedAt, snapshot.history, now])

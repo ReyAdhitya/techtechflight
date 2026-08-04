@@ -24,6 +24,7 @@ const aDrone = (droneId: string, alerts: readonly VitalsAlert[]): DroneVitals =>
   airborne: true,
   altitudeM: 1,
   verticalRateMps: 0,
+  groundSpeedMps: null,
   batteryFraction: 0.5,
   enduranceMs: null,
   responseAgeMs: 500,

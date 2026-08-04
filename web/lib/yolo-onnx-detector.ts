@@ -13,12 +13,12 @@ const MODEL_URL = '/models/yolov8n.onnx'
 /**
  * Model input edge length.
  *
- * 416 rather than 640: roughly twice as fast on a single-threaded wasm laptop, and still
- * accurate enough for a classroom person / desk object. The weights are the same —
- * YOLOv8n letterboxes to whatever square we feed it.
+ * Fixed at 640 to match the Hyuto YOLOv8n ONNX the board fetches. Feeding 416 made every
+ * `session.run` throw on that fixed-shape graph; Vision swallowed the error and drew no
+ * boxes while still saying the model was loaded. Do not change this without confirming the
+ * ONNX reports dynamic spatial axes.
  */
-const INPUT = 416
-/** Keep boxes that clear this — a touch lower than 0.45 so a distant person still registers. */
+const INPUT = 640
 const CONF = 0.35
 const IOU = 0.45
 /**
@@ -107,21 +107,22 @@ async function loadSession(): Promise<InferenceSession | null> {
   return sessionPromise
 }
 
-/** One letterbox canvas for the whole board — allocating 416² every frame was free lag. */
-let letterboxCanvas: HTMLCanvasElement | null = null
-let tensorScratch: Float32Array | null = null
-
+/**
+ * Letterbox into a *fresh* canvas each call.
+ *
+ * A shared module canvas looked cheap until Camera, Vision and DetectWall all called
+ * `detect()` at once and painted over each other's pixels mid-inference. Per-call
+ * allocation is the honest cost of concurrent surfaces.
+ */
 function letterbox(source: CanvasImageSource, size: number): {
   canvas: HTMLCanvasElement
   scale: number
   padX: number
   padY: number
 } {
-  const canvas = (letterboxCanvas ??= document.createElement('canvas'))
-  if (canvas.width !== size || canvas.height !== size) {
-    canvas.width = size
-    canvas.height = size
-  }
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
   const ctx = canvas.getContext('2d', { willReadFrequently: true })
   if (!ctx) throw new Error('no 2d context')
 
@@ -155,10 +156,7 @@ function letterbox(source: CanvasImageSource, size: number): {
 
 function imageDataToTensor(data: ImageData, ort: OrtModule) {
   const { data: px, width, height } = data
-  const cells = 3 * width * height
-  const float = tensorScratch && tensorScratch.length === cells
-    ? tensorScratch
-    : (tensorScratch = new Float32Array(cells))
+  const float = new Float32Array(3 * width * height)
   const plane = width * height
   for (let i = 0; i < plane; i++) {
     const o = i * 4
@@ -367,7 +365,5 @@ export async function createYoloOnnxDetector(): Promise<ObjectDetector | null> {
 export function resetYoloSessionForTests(): void {
   ortPromise = null
   sessionPromise = null
-  letterboxCanvas = null
-  tensorScratch = null
   lastError = null
 }

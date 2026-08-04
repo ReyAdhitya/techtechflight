@@ -31,6 +31,15 @@ if not exist "web\out\index.html" (
   )
 )
 
+REM Optional YOLO11x AI service — CUDA if an NVIDIA GPU is present, else CPU.
+REM Board falls back to in-browser YOLOv8n when this is missing or fails.
+if exist "ai-service\.venv\Scripts\uvicorn.exe" (
+  echo Starting AI detection service on http://127.0.0.1:8090 ...
+  start "TechTech AI Service" cmd /k "cd /d ""%~dp0ai-service"" && .venv\Scripts\activate && uvicorn app.main:app --host 127.0.0.1 --port 8090"
+) else if exist "ai-service\requirements.txt" (
+  echo AI service venv not found. To enable YOLO11x: see ai-service\README.md
+)
+
 echo Starting the ground station on http://localhost:4321 ...
 start "TechTech Ground Station" cmd /k "cd /d ""%~dp0"" && npm run start --workspace=ground-station"
 
@@ -44,5 +53,6 @@ echo.
 echo Default Fleet is the classroom Simulator.
 echo Settings can switch next launch to Radio ^(MAVLink^) — monitoring only.
 echo Close this ground-station window and run the launcher again after changing path.
+echo AI detection: http://127.0.0.1:8090 when the AI Service window is running.
 echo.
 pause

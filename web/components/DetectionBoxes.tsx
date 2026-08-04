@@ -59,6 +59,9 @@ export function DetectionBoxes({
               }}
             >
               <span className="truncate">{detection.label}</span>
+              {detection.trackId ? (
+                <span className="tnum shrink-0 opacity-90">#{detection.trackId}</span>
+              ) : null}
               <span className="tnum shrink-0 opacity-90">{pct}%</span>
             </span>
           </li>

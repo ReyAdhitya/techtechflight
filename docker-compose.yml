@@ -1,0 +1,49 @@
+# Optional AI detection service beside the classroom stack.
+# Board keeps working when this profile is not started (wasm / demo fallback).
+
+services:
+  ai-service:
+    profiles: ["ai"]
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      YOLO_MODEL: ${YOLO_MODEL:-yolo11x.pt}
+      YOLO_IMGSZ: ${YOLO_IMGSZ:-1280}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      YOLO_IOU: ${YOLO_IOU:-0.45}
+      YOLO_TRACKER: ${YOLO_TRACKER:-bytetrack.yaml}
+    volumes:
+      # Persist Ultralytics weight downloads across restarts
+      - ai-weights:/root/.config/Ultralytics
+      - ai-cache:/root/.cache
+
+  ai-service-gpu:
+    profiles: ["ai-gpu"]
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile.gpu
+    ports:
+      - "8090:8090"
+    environment:
+      YOLO_MODEL: ${YOLO_MODEL:-yolo11x.pt}
+      YOLO_IMGSZ: ${YOLO_IMGSZ:-1280}
+      YOLO_CONF: ${YOLO_CONF:-0.25}
+      YOLO_IOU: ${YOLO_IOU:-0.45}
+      YOLO_TRACKER: ${YOLO_TRACKER:-bytetrack.yaml}
+    volumes:
+      - ai-weights:/root/.config/Ultralytics
+      - ai-cache:/root/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  ai-weights:
+  ai-cache:

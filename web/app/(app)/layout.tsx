@@ -7,7 +7,7 @@ import { FleetProvider, useFleet } from '@/components/FleetProvider'
 import { TrainingWheelsProvider } from '@/lib/training-wheels'
 import { CommandPalette } from '@/components/CommandPalette'
 import { SiteHeader } from '@/components/SiteHeader'
-import { MissionRunRail } from '@/components/MissionRunRail'
+import { RunBar } from '@/components/RunBar'
 import { isMissionBriefingComplete, readMissionBriefing } from '@/components/MissionBriefing'
 import {
   evaluatePreFlightSeven,
@@ -17,6 +17,7 @@ import {
 } from '@/lib/preflight-seven'
 import { enclosesAnything } from '@/lib/airspace'
 import { emptyClearanceState, isActiveMission, shouldAwaitClearance } from '@/lib/clearance'
+import { INSTRUMENT_FRAME, READING_FRAME } from '@/lib/frame'
 import {
   missionsFrom,
   readLogbook,
@@ -30,6 +31,7 @@ import type { Mission } from '@/lib/mission'
 import type { RunStepInput } from '@/lib/run-step'
 import { readTeams } from '@/lib/teams'
 import { alertQueue } from '@/lib/vitals'
+import { cn } from '@/lib/utils'
 
 /**
  * Everything a Teacher uses, around one connection to the ground station.
@@ -160,35 +162,20 @@ function deriveRunStepInput({
   }
 }
 
-const IDLE_RUN_STEP: RunStepInput = {
-  hasScenario: false,
-  hasZones: false,
-  hasTeams: false,
-  preFlightDone: false,
-  briefingDone: false,
-  hasPendingClearance: false,
-  missionStarted: false,
-  hasAlerts: false,
-  allDown: false,
-  confirmedComplete: false,
-  onReports: false,
-}
-
 /**
- * Mission chrome on the app frame — left step rail on every Teacher screen.
+ * The Run bar on the app frame — one Mission step for the whole Lesson.
  *
- * Always visible so the board does not look unchanged until someone starts a Lesson.
- * Without a Lesson the rail sits on step 1 and points at Lesson; with a Lesson the
- * derived step advances as before. SiteNav stays the room switcher.
+ * Hidden when no Lesson is running. Step flags are derived from whatever Mission records
+ * exist today; later tickets wire more of the Integrator without moving the mount point.
  */
-function AppMissionChrome({ children }: { children: ReactNode }) {
+function AppRunBar() {
   const pathname = usePathname()
   const { vitals, isAcknowledged, snapshot } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const lesson = runningLesson(book)
 
   const state = useMemo(() => {
-    if (!lesson) return IDLE_RUN_STEP
+    if (!lesson) return null
     const mission = focusMission(lesson)
     const telemetryFor = (droneId: DroneId) =>
       snapshot.state?.drones.find((drone) => drone.id === droneId)?.telemetry ?? null
@@ -203,10 +190,16 @@ function AppMissionChrome({ children }: { children: ReactNode }) {
     })
   }, [book, isAcknowledged, lesson, pathname, snapshot.state, vitals])
 
+  if (!lesson || state === null) return null
+
+  const frame =
+    pathname.startsWith('/control') || pathname === '/' || pathname.startsWith('/tower')
+      ? INSTRUMENT_FRAME
+      : READING_FRAME
+
   return (
-    <div className="flex min-h-0 flex-col min-[60rem]:flex-row">
-      <MissionRunRail state={state} lessonOpen={lesson !== null} />
-      <div className="min-w-0 flex-1">{children}</div>
+    <div className={cn(frame, 'px-4 pt-4 min-[26rem]:px-8 min-[26rem]:pt-6')}>
+      <RunBar state={state} />
     </div>
   )
 }
@@ -219,7 +212,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           Skip to the Fleet
         </a>
         <SiteHeader />
-        <AppMissionChrome>{children}</AppMissionChrome>
+        <AppRunBar />
+        {children}
         <CommandPalette />
       </TrainingWheelsProvider>
     </FleetProvider>

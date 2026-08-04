@@ -5,12 +5,13 @@ would notice.
 
 ## Unreleased
 
+### Removed
+
+- **Mission run rail (left).** Reverted — Teachers keep the top SiteNav and the Run bar
+  while a Lesson is open; no left step wizard.
+
 ### Added
 
-- **Mission run rail (left).** Twelve ATC steps sit in a left nav on every Teacher screen
-  (Preparation → Live → Wrap-up). Current step still comes from Mission records when a
-  Lesson is open; before that, step 1 + “Go to Lesson”. Each step jumps to Lesson /
-  Control / Reports. Top SiteNav stays the room switcher.
 - **Local YOLO11x AI service.** Optional FastAPI service (`ai-service/`) runs Ultralytics
   YOLO11x with CUDA when available and CPU otherwise — REST `/detect`, WebSocket `/stream`
   with ByteTrack, Docker CPU/GPU profiles. The board prefers it when
@@ -36,8 +37,6 @@ would notice.
   border and chip colour (`person` is purple); the label sits on a solid chip with large
   type so it stays legible on a dark hoodie. The camera loop waits for each inference to
   finish before starting the next.
-- **Run bar yields to the Mission run rail** while a Lesson is open — one place names the
-  step (left rail). RunBar component remains for tests / reuse.
 
 ### Added (Wave M2 — Search and Rescue end-to-end)
 

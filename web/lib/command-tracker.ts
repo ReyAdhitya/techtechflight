@@ -47,6 +47,17 @@ function satisfied(kind: CommandKind, vitals: DroneVitals): boolean {
       // Not climbing and not descending. A Drone that landed instead also counts: it is
       // not going anywhere vertically, which is what was asked.
       return !vitals.airborne || vitals.phase === 'level'
+    case 'return-home':
+      /*
+       * A Recall is done when the aircraft is down, and not one moment sooner. It flies
+       * across the room first (ADR-0022), so the whole journey reads as `waiting` — which
+       * is honest, because until it lands there is no evidence it will.
+       *
+       * Deliberately not satisfied by "moving toward home": that would be the board
+       * inferring intent from two positions, and a Drone drifting the right way is not a
+       * Drone obeying.
+       */
+      return !vitals.airborne
   }
 }
 

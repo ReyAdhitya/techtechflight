@@ -950,4 +950,5 @@ const COMMAND_WORDS: Readonly<Record<CommandKind, string>> = {
   hold: 'Hover',
   'auto-land': 'Auto-land',
   'emergency-stop': 'Stop',
+  'return-home': 'Recall',
 }

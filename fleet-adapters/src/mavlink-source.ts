@@ -57,6 +57,7 @@ type CraftDraft = {
   eastM?: number
   northM?: number
   orientation?: Orientation
+  linkQuality?: number
 }
 
 /**
@@ -155,6 +156,7 @@ export class MavlinkTelemetrySource implements TelemetrySource {
       roll?: number
       pitch?: number
       yaw?: number
+      rssi?: number
     }
     const systemId = packet.header.sysid
     // Our own GCS heartbeats bounce back on some links; ignore them.
@@ -196,6 +198,19 @@ export class MavlinkTelemetrySource implements TelemetrySource {
       changed = true
     } else if (clazz === common.GlobalPositionInt) {
       draft.altitudeM = round1((data.relativeAlt ?? 0) / 1_000)
+      changed = true
+    } else if (clazz === common.RadioStatus) {
+      /*
+       * How well the radio is carrying, which is a different fact from when we last heard
+       * anything. RADIO_STATUS comes from the *radio*, not the aircraft, so it arrives
+       * without a system id we can attribute — it describes the link this ground station
+       * holds, and every craft on that link shares it.
+       *
+       * `rssi` is 0..254 on a SiK-style link. Scaled to a proportion here rather than on
+       * a screen, because the contract's rule is that a reading reaches the board already
+       * in the units a Teacher can read.
+       */
+      draft.linkQuality = round2(clamp01((data.rssi ?? 0) / 254))
       changed = true
     } else if (clazz === common.Attitude) {
       draft.orientation = {
@@ -277,21 +292,20 @@ function toTelemetry(draft: CraftDraft): Telemetry | null {
     fault: faultFrom(draft.systemStatus),
   }
 
-  if (draft.altitudeM !== undefined) {
-    return withOptional(telemetry, {
-      altitudeM: draft.altitudeM,
-      ...(draft.eastM !== undefined && draft.northM !== undefined
-        ? { position: { eastM: draft.eastM, northM: draft.northM } }
-        : {}),
-      ...(draft.orientation ? { orientation: draft.orientation } : {}),
-    })
-  }
-
-  if (draft.orientation) {
-    return withOptional(telemetry, { orientation: draft.orientation })
-  }
-
-  return telemetry
+  /*
+   * Spread only the keys this link actually reported. A key present and undefined is not
+   * the same as an absent key under `exactOptionalPropertyTypes`, and the board reads
+   * absent as "this craft cannot report it at all" — which is exactly what a link with no
+   * RADIO_STATUS means about signal strength.
+   */
+  return withOptional(telemetry, {
+    ...(draft.altitudeM !== undefined ? { altitudeM: draft.altitudeM } : {}),
+    ...(draft.altitudeM !== undefined && draft.eastM !== undefined && draft.northM !== undefined
+      ? { position: { eastM: draft.eastM, northM: draft.northM } }
+      : {}),
+    ...(draft.orientation ? { orientation: draft.orientation } : {}),
+    ...(draft.linkQuality !== undefined ? { linkQuality: draft.linkQuality } : {}),
+  })
 }
 
 function withOptional(base: Telemetry, extra: Partial<Telemetry>): Telemetry {
@@ -312,6 +326,10 @@ function faultFrom(systemStatus: number): FaultReport | null {
     }
   }
   return null
+}
+
+function round2(value: number): number {
+  return Number(value.toFixed(2))
 }
 
 function clamp01(value: number): number {

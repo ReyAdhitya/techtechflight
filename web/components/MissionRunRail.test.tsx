@@ -80,4 +80,15 @@ describe('MissionRunRail', () => {
       '/control#mission-alerts',
     )
   })
+
+  it('points at Lesson when no Lesson is open yet', () => {
+    render(<MissionRunRail state={state()} lessonOpen={false} />)
+
+    const nav = screen.getByRole('navigation', { name: /Mission run steps/i })
+    expect(nav).toHaveTextContent(/Open Lesson and start one/)
+    expect(screen.getByRole('link', { name: /^Go to Lesson$/ })).toHaveAttribute(
+      'href',
+      '/lesson',
+    )
+  })
 })

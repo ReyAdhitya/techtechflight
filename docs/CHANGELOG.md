@@ -7,9 +7,10 @@ would notice.
 
 ### Added
 
-- **Mission run rail (left).** While a Lesson is open, twelve ATC steps sit in a left nav
-  (Preparation → Live → Wrap-up). Current step still comes from Mission records; each step
-  jumps to Lesson / Control / Reports. Top SiteNav stays the room switcher.
+- **Mission run rail (left).** Twelve ATC steps sit in a left nav on every Teacher screen
+  (Preparation → Live → Wrap-up). Current step still comes from Mission records when a
+  Lesson is open; before that, step 1 + “Go to Lesson”. Each step jumps to Lesson /
+  Control / Reports. Top SiteNav stays the room switcher.
 - **Local YOLO11x AI service.** Optional FastAPI service (`ai-service/`) runs Ultralytics
   YOLO11x with CUDA when available and CPU otherwise — REST `/detect`, WebSocket `/stream`
   with ByteTrack, Docker CPU/GPU profiles. The board prefers it when

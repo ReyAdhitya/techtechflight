@@ -79,6 +79,8 @@ export interface DroneVitals {
   readonly airborne: boolean
   readonly altitudeM: number | null
   readonly verticalRateMps: number | null
+  /** Horizontal speed from position over time; null when the track is not yet long enough. */
+  readonly groundSpeedMps: number | null
   readonly batteryFraction: number | null
   readonly enduranceMs: number | null
   readonly responseAgeMs: number | null
@@ -113,6 +115,8 @@ export interface VitalsInput {
   readonly batteries: readonly DroneBatteryHistory[]
   /** Metres per second, per Drone. Absent or null when the direction is not yet known. */
   readonly rates: ReadonlyMap<DroneId, number | null>
+  /** Horizontal metres per second, per Drone. Absent or null when the track is not yet long enough. */
+  readonly groundSpeeds?: ReadonlyMap<DroneId, number | null>
   readonly thresholds?: FleetThresholds
   /**
    * When each condition was first seen, keyed by `alertKey`. Absent for one that has
@@ -136,6 +140,7 @@ export function fleetVitals(input: VitalsInput): readonly DroneVitals[] {
   return input.state.drones.map((drone) => {
     const telemetry = drone.telemetry
     const rate = input.rates.get(drone.id) ?? null
+    const groundSpeed = input.groundSpeeds?.get(drone.id) ?? null
     const phase = flightPhase(drone, rate)
     const conflict = separation.get(drone.id) ?? null
     const samples = input.batteries.find((entry) => entry.droneId === drone.id)?.samples ?? []
@@ -150,6 +155,7 @@ export function fleetVitals(input: VitalsInput): readonly DroneVitals[] {
       airborne: telemetry?.airborne === true,
       altitudeM: telemetry?.altitudeM ?? null,
       verticalRateMps: rate,
+      groundSpeedMps: groundSpeed,
       batteryFraction: telemetry?.batteryFraction ?? null,
       enduranceMs: endurance,
       responseAgeMs: responseAge,
@@ -461,4 +467,59 @@ function rateOf(track: readonly { at: number; altitudeM: number }[]): number | n
   const seconds = (last.at - first.at) / 1_000
   if (seconds <= 0) return null
   return (last.altitudeM - first.altitudeM) / seconds
+}
+
+/**
+ * Ground speed, kept as a small ring of position readings per Drone.
+ *
+ * Samples are stamped with the Drone's own Last Contact rather than with the moment this
+ * ran, so a Drone that stops responding stops producing a speed instead of appearing to
+ * coast. Two readings from the same contact moment carry no time between them and cannot
+ * yield a rate.
+ */
+export class GroundSpeedTracker {
+  readonly #tracks = new Map<DroneId, { at: number; eastM: number; northM: number }[]>()
+  readonly #windowMs: number
+
+  constructor(windowMs = 10_000) {
+    this.#windowMs = windowMs
+  }
+
+  observe(state: FleetState): void {
+    for (const drone of state.drones) {
+      const position = drone.telemetry?.position
+      const at = drone.lastContact
+      if (position === undefined || at === null) continue
+
+      const track = this.#tracks.get(drone.id) ?? []
+      if (track.length > 0 && track[track.length - 1]!.at === at) continue
+      track.push({ at, eastM: position.eastM, northM: position.northM })
+      while (track.length > 1 && at - track[0]!.at > this.#windowMs) track.shift()
+      this.#tracks.set(drone.id, track)
+    }
+  }
+
+  speeds(): ReadonlyMap<DroneId, number | null> {
+    const speeds = new Map<DroneId, number | null>()
+    for (const [droneId, track] of this.#tracks) {
+      speeds.set(droneId, groundSpeedOf(track))
+    }
+    return speeds
+  }
+
+  reset(): void {
+    this.#tracks.clear()
+  }
+}
+
+function groundSpeedOf(
+  track: readonly { at: number; eastM: number; northM: number }[],
+): number | null {
+  if (track.length < 2) return null
+  const first = track[0]!
+  const last = track[track.length - 1]!
+  const seconds = (last.at - first.at) / 1_000
+  if (seconds <= 0) return null
+  const metres = Math.hypot(last.eastM - first.eastM, last.northM - first.northM)
+  return metres / seconds
 }

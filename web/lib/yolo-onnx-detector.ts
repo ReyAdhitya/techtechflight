@@ -13,7 +13,19 @@ const MODEL_URL = '/models/yolov8n.onnx'
 const INPUT = 640
 const CONF = 0.45
 const IOU = 0.45
-const WASM_CDN = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/'
+/**
+ * Where the WebAssembly runtime is served from.
+ *
+ * The board itself, not a CDN. This used to point at jsDelivr, which meant detection
+ * quietly fell back to the demo detector in any classroom without internet — the exact
+ * condition ADR-0002 says the product is built for, and a failure that looked like a
+ * working feature because the demo detector still drew boxes.
+ *
+ * `node scripts/fetch-yolo-model.mjs` copies the runtime out of `node_modules` into
+ * `web/public/ort/` alongside the weights. Both are gitignored and both are fetched by
+ * the same command.
+ */
+const WASM_PATH = '/ort/'
 
 type OrtModule = typeof import('onnxruntime-web')
 type InferenceSession = import('onnxruntime-web').InferenceSession
@@ -24,7 +36,7 @@ let sessionPromise: Promise<InferenceSession | null> | null = null
 async function loadOrt(): Promise<OrtModule> {
   if (!ortPromise) {
     ortPromise = import('onnxruntime-web').then((ort) => {
-      ort.env.wasm.wasmPaths = WASM_CDN
+      ort.env.wasm.wasmPaths = WASM_PATH
       return ort
     })
   }

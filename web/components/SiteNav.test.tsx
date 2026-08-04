@@ -12,9 +12,14 @@ vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
  * more thing to read past while looking for the one they wanted.
  */
 describe('where a Teacher can go', () => {
-  it('offers exactly the six places in the workflow', () => {
+  it('offers exactly the seven places, in the order of a Teacher day', () => {
     render(<SiteNav />)
 
+    /*
+     * Vision is last and is the odd one out — a check rather than a place in the day. It
+     * is here at all because a check nobody can find is a check nobody runs, and it
+     * answers a question no other screen can: whether this machine can see.
+     */
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
       'Control',
       'Walls',
@@ -22,6 +27,7 @@ describe('where a Teacher can go', () => {
       'Lesson',
       'Students',
       'Reports',
+      'Vision',
     ])
   })
 
@@ -68,6 +74,7 @@ describe('where a Teacher can go', () => {
       '/lesson',
       '/students',
       '/reports',
+      '/vision',
     ])
   })
 })

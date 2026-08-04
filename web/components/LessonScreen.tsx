@@ -524,43 +524,45 @@ function MissionPrep({
         </p>
       </div>
 
-      <ScenarioPicker
-        selectedScenarioId={scenarioId}
-        onSelect={setScenarioId}
-        locked={false}
-      />
-      <NextStepHint>Draw the Mission area and any no-fly zones.</NextStepHint>
+      <section id="mission-scenario" className="scroll-mt-24 flex flex-col gap-3">
+        <ScenarioPicker
+          selectedScenarioId={scenarioId}
+          onSelect={setScenarioId}
+          locked={false}
+        />
+        <NextStepHint>Draw the Mission area and any no-fly zones.</NextStepHint>
+      </section>
 
       {hasScenario ? (
-        <>
+        <section id="mission-area" className="scroll-mt-24 flex flex-col gap-3">
           <MissionAreaEditor zones={zones} onChange={setZones} />
           <NextStepHint>Assign each team to a craft.</NextStepHint>
-        </>
+        </section>
       ) : null}
 
       {hasScenario && hasMissionZone ? (
-        <>
+        <section id="mission-teams" className="scroll-mt-24 flex flex-col gap-3">
           <TeamsPanel book={book} drones={drones} />
           <NextStepHint>Tick each craft’s pre-flight check when it is ready.</NextStepHint>
-        </>
+        </section>
       ) : null}
 
       {hasScenario && hasMissionZone && hasTeams && focusDroneId !== null ? (
-        <>
+        <section id="mission-preflight" className="scroll-mt-24 flex flex-col gap-3">
           <PreFlightSeven
             droneId={focusDroneId}
             lessonId={lessonId}
             telemetry={telemetry}
           />
           <NextStepHint>Walk the class through the Mission rules and safety brief.</NextStepHint>
-        </>
+        </section>
       ) : null}
 
       {hasScenario && hasMissionZone && hasTeams ? (
-        <>
+        <section id="mission-briefing" className="scroll-mt-24 flex flex-col gap-3">
           <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} />
           <NextStepHint>Print a team brief for each group before granting clearance.</NextStepHint>
-        </>
+        </section>
       ) : null}
 
       {draftMission !== null && teams.length > 0 ? (

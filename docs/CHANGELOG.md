@@ -5,6 +5,16 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **Mission run rail (left).** While a Lesson is open, twelve ATC steps sit in a left nav
+  (Preparation → Live → Wrap-up). Current step still comes from Mission records; each step
+  jumps to Lesson / Control / Reports. Top SiteNav stays the room switcher.
+- **Local YOLO11x AI service.** Optional FastAPI service (`ai-service/`) runs Ultralytics
+  YOLO11x with CUDA when available and CPU otherwise — REST `/detect`, WebSocket `/stream`
+  with ByteTrack, Docker CPU/GPU profiles. The board prefers it when
+  `http://127.0.0.1:8090` is healthy, else YOLOv8n wasm, else the demo detector (ADR-0023).
+
 ### Fixed
 
 - **Vision boxes work again.** In-browser YOLO letterboxes at 640 to match the fixed ONNX
@@ -14,13 +24,6 @@ would notice.
   strip change shipped with the YOLO11x PR and hid Land / Hover / Recall / Stop (and the
   coordinate line) on grounded unselected craft — CI failed. Anatomy restored; fleet-wide
   Hover all / Stop all and the Attention focused card remain.
-
-### Added
-
-- **Local YOLO11x AI service.** Optional FastAPI service (`ai-service/`) runs Ultralytics
-  YOLO11x with CUDA when available and CPU otherwise — REST `/detect`, WebSocket `/stream`
-  with ByteTrack, Docker CPU/GPU profiles. The board prefers it when
-  `http://127.0.0.1:8090` is healthy, else YOLOv8n wasm, else the demo detector (ADR-0023).
 
 ### Changed
 
@@ -32,6 +35,8 @@ would notice.
   border and chip colour (`person` is purple); the label sits on a solid chip with large
   type so it stays legible on a dark hoodie. The camera loop waits for each inference to
   finish before starting the next.
+- **Run bar yields to the Mission run rail** while a Lesson is open — one place names the
+  step (left rail). RunBar component remains for tests / reuse.
 
 ### Added (Wave M2 — Search and Rescue end-to-end)
 

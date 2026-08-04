@@ -9,6 +9,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-04 — Mission steps live in a left rail; SiteNav stays rooms.
+
+- **Decision / notes:** Photo 3’s twelve steps become a left Mission run rail while a
+  Lesson is open. SiteNav (Control / Lesson / Reports / …) stays the horizontal room
+  switcher. The top Run bar is dropped when the rail is present — one place names the
+  step. Step hrefs deep-link into Lesson / Control / Reports anchors.
+- **Could have gone differently:** Replacing SiteNav entirely during a Mission, or keeping
+  only the Run bar. Rejected — Teachers still need rooms; the rail is the workflow, not
+  the whole board.
+
 ## 2026-08-04 — Control strips stay fully open; Attention stays one focused Alert.
 
 - **Decision / notes:** AttentionBar keeps DESIGN §4.2 — worst Alert plus playbook

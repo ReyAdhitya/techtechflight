@@ -220,17 +220,24 @@ export function ControlScreen() {
         />
       </div>
 
-      <AttentionBar
-        queue={queue}
-        studentFor={(droneId) => studentOf(book, droneId)}
-        onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
-        onResponse={(entry, response) => {
-          if (response.command !== null) {
-            issueCommand(entry.droneId, response.command, entry.callsign)
-          }
-          acknowledge(entry.droneId, entry)
-        }}
-      />
+      {/*
+       * Mission-run rail hashes. Clearance and confirm mount elsewhere over time; until
+       * then these anchors land on the Attention / Scope regions a Teacher already uses.
+       */}
+      <span id="mission-clearance" className="scroll-mt-24 block h-0 w-0 overflow-hidden" />
+      <div id="mission-alerts" className="scroll-mt-24 flex flex-col gap-3">
+        <AttentionBar
+          queue={queue}
+          studentFor={(droneId) => studentOf(book, droneId)}
+          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+          onResponse={(entry, response) => {
+            if (response.command !== null) {
+              issueCommand(entry.droneId, response.command, entry.callsign)
+            }
+            acknowledge(entry.droneId, entry)
+          }}
+        />
+      </div>
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
       <ControlDisclosure summary="Also noting">
@@ -248,7 +255,10 @@ export function ControlScreen() {
         </div>
       </ControlDisclosure>
 
-      <section className="flex flex-col gap-3">
+      <span id="mission-telemetry" className="scroll-mt-24 block h-0 w-0 overflow-hidden" />
+      <span id="mission-commands" className="scroll-mt-24 block h-0 w-0 overflow-hidden" />
+      <span id="mission-complete" className="scroll-mt-24 block h-0 w-0 overflow-hidden" />
+      <section id="mission-map" className="scroll-mt-24 flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
         <Scope
           drones={state.drones}

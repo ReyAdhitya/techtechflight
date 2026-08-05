@@ -76,6 +76,32 @@ describe('what is open', () => {
   })
 
   /*
+   * The dead end. A Teacher reported the rail stuck on step 6 with the class already in
+   * the air: 7 to 10 still said "grant a clearance first", and nothing on the board would
+   * ever grant one, because no craft was on the Mission to enter the queue.
+   *
+   * A rail that refuses to leave the paperwork while Drones are flying is describing a
+   * process rather than the room. Any of the three is enough to be under way.
+   */
+  it('opens the flying steps when the class is up, clearance on record or not', () => {
+    const flyingWithoutPaperwork = facts({ ...pastTheBrief, airborne: true })
+    for (const step of [7, 8, 9, 10]) {
+      expect(isMissionStepOpen(step, flyingWithoutPaperwork), `step ${step}`).toBe(true)
+      expect(missionStepMark(step, flyingWithoutPaperwork)).toBe('live')
+    }
+
+    const startedButNotYetUp = facts({ ...pastTheBrief, flown: true })
+    expect(isMissionStepOpen(7, startedButNotYetUp)).toBe(true)
+    expect(currentMissionStep(startedButNotYetUp)).toBe(11)
+  })
+
+  it('does not offer to seal a Mission that has never flown', () => {
+    const nothingHasFlown = facts({ ...pastTheBrief })
+    expect(isMissionStepOpen(11, nothingHasFlown)).toBe(false)
+    expect(missionStepBlockedBy(11, nothingHasFlown)).toMatch(/Nothing has flown/i)
+  })
+
+  /*
    * The one that matters most. Confirm mission complete already refuses while a craft is
    * up, but a Teacher should not have to press it to find that out.
    */

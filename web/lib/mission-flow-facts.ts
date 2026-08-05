@@ -81,6 +81,7 @@ export function missionFlowFactsFrom(input: MissionFlowInput): MissionFlowFacts 
     preFlightPassed,
     briefed: input.briefed,
     cleared: anyClearanceGranted(input.clearances, mission.id),
+    flown: mission.startedAt !== null,
     airborne: input.anyAirborne,
     sealed: mission.outcome !== null,
     reviewed: input.reviewed === true,

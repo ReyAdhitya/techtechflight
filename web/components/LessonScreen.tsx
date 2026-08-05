@@ -753,16 +753,13 @@ function MissionPrepFoot({ step }: { readonly step: number }) {
         </Link>
       ) : null}
       {next ? (
-        <>
-          <Link
-            href={next.href}
-            prefetch={false}
-            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
-          >
-            Next
-          </Link>
-          <span className="text-value text-ink-subtle">{next.label}</span>
-        </>
+        <Link
+          href={next.href}
+          prefetch={false}
+          className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
+        >
+          Next
+        </Link>
       ) : null}
     </div>
   )

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { LandAllButton } from './LandAllButton'
 
 const fleet = [
@@ -16,48 +16,27 @@ describe('LandAllButton', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
-  it('does not land on a short press', async () => {
+  /*
+   * It used to want about a second of held pointer, and a keyboard path that armed on the
+   * first press and fired on the second. A Teacher reaching for Land all is usually
+   * reaching for it because something is going wrong, and a control that ignores the first
+   * press has to be learned before it works (DECISIONS, 2026-08-05).
+   */
+  it('lands every airborne craft on one press', () => {
     const onLand = vi.fn()
-    render(<LandAllButton fleet={fleet} onLand={onLand} holdMs={200} />)
+    render(<LandAllButton fleet={fleet} onLand={onLand} />)
 
-    const button = screen.getByRole('button', { name: /Land all/ })
-    fireEvent.pointerDown(button)
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 40))
-    })
-    fireEvent.pointerUp(button)
+    fireEvent.click(screen.getByRole('button', { name: /Land all/ }))
 
-    expect(onLand).not.toHaveBeenCalled()
-  })
-
-  it('requires a sustained press, then issues land to every airborne craft', async () => {
-    const onLand = vi.fn()
-    render(<LandAllButton fleet={fleet} onLand={onLand} holdMs={80} />)
-
-    const button = screen.getByRole('button', { name: /Land all/ })
-    fireEvent.pointerDown(button)
-
-    await waitFor(
-      () => {
-        expect(onLand).toHaveBeenCalledTimes(2)
-      },
-      { timeout: 2_000 },
-    )
+    expect(onLand).toHaveBeenCalledTimes(2)
     expect(onLand).toHaveBeenCalledWith('ttf-0001')
     expect(onLand).toHaveBeenCalledWith('ttf-0003')
     expect(onLand).not.toHaveBeenCalledWith('ttf-0002')
   })
 
-  it('offers a keyboard second press instead of a hold', () => {
-    const onLand = vi.fn()
-    render(<LandAllButton fleet={fleet} onLand={onLand} />)
+  it('says how many craft it is about to land', () => {
+    render(<LandAllButton fleet={fleet} onLand={vi.fn()} />)
 
-    const button = screen.getByRole('button', { name: /Land all/ })
-    fireEvent.keyDown(button, { key: 'Enter' })
-    expect(onLand).not.toHaveBeenCalled()
-    expect(button).toHaveAccessibleName(/Press again to land all/)
-
-    fireEvent.keyDown(button, { key: 'Enter' })
-    expect(onLand).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('button', { name: 'Land all (2)' })).toBeInTheDocument()
   })
 })

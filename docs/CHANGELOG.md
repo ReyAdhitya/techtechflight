@@ -54,6 +54,15 @@ would notice.
 
 ### Fixed
 
+- **The Mission run is walkable end to end.** Seven things a Teacher hit trying to run one.
+  Steps 6 to 11 are reachable at last: the rail sent every in-the-air step to a bare
+  `/control`, so Telemetry, Commands and Alerts could not be opened at all. Control now
+  carries **Back** and **Next** like Lesson does, and the forward button says *Next* rather
+  than the next step's whole sentence. The simulated Fleet reports Wi-Fi signal and altitude
+  hold, so pre-flight can be finished on a Fleet with no hardware in the room — it could not
+  before, and step 4 was the end of the road. The Attention bar sits on step 10 instead of
+  above every step. The rest of the day is on step 1 rather than folded under all five. Land
+  all, Hover all and Stop all fire on one press.
 - **You can now draw the Mission area by drawing.** The Mission area editor showed its
   grid only once a zone already had a point, so "Tap the grid" pointed at nothing and the
   only way in was to type two numbers into Add point. The grid is always there now, capped

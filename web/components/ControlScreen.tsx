@@ -268,6 +268,7 @@ export function ControlScreen() {
     >
       <StepRail
         facts={missionFacts}
+        lessonName={lesson?.label ?? null}
         open={railOpen}
         onToggle={() => setRailOpen((was) => !was)}
       />

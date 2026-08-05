@@ -65,6 +65,34 @@ describe('mission set-up, one step at a time', () => {
     expect(screen.queryByRole('heading', { name: 'Mission area' })).not.toBeInTheDocument()
   })
 
+  /*
+   * The step is the screen. It was briefly a header on top of the old long page, with
+   * serviceable counts, the plan wizard, assignment and Start the lesson all still stacked
+   * underneath, which is exactly the scroll the twelve steps exist to replace.
+   */
+  it('puts the rest of the Lesson away rather than under the step', () => {
+    atStep(1)
+    settle()
+
+    expect(
+      screen.getByText(/Start a Lesson, and the rest of the day/i),
+    ).toBeInTheDocument()
+    // Start the lesson is still reachable, just not stacked under the step.
+    expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeInTheDocument()
+  })
+
+  it('names the step as the work, not as the noun the rail uses', () => {
+    atStep(1)
+    settle()
+
+    expect(
+      screen.getByRole('heading', { name: 'Choose the Mission Scenario' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/The objective, what counts as success/i)).toBeInTheDocument()
+    // 'Set up' is also the rail phase heading, so read the chip beside the step count.
+    expect(screen.getByText('Step 1 of 12').parentElement).toHaveTextContent('Set up')
+  })
+
   it('keeps the Scenario when the Teacher walks away from the screen', () => {
     atStep(1)
     settle()

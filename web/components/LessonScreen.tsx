@@ -27,7 +27,6 @@ import {
   type AbsentReassignResult,
 } from '@/lib/absent-reassign'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
-import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
 import { BatteryOnChargeTick } from './BatteryOnChargeTick'
 import { CraftReturnedTick } from './CraftReturnedTick'
@@ -184,8 +183,6 @@ export function LessonScreen() {
               )}
 
               <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
-
-              <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
             </div>
           ) : null}
         </div>
@@ -428,8 +425,6 @@ function LessonUnderWay({
         Monitor from the Flight Control Center. Every item requiring action is listed there, in
         the order it requires action, and the lesson is ended from there.
       </p>
-
-      <MissionBriefing lessonId={lesson.id} scenarioId={null} />
 
       <WaitingList book={book} />
 
@@ -688,43 +683,3 @@ function MissionPrepFoot({ step }: { readonly step: number }) {
     </div>
   )
 }
-
-function PastLessons({ lessons }: { lessons: readonly LessonRecord[] }) {
-  if (lessons.length === 0) return null
-
-  return (
-    <section className="flex flex-col gap-3 border-t border-hairline pt-6">
-      <h2 className="label m-0">Earlier lessons</h2>
-      <ul className="m-0 flex list-none flex-col gap-3 p-0">
-        {lessons.slice(0, 12).map((lesson) => (
-          <li
-            key={lesson.id}
-            className="flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-surface border border-hairline bg-surface-1 p-3"
-          >
-            <span className="font-display text-body font-medium">{lesson.label}</span>
-            <span className="tnum text-value text-ink-subtle">
-              {formatClock(lesson.startedAt)}
-              {lesson.endedAt && ` – ${formatClock(lesson.endedAt)}`}
-            </span>
-            <span className="tnum text-value text-ink-muted">
-              {lesson.readyAtStart} of {lesson.fleetSize} ready at the start
-            </span>
-            <span
-              className={cn(
-                'tnum ml-auto text-value',
-                lesson.incidents.length > 0 ? 'text-status-fault' : 'text-ink-subtle',
-              )}
-            >
-              {lesson.incidents.length === 0
-                ? 'No incidents'
-                : `${lesson.incidents.length} ${
-                    lesson.incidents.length === 1 ? 'incident' : 'incidents'
-                  }`}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-

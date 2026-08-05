@@ -600,7 +600,7 @@ function MissionPrep({
        */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="label rounded-pill border border-hairline px-2.5 py-0.5">
+          <span className="label rounded-pill bg-muted px-2.5 py-1 text-ink-subtle">
             {phaseLabel}
           </span>
           <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
@@ -616,6 +616,7 @@ function MissionPrep({
           selectedScenarioId={scenarioId}
           onSelect={(id) => onMissionChange(chooseScenario(lessonId, id))}
           locked={false}
+          bare
         />
       ) : null}
 
@@ -623,12 +624,13 @@ function MissionPrep({
         <MissionAreaEditor
           zones={zones}
           onChange={(next) => onMissionChange(setMissionZones(lessonId, next))}
+          bare
         />
       ) : null}
 
       {step === 3 ? (
         <>
-          <TeamsPanel book={book} drones={drones} />
+          <TeamsPanel book={book} drones={drones} bare />
           <SetMissionCraftButton
             lessonId={lessonId}
             craftIds={craftIds}
@@ -659,7 +661,7 @@ function MissionPrep({
 
       {step === 5 ? (
         <>
-          <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} />
+          <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} bare />
           {mission !== null && teams.length > 0 ? (
             <div className="flex flex-col gap-4">
               <h2 className="label m-0">Team briefs to print</h2>

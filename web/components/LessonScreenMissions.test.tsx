@@ -60,9 +60,9 @@ describe('mission set-up, one step at a time', () => {
     settle()
 
     expect(screen.getByText(/Step\s*1\s*of\s*12/)).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Mission Scenario' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Mission Scenario' })).toBeInTheDocument()
     // The next block is not underneath it waiting to be scrolled past.
-    expect(screen.queryByRole('heading', { name: 'Mission area' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Mission area' })).not.toBeInTheDocument()
   })
 
   /*
@@ -106,8 +106,8 @@ describe('mission set-up, one step at a time', () => {
     atStep(2)
     settle()
 
-    expect(screen.getByRole('heading', { name: 'Mission area' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Mission Scenario' })).not.toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Mission area' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Mission Scenario' })).not.toBeInTheDocument()
   })
 
   it('offers teams at step 3', () => {
@@ -115,7 +115,7 @@ describe('mission set-up, one step at a time', () => {
     atStep(3)
     settle()
 
-    expect(screen.getByRole('heading', { name: 'Mission teams' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Mission teams' })).toBeInTheDocument()
   })
 
   /*
@@ -156,7 +156,7 @@ describe('mission set-up, one step at a time', () => {
     settle()
 
     expect(
-      screen.getByRole('heading', { name: 'Mission rules and safety briefing' }),
+      screen.getByRole('region', { name: 'Mission rules and safety briefing' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Team briefs to print' })).toBeInTheDocument()
     expect(screen.getByLabelText(/Team brief: Red Team/i)).toBeInTheDocument()

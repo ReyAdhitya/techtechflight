@@ -5,7 +5,6 @@ import type { DroneId } from '@techtechflight/contract'
 import {
   awaitingClearance,
   grantClearance,
-  holdClearance,
   syncClearanceQueue,
   type ClearanceCraftInput,
   type ClearanceRequest,
@@ -16,9 +15,9 @@ import { cn } from '@/lib/utils'
 /**
  * The clearance queue — craft that entered *Awaiting clearance* on their own (ADR-0021).
  *
- * The Teacher grants takeoff or holds; nothing reaches the ground station. Mounting stays
- * with the Integrator; this panel takes state and craft rows so it can render under Control
- * without owning subscriptions. The count stays visible at zero (DELIBERATE-POSITIONS 3).
+ * The Teacher grants or holds; nothing reaches the ground station. Mounting stays with the
+ * Integrator; this panel takes state and craft rows so it can render under Control without
+ * owning subscriptions. The count stays visible at zero (DELIBERATE-POSITIONS 3).
  */
 
 export interface ClearanceQueueCraft {
@@ -30,7 +29,7 @@ export interface ClearanceQueueCraft {
 
 /** Empty copy — the queue vanishing would look like a layout bug, not information. */
 export const CLEARANCE_QUEUE_EMPTY =
-  'Nobody is awaiting clearance. Craft on this Mission enter the queue by themselves.'
+  'Nobody is awaiting clearance. Teams enter the queue when Ready, assigned and past pre-flight.'
 
 function craftLabel(entry: ClearanceQueueCraft): string {
   return entry.teamName ?? entry.droneName
@@ -61,14 +60,14 @@ export function ClearanceQueue({
   const inputs = craft.map((row) => row.input)
   const synced = syncClearanceQueue(state, inputs, now)
   const queue = awaitingClearance(inputs, synced)
-  const canAct = !disabled && grantedBy.trim() !== ''
+  const canGrant = !disabled && grantedBy.trim() !== ''
 
   useEffect(() => {
     if (synced !== state) onStateChange?.(synced)
   }, [state, synced, onStateChange])
 
   const grant = (request: ClearanceRequest) => {
-    if (!canAct) return
+    if (!canGrant) return
     const next = grantClearance(
       synced,
       request.droneId,
@@ -77,11 +76,6 @@ export function ClearanceQueue({
       now,
     )
     onStateChange?.(next)
-  }
-
-  const hold = (request: ClearanceRequest) => {
-    if (!canAct) return
-    onStateChange?.(holdClearance(synced, request.droneId, request.missionId, now))
   }
 
   return (
@@ -115,30 +109,17 @@ export function ClearanceQueue({
                     <span className="text-value text-ink-subtle">Flown by {row.studentName}</span>
                   ) : null}
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={!canAct}
-                    onClick={() => hold(request)}
-                    className={cn(
-                      'min-h-11 shrink-0 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink',
-                      'hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline',
-                    )}
-                  >
-                    Hold
-                  </button>
-                  <button
-                    type="button"
-                    disabled={!canAct}
-                    onClick={() => grant(request)}
-                    className={cn(
-                      'min-h-11 shrink-0 cursor-pointer rounded-pill border-0 bg-ink px-4 py-1.5 text-value font-medium text-canvas',
-                      'disabled:cursor-not-allowed disabled:bg-muted disabled:text-ink-muted',
-                    )}
-                  >
-                    Grant takeoff
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={!canGrant}
+                  onClick={() => grant(request)}
+                  className={cn(
+                    'min-h-11 shrink-0 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink',
+                    'hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline',
+                  )}
+                >
+                  Grant clearance
+                </button>
               </li>
             )
           })}

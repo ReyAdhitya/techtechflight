@@ -2,6 +2,7 @@
 
 import { useFleet } from './FleetProvider'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
+import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
 import { SeparationThresholdPanel } from './SeparationThresholdPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
@@ -33,6 +34,7 @@ export function SettingsScreen() {
     >
       <h1 className="m-0 font-display text-summary font-medium">Settings</h1>
 
+      <LogbookLocationNote />
 
       <ClassroomSetupPanel />
 
@@ -43,12 +45,12 @@ export function SettingsScreen() {
           <dt className="label self-center">Connection</dt>
           <dd className="m-0 text-value">
             {demo
-              ? 'Offline Fleet. No ground station is being contacted.'
+              ? 'Demonstration Fleet — no ground station is being contacted'
               : snapshot.connection === 'live'
                 ? 'Connected'
                 : snapshot.connection === 'connecting'
                   ? 'Connecting'
-                  : 'Cannot be reached. Retrying.'}
+                  : 'Cannot be reached — retrying'}
           </dd>
           <dt className="label self-center">Drones registered</dt>
           <dd className="tnum m-0 text-value">{snapshot.state?.drones.length ?? 0}</dd>

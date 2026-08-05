@@ -63,7 +63,6 @@ describe('where clearances live', () => {
           requestedAt: 1_000,
           grantedAt: null,
           grantedBy: null,
-          heldAt: null,
           endedAt: null,
         },
       ],

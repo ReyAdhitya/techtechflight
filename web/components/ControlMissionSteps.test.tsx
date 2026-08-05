@@ -122,7 +122,7 @@ describe('step 6, approving takeoff', () => {
    * The count stays visible at zero. A queue that vanishes when nobody is waiting reads as
    * a layout bug rather than as information (DELIBERATE-POSITIONS 3).
    */
-  it('fills the queue from the craft on the board when Teams are not built', () => {
+  it('keeps the queue on screen when nobody is waiting', () => {
     startLesson('Year 8', 6, 6, Date.now(), [])
     const lessonId = runningLesson(readLogbook())!.id
     chooseScenario(lessonId, 'search-rescue')
@@ -130,8 +130,7 @@ describe('step 6, approving takeoff', () => {
     control()
     settle()
 
-    expect(screen.getAllByRole('button', { name: /Grant takeoff/i }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: /^Hold$/i }).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Nobody is awaiting clearance/i)).toBeInTheDocument()
   })
 
   it('writes a granted clearance down', () => {
@@ -139,7 +138,7 @@ describe('step 6, approving takeoff', () => {
     control()
     settle()
 
-    const grant = screen.queryByRole('button', { name: /Grant takeoff/i })
+    const grant = screen.queryByRole('button', { name: /Grant clearance/i })
     expect(grant, 'nobody reached the queue').not.toBeNull()
 
     fireEvent.click(grant!)

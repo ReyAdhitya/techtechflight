@@ -125,7 +125,7 @@ function batteryReading(
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Confirm the craft is powered and in range.',
+      'No Telemetry yet — confirm the craft is powered and in range.',
     )
   }
   const fraction = telemetry.batteryFraction
@@ -176,7 +176,7 @@ function sensorsReading(telemetry: Telemetry | null): PreFlightSevenReading {
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Cannot verify sensors.',
+      'No Telemetry yet — cannot verify sensors.',
     )
   }
   if (telemetry.fault !== null) {
@@ -202,7 +202,7 @@ function wifiReading(telemetry: Telemetry | null): PreFlightSevenReading {
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Cannot verify the link.',
+      'No Telemetry yet — cannot verify the link.',
     )
   }
   if (!('linkQuality' in telemetry) || telemetry.linkQuality === undefined) {
@@ -222,7 +222,7 @@ function wifiReading(telemetry: Telemetry | null): PreFlightSevenReading {
       meta.label,
       meta.manual,
       'fail',
-      `Signal weak at ${percent}%. Move closer to the access point.`,
+      `Signal weak at ${percent}% — move closer to the access point.`,
     )
   }
   return reading(
@@ -242,7 +242,7 @@ function cameraReading(telemetry: Telemetry | null): PreFlightSevenReading {
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Cannot verify the camera.',
+      'No Telemetry yet — cannot verify the camera.',
     )
   }
   if (telemetry.camera === undefined) {
@@ -251,7 +251,7 @@ function cameraReading(telemetry: Telemetry | null): PreFlightSevenReading {
   if (telemetry.camera.streaming) {
     return reading(meta.id, meta.label, meta.manual, 'pass', 'Camera fitted and streaming.')
   }
-  return reading(meta.id, meta.label, meta.manual, 'pass', 'Camera fitted. Ready to start.')
+  return reading(meta.id, meta.label, meta.manual, 'pass', 'Camera fitted — ready to start.')
 }
 
 function altitudeHoldReading(telemetry: Telemetry | null): PreFlightSevenReading {
@@ -262,7 +262,7 @@ function altitudeHoldReading(telemetry: Telemetry | null): PreFlightSevenReading
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Cannot verify altitude hold.',
+      'No Telemetry yet — cannot verify altitude hold.',
     )
   }
   const raw = telemetry.extra?.altitudeHold
@@ -281,7 +281,7 @@ function altitudeHoldReading(telemetry: Telemetry | null): PreFlightSevenReading
       meta.label,
       meta.manual,
       'fail',
-      'Altitude hold is not ready. Check the flight controller.',
+      'Altitude hold is not ready — check the flight controller.',
     )
   }
   return reading(meta.id, meta.label, meta.manual, 'pass', 'Altitude hold ready.')
@@ -295,7 +295,7 @@ function obstacleReading(telemetry: Telemetry | null): PreFlightSevenReading {
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Cannot verify obstacle sensing.',
+      'No Telemetry yet — cannot verify obstacle sensing.',
     )
   }
   if (!('proximity' in telemetry)) {

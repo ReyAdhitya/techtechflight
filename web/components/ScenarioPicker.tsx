@@ -85,7 +85,12 @@ export function ScenarioPicker({
                 className={cn(
                   'flex h-full min-h-11 w-full cursor-pointer flex-col gap-3 rounded-sm border bg-canvas p-4 text-left',
                   'hover:border-ink-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink',
-                  selected ? 'border-ink' : 'border-hairline',
+                  /*
+                   * The chosen Scenario is the one decision the whole set-up hangs off, and
+                   * it is read at a glance on the way back to step 1. An ink border alone
+                   * was one hairline different from the other two cards.
+                   */
+                  selected ? 'border-brand bg-brand-wash ring-1 ring-brand' : 'border-hairline',
                   locked && 'cursor-not-allowed opacity-80',
                 )}
               >

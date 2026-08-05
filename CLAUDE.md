@@ -157,6 +157,14 @@ which reads records only, and **done is checked before open** so a step whose co
 holding does not read as never started. Lesson set-up is one step per screen via `?step=`, so
 `/lesson` needs its `Suspense` boundary.
 
+**Lesson is the Mission and the period, and nothing else.** Set the Mission up, start or end
+the period. Everything that used to sit under the steps now lives on the screen whose
+question it answers: Fleet health craft by craft is the **Fleet** board's (one line stays on
+Lesson saying whether the period can run, linking to `/`), finished Lessons and the remedial
+queue are **Reports**', pack-down is **Control** step 11, the Mission briefing is step 5, and
+where records are stored is said on **Settings** alone. Before adding a block to Lesson, ask
+which screen already answers it — two screens holding one list means one of them is stale.
+
 **A Mission is a side key, not a Logbook row.** `techtechflight:mission-draft` holds the
 Scenario, the zones and the craft; `techtechflight:clearances` holds takeoff clearances. Both
 are keyed by Lesson id, and a Mission planned before Start is adopted by the Lesson that starts

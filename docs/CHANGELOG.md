@@ -5,6 +5,17 @@ would notice.
 
 ## Unreleased
 
+### Changed
+
+- **Lesson answers one question: set this Mission up, and start or end the period.**
+  Everything else it carried moved to the screen whose question it answers, or went because
+  that screen already answered it. Fleet health, craft by craft, is the **Fleet** board's;
+  one line stays on Lesson saying whether the period can run, and links there. Finished
+  Lessons and the remedial queue are **Reports**'. Pack-down is **Control** step 11, under
+  the confirmation that ends the Mission. The second copy of the Mission briefing goes;
+  step 5 is the one the rail points at. Where records are stored is said on **Settings**
+  alone, not on four screens.
+
 ### Removed
 
 - **Run bar (“Step N of 12”).** Gone from the app frame — no step banner above Control.

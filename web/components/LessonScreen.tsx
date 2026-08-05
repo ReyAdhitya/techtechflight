@@ -71,12 +71,28 @@ import { readPreFlightSeven } from '@/lib/preflight-seven'
 import type { FleetSnapshot } from '@/lib/fleet-link'
 
 /**
- * The lesson, from the check before it to the summary after it.
+ * Set this Mission up, and start or end the period. That is the whole screen.
  *
- * This is the workflow the board was always implying and never quite supported. A
- * Teacher does not glance at a status board out of curiosity — they glance at it at
- * 08:55 to find out whether the next hour is going to work, and again afterwards to find
- * out what broke. Everything here is built around those two moments.
+ * It used to be the whole day: Fleet health with a craft-by-craft fault list, finished
+ * Lessons, the remedial queue, pack-down, a second copy of the Mission briefing, and two
+ * paragraphs on where records are stored. Every one of those answered a question another
+ * screen already owns, so a Teacher at 08:55 read past four blocks to reach the step they
+ * came for, and each block was a second place for the same fact to go stale.
+ *
+ * Where they went, and why each one is that screen's question rather than this one's:
+ *
+ * - Fleet health, craft by craft → the Fleet board, which lists every Drone with its
+ *   Status and fault. One line survives here, because "can the period run" is a question
+ *   about the period. It links to the list.
+ * - Finished Lessons → Reports (`LessonReports`), which already listed the same fields
+ *   from the same filter.
+ * - The remedial queue → Reports, beside the record of what happened.
+ * - Pack-down → Control step 11, under the confirmation that ends the Mission.
+ * - The second Mission briefing → step 5, which is the one the rail points at.
+ * - Where records live → Settings, which is where a Teacher goes to ask.
+ *
+ * What is left is the step pane, one line of Fleet health, which craft are in this period
+ * (`LessonPrepPanel`), and starting or ending it.
  */
 export function LessonScreen() {
   const { snapshot, now, vitals } = useFleet()

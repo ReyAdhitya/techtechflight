@@ -34,7 +34,14 @@ export interface MissionFlowStep {
   /** One sentence on why the step exists, above the controls. */
   readonly why: string
   readonly phase: MissionPhaseId
-  /** Where the work lives. Set-up on Lesson, flying on Control, the debrief on Reports. */
+  /**
+   * Where the work lives. Set-up on Lesson, flying on Control, the debrief on Reports.
+   *
+   * The step number is in the query, and it has to be. The in-the-air steps all pointed at
+   * a bare `/control`, which reads the step from the records when the URL does not say —
+   * so pressing Telemetry, or Commands, or Alerts in the rail put the Teacher back on
+   * whichever step the records implied and there was no way to reach the other three.
+   */
   readonly href: string
   /** The one thing to do while this step is where the Teacher is. */
   readonly nextAction: string
@@ -92,7 +99,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     title: 'Approve takeoff',
     why: 'A team that is Ready, on a craft and past pre-flight enters the queue by itself. You grant or hold, and the Students still fly by hand.',
     phase: 'in-the-air',
-    href: '/control',
+    href: '/control?step=6',
     nextAction: 'Grant or hold each team waiting to launch.',
   },
   {
@@ -101,7 +108,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     title: 'Watch the airspace',
     why: 'Plan view in the Fleet’s own frame, with the zones you drew and the trail each craft has flown.',
     phase: 'in-the-air',
-    href: '/control',
+    href: '/control?step=7',
     nextAction: 'Watch the Scope for craft leaving the Mission Zone.',
   },
   {
@@ -110,7 +117,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     title: 'Read one craft closely',
     why: 'The numbers and the picture together, because a battery reading means something different when you can see what the craft is over.',
     phase: 'in-the-air',
-    href: '/control',
+    href: '/control?step=8',
     nextAction: 'Read a craft closely when its numbers look wrong.',
   },
   {
@@ -119,7 +126,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     title: 'Send what only you can send',
     why: 'Five things reach the aircraft. The rest are instructions you record, so they work on real hardware too.',
     phase: 'in-the-air',
-    href: '/control',
+    href: '/control?step=9',
     nextAction: 'Land, Hover, Recall or Stop when a team needs help.',
   },
   {
@@ -128,7 +135,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     title: 'Work the Alert at the top',
     why: 'One focused Alert with the responses already worked out, and the rest of the queue folded away.',
     phase: 'in-the-air',
-    href: '/control',
+    href: '/control?step=10',
     nextAction: 'Work the Alert at the top of the Attention bar.',
   },
   {
@@ -137,7 +144,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     title: 'Confirm the Mission complete',
     why: 'Seals the Mission and its score. It refuses while anything is still in the air, and that refusal is the point of the step.',
     phase: 'close-down',
-    href: '/control',
+    href: '/control?step=11',
     nextAction: 'Confirm the Mission once every craft is down.',
   },
   {

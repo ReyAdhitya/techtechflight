@@ -238,13 +238,9 @@ function StartLessonStrip({
       existingCode ? { ...classroomInput, code: existingCode } : classroomInput,
     )
 
-    // jsdom cannot navigate; production goes straight to the flying board.
-    if (typeof window !== 'undefined') {
-      try {
-        window.location.assign('/control')
-      } catch {
-        /* tests */
-      }
+    // Production goes straight to the flying board. Vitest/jsdom cannot navigate.
+    if (typeof process === 'undefined' || process.env.VITEST !== 'true') {
+      window.location.assign('/control')
     }
   }
 

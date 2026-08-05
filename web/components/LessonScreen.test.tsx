@@ -58,14 +58,14 @@ describe('starting a lesson with nothing filled in', () => {
     screenUnderTest()
     settle()
 
-    expect(screen.getByRole('button', { name: /Start now/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeEnabled()
   })
 
   it('starts, with no name, no Students and no Exercises', () => {
     screenUnderTest()
     settle()
 
-    fireEvent.click(screen.getByRole('button', { name: /Start now/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
 
     const lesson = runningLesson(readLogbook())
     expect(lesson).not.toBeNull()
@@ -79,7 +79,7 @@ describe('starting a lesson with nothing filled in', () => {
     screenUnderTest()
     settle()
 
-    fireEvent.click(screen.getByRole('button', { name: /Start now/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
     settle()
 
     expect(screen.getByRole('link', { name: /Flight Control Center/i })).toHaveAttribute(

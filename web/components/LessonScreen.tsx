@@ -35,10 +35,7 @@ import { AssignmentColumn } from './AssignmentColumn'
 import { AssignmentUndoButton } from './AssignmentUndoButton'
 import { BatteryOnChargeTick } from './BatteryOnChargeTick'
 import { CraftReturnedTick } from './CraftReturnedTick'
-import { ExerciseList } from './ExerciseList'
-import { LessonPlanWizard } from './LessonPlanWizard'
 import { LessonPrepPanel } from './LessonPrepPanel'
-import { LessonTemplatesPack } from './LessonTemplatesPack'
 import { PackdownChecklist } from './PackdownChecklist'
 import { SafetyBriefPanel } from './SafetyBriefPanel'
 import { SwapPupilsControl } from './SwapPupilsControl'
@@ -352,8 +349,6 @@ function PreFlight({
 
       <LessonPrepPanel drones={drones} book={book} />
 
-      <SafetyBriefPanel lessonId={null} />
-
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <AssignEveryoneButton
@@ -407,20 +402,6 @@ function PreFlight({
           </div>
         )}
       </div>
-
-      <LessonPlanWizard
-        label={label}
-        onLabelChange={setLabel}
-        exercises={exercises}
-        onExercisesChange={setExercises}
-        usableCount={usable.length}
-        fleetSize={drones.length}
-        onStart={() =>
-          startLesson(label, usable.length, drones.length, now || Date.now(), exercises)
-        }
-      />
-      <LessonTemplatesPack onPick={() => {}} />
-      <ExerciseList exercises={exercises} onChange={setExercises} />
 
       <div className="flex flex-col gap-2 border-t border-hairline pt-5">
         {ready === 0 && vitals.length > 0 && (
@@ -508,8 +489,6 @@ function LessonUnderWay({
         Monitor from the Flight Control Center. Every item requiring action is listed there, in
         the order it requires action, and the lesson is ended from there.
       </p>
-
-      <SafetyBriefPanel lessonId={lesson.id} />
 
       <MissionBriefing lessonId={lesson.id} scenarioId={null} />
 
@@ -667,6 +646,9 @@ function MissionPrep({
       {step === 5 ? (
         <>
           <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} bare />
+          {/* The classroom rules, which are a different list from the Mission rules and
+              used to sit on this screen twice over. */}
+          <SafetyBriefPanel lessonId={lessonId} />
           {mission !== null && teams.length > 0 ? (
             <div className="flex flex-col gap-4">
               <h2 className="label m-0">Team briefs to print</h2>

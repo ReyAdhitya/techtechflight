@@ -37,7 +37,6 @@ import { SafetyBriefPanel } from './SafetyBriefPanel'
 import { WaitingList } from './WaitingList'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
-import { LogbookLocationNote } from './LogbookLocationNote'
 import { BeforeAfterScores } from './BeforeAfterScores'
 import { LessonWarmUp } from './LessonWarmUp'
 import { StatusGlyph } from './StatusBadge'
@@ -144,7 +143,6 @@ export function LessonScreen() {
       tabIndex={-1}
       className={cn(READING_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
-      <LogbookLocationNote />
 
       <div className="flex items-start gap-5">
         <StepRail

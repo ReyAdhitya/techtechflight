@@ -14,12 +14,14 @@ import {
 import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
 import {
   evaluatePreFlightSeven,
+  LINK_QUALITY_WEAK,
   preFlightSevenDoneCount,
   preFlightSevenStatusWord,
   propellersTicked,
   readPreFlightSeven,
   type PreFlightSevenReading,
 } from '@/lib/preflight-seven'
+import { formatAge } from '@/lib/age'
 import { useFleet } from './FleetProvider'
 import { cn } from '@/lib/utils'
 
@@ -168,6 +170,8 @@ function MissionBrief({
     <StudentFrame>
       <IdentityLine seat={seat} />
 
+      <AmIConnected seat={seat} />
+
       <h1 className="m-0 max-w-[24ch] font-display text-summary font-medium text-balance text-ink">
         {session.objective.trim() === ''
           ? 'Your Teacher has not set the objective yet.'
@@ -180,6 +184,102 @@ function MissionBrief({
 
       <AskToTakeOff seat={seat} session={session} onSession={onSession} />
     </StudentFrame>
+  )
+}
+
+/**
+ * Two questions a Student asks before anything else, answered in words.
+ *
+ * Poster step 4. Am I joined to the Teacher's board, and is my craft actually talking. A
+ * frozen screen and a working screen look identical, so the age of the last reading is the
+ * answer to the first; a craft that is not reporting is the answer to the second, and it
+ * shows **no figure at all** rather than a stale one dressed as live.
+ *
+ * Shape as well as colour on both, because colour is never the only channel (ADR-0004).
+ */
+function AmIConnected({ seat }: { readonly seat: ClassroomSeat }) {
+  const { snapshot, vitals, now } = useFleet()
+
+  const boardAgeMs = snapshot.receivedAt === null ? null : Math.max(0, now - snapshot.receivedAt)
+  const mine = vitals.find((entry) => entry.droneId === seat.droneId) ?? null
+  const telemetry =
+    snapshot.state?.drones.find((drone) => drone.id === seat.droneId)?.telemetry ?? null
+  const reporting = mine !== null && telemetry !== null
+
+  const link = telemetry?.linkQuality
+  const battery = mine?.batteryFraction ?? null
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      <StatusLine
+        ok={boardAgeMs !== null}
+        label="The Teacher's board"
+        says={
+          boardAgeMs === null
+            ? 'Not reaching it yet.'
+            : `Joined. Last heard ${formatAge(boardAgeMs)}.`
+        }
+      />
+      <StatusLine
+        ok={reporting}
+        label={seat.droneName ?? 'Your craft'}
+        says={
+          seat.droneId === null
+            ? 'You do not have a craft yet.'
+            : !reporting
+              ? 'Not reporting. Tell your Teacher.'
+              : null
+        }
+      >
+        {reporting ? (
+          <span className="flex flex-wrap gap-x-4 gap-y-1 text-value text-ink-subtle">
+            {battery === null ? (
+              <span>Charge not reported</span>
+            ) : (
+              <span>
+                <span className="tnum">{Math.round(battery * 100)}</span>% charge
+              </span>
+            )}
+            {link === undefined ? (
+              <span>Signal not reported</span>
+            ) : (
+              <span>{link < LINK_QUALITY_WEAK ? 'Signal weak' : 'Signal strong'}</span>
+            )}
+          </span>
+        ) : null}
+      </StatusLine>
+    </div>
+  )
+}
+
+function StatusLine({
+  ok,
+  label,
+  says,
+  children,
+}: {
+  readonly ok: boolean
+  readonly label: string
+  readonly says?: string | null
+  readonly children?: React.ReactNode
+}) {
+  return (
+    <div className="flex min-w-0 flex-1 items-start gap-3 rounded-surface border border-hairline bg-surface-1 px-4 py-3">
+      <span
+        aria-hidden="true"
+        className={cn(
+          'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-pill border text-label',
+          ok ? 'border-ink bg-ink text-canvas' : 'border-status-not-ready text-status-not-ready',
+        )}
+      >
+        {ok ? '✓' : '!'}
+      </span>
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="font-display text-value font-medium text-ink">{label}</span>
+        {says ? <span className="text-value text-ink-subtle">{says}</span> : null}
+        {children}
+      </span>
+    </div>
   )
 }
 

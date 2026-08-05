@@ -143,6 +143,33 @@ describe('the brief', () => {
     expect(screen.getByText('Stay inside the Mission Zone.')).toBeInTheDocument()
   })
 
+  /*
+   * Poster step 4, and the reason a figure is never invented: a frozen screen and a working
+   * screen look identical, so the age of the last reading is what says which this is.
+   */
+  it('says whether the board and the craft are actually there', () => {
+    seatPriya()
+
+    expect(screen.getByText(/^The Teacher's board$/)).toBeInTheDocument()
+    expect(screen.getByText(/Joined\. Last heard/)).toBeInTheDocument()
+  })
+
+  it('shows no figure for a craft that is not reporting', () => {
+    seatPriya()
+    const session = readClassroomSession()!
+    const seat = session.seats[0]!
+    // A craft the Fleet has never heard of. The screen must say so and print nothing.
+    assignSeatCraft(session, seat.studentId, 'ttf-9999', 'Drone 9')
+
+    cleanup()
+    studentScreen()
+    settle()
+
+    expect(screen.getByText(/Not reporting\. Tell your Teacher\./)).toBeInTheDocument()
+    expect(screen.queryByText(/% charge/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Signal (weak|strong)/)).not.toBeInTheDocument()
+  })
+
   it('says the Teacher has not given them a craft yet, rather than inventing one', () => {
     seatPriya()
 
@@ -168,7 +195,8 @@ describe('the brief', () => {
     settle()
 
     expect(screen.getByRole('heading', { name: 'Before you fly' })).toBeInTheDocument()
-    expect(screen.getByText('Drone 1')).toBeInTheDocument()
+    // Named twice on purpose: once on the identity line, once as the craft that is reporting.
+    expect(screen.getAllByText('Drone 1')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Ask to take off' })).toBeInTheDocument()
   })
 })

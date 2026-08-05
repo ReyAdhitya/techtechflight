@@ -25,7 +25,6 @@ import {
   markAbsentAndFreeCraft,
   type AbsentReassignResult,
 } from '@/lib/absent-reassign'
-import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 import { BatteryOnChargeTick } from './BatteryOnChargeTick'
 import { CraftReturnedTick } from './CraftReturnedTick'
@@ -37,12 +36,7 @@ import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { BeforeAfterScores } from './BeforeAfterScores'
 import { LessonWarmUp } from './LessonWarmUp'
-import { StatusGlyph } from './StatusBadge'
-import {
-  readyBoardLabel,
-  readyBoardSummary,
-  READY_BOARD_PRESENTATION,
-} from './walls/ready-mapping'
+import { readyBoardLabel, readyBoardSummary } from './walls/ready-mapping'
 import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
 import { LessonBookmarkControl } from './LessonBookmarkControl'
@@ -219,111 +213,41 @@ function PreFlight({
     (drone) => needsAttention(drone.status) && !withheldIds.has(drone.id),
   )
   const readyLabels = vitals.map(readyBoardLabel)
-  const { ready, notReady } = readyBoardSummary(readyLabels)
+  const { ready } = readyBoardSummary(readyLabels)
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h2 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
-          <span className="tnum tracking-[-0.02em]">{usable.length}</span>
-          <span className="text-heading text-ink-subtle">
-            of {drones.length} serviceable
+      {/*
+       * Fleet health in one line, and then out of the way.
+       *
+       * This block used to be the serviceable headline, a ready / not-ready count, and a
+       * list of every craft standing in the way. All three answered "what is wrong with
+       * the Fleet", which is the question the Fleet board exists for and answers better:
+       * it lists every Drone with its Status and its fault. Two screens holding the same
+       * list means one of them is stale, and a Teacher at 08:55 reading past it to reach
+       * the step they came for.
+       *
+       * What survives is the one thing they need before the period: can this run. The
+       * numbers are said in words as well as digits, and the line is the way to the list.
+       */}
+      <Link
+        href="/"
+        prefetch={false}
+        className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-value text-ink no-underline hover:underline"
+      >
+        <span>
+          <span className="tnum">{usable.length}</span> of{' '}
+          <span className="tnum">{drones.length}</span> serviceable
+        </span>
+        {blocking.length > 0 ? (
+          <span className="text-status-not-ready">
+            <span className="tnum">{blocking.length}</span>
+            {blocking.length === 1 ? ' needs attention' : ' need attention'}
           </span>
-        </h2>
-        <p className="m-0 text-body text-ink-muted">
-          {usable.length === 0
-            ? 'None serviceable yet. The list below is what stands in the way.'
-            : `Sufficient for ${usable.length} ${usable.length === 1 ? 'Student' : 'Students'} airborne at once.`}
-        </p>
-      </div>
-
-      {vitals.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="label m-0">Pre-flight check</h2>
-          <p className="m-0 font-display text-summary font-medium text-ink">
-            <span className="tnum">{ready}</span>
-            {' ready · '}
-            <span className="tnum">{notReady}</span>
-            {' not ready'}
-          </p>
-          {notReady > 0 && (
-            <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {vitals.map((entry) => {
-                const boardLabel = readyBoardLabel(entry)
-                if (boardLabel === 'Ready') return null
-                const presentation = READY_BOARD_PRESENTATION[boardLabel]
-                return (
-                  <li key={entry.droneId}>
-                    <Link
-                      prefetch={false}
-                      href={`/drone?id=${encodeURIComponent(entry.droneId)}`}
-                      className={cn(
-                        'flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-2 bg-surface-1 py-3 pl-3 pr-4 no-underline',
-                        boardLabel === 'Fault' ? 'border-status-fault' : 'border-status-not-ready',
-                      )}
-                    >
-                      <span className="font-display text-body font-medium text-ink">
-                        {entry.callsign}
-                      </span>
-                      <span
-                        className={cn(
-                          'inline-flex items-center gap-2 text-value',
-                          presentation.className,
-                        )}
-                      >
-                        <StatusGlyph shape={presentation.shape} />
-                        {presentation.label}
-                      </span>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {blocking.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h2 className="label m-0">Standing in the way</h2>
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {blocking.map((drone) => (
-              <li key={drone.id}>
-                <Link
-                  prefetch={false}
-                  href={`/drone?id=${encodeURIComponent(drone.id)}`}
-                  className={cn(
-                    // py-3 rather than py-2: at py-2 the row came to 41px, just under the
-                    // 44px a finger needs, and this is the list a Teacher works through.
-                    'flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-2 bg-surface-1 py-3 pl-3 pr-4 no-underline',
-                    drone.status === 'Fault' ? 'border-status-fault' : 'border-status-not-ready',
-                  )}
-                >
-                  <span className="font-display text-body font-medium text-ink">
-                    {drone.name}
-                  </span>
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-2 text-value',
-                      drone.status === 'Fault'
-                        ? 'text-status-fault'
-                        : 'text-status-not-ready',
-                    )}
-                  >
-                    <StatusGlyph shape={STATUS_PRESENTATION[drone.status].shape} />
-                    {STATUS_PRESENTATION[drone.status].label}
-                  </span>
-                  <span className="text-value text-ink-subtle">
-                    {drone.status === 'Not Ready'
-                      ? 'Place on charge. Projected serviceable before the lesson.'
-                      : 'Withdraw from service. Not projected serviceable before the lesson.'}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        ) : (
+          <span className="text-ink-subtle">nothing needs attention</span>
+        )}
+      </Link>
 
       {withheld.length > 0 && (
         <p className="m-0 text-value text-ink-subtle">

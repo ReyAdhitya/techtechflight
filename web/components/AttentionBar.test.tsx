@@ -33,13 +33,13 @@ describe('when nothing needs the Teacher', () => {
   it('says so, rather than showing an empty space', () => {
     bar([aVitals()])
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('0')
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('0')
     expect(screen.getByText(/No items require action/i)).toBeInTheDocument()
   })
 
   it('still shows the count, so its return is a number changing', () => {
     bar([aVitals()])
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument()
   })
 })
 
@@ -64,7 +64,7 @@ describe('when several things need the Teacher', () => {
 
   it('counts every one of them', () => {
     bar(busy)
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('3')
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('3')
   })
 
   it('puts the worst Alert on a compact focused card, not only in a disclosure summary', () => {

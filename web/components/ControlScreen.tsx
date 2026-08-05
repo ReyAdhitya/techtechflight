@@ -1107,9 +1107,9 @@ function MissionStepHead({ step }: { readonly step: number }) {
         </span>
         <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
       </div>
-      <h2 className="m-0 font-display text-heading font-medium text-balance">
+      <h1 className="m-0 font-display text-heading font-medium text-balance">
         {definition.title}
-      </h2>
+      </h1>
       <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition.why}</p>
     </div>
   )

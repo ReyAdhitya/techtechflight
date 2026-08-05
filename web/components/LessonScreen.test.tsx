@@ -16,7 +16,12 @@ import * as readyMapping from './walls/ready-mapping'
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+// The Lesson screen reads its set-up step from `?step=`.
+const search = vi.hoisted(() => ({ current: new URLSearchParams() }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useSearchParams: () => search.current,
+}))
 
 const settle = () =>
   act(() => {

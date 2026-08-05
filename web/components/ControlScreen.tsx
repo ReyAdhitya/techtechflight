@@ -8,6 +8,7 @@ import {
   clearStudents,
   firstUnassignedDrone,
   nextRosterNameForAssign,
+  studentIdOf,
   studentOf,
   swapStudentAssignments,
   currentExercise,
@@ -60,8 +61,21 @@ import { PresenceBadge } from './PresenceBadge'
 import { Scope } from './Scope'
 import { MaintenanceFlag } from './MaintenanceFlag'
 import { ControlDisclosure } from './ControlDisclosure'
+import { ClearanceQueue, type ClearanceQueueCraft } from './ClearanceQueue'
+import { ConfirmMissionComplete } from './ConfirmMissionComplete'
+import { StepRail } from './StepRail'
 import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
+import { readClearances, writeClearances } from '@/lib/clearance-store'
+import type { ClearanceState } from '@/lib/clearance'
+import { emptyClearanceState } from '@/lib/clearance'
+import { putMission, readMission, startMission } from '@/lib/mission-draft'
+import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
+import type { Mission } from '@/lib/mission'
+import { scenarioOrUnknown } from '@/lib/mission-scenarios'
+import { readPreFlightSeven, propellersTicked } from '@/lib/preflight-seven'
+import { readTeams, teamForStudent } from '@/lib/teams'
+import { isMissionBriefingComplete, readMissionBriefing } from './MissionBriefing'
 
 /**
  * The Flight Control Center: calm while the Mission runs.
@@ -81,6 +95,11 @@ export function ControlScreen() {
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
+  const [railOpen, setRailOpen] = useState(true)
+  // The Mission and its clearances are read on mount, not in an initialiser: the server
+  // render has no localStorage and must not disagree with the first client paint.
+  const [mission, setMission] = useState<Mission | null>(null)
+  const [clearances, setClearances] = useState<ClearanceState>(() => emptyClearanceState())
   const airborneTracker = useRef(new AirborneTracker())
   const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
   const ceilingLessonId = useRef<string | null>(null)
@@ -108,6 +127,23 @@ export function ControlScreen() {
     if (!state) return
     setGhostPaths((current) => recordGhostPaths(current, state.drones, now))
   }, [state, now])
+
+  const lessonId = lesson?.id ?? null
+  useEffect(() => {
+    /*
+     * Arriving here with a Mission is what "under way" means. The clearance queue fills
+     * itself from eligibility (ADR-0021) and eligibility requires an active Mission, so
+     * waiting for the first grant to start it would leave the queue permanently empty.
+     * Nothing about this reaches an aircraft.
+     */
+    const found = readMission(lessonId)
+    setMission(
+      found !== null && lessonId !== null && found.startedAt === null
+        ? (startMission(lessonId, Date.now()) ?? found)
+        : found,
+    )
+    setClearances(readClearances(lessonId))
+  }, [lessonId])
 
   useEffect(() => {
     if (!lesson) {
@@ -148,6 +184,54 @@ export function ControlScreen() {
       : (state.drones.find((drone) => drone.id === cameraDroneId) ?? null)
   const boardDroneIds = state.drones.map((drone) => drone.id)
   const nextRosterName = nextRosterNameForAssign(book)
+
+  /*
+   * Step 6 and step 11 of the Mission run, which were built, tested and never mounted.
+   * Both are records rather than Commands (ADR-0021): granting a clearance is the
+   * Teacher's answer on record, and confirming completion seals what was observed.
+   */
+  const teams = readTeams()
+  const preFlight = readPreFlightSeven(lessonId)
+  const missionCraft = missionCraftIds(teams, mission)
+
+  const clearanceCraft: readonly ClearanceQueueCraft[] = state.drones
+    .filter((drone) => missionCraft.includes(drone.id))
+    .map((drone) => {
+      const studentId = studentIdOf(book, drone.id)
+      return {
+        input: {
+          droneId: drone.id,
+          status: drone.status,
+          studentId,
+          // The Teacher's own tick is the part of pre-flight the board cannot see, and
+          // it is the part that says a human looked at the airframe.
+          preFlightDone: propellersTicked(preFlight, drone.id),
+          mission,
+        },
+        droneName: drone.name,
+        teamName: studentId === null ? null : (teamForStudent(teams, studentId)?.name ?? null),
+        studentName: studentOf(book, drone.id),
+      }
+    })
+
+  const missionFacts = missionFlowFactsFrom({
+    mission,
+    teams,
+    preFlight,
+    briefed: isMissionBriefingComplete(readMissionBriefing(lessonId)),
+    clearances,
+    telemetryFor: (droneId) =>
+      state.drones.find((drone) => drone.id === droneId)?.telemetry ?? null,
+    anyAirborne: airborneCount > 0,
+  })
+
+  const missionCraftStatus = state.drones
+    .filter((drone) => missionCraft.includes(drone.id))
+    .map((drone) => ({
+      droneId: drone.id,
+      droneName: drone.name,
+      airborne: vitals.find((entry) => entry.droneId === drone.id)?.airborne === true,
+    }))
   const assignTargetDroneId =
     selected !== null && studentOf(book, selected) === null
       ? selected
@@ -180,8 +264,15 @@ export function ControlScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
+      className={cn(INSTRUMENT_FRAME, 'flex items-start gap-5 p-4 min-[26rem]:p-8')}
     >
+      <StepRail
+        facts={missionFacts}
+        open={railOpen}
+        onToggle={() => setRailOpen((was) => !was)}
+      />
+
+      <div className="flex min-w-0 flex-1 flex-col gap-6">
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
@@ -218,6 +309,16 @@ export function ControlScreen() {
           <LongestAirborne now={now} craft={longestAirborneCraft} />
         </div>
       </ControlDisclosure>
+
+      {mission !== null ? (
+        <ClearanceQueue
+          state={clearances}
+          craft={clearanceCraft}
+          grantedBy="Teacher"
+          now={now}
+          onStateChange={(next) => setClearances(writeClearances(lessonId, next))}
+        />
+      ) : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
@@ -398,6 +499,27 @@ export function ControlScreen() {
         </ul>
       </section>
 
+      {mission !== null && mission.startedAt !== null ? (
+        <section className="flex flex-col gap-3 border-t border-hairline pt-5">
+          <h2 className="label m-0">Mission complete</h2>
+          <ConfirmMissionComplete
+            mission={mission}
+            craft={missionCraftStatus}
+            judges={scenarioOrUnknown(mission.scenarioId).judges}
+            /*
+             * Only what the board actually watched. Everything it did not measure stays
+             * absent rather than defaulting to true, so an unknown scores as unknown.
+             */
+            evidence={{
+              hadCollision: null,
+              noFlyViolations: null,
+              routeCoverageKnown: null,
+            }}
+            onConfirmed={(sealed) => setMission(putMission(lessonId, sealed))}
+          />
+        </section>
+      ) : null}
+
       {cameraDrone && (
         <CameraSlide
           droneId={cameraDrone.id}
@@ -407,7 +529,7 @@ export function ControlScreen() {
           onClose={() => setCameraDroneId(null)}
         />
       )}
-
+      </div>
     </main>
   )
 }

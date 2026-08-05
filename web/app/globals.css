@@ -813,6 +813,83 @@
       transform: none;
     }
   }
+
+  /*
+   * The Mission step rail.
+   *
+   * A twelve-step left rail shipped once and was withdrawn the same day, because it was a
+   * second navigation that was always there and could not be put away. The width here is
+   * the answer to that: the rail minimises to its numbers, and the Teacher decides. It
+   * animates on `width` alone, with the shared chrome easing, so nothing beside it reflows
+   * on a different curve.
+   *
+   * jsdom has no layout engine, so `StepRail.test.tsx` reads these declarations rather
+   * than trusting a render.
+   */
+  .step-rail {
+    flex: 0 0 auto;
+    width: 18.5rem;
+    overflow: hidden;
+    transition: width var(--chrome-duration) var(--chrome-ease);
+  }
+
+  .step-rail[data-open='false'] {
+    width: 4.25rem;
+  }
+
+  /* Minimised, every step is its number. The names arrive through `title`. */
+  .step-rail[data-open='false'] .step-rail__text,
+  .step-rail[data-open='false'] .step-rail__phase {
+    display: none;
+  }
+
+  .step-rail[data-open='false'] .step-rail__step {
+    justify-content: center;
+  }
+
+  .step-rail__toggle svg {
+    transition: transform var(--chrome-duration) var(--chrome-ease);
+  }
+
+  .step-rail[data-open='false'] .step-rail__toggle svg {
+    transform: rotate(180deg);
+  }
+
+  /*
+   * Narrow: the rail leaves the flow entirely and slides over the board. Squeezing a
+   * board that is already short of width is worse than covering it for a moment.
+   */
+  @media (max-width: 60rem) {
+    .step-rail {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+      width: 18.5rem;
+      transform: translateX(-100%);
+      transition: transform var(--chrome-duration) var(--chrome-ease);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .step-rail[data-open='true'] {
+      transform: none;
+    }
+
+    .step-rail[data-open='false'] {
+      width: 18.5rem;
+    }
+
+    .step-rail[data-open='false'] .step-rail__text,
+    .step-rail[data-open='false'] .step-rail__phase {
+      display: block;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .step-rail,
+    .step-rail__toggle svg {
+      transition: none;
+    }
+  }
 }
 
 /*

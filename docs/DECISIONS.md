@@ -9,6 +9,14 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-05 — One deploy, Teacher or Student at the door.
+
+- **Decision / notes:** Students use the same Vercel URL. `/enter` picks role. Student
+  chrome is `/student` with a classroom code into the Teacher's live Mission. Clearances
+  on Control unlock Student takeoff. ADR-0025.
+- **Could have gone differently:** A second Student deploy. Rejected — two URLs and two
+  sync secrets for one classroom period.
+
 ## 2026-08-05 — Approve takeoff fills from the craft, not from team paperwork.
 
 - **Decision / notes:** Step 6 used to wait for Ready + assigned Student + pre-flight tick

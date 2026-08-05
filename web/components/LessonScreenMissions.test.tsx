@@ -69,16 +69,25 @@ describe('mission set-up, one step at a time', () => {
    * The step is the screen. It was briefly a header on top of the old long page, with
    * serviceable counts, the plan wizard, assignment and Start the lesson all still stacked
    * underneath, which is exactly the scroll the twelve steps exist to replace.
+   *
+   * The answer was a disclosure summarised "Start a Lesson, and the rest of the day",
+   * carried on every step. Carried is the part that was wrong: on step 4 it read as a
+   * drawer of unexplained work under the one thing the Teacher was being asked to do. It
+   * is the top of the day, so it belongs on step 1 and nowhere else.
    */
-  it('puts the rest of the Lesson away rather than under the step', () => {
+  it('keeps the rest of the day on step 1, in the open', () => {
     atStep(1)
     settle()
 
-    expect(
-      screen.getByText(/Start a Lesson, and the rest of the day/i),
-    ).toBeInTheDocument()
-    // Start the lesson is still reachable, just not stacked under the step.
+    expect(screen.queryByText(/Start a Lesson, and the rest of the day/i)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeInTheDocument()
+  })
+
+  it('leaves the rest of the day off the later steps entirely', () => {
+    atStep(2)
+    settle()
+
+    expect(screen.queryByRole('button', { name: /Start the lesson/i })).not.toBeInTheDocument()
   })
 
   it('names the step as the work, not as the noun the rail uses', () => {

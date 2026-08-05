@@ -70,7 +70,6 @@ import {
 } from './MissionBriefing'
 import { TeamBriefPrint } from './TeamBriefPrint'
 import { StepRail } from './StepRail'
-import { ControlDisclosure } from './ControlDisclosure'
 import type { Mission } from '@/lib/mission'
 import { readTeams } from '@/lib/teams'
 import {
@@ -178,21 +177,27 @@ export function LessonScreen() {
           {/*
            * Everything the Lesson is besides the Mission: whether the Fleet is
            * serviceable, who is flying what, starting and ending the period, pack-down,
-           * and what happened last week. All real work, none of it the step in front of
-           * the Teacher right now, so it folds away rather than turning the step back
-           * into the top of a long page.
+           * and what happened last week.
+           *
+           * It used to fold into a disclosure summarised "Start a Lesson, and the rest of
+           * the day", carried on every step. A Teacher on step 4 read it as a drawer of
+           * unexplained work under the one thing they were being asked to do. It is the
+           * top of the day, so it sits at the top of the day: step 1, in the open, and
+           * nowhere else.
            */}
-          <ControlDisclosure summary={lesson ? 'The rest of this Lesson' : 'Start a Lesson, and the rest of the day'}>
-            {lesson ? (
-              <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
-            ) : (
-              <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
-            )}
+          {step === 1 ? (
+            <div className="flex flex-col gap-6 border-t border-hairline pt-6">
+              {lesson ? (
+                <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
+              ) : (
+                <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
+              )}
 
-            <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
+              <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
 
-            <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
-          </ControlDisclosure>
+              <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

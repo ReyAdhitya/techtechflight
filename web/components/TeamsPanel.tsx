@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { DroneState } from '@techtechflight/contract'
 import type { Logbook } from '@/lib/logbook'
 import { studentRecordOf } from '@/lib/logbook'
+import { cn } from '@/lib/utils'
 import {
   addStudentToTeam,
   assignDroneToTeam,
@@ -26,9 +27,12 @@ import {
 export function TeamsPanel({
   book,
   drones,
+  bare = false,
 }: {
   readonly book: Logbook
   readonly drones: readonly DroneState[]
+  /** Drop the heading and the card, because a Mission step already carries both. */
+  readonly bare?: boolean
 }) {
   const [teams, setTeams] = useState<readonly Team[]>(() => readTeams())
   const [draftName, setDraftName] = useState('')
@@ -56,18 +60,25 @@ export function TeamsPanel({
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5"
-      aria-labelledby="teams-panel-heading"
+      className={cn(
+        'flex flex-col gap-4',
+        !bare && 'rounded-surface border border-hairline bg-surface-1 p-5',
+      )}
+      aria-label={bare ? 'Mission teams' : undefined}
+      aria-labelledby={bare ? undefined : 'teams-panel-heading'}
     >
-      <div className="flex flex-col gap-1">
-        <h2 id="teams-panel-heading" className="label m-0">
-          Mission teams
-        </h2>
-        <p className="m-0 text-value text-ink-subtle">
-          Group Students into named teams and give each team a Drone. Individual who-is-flying
-          assignments in the Logbook stay as they are — teams sit beside them for Mission prep.
-        </p>
-      </div>
+      {bare ? null : (
+        <div className="flex flex-col gap-1">
+          <h2 id="teams-panel-heading" className="label m-0">
+            Mission teams
+          </h2>
+          <p className="m-0 text-value text-ink-subtle">
+            Group Students into named teams and give each team a Drone. Individual
+            who-is-flying assignments in the Logbook stay as they are — teams sit beside them
+            for Mission prep.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">

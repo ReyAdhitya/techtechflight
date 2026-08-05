@@ -9,6 +9,43 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-05 — Land all, Hover all and Stop all lost their hold.
+
+- **Decision / notes:** All three fleet-wide buttons wanted about a second of held pointer,
+  with a fill bar, and a keyboard path that armed on the first press and fired on the
+  second. The guard was aimed at a glance-misclick on the projector emptying the room. A
+  Teacher reaching for one of these is usually reaching because something is going wrong,
+  and a control that ignores the first press has to be learned before it works. Hover is
+  the least consequential thing that can be done to the room; Land is recoverable; Stop is
+  the one with a real argument, and it goes anyway because **per-strip Stop has always been
+  a single press** (DESIGN §4.5) and one word cannot mean "at once" on a strip and "hold
+  me" on the fleet row.
+- **Could have gone differently:** Keep the hold on Stop all alone. Rejected — a guard that
+  applies to one of three identical-looking buttons is a guard a Teacher discovers by
+  pressing and getting nothing.
+
+## 2026-08-05 — The Mission step is the h1, and Alerts belong to step 10.
+
+- **Decision / notes:** The Attention bar was mounted above every Control step, carrying
+  both the alert count and the page's only `<h1>`. Taking it off the other steps therefore
+  left Control with no top-level heading, and Lesson had the same hole once the rest of the
+  day moved to step 1. The step is what the screen is about, so the step title is the h1 on
+  both screens, and the alert count is the h2 under it on step 10.
+- **Could have gone differently:** Leave the bar mounted everywhere and shrink it.
+  Rejected — a count that reads "4 items require action" above *Watch the airspace* is a
+  second screen stacked on the first, whatever size it is.
+
+## 2026-08-05 — The rest of the day lives on step 1, not under every step.
+
+- **Decision / notes:** The Fleet check, the plan wizard, the remedial queue and last
+  week's lessons folded into a disclosure summarised "Start a Lesson, and the rest of the
+  day", carried on all five set-up steps. Carried is what was wrong: on step 4 it read as a
+  drawer of unexplained work under the one thing the Teacher was being asked to do. It is
+  the top of the day, so it is on step 1, in the open.
+- **Could have gone differently:** Delete it outright, which is the literal request.
+  Rejected — Start the lesson lives in there, and removing the only way to start a Lesson
+  is not decluttering.
+
 ## 2026-08-04 — The Mission area grid is always on screen, and the guidance sits under it.
 
 - **Decision / notes:** The editor swapped its drawing surface for a "here is what to do"

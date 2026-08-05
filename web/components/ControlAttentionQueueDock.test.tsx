@@ -86,4 +86,44 @@ describe('Attention on Control', () => {
     expect(screen.queryByText(/items? require[s]? action/i)).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Watch the airspace' })).toBeInTheDocument()
   })
+
+  /*
+   * The rail was the only way between Control steps, and it minimises and slides away on a
+   * narrow board. Both ends stay on Control: step 6 does not walk back into set-up.
+   */
+  it('carries Back and Next between the Control steps', () => {
+    search.current = new URLSearchParams('step=7')
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/control?step=6')
+    expect(screen.getByRole('link', { name: 'Next' })).toHaveAttribute('href', '/control?step=8')
+  })
+
+  it('has no Back on the first Control step and no Next on the last', () => {
+    search.current = new URLSearchParams('step=6')
+    const { unmount } = render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+    expect(screen.queryByRole('link', { name: 'Back' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Next' })).toHaveAttribute('href', '/control?step=7')
+    unmount()
+
+    search.current = new URLSearchParams('step=11')
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/control?step=10')
+    expect(screen.queryByRole('link', { name: 'Next' })).not.toBeInTheDocument()
+  })
 })

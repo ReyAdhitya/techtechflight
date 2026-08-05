@@ -561,6 +561,8 @@ export function ControlScreen() {
         </section>
       ) : null}
 
+      <MissionStepFoot step={step} />
+
       {cameraDrone && (
         <CameraSlide
           droneId={cameraDrone.id}
@@ -1109,6 +1111,47 @@ function MissionStepHead({ step }: { readonly step: number }) {
         {definition.title}
       </h2>
       <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition.why}</p>
+    </div>
+  )
+}
+
+/**
+ * Back and Next, the same pair the Lesson steps carry.
+ *
+ * Control had no way between steps but the rail, which minimises and slides away on a
+ * narrow board. Both ends stay on Control: step 6 does not walk back into set-up, and step
+ * 11 is the last thing Control does, so the debrief on Reports is left to the rail.
+ */
+function MissionStepFoot({ step }: { readonly step: number }) {
+  const back = step > 6 ? step - 1 : null
+  const next = step < 11 ? step + 1 : null
+  const nextLabel = next === null ? null : MISSION_FLOW_STEPS[next - 1]?.label
+
+  if (back === null && next === null) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
+      {back !== null ? (
+        <Link
+          href={`/control?step=${back}`}
+          prefetch={false}
+          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink no-underline hover:border-ink"
+        >
+          Back
+        </Link>
+      ) : null}
+      {next !== null ? (
+        <>
+          <Link
+            href={`/control?step=${next}`}
+            prefetch={false}
+            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
+          >
+            Next
+          </Link>
+          <span className="text-value text-ink-subtle">{nextLabel}</span>
+        </>
+      ) : null}
     </div>
   )
 }

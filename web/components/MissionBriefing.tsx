@@ -196,11 +196,14 @@ export function isMissionBriefingComplete(state: MissionBriefingState): boolean 
 export function MissionBriefing({
   lessonId,
   scenarioId = null,
+  bare = false,
 }: {
   /** Running Lesson id, or null when none is under way. */
   readonly lessonId: string | null
   /** Scenario this Lesson runs — shows objective and risks above the checklist. */
   readonly scenarioId?: ScenarioId | null
+  /** Drop the heading and the card, because a Mission step already carries both. */
+  readonly bare?: boolean
 }) {
   const [state, setState] = useState<MissionBriefingState>(() =>
     readMissionBriefing(lessonId),
@@ -216,18 +219,27 @@ export function MissionBriefing({
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5"
-      aria-labelledby="mission-briefing-heading"
+      className={cn(
+        'flex flex-col gap-4',
+        !bare && 'rounded-surface border border-hairline bg-surface-1 p-5',
+      )}
+      aria-label={bare ? 'Mission rules and safety briefing' : undefined}
+      aria-labelledby={bare ? undefined : 'mission-briefing-heading'}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <div className="flex flex-col gap-1">
-          <h2 id="mission-briefing-heading" className="label m-0">
-            Mission rules and safety briefing
-          </h2>
-          <p className="m-0 text-value text-ink-subtle">
-            Walk the class through these before takeoff. Ticks clear when a new Lesson starts.
-          </p>
-        </div>
+        {bare ? null : (
+          <div className="flex flex-col gap-1">
+            <h2 id="mission-briefing-heading" className="label m-0">
+              Mission rules and safety briefing
+            </h2>
+            <p className="m-0 text-value text-ink-subtle">
+              Walk the class through these before takeoff. Ticks clear when a new Lesson
+              starts.
+            </p>
+          </div>
+        )}
+        {/* The count stays whether or not the heading does. It is the only thing on the
+            block that says how much of the brief is left. */}
         <p className="m-0 text-value text-ink-subtle" role="status">
           <span className="tnum">{done}</span>
           {' of '}

@@ -78,6 +78,28 @@ describe('the Mission step rail', () => {
     expect(screen.getByTitle(/9\. Commands · Happening now/i)).toBeInTheDocument()
   })
 
+  it('shows how far through the run it is, as a bar as well as a count', () => {
+    railFor({
+      scenarioChosen: true,
+      missionZoneDrawn: true,
+      teamOnCraft: true,
+    })
+
+    const bar = screen.getByRole('progressbar', { name: /Mission run progress/i })
+    expect(bar).toHaveAttribute('aria-valuenow', '3')
+    expect(bar).toHaveAttribute('aria-valuemax', '12')
+  })
+
+  it('names the Lesson whose day this is, and falls back when there is none', () => {
+    const { rerender } = railFor()
+    expect(screen.getByText('Mission run')).toBeInTheDocument()
+
+    rerender(
+      <StepRail facts={facts()} lessonName="Year 8, period 3" open onToggle={() => {}} />,
+    )
+    expect(screen.getByText('Year 8, period 3')).toBeInTheDocument()
+  })
+
   it('says whether it is open, and offers the other state as the button', () => {
     const { rerender } = railFor({}, true)
     expect(screen.getByRole('navigation', { name: /Mission steps/i }))

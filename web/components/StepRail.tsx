@@ -99,6 +99,7 @@ function StepRow({
 export function StepRail({
   facts,
   activeStep,
+  lessonName,
   open,
   onToggle,
   className,
@@ -106,6 +107,8 @@ export function StepRail({
   readonly facts: MissionFlowFacts
   /** The step this screen is showing. Defaults to whatever the records say. */
   readonly activeStep?: number
+  /** The running Lesson, so the rail says whose day this is. */
+  readonly lessonName?: string | null
   readonly open: boolean
   readonly onToggle: () => void
   readonly className?: string
@@ -123,9 +126,9 @@ export function StepRail({
         className,
       )}
     >
-      <div className="flex items-center gap-2 border-b border-hairline px-1 pb-2">
+      <div className="flex items-center gap-2 px-1">
         <span className="step-rail__text flex min-w-0 flex-col">
-          <span className="label">Mission run</span>
+          <span className="label truncate">{lessonName ?? 'Mission run'}</span>
           <span className="tnum whitespace-nowrap font-display text-value font-medium text-ink">
             {done} of {MISSION_STEP_COUNT} done
           </span>
@@ -158,8 +161,27 @@ export function StepRail({
         </button>
       </div>
 
+      {/*
+       * How far through, as a bar as well as a count. Twelve steps is more than a Teacher
+       * holds in their head, and "6 of 12" read at a glance across a classroom is a pair
+       * of digits before it is a proportion.
+       */}
+      <div
+        className="h-0.5 overflow-hidden rounded-pill bg-canvas"
+        role="progressbar"
+        aria-valuenow={done}
+        aria-valuemin={0}
+        aria-valuemax={MISSION_STEP_COUNT}
+        aria-label="Mission run progress"
+      >
+        <span
+          className="block h-full bg-ink transition-[width] duration-[--chrome-duration] ease-[--chrome-ease]"
+          style={{ width: `${(done / MISSION_STEP_COUNT) * 100}%` }}
+        />
+      </div>
+
       {stepNow ? (
-        <p className="step-rail__text m-0 px-1 text-label text-ink-subtle">
+        <p className="step-rail__text m-0 border-t border-hairline px-1 pt-2 text-label text-ink-subtle">
           {stepNow.nextAction}
         </p>
       ) : null}

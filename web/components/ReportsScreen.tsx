@@ -6,7 +6,6 @@ import { EndOfDayExportButton } from './EndOfDayExportButton'
 import { FleetReliability, rankFleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
-import { LogbookLocationNote } from './LogbookLocationNote'
 import { ReportsCsvButton } from './ReportsCsvButton'
 import { CraftLifetimeHours } from './CraftLifetimeHours'
 import { LessonOnePager } from './LessonOnePager'
@@ -125,7 +124,6 @@ export function ReportsScreen() {
       </p>
 
       <div className="print-hide">
-        <LogbookLocationNote />
       </div>
 
       {/*

@@ -77,6 +77,19 @@ describe('Settings, with the records and keyboard panels gone', () => {
     expect(screen.getByText('The ground station')).toBeInTheDocument()
     expect(screen.getByText(/These make the simulated Fleet misbehave/)).toBeInTheDocument()
   })
+
+  /*
+   * Where records live is a Settings question, and this is the only screen that answers it.
+   * The same two paragraphs used to be printed on Lesson, Reports and Students as well,
+   * where they were documentation on top of a working screen.
+   */
+  it('is the one screen that says where records live', () => {
+    show(<SettingsScreen />)
+    settle()
+
+    expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
+    expect(screen.getByRole('note')).toHaveTextContent(/copy also goes to Vercel/)
+  })
 })
 
 describe('ending a lesson with a large logbook', () => {

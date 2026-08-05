@@ -13,6 +13,8 @@ type DrawMode = ZoneKind
 export type MissionAreaEditorProps = {
   readonly zones: readonly Zone[]
   readonly onChange: (zones: readonly Zone[]) => void
+  /** Drop the heading and the card, because a Mission step already carries both. */
+  readonly bare?: boolean
 }
 
 function missionZoneOf(zones: readonly Zone[]): Zone | undefined {
@@ -57,7 +59,7 @@ function polylinePoints(points: readonly LocalPosition[]): string {
  * Mission Zone at most; No-fly Zones as many as the Teacher needs. Undo drops the last
  * point while a shape is open, or the last zone when nothing is being drawn.
  */
-export function MissionAreaEditor({ zones, onChange }: MissionAreaEditorProps) {
+export function MissionAreaEditor({ zones, onChange, bare = false }: MissionAreaEditorProps) {
   const baseId = useId()
   const nextZoneCounter = useRef(1)
   const [mode, setMode] = useState<DrawMode>('mission')
@@ -198,18 +200,24 @@ export function MissionAreaEditor({ zones, onChange }: MissionAreaEditorProps) {
 
   return (
     <section
-      className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5"
-      aria-labelledby={`${baseId}-heading`}
+      className={cn(
+        'flex flex-col gap-4',
+        !bare && 'rounded-surface border border-hairline bg-surface-1 p-5',
+      )}
+      aria-label={bare ? 'Mission area' : undefined}
+      aria-labelledby={bare ? undefined : `${baseId}-heading`}
     >
-      <div className="flex flex-col gap-1">
-        <h2 id={`${baseId}-heading`} className="label m-0">
-          Mission area
-        </h2>
-        <p className="m-0 text-value text-ink-subtle">
-          Draw where the Mission happens and anywhere Drones must stay out of, in metres from
-          where the Fleet was set up.
-        </p>
-      </div>
+      {bare ? null : (
+        <div className="flex flex-col gap-1">
+          <h2 id={`${baseId}-heading`} className="label m-0">
+            Mission area
+          </h2>
+          <p className="m-0 text-value text-ink-subtle">
+            Draw where the Mission happens and anywhere Drones must stay out of, in metres
+            from where the Fleet was set up.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Drawing mode">
         <button

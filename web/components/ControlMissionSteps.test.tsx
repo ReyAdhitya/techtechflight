@@ -28,7 +28,16 @@ import { FleetProvider } from './FleetProvider'
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+// The step under test, since Control now shows one at a time.
+const search = vi.hoisted(() => ({ current: new URLSearchParams('step=6') }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useSearchParams: () => search.current,
+}))
+
+const atStep = (step: number) => {
+  search.current = new URLSearchParams(`step=${step}`)
+}
 
 const settle = () =>
   act(() => {
@@ -81,6 +90,7 @@ const control = () =>
 
 beforeEach(() => {
   pathname.current = '/demo'
+  atStep(6)
   clearLogbook()
   wipe()
   vi.useFakeTimers()
@@ -149,6 +159,8 @@ describe('step 6, approving takeoff', () => {
 })
 
 describe('step 11, confirming the Mission complete', () => {
+  beforeEach(() => atStep(11))
+
   it('stays off the board when there is no Mission to confirm', () => {
     control()
     settle()
@@ -171,6 +183,8 @@ describe('step 11, confirming the Mission complete', () => {
 })
 
 describe('the rail on Control', () => {
+  beforeEach(() => atStep(6))
+
   it('is there, so a Teacher does not lose their place crossing screens', () => {
     control()
     settle()

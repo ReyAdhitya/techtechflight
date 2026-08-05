@@ -311,6 +311,8 @@ export function ControlScreen() {
        * count won the race for the Teacher's eye against the step heading every time.
        * Step 10 is *Work the Alert at the top*, so that is where the top is.
        */}
+      <MissionStepHead step={step} />
+
       {step === 10 ? (
         <AttentionBar
           queue={queue}
@@ -324,7 +326,6 @@ export function ControlScreen() {
           }}
         />
       ) : null}
-      <MissionStepHead step={step} />
 
       {step === 10 ? (
         <>

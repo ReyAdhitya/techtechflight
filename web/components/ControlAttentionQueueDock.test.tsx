@@ -62,7 +62,9 @@ describe('Attention on Control', () => {
     expect(screen.queryByRole('navigation', { name: 'Attention queue' })).not.toBeInTheDocument()
     expect(screen.getByRole('article')).toHaveTextContent('Drone 6')
     expect(screen.getByRole('list', { name: 'Items requiring action' })).toHaveTextContent('Drone 6')
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/item requires action|items require action/)
+    // The step is the h1 now, so the count is the h2 under it rather than a second h1.
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Work the Alert at the top')
+    expect(screen.getByRole('heading', { level: 2, name: /items? require[s]? action/ })).toBeInTheDocument()
   })
 
   /*

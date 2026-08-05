@@ -302,17 +302,28 @@ export function ControlScreen() {
         <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
       </div>
 
-      <AttentionBar
-        queue={queue}
-        studentFor={(droneId) => studentOf(book, droneId)}
-        onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
-        onResponse={(entry, response) => {
-          if (response.command !== null) {
-            issueCommand(entry.droneId, response.command, entry.callsign)
-          }
-          acknowledge(entry.droneId, entry)
-        }}
-      />
+      {/*
+       * Alerts belong to step 10 and to nowhere else.
+       *
+       * The bar used to sit above every step as an `<h1>` counting "4 items require
+       * action", with a focused Alert and a folded queue under it. On a screen whose whole
+       * point is one step at a time it was a second screen stacked on the first, and the
+       * count won the race for the Teacher's eye against the step heading every time.
+       * Step 10 is *Work the Alert at the top*, so that is where the top is.
+       */}
+      {step === 10 ? (
+        <AttentionBar
+          queue={queue}
+          studentFor={(droneId) => studentOf(book, droneId)}
+          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+          onResponse={(entry, response) => {
+            if (response.command !== null) {
+              issueCommand(entry.droneId, response.command, entry.callsign)
+            }
+            acknowledge(entry.droneId, entry)
+          }}
+        />
+      ) : null}
       <MissionStepHead step={step} />
 
       {step === 10 ? (

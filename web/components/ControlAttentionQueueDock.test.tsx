@@ -25,6 +25,7 @@ const settle = () =>
 
 beforeEach(() => {
   pathname.current = '/demo'
+  search.current = new URLSearchParams('step=10')
   vi.useFakeTimers()
 })
 
@@ -62,5 +63,27 @@ describe('Attention on Control', () => {
     expect(screen.getByRole('article')).toHaveTextContent('Drone 6')
     expect(screen.getByRole('list', { name: 'Items requiring action' })).toHaveTextContent('Drone 6')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/item requires action|items require action/)
+  })
+
+  /*
+   * The bar used to sit above every step, so "4 items require action" was the first thing
+   * read on the Scope step and on the Telemetry step alike, competing with the step
+   * heading. Step 10 is *Work the Alert at the top*; the top is there.
+   */
+  it('stays off the steps that are not about Alerts', () => {
+    search.current = new URLSearchParams('step=7')
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ScenarioPanel />
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+
+    fireEvent.click(screen.getAllByRole('button', { name: /^Fault$/ })[5]!)
+    settle()
+
+    expect(screen.queryByText(/items? require[s]? action/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Watch the airspace' })).toBeInTheDocument()
   })
 })

@@ -4,9 +4,7 @@ import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import {
   emptyClearanceState,
-  grantClearance,
   isCleared,
-  isHeld,
   syncClearanceQueue,
 } from '@/lib/clearance'
 import { emptyMission } from '@/lib/mission'
@@ -40,7 +38,7 @@ describe('ClearanceQueue', () => {
     render(
       <ClearanceQueue
         state={emptyClearanceState()}
-        craft={[]}
+        craft={[readyCraft('ttf-0001', { input: { ...readyCraft('ttf-0001').input, preFlightDone: false } })]}
         grantedBy="Ms Chen"
         now={2_000}
       />,
@@ -54,7 +52,7 @@ describe('ClearanceQueue', () => {
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
-  it('syncs craft into the queue themselves and lists them in board order', () => {
+  it('syncs eligible craft into the queue themselves and lists them in board order', () => {
     function Harness() {
       const [state, setState] = useState(emptyClearanceState)
       return (
@@ -81,7 +79,7 @@ describe('ClearanceQueue', () => {
     expect(within(items[1]!).getByText('Rescue 2')).toBeInTheDocument()
   })
 
-  it('grants takeoff for one craft and drops it from the queue', async () => {
+  it('grants clearance for one team and drops it from the queue', async () => {
     const user = userEvent.setup()
 
     function Harness() {
@@ -101,7 +99,7 @@ describe('ClearanceQueue', () => {
 
     render(<Harness />)
 
-    await user.click(screen.getByRole('button', { name: 'Grant takeoff' }))
+    await user.click(screen.getByRole('button', { name: 'Grant clearance' }))
 
     expect(screen.getByText(CLEARANCE_QUEUE_EMPTY)).toBeInTheDocument()
     expect(
@@ -109,7 +107,7 @@ describe('ClearanceQueue', () => {
     ).toBeInTheDocument()
   })
 
-  it('holds takeoff and drops the craft from the queue without granting', async () => {
+  it('records who granted clearance on the state the Integrator holds', async () => {
     const user = userEvent.setup()
     let latest = syncClearanceQueue(emptyClearanceState(), [readyCraft('ttf-0001').input], 2_000)
 
@@ -125,29 +123,7 @@ describe('ClearanceQueue', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Hold' }))
-
-    expect(isHeld(latest, 'ttf-0001', 'm1')).toBe(true)
-    expect(isCleared(latest, 'ttf-0001', 'm1')).toBe(false)
-  })
-
-  it('records who granted takeoff on the state the Integrator holds', async () => {
-    const user = userEvent.setup()
-    let latest = syncClearanceQueue(emptyClearanceState(), [readyCraft('ttf-0001').input], 2_000)
-
-    render(
-      <ClearanceQueue
-        state={latest}
-        craft={[readyCraft('ttf-0001')]}
-        grantedBy="Ms Chen"
-        now={3_000}
-        onStateChange={(next) => {
-          latest = next
-        }}
-      />,
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Grant takeoff' }))
+    await user.click(screen.getByRole('button', { name: 'Grant clearance' }))
 
     expect(isCleared(latest, 'ttf-0001', 'm1')).toBe(true)
     expect(latest.records[0]?.grantedBy).toBe('Ms Chen')
@@ -169,8 +145,7 @@ describe('ClearanceQueue', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Grant takeoff' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Hold' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Grant clearance' })).toBeDisabled()
 
     rerender(
       <ClearanceQueue
@@ -182,27 +157,6 @@ describe('ClearanceQueue', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Grant takeoff' })).toBeDisabled()
-  })
-
-  it('keeps a granted craft out after grantClearance wrote the record', () => {
-    const granted = grantClearance(
-      syncClearanceQueue(emptyClearanceState(), [readyCraft('ttf-0001').input], 2_000),
-      'ttf-0001',
-      'm1',
-      'Ms Chen',
-      3_000,
-    )
-
-    render(
-      <ClearanceQueue
-        state={granted}
-        craft={[readyCraft('ttf-0001')]}
-        grantedBy="Ms Chen"
-        now={4_000}
-      />,
-    )
-
-    expect(screen.getByText(CLEARANCE_QUEUE_EMPTY)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Grant clearance' })).toBeDisabled()
   })
 })

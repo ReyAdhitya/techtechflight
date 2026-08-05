@@ -79,18 +79,6 @@ and those still reach the simulated Fleet only.
 reorder, counts render at zero, elevation is lightness only, the amber/coral hue split.
 Argue with them in an ADR or leave them alone.
 
-**Header theme is icon-only; Large format is not in the header.** The lit-room toggle keeps
-its words on `aria-label` / `title`. Large format was removed from the bar (#623); anything
-that still needs `--display-scale` sets storage directly.
-
-**Fleet is the tiles.** Headcount ticks, missing lists, spare nomination and the maintenance
-stack under `/fleet` were removed (#624). Pack-down return ticks still live on Lesson when a
-period is running.
-
-**Approve takeoff fills from craft.** Step 6 no longer waits on Ready / assigned / pre-flight
-to show rows — Grant takeoff and Hold are per craft on the Mission (or the whole Fleet when
-none are named) (#616).
-
 **Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
 no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
 the Simulator; Settings **Classroom setup** can prefer Radio (MAVLink) for the next launch

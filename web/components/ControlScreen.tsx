@@ -45,6 +45,7 @@ import { BatteryChargeReading } from './BatteryChargeReading'
 import { CameraRecordAllButton } from './CameraRecordAllButton'
 import { CameraSlide } from './CameraSlide'
 import { ExerciseRemaining } from './ExerciseRemaining'
+import { FleetAllWellLine } from './FleetAllWellLine'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { HoverAllButton } from './HoverAllButton'
 import { LandAllButton } from './LandAllButton'
@@ -53,6 +54,7 @@ import { LessonStrip } from './LessonStrip'
 import { LongestAirborne } from './LongestAirborne'
 import { NotYetAirborneNotice } from './NotYetAirborneNotice'
 import { AssignNextButton } from './AssignNextButton'
+import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
 import { SimLandAllButton } from './SimLandAllButton'
 import { StopAllButton } from './StopAllButton'
@@ -199,16 +201,9 @@ export function ControlScreen() {
   const teams = readTeams()
   const preFlight = readPreFlightSeven(lessonId)
   const missionCraft = missionCraftIds(teams, mission)
-  /*
-   * Step 6 approves craft. When Teams have not named who flies, every Drone on the board
-   * is in play — an empty Mission craft list must not leave the step with nothing to
-   * approve (#616).
-   */
-  const clearanceIds =
-    missionCraft.length > 0 ? missionCraft : state.drones.map((drone) => drone.id)
 
   const clearanceCraft: readonly ClearanceQueueCraft[] = state.drones
-    .filter((drone) => clearanceIds.includes(drone.id))
+    .filter((drone) => missionCraft.includes(drone.id))
     .map((drone) => {
       const studentId = studentIdOf(book, drone.id)
       return {
@@ -216,7 +211,8 @@ export function ControlScreen() {
           droneId: drone.id,
           status: drone.status,
           studentId,
-          // Kept on the row for display. Entry into the queue no longer waits on it (#616).
+          // The Teacher's own tick is the part of pre-flight the board cannot see, and
+          // it is the part that says a human looked at the airframe.
           preFlightDone: propellersTicked(preFlight, drone.id),
           mission,
         },
@@ -286,7 +282,7 @@ export function ControlScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className={cn(INSTRUMENT_FRAME, 'flex items-start gap-3 p-4 min-[26rem]:p-8 min-[60rem]:gap-5')}
+      className={cn(INSTRUMENT_FRAME, 'flex items-start gap-5 p-4 min-[26rem]:p-8')}
     >
       <StepRail
         facts={missionFacts}
@@ -300,6 +296,11 @@ export function ControlScreen() {
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
+
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <FleetAllWellLine drones={state.drones} />
+        <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
+      </div>
 
       {/*
        * Alerts belong to step 10 and to nowhere else.
@@ -1110,6 +1111,7 @@ function MissionStepHead({ step }: { readonly step: number }) {
       <h1 className="m-0 font-display text-heading font-medium text-balance">
         {definition.title}
       </h1>
+      <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition.why}</p>
     </div>
   )
 }
@@ -1124,6 +1126,7 @@ function MissionStepHead({ step }: { readonly step: number }) {
 function MissionStepFoot({ step }: { readonly step: number }) {
   const back = step > 6 ? step - 1 : null
   const next = step < 11 ? step + 1 : null
+  const nextLabel = next === null ? null : MISSION_FLOW_STEPS[next - 1]?.label
 
   if (back === null && next === null) return null
 
@@ -1139,13 +1142,16 @@ function MissionStepFoot({ step }: { readonly step: number }) {
         </Link>
       ) : null}
       {next !== null ? (
-        <Link
-          href={`/control?step=${next}`}
-          prefetch={false}
-          className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
-        >
-          Next
-        </Link>
+        <>
+          <Link
+            href={`/control?step=${next}`}
+            prefetch={false}
+            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
+          >
+            Next
+          </Link>
+          <span className="text-value text-ink-subtle">{nextLabel}</span>
+        </>
       ) : null}
     </div>
   )

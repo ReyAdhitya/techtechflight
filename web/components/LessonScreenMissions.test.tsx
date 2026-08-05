@@ -111,6 +111,21 @@ describe('mission set-up, one step at a time', () => {
     expect(readMission(null)?.scenarioId).toBe('search-rescue')
   })
 
+  /*
+   * The forward control was labelled with the next step's whole nextAction sentence, so
+   * the button a Teacher presses twelve times a day changed width and wrapping every time.
+   */
+  it('moves on with a button that says Next, not a sentence', () => {
+    atStep(2)
+    settle()
+
+    expect(screen.getByRole('link', { name: 'Next' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: /Put each team on a craft/i }),
+    ).not.toBeInTheDocument()
+  })
+
   it('shows the area editor at step 2 and nothing else', () => {
     atStep(2)
     settle()

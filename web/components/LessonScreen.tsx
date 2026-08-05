@@ -729,7 +729,15 @@ function SetMissionCraftButton({
   )
 }
 
-/** Back and on, in the flow rather than only in the rail. */
+/**
+ * Back and on, in the flow rather than only in the rail.
+ *
+ * The forward control says **Next** and nothing else. It used to be labelled with the next
+ * step's whole `nextAction` sentence, which put a paragraph inside a button and gave the
+ * one control a Teacher presses twelve times a day a different width and a different
+ * wrapping on every step. Where it goes is said beside it, as text, where a changing
+ * length costs nothing.
+ */
 function MissionPrepFoot({ step }: { readonly step: number }) {
   const next = MISSION_FLOW_STEPS[step]
 
@@ -745,13 +753,16 @@ function MissionPrepFoot({ step }: { readonly step: number }) {
         </Link>
       ) : null}
       {next ? (
-        <Link
-          href={next.href}
-          prefetch={false}
-          className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
-        >
-          {next.nextAction}
-        </Link>
+        <>
+          <Link
+            href={next.href}
+            prefetch={false}
+            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
+          >
+            Next
+          </Link>
+          <span className="text-value text-ink-subtle">{next.label}</span>
+        </>
       ) : null}
     </div>
   )

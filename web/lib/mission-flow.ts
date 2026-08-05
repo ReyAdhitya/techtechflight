@@ -167,6 +167,14 @@ export interface MissionFlowFacts {
   readonly briefed: boolean
   /** At least one takeoff clearance has been granted for this Mission. */
   readonly cleared: boolean
+  /**
+   * The Mission is under way: it has a start time.
+   *
+   * Separate from `cleared` on purpose. A class can be in the air without a clearance on
+   * record, and a rail that refuses to leave step 6 while Drones are flying is describing
+   * paperwork rather than the room.
+   */
+  readonly flown: boolean
   /** Something is off the ground right now. */
   readonly airborne: boolean
   /** The Teacher has confirmed the Mission complete. */
@@ -183,6 +191,7 @@ export function noMissionYet(): MissionFlowFacts {
     preFlightPassed: false,
     briefed: false,
     cleared: false,
+    flown: false,
     airborne: false,
     sealed: false,
     reviewed: false,
@@ -203,6 +212,17 @@ const LIVE_STEPS = [7, 8, 9, 10] as const
 
 function isLiveStep(step: number): boolean {
   return (LIVE_STEPS as readonly number[]).includes(step)
+}
+
+/**
+ * Whether the class is flying this Mission.
+ *
+ * Any of three answers counts. A clearance on record is the tidy one; a Mission with a
+ * start time is the honest one; something already off the ground settles it either way.
+ * Requiring only the first is what let the rail sit at step 6 with Drones in the air.
+ */
+function isUnderWay(facts: MissionFlowFacts): boolean {
+  return facts.cleared || facts.flown || facts.airborne
 }
 
 /**
@@ -229,9 +249,9 @@ export function isMissionStepOpen(step: number, facts: MissionFlowFacts): boolea
     case 8:
     case 9:
     case 10:
-      return facts.cleared
+      return isUnderWay(facts)
     case 11:
-      return facts.cleared && !facts.airborne
+      return isUnderWay(facts) && !facts.airborne
     case 12:
       return facts.sealed
     default:
@@ -296,7 +316,7 @@ export function missionStepBlockedBy(
     case 11:
       return facts.airborne
         ? 'Land or Recall every craft first.'
-        : 'Grant a takeoff clearance first.'
+        : 'Nothing has flown yet.'
     case 12:
       return 'Confirm the Mission complete first.'
     default:
@@ -312,8 +332,8 @@ export function missionStepBlockedBy(
  */
 export function currentMissionStep(facts: MissionFlowFacts): number {
   if (facts.reviewed || facts.sealed) return 12
-  if (facts.cleared && !facts.airborne) return 11
-  if (facts.cleared) return 7
+  if (isUnderWay(facts) && !facts.airborne) return 11
+  if (isUnderWay(facts)) return 7
   if (facts.briefed) return 6
   if (facts.preFlightPassed) return 5
   if (facts.teamOnCraft) return 4
@@ -329,7 +349,7 @@ export function missionStepMark(step: number, facts: MissionFlowFacts): MissionS
    * once the brief is unticked and step 11 closes while a craft is up, so asking "is it
    * open" first would paint work the Teacher has already finished as not started.
    */
-  if (isLiveStep(step) && facts.cleared && !facts.sealed) return 'live'
+  if (isLiveStep(step) && isUnderWay(facts) && !facts.sealed) return 'live'
   if (isMissionStepDone(step, facts)) return 'done'
   if (!isMissionStepOpen(step, facts)) return 'locked'
   return step === currentMissionStep(facts) ? 'current' : 'locked'

@@ -14,6 +14,7 @@ import {
   swapStudentAssignments,
   currentExercise,
   readLogbook,
+  putMissionOnLesson,
   recordCommand,
   readServerLogbook,
   runningLesson,
@@ -566,7 +567,16 @@ export function ControlScreen() {
               noFlyViolations: null,
               routeCoverageKnown: null,
             }}
-            onConfirmed={(sealed) => setMission(putMission(lessonId, sealed))}
+            /*
+             * Two writes, deliberately. The side key is the working copy Control reads
+             * while the period runs; the Logbook is the record Reports and the Student
+             * screen read afterwards. Without the second one a confirmed score was
+             * unreadable the moment the next period overwrote the key.
+             */
+            onConfirmed={(sealed) => {
+              setMission(putMission(lessonId, sealed))
+              if (lessonId !== null) putMissionOnLesson(lessonId, sealed)
+            }}
           />
         </section>
       ) : null}

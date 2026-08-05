@@ -849,6 +849,34 @@ export function talliedLessonCount(book: Logbook): number {
   return talliedWindows(book).length
 }
 
+/**
+ * Write a Mission onto the Lesson it was flown in, replacing any earlier run of the same id.
+ *
+ * The Mission itself lives in `techtechflight:mission-draft`, keyed by Lesson, which is what
+ * Control reads while it runs. That key is a working copy: it holds one Mission at a time and
+ * is rewritten by the next period. The Logbook is the record, and until this existed a sealed
+ * Mission never reached it, so a score a Teacher confirmed could not be read back on Reports.
+ *
+ * Same shape as `addIncident`: read, map the lessons, save. Replacing by id rather than
+ * appending, because confirming a Mission complete twice is one Mission with a later outcome
+ * and not two runs.
+ */
+export function putMissionOnLesson(lessonId: string, mission: Mission): void {
+  const book = readLogbook()
+  save({
+    ...book,
+    lessons: book.lessons.map((lesson) => {
+      if (lesson.id !== lessonId) return lesson
+      const existing = missionsFrom(lesson)
+      const missions = existing.some((entry) => entry.id === mission.id)
+        ? existing.map((entry) => (entry.id === mission.id ? mission : entry))
+        : [...existing, mission]
+      const { exercises: _legacy, ...rest } = lesson
+      return { ...rest, missions }
+    }),
+  })
+}
+
 export function addIncident(id: string, incident: LessonIncident): void {
   const book = readLogbook()
   save({

@@ -34,15 +34,23 @@ const MARK_WORDS: Readonly<Record<MissionStepMark, string>> = {
   locked: 'Not open yet',
 }
 
+/*
+ * The marigold does the work here, which is a deviation worth naming. Chrome on this board
+ * is normally kept off the brand so it cannot compete with a Fault colour on a tile
+ * (globals.css, Sections). A step dot is a few millimetres of fill in a rail a Teacher is
+ * reading deliberately rather than glancing at, and the alternative was ink on ink: done
+ * and current became the same shape in a different weight, which is the one distinction
+ * the rail exists to make.
+ */
 function StepGlyph({ mark, step }: { readonly mark: MissionStepMark; readonly step: number }) {
   return (
     <span
       aria-hidden="true"
       className={cn(
-        'tnum inline-grid size-7 shrink-0 place-items-center rounded-pill border font-display text-label font-medium',
-        mark === 'done' && 'border-ink bg-ink text-canvas',
-        mark === 'current' && 'border-ink text-ink',
-        mark === 'live' && 'border-status-flying border-dashed text-ink',
+        'tnum inline-grid size-7 shrink-0 place-items-center rounded-pill border bg-canvas font-display text-label font-medium',
+        mark === 'done' && 'border-brand bg-brand text-primary-foreground',
+        mark === 'current' && 'border-brand text-ink ring-3 ring-brand-wash',
+        mark === 'live' && 'border-info border-dashed text-ink',
         mark === 'locked' && 'border-hairline text-ink-muted',
       )}
     >
@@ -74,8 +82,8 @@ function StepRow({
         title={`${step.step}. ${step.label} · ${state}`}
         className={cn(
           'step-rail__step flex min-h-11 items-center gap-3 rounded-surface px-2 py-1.5 no-underline',
-          'hover:bg-canvas',
-          active && 'bg-canvas',
+          'hover:bg-muted',
+          active && 'bg-brand-wash',
         )}
       >
         <StepGlyph mark={mark} step={step.step} />
@@ -122,11 +130,11 @@ export function StepRail({
       aria-label="Mission steps"
       data-open={open ? 'true' : 'false'}
       className={cn(
-        'step-rail flex flex-col gap-2 self-start rounded-surface border border-hairline bg-surface-1 p-2',
+        'step-rail flex flex-col self-start rounded-surface border border-hairline bg-surface-1',
         className,
       )}
     >
-      <div className="flex items-center gap-2 px-1">
+      <div className="flex items-center gap-3 border-b border-hairline px-3.5 pb-3 pt-3.5">
         <span className="step-rail__text flex min-w-0 flex-col">
           <span className="label truncate">{lessonName ?? 'Mission run'}</span>
           <span className="tnum whitespace-nowrap font-display text-value font-medium text-ink">
@@ -167,7 +175,7 @@ export function StepRail({
        * of digits before it is a proportion.
        */}
       <div
-        className="h-0.5 overflow-hidden rounded-pill bg-canvas"
+        className="h-[3px] overflow-hidden bg-muted"
         role="progressbar"
         aria-valuenow={done}
         aria-valuemin={0}
@@ -175,32 +183,28 @@ export function StepRail({
         aria-label="Mission run progress"
       >
         <span
-          className="block h-full bg-ink transition-[width] duration-[--chrome-duration] ease-[--chrome-ease]"
+          className="block h-full bg-brand transition-[width] duration-[--chrome-duration] ease-[--chrome-ease]"
           style={{ width: `${(done / MISSION_STEP_COUNT) * 100}%` }}
         />
       </div>
 
-      {stepNow ? (
-        <p className="step-rail__text m-0 border-t border-hairline px-1 pt-2 text-label text-ink-subtle">
-          {stepNow.nextAction}
-        </p>
-      ) : null}
-
-      {MISSION_FLOW_PHASES.map((phase) => (
-        <div key={phase.id} className="flex flex-col gap-1">
-          <p className="step-rail__phase label m-0 px-1 pt-1">{phase.label}</p>
-          <ol className="m-0 flex list-none flex-col gap-0.5 p-0">
-            {MISSION_FLOW_STEPS.filter((step) => step.phase === phase.id).map((step) => (
-              <StepRow
-                key={step.step}
-                step={step}
-                facts={facts}
-                active={step.step === current}
-              />
-            ))}
-          </ol>
-        </div>
-      ))}
+      <div className="flex flex-col p-2 pb-3">
+        {MISSION_FLOW_PHASES.map((phase) => (
+          <div key={phase.id} className="flex flex-col">
+            <p className="step-rail__phase label m-0 px-2 pb-1.5 pt-3">{phase.label}</p>
+            <ol className="m-0 flex list-none flex-col gap-0.5 p-0">
+              {MISSION_FLOW_STEPS.filter((step) => step.phase === phase.id).map((step) => (
+                <StepRow
+                  key={step.step}
+                  step={step}
+                  facts={facts}
+                  active={step.step === current}
+                />
+              ))}
+            </ol>
+          </div>
+        ))}
+      </div>
     </nav>
   )
 }

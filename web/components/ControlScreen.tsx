@@ -45,7 +45,6 @@ import { BatteryChargeReading } from './BatteryChargeReading'
 import { CameraRecordAllButton } from './CameraRecordAllButton'
 import { CameraSlide } from './CameraSlide'
 import { ExerciseRemaining } from './ExerciseRemaining'
-import { FleetAllWellLine } from './FleetAllWellLine'
 import { HeightCeilingBanner } from './HeightCeilingBanner'
 import { HoverAllButton } from './HoverAllButton'
 import { LandAllButton } from './LandAllButton'
@@ -54,7 +53,6 @@ import { LessonStrip } from './LessonStrip'
 import { LongestAirborne } from './LongestAirborne'
 import { NotYetAirborneNotice } from './NotYetAirborneNotice'
 import { AssignNextButton } from './AssignNextButton'
-import { LiveHeadcount } from './LiveHeadcount'
 import { SpareInventory } from './SpareInventory'
 import { SimLandAllButton } from './SimLandAllButton'
 import { StopAllButton } from './StopAllButton'
@@ -296,11 +294,6 @@ export function ControlScreen() {
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
-
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <FleetAllWellLine drones={state.drones} />
-        <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
-      </div>
 
       {/*
        * Alerts belong to step 10 and to nowhere else.

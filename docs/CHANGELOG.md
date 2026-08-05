@@ -14,6 +14,13 @@ would notice.
 
 ### Added
 
+- **A Mission step is the whole Lesson screen.** The step opens with its phase, its number,
+  an instruction as the heading and one line on what it is for. Everything else the Lesson
+  is (serviceable counts, the plan, assignment, exercises, pack-down, earlier lessons) folds
+  into one disclosure, so the step is not the top of a long page. Start the lesson stays
+  reachable inside it.
+- **The rail says how far through the run you are**, as a bar as well as a count, and names
+  the running Lesson.
 - **The twelve steps are a workflow you can follow.** A step rail down the left of Lesson and
   Control carries the operational run: each step reads as done, current, live or locked, and a
   locked step says what is standing in the way ("Draw the Mission Zone first") instead of going

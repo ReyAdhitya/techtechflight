@@ -66,28 +66,24 @@ describe('mission set-up, one step at a time', () => {
   })
 
   /*
-   * The step is the screen. It was briefly a header on top of the old long page, with
-   * serviceable counts, the plan wizard, assignment and Start the lesson all still stacked
-   * underneath, which is exactly the scroll the twelve steps exist to replace.
-   *
-   * The answer was a disclosure summarised "Start a Lesson, and the rest of the day",
-   * carried on every step. Carried is the part that was wrong: on step 4 it read as a
-   * drawer of unexplained work under the one thing the Teacher was being asked to do. It
-   * is the top of the day, so it belongs on step 1 and nowhere else.
+   * Step 1 is the Scenario. Serviceable counts, the plan wizard and past Lessons used to
+   * stack under it (#622). Start the lesson stays reachable as a strip under every set-up
+   * step — that is the one thing the flow still needs from Lesson admin.
    */
-  it('keeps the rest of the day on step 1, in the open', () => {
+  it('keeps step 1 to the Scenario, without the Lesson admin stack', () => {
     atStep(1)
     settle()
 
-    expect(screen.queryByText(/Start a Lesson, and the rest of the day/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Pre-flight check/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Lesson plan/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeInTheDocument()
   })
 
-  it('leaves the rest of the day off the later steps entirely', () => {
+  it('keeps Start the lesson reachable on later set-up steps', () => {
     atStep(2)
     settle()
 
-    expect(screen.queryByRole('button', { name: /Start the lesson/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeInTheDocument()
   })
 
   it('names the step as the work, not as the noun the rail uses', () => {
@@ -198,13 +194,6 @@ describe('mission set-up, one step at a time', () => {
     )
   })
 
-  it('keeps the Ready wall pre-flight summary, which is a different question', () => {
-    atStep(1)
-    settle()
-
-    expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
-    expect(screen.queryByText(/Propellers is the only one you tick/i)).not.toBeInTheDocument()
-  })
 })
 
 describe('the rail beside the set-up', () => {

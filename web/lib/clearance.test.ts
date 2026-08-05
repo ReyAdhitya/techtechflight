@@ -6,7 +6,9 @@ import {
   emptyClearanceState,
   endClearancesForMission,
   grantClearance,
+  holdClearance,
   isCleared,
+  isHeld,
   shouldAwaitClearance,
   syncClearanceQueue,
   type ClearanceCraftInput,
@@ -15,8 +17,8 @@ import {
 import { emptyMission, type Mission } from './mission.ts'
 
 /**
- * Clearances are Teacher records (ADR-0021). These pin the derived queue, the grant audit
- * trail, and the rule that a clearance dies with its Mission.
+ * Clearances are Teacher records (ADR-0021). These pin the derived queue, the grant and
+ * hold audit trail, and the rule that a clearance dies with its Mission.
  */
 
 const mission = (overrides: Partial<Mission> = {}): Mission => ({
@@ -36,7 +38,7 @@ const craft = (overrides: Partial<ClearanceCraftInput> = {}): ClearanceCraftInpu
 })
 
 describe('who enters the queue', () => {
-  it('queues itself once Ready, assigned and past pre-flight', () => {
+  it('queues itself once there is an active Mission', () => {
     const state = emptyClearanceState()
     expect(shouldAwaitClearance(craft(), state)).toBe(true)
 
@@ -48,28 +50,20 @@ describe('who enters the queue', () => {
         requestedAt: 2_000,
         grantedAt: null,
         grantedBy: null,
+        heldAt: null,
         endedAt: null,
       },
     ])
   })
 
-  it('stays out when not Ready', () => {
+  it('still queues when not Ready, unassigned or short of pre-flight', () => {
     const state = emptyClearanceState()
     for (const status of ['Offline', 'Not Ready', 'Flying', 'Fault'] as const satisfies readonly Status[]) {
-      expect(shouldAwaitClearance(craft({ status }), state)).toBe(false)
+      expect(shouldAwaitClearance(craft({ status }), state)).toBe(true)
     }
-    expect(awaitingClearance([craft({ status: 'Not Ready' })], state)).toEqual([])
-  })
-
-  it('stays out when nobody is assigned', () => {
-    const state = emptyClearanceState()
-    expect(shouldAwaitClearance(craft({ studentId: null }), state)).toBe(false)
-    expect(shouldAwaitClearance(craft({ studentId: '   ' }), state)).toBe(false)
-  })
-
-  it('stays out until the pre-flight check is done', () => {
-    const state = emptyClearanceState()
-    expect(shouldAwaitClearance(craft({ preFlightDone: false }), state)).toBe(false)
+    expect(shouldAwaitClearance(craft({ studentId: null }), state)).toBe(true)
+    expect(shouldAwaitClearance(craft({ studentId: '   ' }), state)).toBe(true)
+    expect(shouldAwaitClearance(craft({ preFlightDone: false }), state)).toBe(true)
   })
 
   it('stays out with no Mission or an inactive one', () => {
@@ -101,13 +95,6 @@ describe('who enters the queue', () => {
       ),
     ).toBe(false)
   })
-
-  it('stays out when the craft is not on the Mission', () => {
-    const state = emptyClearanceState()
-    expect(
-      shouldAwaitClearance(craft({ mission: mission({ droneIds: ['ttf-0002'] }) }), state),
-    ).toBe(false)
-  })
 })
 
 describe('granting clearance', () => {
@@ -126,6 +113,18 @@ describe('granting clearance', () => {
     let state = syncClearanceQueue(emptyClearanceState(), [craft()], 2_000)
     state = grantClearance(state, 'ttf-0001', 'm1', 'Ms Chen', 3_000)
 
+    expect(shouldAwaitClearance(craft(), state)).toBe(false)
+    expect(awaitingClearance([craft()], state)).toEqual([])
+  })
+})
+
+describe('holding takeoff', () => {
+  it('removes the craft from the queue without granting', () => {
+    let state = syncClearanceQueue(emptyClearanceState(), [craft()], 2_000)
+    state = holdClearance(state, 'ttf-0001', 'm1', 3_000)
+
+    expect(isHeld(state, 'ttf-0001', 'm1')).toBe(true)
+    expect(isCleared(state, 'ttf-0001', 'm1')).toBe(false)
     expect(shouldAwaitClearance(craft(), state)).toBe(false)
     expect(awaitingClearance([craft()], state)).toEqual([])
   })
@@ -152,6 +151,7 @@ describe('when the Mission ends', () => {
           requestedAt: 1_000,
           grantedAt: 2_000,
           grantedBy: 'Ms Chen',
+          heldAt: null,
           endedAt: null,
         },
         {
@@ -160,6 +160,7 @@ describe('when the Mission ends', () => {
           requestedAt: 1_000,
           grantedAt: 2_000,
           grantedBy: 'Ms Chen',
+          heldAt: null,
           endedAt: null,
         },
       ],
@@ -170,5 +171,6 @@ describe('when the Mission ends', () => {
     expect(state.records.find((row) => row.missionId === 'm1')!.endedAt).toBe(9_000)
     expect(state.records.find((row) => row.missionId === 'm2')!.endedAt).toBeNull()
     expect(isCleared(state, 'ttf-0002', 'm2')).toBe(true)
+    void other
   })
 })

@@ -199,9 +199,16 @@ export function ControlScreen() {
   const teams = readTeams()
   const preFlight = readPreFlightSeven(lessonId)
   const missionCraft = missionCraftIds(teams, mission)
+  /*
+   * Step 6 approves craft. When Teams have not named who flies, every Drone on the board
+   * is in play — an empty Mission craft list must not leave the step with nothing to
+   * approve (#616).
+   */
+  const clearanceIds =
+    missionCraft.length > 0 ? missionCraft : state.drones.map((drone) => drone.id)
 
   const clearanceCraft: readonly ClearanceQueueCraft[] = state.drones
-    .filter((drone) => missionCraft.includes(drone.id))
+    .filter((drone) => clearanceIds.includes(drone.id))
     .map((drone) => {
       const studentId = studentIdOf(book, drone.id)
       return {
@@ -209,8 +216,7 @@ export function ControlScreen() {
           droneId: drone.id,
           status: drone.status,
           studentId,
-          // The Teacher's own tick is the part of pre-flight the board cannot see, and
-          // it is the part that says a human looked at the airframe.
+          // Kept on the row for display. Entry into the queue no longer waits on it (#616).
           preFlightDone: propellersTicked(preFlight, drone.id),
           mission,
         },
@@ -280,7 +286,7 @@ export function ControlScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className={cn(INSTRUMENT_FRAME, 'flex items-start gap-5 p-4 min-[26rem]:p-8')}
+      className={cn(INSTRUMENT_FRAME, 'flex items-start gap-3 p-4 min-[26rem]:p-8 min-[60rem]:gap-5')}
     >
       <StepRail
         facts={missionFacts}

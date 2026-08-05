@@ -1,4 +1,8 @@
-import { emptyClearanceState, type ClearanceState } from './clearance.ts'
+import {
+  emptyClearanceState,
+  type ClearanceRecord,
+  type ClearanceState,
+} from './clearance.ts'
 
 /**
  * Where takeoff clearances live between screens.
@@ -28,7 +32,15 @@ export function readClearances(lessonId: string | null): ClearanceState {
     if (parsed.lessonId !== lessonId) return emptyClearanceState()
     const records = parsed.state?.records
     if (!Array.isArray(records)) return emptyClearanceState()
-    return { records }
+    // Older stores predate `heldAt`. Treat a missing field as not held.
+    return {
+      records: records.map(
+        (record): ClearanceRecord => ({
+          ...(record as ClearanceRecord),
+          heldAt: (record as ClearanceRecord).heldAt ?? null,
+        }),
+      ),
+    }
   } catch {
     return emptyClearanceState()
   }

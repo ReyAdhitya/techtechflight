@@ -9,7 +9,7 @@ describe('fleetAllWell', () => {
       { status: 'Offline' },
     ])
     expect(result.attentionCount).toBe(0)
-    expect(result.sentence).toBe('Everything is fine — 0 need attention')
+    expect(result.sentence).toBe('Everything is fine. 0 need attention')
   })
 
   it('names the Needs Attention count when something is wrong', () => {
@@ -28,7 +28,7 @@ describe('fleetAllWell', () => {
   it('treats an empty Fleet as fine, still showing zero', () => {
     expect(fleetAllWell([])).toEqual({
       attentionCount: 0,
-      sentence: 'Everything is fine — 0 need attention',
+      sentence: 'Everything is fine. 0 need attention',
     })
   })
 })

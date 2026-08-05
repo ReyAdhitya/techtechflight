@@ -7,6 +7,13 @@ would notice.
 
 ### Removed
 
+- **Lesson admin under the Scenario.** Serviceable counts, ready tally, Lesson plan, remedial
+  queue and past Lessons no longer sit under step 1. Start the lesson is a strip under every
+  set-up step; pre-flight stays on step 4.
+- **Fleet headcount and the stack under the tiles.** Present/missing ticks, spare nomination
+  and the maintenance list leave `/fleet` — the board is the tiles.
+- **Large format from the header.** Theme toggle is icon-only. Large format is gone from the
+  bar (the scale multiplier can still be set in storage).
 - **Run bar (“Step N of 12”).** Gone from the app frame — no step banner above Control.
 - **Lock screen.** Toggle and command lock are gone; Commands stay available.
 - **Quiet mode / training wheels.** Stop-hiding practice chrome is gone; Stop stays on strips.
@@ -32,6 +39,13 @@ would notice.
 
 ### Fixed
 
+- **Approve takeoff works without teams.** Step 6 shows every craft on the Mission (or the
+  whole Fleet when none are named) with **Grant takeoff** and **Hold**, instead of an empty
+  queue waiting on Ready / assignment / pre-flight paperwork.
+- **Mission steps on a phone.** A closed step rail on a narrow board left no way back in; an
+  edge **Steps** tab opens it. Theme labels no longer pad the header.
+- **No em dashes in Teacher-facing copy.** Pre-flight readings, the simulation label, the
+  all-well line and similar sentences are two sentences (or a full stop) rather than a dash.
 - **Pre-flight asks about every craft.** It ran on the first Drone on the board alone, so a
   Teacher ticked one airframe and the other five were never checked. It now runs for each craft
   a team has taken.

@@ -43,8 +43,8 @@ export function ScenarioPicker({
             Mission Scenario
           </h2>
           <p className="m-0 text-value text-ink-subtle">
-            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve —
-            the flow, exercises and brief follow from here.
+            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve.
+            The flow, exercises and brief follow from here.
           </p>
         </div>
       )}

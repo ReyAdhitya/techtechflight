@@ -40,6 +40,7 @@ import {
   type CeilingBreachState,
 } from '@/lib/ceiling-breach-count'
 import { AttentionBar } from './AttentionBar'
+import { BatteryOnChargeTick } from './BatteryOnChargeTick'
 import { AltitudeFloorNotice } from './AltitudeFloorNotice'
 import { BatteryChargeReading } from './BatteryChargeReading'
 import { CameraRecordAllButton } from './CameraRecordAllButton'
@@ -64,6 +65,8 @@ import { MaintenanceFlag } from './MaintenanceFlag'
 import { ControlDisclosure } from './ControlDisclosure'
 import { ClearanceQueue, type ClearanceQueueCraft } from './ClearanceQueue'
 import { ConfirmMissionComplete } from './ConfirmMissionComplete'
+import { CraftReturnedTick } from './CraftReturnedTick'
+import { PackdownChecklist } from './PackdownChecklist'
 import { StepRail } from './StepRail'
 import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
@@ -242,6 +245,12 @@ export function ControlScreen() {
     requestedStep >= 6 && requestedStep <= 11
       ? requestedStep
       : Math.min(11, Math.max(6, fromRecords))
+
+  // Board order, both fields, from the Fleet State this screen already has.
+  const packdownCrafts = state.drones.map((drone) => ({
+    droneId: drone.id,
+    droneName: drone.name,
+  }))
 
   const missionCraftStatus = state.drones
     .filter((drone) => missionCraft.includes(drone.id))
@@ -559,6 +568,23 @@ export function ControlScreen() {
             }}
             onConfirmed={(sealed) => setMission(putMission(lessonId, sealed))}
           />
+        </section>
+      ) : null}
+
+      {/*
+       * Pack-down is close-down, so it is step 11's.
+       *
+       * These three lived on the Lesson screen, inside the running-Lesson block, which is
+       * the screen a Teacher sets the *next* period up on. Putting the craft away happens
+       * at the end of this one, under the confirmation that ends it.
+       */}
+      {step === 11 && lesson !== null ? (
+        <section className="flex flex-col gap-4 border-t border-hairline pt-5">
+          {/* PackdownChecklist supplies the Pack-down heading; Lesson wrapped it in a
+              second one saying the same word. */}
+          <PackdownChecklist lessonId={lesson.id} crafts={packdownCrafts} />
+          <BatteryOnChargeTick lessonId={lesson.id} packs={packdownCrafts} />
+          <CraftReturnedTick lessonId={lesson.id} crafts={packdownCrafts} />
         </section>
       ) : null}
 

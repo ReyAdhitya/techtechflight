@@ -180,6 +180,31 @@ describe('step 11, confirming the Mission complete', () => {
     ).toBeInTheDocument()
     expect(readMission(lessonId)?.outcome ?? null).toBeNull()
   })
+
+  /*
+   * Pack-down lived on the Lesson screen, which is where a Teacher sets the *next* period
+   * up. Putting the craft away happens at the end of this one, under the confirmation
+   * that ends it.
+   */
+  it('carries pack-down under the confirmation', () => {
+    classReadyToFly()
+    control()
+    settle()
+
+    // One heading, not two: the checklist supplies its own and Lesson wrapped it in a
+    // second one saying the same word.
+    expect(screen.getAllByRole('heading', { name: 'Pack-down' })).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: 'Craft returned' })).toBeInTheDocument()
+  })
+
+  it('leaves pack-down off the flying steps', () => {
+    classReadyToFly()
+    atStep(7)
+    control()
+    settle()
+
+    expect(screen.queryByRole('heading', { name: 'Pack-down' })).not.toBeInTheDocument()
+  })
 })
 
 describe('the rail on Control', () => {

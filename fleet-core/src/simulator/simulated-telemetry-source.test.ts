@@ -70,6 +70,32 @@ describe('reporting', () => {
     })
   })
 
+  /*
+   * The simulated Fleet used to omit both of these, which the board read correctly and
+   * showed as "cannot report on this airframe". Pre-flight wants all seven items to pass,
+   * so a school with no hardware in the room could not get past step 4.
+   */
+  it('reports how well the radio is carrying', () => {
+    clock.advance(REPORT_INTERVAL)
+
+    const quality = latestFor('ttf-0001')?.telemetry.linkQuality
+    expect(quality).toBeGreaterThan(0.25)
+    expect(quality).toBeLessThanOrEqual(1)
+  })
+
+  it('reports altitude hold ready on a craft with nothing wrong with it', () => {
+    clock.advance(REPORT_INTERVAL)
+
+    expect(latestFor('ttf-0001')?.telemetry.extra?.altitudeHold).toBe(true)
+  })
+
+  it('reports altitude hold not ready on a faulted craft', () => {
+    simulator.injectFault('ttf-0001')
+    clock.advance(REPORT_INTERVAL)
+
+    expect(latestFor('ttf-0001')?.telemetry.extra?.altitudeHold).toBe(false)
+  })
+
   it('stops reporting once disconnected', () => {
     clock.advance(REPORT_INTERVAL)
     const countWhileConnected = observed.length

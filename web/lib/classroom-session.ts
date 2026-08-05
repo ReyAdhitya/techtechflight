@@ -144,6 +144,8 @@ export function openClassroom(input: {
   readonly objective: string
   readonly rules: readonly string[]
   readonly limitMinutes: number
+  /** How many checkpoints this Mission has. Absent keeps whatever the session already had. */
+  readonly checkpointCount?: number
   readonly zones: readonly Zone[]
   readonly live?: boolean
   readonly now?: number
@@ -162,6 +164,7 @@ export function openClassroom(input: {
     objective: input.objective,
     rules: input.rules,
     limitMinutes: input.limitMinutes,
+    checkpointCount: input.checkpointCount ?? base.checkpointCount,
     zones: input.zones,
     live: input.live ?? true,
     updatedAt: now,

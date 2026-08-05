@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { FleetProvider } from '@/components/FleetProvider'
+import { ClassroomOpen } from '@/components/ClassroomOpen'
 import { CommandPalette } from '@/components/CommandPalette'
 import { RequireRole } from '@/components/RoleGate'
 import { SiteHeader } from '@/components/SiteHeader'
@@ -16,7 +17,8 @@ import { SiteHeader } from '@/components/SiteHeader'
  *
  * `/showcase` deliberately sits outside this group: it carries its own chrome and its
  * own scenario switcher, and is a comparison rather than part of the product.
- * Students are gated to `/student` (#627).
+ * Students are gated to `/student` (#627), and `ClassroomOpen` sits here so the classroom
+ * a Student joins is written from one place rather than from Lesson and again from Control.
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
@@ -28,6 +30,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <SiteHeader />
         {children}
         <CommandPalette />
+        {/* Keeps the Student tablets' brief in step with the Mission the Teacher planned. */}
+        <ClassroomOpen />
       </FleetProvider>
     </RequireRole>
   )

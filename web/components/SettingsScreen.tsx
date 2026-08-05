@@ -2,7 +2,6 @@
 
 import { useFleet } from './FleetProvider'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
-import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
 import { SeparationThresholdPanel } from './SeparationThresholdPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
@@ -34,7 +33,6 @@ export function SettingsScreen() {
     >
       <h1 className="m-0 font-display text-summary font-medium">Settings</h1>
 
-      <LogbookLocationNote />
 
       <ClassroomSetupPanel />
 

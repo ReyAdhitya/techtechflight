@@ -6,6 +6,7 @@ import { EndOfDayExportButton } from './EndOfDayExportButton'
 import { FleetReliability, rankFleetReliability } from './MaintenanceScreen'
 import { HistorySections } from './HistoryScreen'
 import { LessonReports } from './LessonReports'
+import { RemedialQueue } from './RemedialQueue'
 import { ReportsCsvButton } from './ReportsCsvButton'
 import { CraftLifetimeHours } from './CraftLifetimeHours'
 import { LessonOnePager } from './LessonOnePager'
@@ -23,6 +24,7 @@ import {
   missionsFrom,
   readLogbook,
   readServerLogbook,
+  remedialQueueOf,
   subscribeLogbook,
 } from '@/lib/logbook'
 import { cn } from '@/lib/utils'
@@ -139,6 +141,15 @@ export function ReportsScreen() {
       </header>
 
       <LessonReports />
+
+      {/*
+       * Who to follow up with, beside the record of what happened. It used to sit on the
+       * Lesson screen, which is where a Teacher sets the next period up, not where they
+       * read the last one. Screen chrome, so it stays off the printed sheet.
+       */}
+      <div className="print-hide">
+        <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
+      </div>
 
       {closed.some((lesson) => missionsFrom(lesson).length > 0) && (
         <section className="flex flex-col gap-3 border-t border-hairline pt-8">

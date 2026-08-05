@@ -8,7 +8,6 @@ import {
   isStudentAbsent,
   readLogbook,
   readServerLogbook,
-  remedialQueueOf,
   runningLesson,
   serviceStateOf,
   startLesson,
@@ -48,7 +47,6 @@ import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
 import { LessonBookmarkControl } from './LessonBookmarkControl'
 import { LessonIncidentNoteControl } from './LessonIncidentNoteControl'
-import { RemedialQueue } from './RemedialQueue'
 import { ScenarioPicker } from './ScenarioPicker'
 import { MissionAreaEditor } from './MissionAreaEditor'
 import { TeamsPanel } from './TeamsPanel'
@@ -181,8 +179,6 @@ export function LessonScreen() {
               ) : (
                 <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
               )}
-
-              <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
             </div>
           ) : null}
         </div>

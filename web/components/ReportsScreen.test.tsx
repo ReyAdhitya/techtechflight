@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
+import { clearLogbook, enqueueRemedial } from '@/lib/logbook'
 import { FleetProvider } from './FleetProvider'
 import { ReportsScreen } from './ReportsScreen'
 import { downloadReportsPdf } from '@/lib/reports-pdf'
@@ -81,5 +82,33 @@ describe('Reports Download PDF', () => {
     const block = printBlock()
     expect(block).toMatch(/\.lesson-report\s*\{[^}]*break-inside:\s*avoid/s)
     expect(block).not.toMatch(/\bli,\s*\n\s*section\s*\{/)
+  })
+})
+
+/*
+ * Who to follow up with belongs beside the record of what happened. It used to sit on the
+ * Lesson screen, which is where a Teacher sets the next period up rather than reads the
+ * last one.
+ */
+describe('the remedial queue on Reports', () => {
+  afterEach(() => clearLogbook())
+
+  it('lists a flagged craft beside the finished Lessons', () => {
+    clearLogbook()
+    enqueueRemedial({
+      droneId: 'ttf-0003',
+      droneName: 'Drone 3',
+      reason: 'IMU fault mid-lesson',
+      addedAt: 1_000,
+    })
+
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ReportsScreen />
+      </FleetProvider>,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Remedial queue' })).toBeInTheDocument()
+    expect(screen.getByText('IMU fault mid-lesson')).toBeInTheDocument()
   })
 })

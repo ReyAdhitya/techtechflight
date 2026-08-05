@@ -126,6 +126,21 @@ export function StepRail({
   const stepNow = MISSION_FLOW_STEPS[current - 1]
 
   return (
+    <>
+      {/*
+       * On a phone the closed rail is fully off-screen, so the toggle that lives on it
+       * cannot be reached. This edge tab is the way back in (#625).
+       */}
+      {!open ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="step-rail__reveal"
+          aria-expanded={false}
+        >
+          Steps
+        </button>
+      ) : null}
     <nav
       aria-label="Mission steps"
       data-open={open ? 'true' : 'false'}
@@ -206,5 +221,6 @@ export function StepRail({
         ))}
       </div>
     </nav>
+    </>
   )
 }

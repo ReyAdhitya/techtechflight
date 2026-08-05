@@ -81,17 +81,29 @@ describe('starting a lesson with nothing filled in', () => {
   })
 })
 
-describe('pre-flight checklist', () => {
-  it('shows ready and not ready counts from the Ready wall mapping', () => {
+describe('Fleet health before the period', () => {
+  /*
+   * This was a serviceable headline, a ready / not-ready count and a list of every craft
+   * standing in the way. All three answered "what is wrong with the Fleet", which is the
+   * Fleet board's question, and it answers it with every Drone's Status and fault. One
+   * line here says whether the period can run, and links to the list.
+   */
+  it('answers whether the period can run in one line, and links to Fleet', () => {
     screenUnderTest()
     settle()
 
-    expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
-    expect(
-      screen.getByText((_, element) =>
-        Boolean(element?.classList.contains('text-summary') && element.textContent?.includes('ready ·')),
-      ),
-    ).toBeInTheDocument()
+    const summary = screen.getByRole('link', { name: /serviceable/ })
+    expect(summary).toHaveAttribute('href', '/')
+    expect(summary).toHaveTextContent(/\d+ of \d+ serviceable/)
+    expect(summary).toHaveTextContent(/needs? attention|nothing needs attention/)
+  })
+
+  it('leaves the craft-by-craft list to the Fleet board', () => {
+    screenUnderTest()
+    settle()
+
+    expect(screen.queryByRole('heading', { name: 'Pre-flight check' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Standing in the way' })).not.toBeInTheDocument()
   })
 
   it('warns calmly when none are ready but does not block Start', () => {

@@ -196,12 +196,17 @@ describe('mission set-up, one step at a time', () => {
     )
   })
 
-  it('keeps the Ready wall pre-flight summary, which is a different question', () => {
+  /*
+   * The Ready wall summary was a second answer to the Fleet board's question, on the step
+   * where a Teacher picks a Scenario. Step 1 keeps the one line that says whether the
+   * period can run; the craft-by-craft reading is step 4's, and the fault list is Fleet's.
+   */
+  it('leaves the Fleet reading to one line on step 1', () => {
     atStep(1)
     settle()
 
-    expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
-    expect(screen.queryByText(/Propellers is the only one you tick/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Pre-flight check' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /serviceable/ })).toHaveAttribute('href', '/')
   })
 })
 

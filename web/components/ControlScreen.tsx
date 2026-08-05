@@ -1126,7 +1126,6 @@ function MissionStepHead({ step }: { readonly step: number }) {
 function MissionStepFoot({ step }: { readonly step: number }) {
   const back = step > 6 ? step - 1 : null
   const next = step < 11 ? step + 1 : null
-  const nextLabel = next === null ? null : MISSION_FLOW_STEPS[next - 1]?.label
 
   if (back === null && next === null) return null
 
@@ -1142,16 +1141,13 @@ function MissionStepFoot({ step }: { readonly step: number }) {
         </Link>
       ) : null}
       {next !== null ? (
-        <>
-          <Link
-            href={`/control?step=${next}`}
-            prefetch={false}
-            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
-          >
-            Next
-          </Link>
-          <span className="text-value text-ink-subtle">{nextLabel}</span>
-        </>
+        <Link
+          href={`/control?step=${next}`}
+          prefetch={false}
+          className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
+        >
+          Next
+        </Link>
       ) : null}
     </div>
   )

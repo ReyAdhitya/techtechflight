@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   assignStudent,
   assignNextRosterName,
@@ -71,6 +72,12 @@ import type { ClearanceState } from '@/lib/clearance'
 import { emptyClearanceState } from '@/lib/clearance'
 import { putMission, readMission, startMission } from '@/lib/mission-draft'
 import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
+import {
+  MISSION_FLOW_PHASES,
+  MISSION_FLOW_STEPS,
+  MISSION_STEP_COUNT,
+  currentMissionStep,
+} from '@/lib/mission-flow'
 import type { Mission } from '@/lib/mission'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 import { readPreFlightSeven, propellersTicked } from '@/lib/preflight-seven'
@@ -96,6 +103,7 @@ export function ControlScreen() {
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
   const [railOpen, setRailOpen] = useState(true)
+  const requestedStep = Number(useSearchParams().get('step'))
   // The Mission and its clearances are read on mount, not in an initialiser: the server
   // render has no localStorage and must not disagree with the first client paint.
   const [mission, setMission] = useState<Mission | null>(null)
@@ -225,6 +233,16 @@ export function ControlScreen() {
     anyAirborne: airborneCount > 0,
   })
 
+  /*
+   * Which step is on screen. Control carries steps 6 to 11, so a `?step=` outside that
+   * range falls back to whatever the records say the Teacher is on.
+   */
+  const fromRecords = currentMissionStep(missionFacts)
+  const step =
+    requestedStep >= 6 && requestedStep <= 11
+      ? requestedStep
+      : Math.min(11, Math.max(6, fromRecords))
+
   const missionCraftStatus = state.drones
     .filter((drone) => missionCraft.includes(drone.id))
     .map((drone) => ({
@@ -268,6 +286,7 @@ export function ControlScreen() {
     >
       <StepRail
         facts={missionFacts}
+        activeStep={step}
         lessonName={lesson?.label ?? null}
         open={railOpen}
         onToggle={() => setRailOpen((was) => !was)}
@@ -294,6 +313,10 @@ export function ControlScreen() {
           acknowledge(entry.droneId, entry)
         }}
       />
+      <MissionStepHead step={step} />
+
+      {step === 10 ? (
+        <>
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
       <ControlDisclosure summary="Also noting">
@@ -310,8 +333,10 @@ export function ControlScreen() {
           <LongestAirborne now={now} craft={longestAirborneCraft} />
         </div>
       </ControlDisclosure>
+        </>
+      ) : null}
 
-      {mission !== null ? (
+      {step === 6 && mission !== null ? (
         <ClearanceQueue
           state={clearances}
           craft={clearanceCraft}
@@ -321,6 +346,7 @@ export function ControlScreen() {
         />
       ) : null}
 
+      {step === 7 ? (
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
         <Scope
@@ -353,8 +379,9 @@ export function ControlScreen() {
           }
         />
       </section>
+      ) : null}
 
-      {airborneCount > 0 && (
+      {(step === 7 || step === 9) && airborneCount > 0 && (
         <section
           className="flex flex-wrap items-center gap-3"
           aria-label="Fleet actions"
@@ -392,6 +419,7 @@ export function ControlScreen() {
         </section>
       )}
 
+      {step === 8 || step === 9 ? (
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
@@ -499,8 +527,9 @@ export function ControlScreen() {
           ))}
         </ul>
       </section>
+      ) : null}
 
-      {mission !== null && mission.startedAt !== null ? (
+      {step === 11 && mission !== null && mission.startedAt !== null ? (
         <section className="flex flex-col gap-3 border-t border-hairline pt-5">
           <h2 className="label m-0">Mission complete</h2>
           <ConfirmMissionComplete
@@ -1043,6 +1072,34 @@ function describeCommand(tracked: TrackedCommand): string {
       // not distinguishable from here.
       return `${asked} — sent, no response since`
   }
+}
+
+/**
+ * The step, named the way the Lesson screen names it.
+ *
+ * Phase, number, an instruction as the heading, one line on what the step is for. Same
+ * shape on both screens so crossing from set-up to flying does not feel like arriving
+ * somewhere else.
+ */
+function MissionStepHead({ step }: { readonly step: number }) {
+  const definition = MISSION_FLOW_STEPS[step - 1]
+  const phase = MISSION_FLOW_PHASES.find((entry) => entry.id === definition?.phase)
+  if (!definition) return null
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="label rounded-pill bg-muted px-2.5 py-1 text-ink-subtle">
+          {phase?.label}
+        </span>
+        <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
+      </div>
+      <h2 className="m-0 font-display text-heading font-medium text-balance">
+        {definition.title}
+      </h2>
+      <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition.why}</p>
+    </div>
+  )
 }
 
 const COMMAND_WORDS: Readonly<Record<CommandKind, string>> = {

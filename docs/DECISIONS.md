@@ -44,6 +44,21 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   Rejected — opening that still grows the page under the Teacher's eyes; a dialog keeps
   the board still.
 
+## 2026-08-05 · The step rail returns, with state and a way to put it away.
+
+- **Decision / notes:** Reverses the withdrawal below, on the owner's direction and against a
+  clickable prototype they reviewed. The rail is not the same object: every step reads as done,
+  current, live or locked, a locked step says what is standing in the way, and the whole thing
+  minimises to a column of numbers (slides away entirely on a narrow board). Set-up on Lesson is
+  now one step per screen, keyed by `?step=`. Steps 6 and 11 (`ClearanceQueue`,
+  `ConfirmMissionComplete`) are mounted for the first time; both had shipped as passing tests
+  that no screen imported. Needed a Mission that outlives a screen
+  (`techtechflight:mission-draft`) and somewhere to keep clearances
+  (`techtechflight:clearances`). ADR-0024.
+- **Could have gone differently:** Mount steps 6 and 11 and leave the rail withdrawn. Rejected —
+  that fixes the unreachable steps and leaves a Teacher still unable to tell how far through
+  set-up they are, or why a block will not open.
+
 ## 2026-08-04 — Mission run rail withdrawn.
 
 - **Decision / notes:** The left twelve-step rail shipped and was removed the same day.

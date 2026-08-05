@@ -12,6 +12,26 @@ would notice.
 - **Quiet mode / training wheels.** Stop-hiding practice chrome is gone; Stop stays on strips.
 - **Mission run rail (left).** Already withdrawn — top SiteNav only.
 
+### Added
+
+- **The twelve steps are a workflow you can follow.** A step rail down the left of Lesson and
+  Control carries the operational run: each step reads as done, current, live or locked, and a
+  locked step says what is standing in the way ("Draw the Mission Zone first") instead of going
+  quiet. It minimises to a column of numbers, and slides away entirely on a narrow board.
+  Set-up is now one step per screen at `/lesson?step=1` to `5`. ADR-0024.
+- **Approve takeoff, and confirm the Mission complete.** Steps 6 and 11 reach a screen for the
+  first time. Both were built and tested and never mounted, so granting a clearance and sealing
+  a Mission were unreachable in the product.
+
+### Fixed
+
+- **Pre-flight asks about every craft.** It ran on the first Drone on the board alone, so a
+  Teacher ticked one airframe and the other five were never checked. It now runs for each craft
+  a team has taken.
+- **A Mission survives changing screens.** The Scenario and the zones lived in React state on
+  the Lesson screen, so walking to Control threw them away. They live in
+  `techtechflight:mission-draft` and are adopted by the Lesson that starts after planning.
+
 ### Changed
 
 - **Lesson leads the navigation.** Order is now Lesson · Control · Walls · Fleet · Students ·

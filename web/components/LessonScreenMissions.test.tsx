@@ -1,106 +1,172 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { clearLogbook } from '@/lib/logbook'
+import { MISSION_DRAFT_KEY, readMission } from '@/lib/mission-draft'
 import { assignDroneToTeam, createTeam, readTeams } from '@/lib/teams'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { LessonScreen } from './LessonScreen'
 
 /**
- * Mission prep on the Lesson screen (#541) — Scenario through team briefs in workflow
- * order, each with a next-step hint.
+ * Mission set-up on the Lesson screen, one step at a time.
+ *
+ * This was a single column of five blocks that appeared as their turn came. A Teacher
+ * part-way down it could not tell how much was left, could not go back to change an
+ * answer, and lost the Scenario and the zones the moment they walked to Control. The five
+ * blocks are the same; what is asserted here is that one is on screen at a time, that the
+ * step is in the URL, and that the work survives the screen.
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+// The Lesson screen reads its set-up step from `?step=`.
+const search = vi.hoisted(() => ({ current: new URLSearchParams() }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useSearchParams: () => search.current,
+}))
 
 const settle = () =>
   act(() => {
     vi.advanceTimersByTime(2_000)
   })
 
-const screenUnderTest = () =>
-  render(
+const atStep = (step: number | null) => {
+  search.current = new URLSearchParams(step === null ? '' : `step=${step}`)
+  return render(
     <FleetProvider demonstration={PINNED_DEMONSTRATION}>
       <LessonScreen />
     </FleetProvider>,
   )
-
-/** Three corners of a Mission Zone on the 20 m grid (via coordinate inputs). */
-function drawMissionZone() {
-  const east = screen.getByLabelText('East')
-  const north = screen.getByLabelText('North')
-  const add = screen.getByRole('button', { name: 'Add point' })
-
-  fireEvent.change(east, { target: { value: '2' } })
-  fireEvent.change(north, { target: { value: '2' } })
-  fireEvent.click(add)
-  fireEvent.change(east, { target: { value: '12' } })
-  fireEvent.change(north, { target: { value: '2' } })
-  fireEvent.click(add)
-  fireEvent.change(east, { target: { value: '12' } })
-  fireEvent.change(north, { target: { value: '12' } })
-  fireEvent.click(add)
 }
 
 beforeEach(() => {
   clearLogbook()
   window.localStorage.removeItem('techtechflight:teams')
+  window.localStorage.removeItem(MISSION_DRAFT_KEY)
   pathname.current = '/demo'
+  search.current = new URLSearchParams()
   vi.useFakeTimers()
 })
 
 afterEach(() => {
   vi.useRealTimers()
   window.localStorage.removeItem('techtechflight:teams')
+  window.localStorage.removeItem(MISSION_DRAFT_KEY)
 })
 
-describe('mission prep on the Lesson screen', () => {
-  it('shows Scenario first with a hint toward drawing the area', () => {
-    screenUnderTest()
+describe('mission set-up, one step at a time', () => {
+  it('opens on the Scenario, and says which step that is', () => {
+    atStep(null)
     settle()
 
-    expect(screen.getByRole('heading', { name: 'Mission prep' })).toBeInTheDocument()
+    expect(screen.getByText(/Step\s*1\s*of\s*12/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Mission Scenario' })).toBeInTheDocument()
-    expect(screen.getByText(/Draw the Mission area and any no-fly zones/i)).toBeInTheDocument()
+    // The next block is not underneath it waiting to be scrolled past.
+    expect(screen.queryByRole('heading', { name: 'Mission area' })).not.toBeInTheDocument()
   })
 
-  it('reveals area, teams, pre-flight, briefing and print in workflow order', () => {
-    createTeam('Red Team')
-    const teamId = readTeams()[0]!.id
-    assignDroneToTeam(teamId, 'ttf-0001')
-    screenUnderTest()
+  it('keeps the Scenario when the Teacher walks away from the screen', () => {
+    atStep(1)
     settle()
 
     fireEvent.click(screen.getByRole('button', { name: /Search and Rescue/i }))
 
-    expect(screen.getByRole('heading', { name: 'Mission area' })).toBeInTheDocument()
-    expect(screen.getByText(/Assign each team to a craft/i)).toBeInTheDocument()
+    expect(readMission(null)?.scenarioId).toBe('search-rescue')
+  })
 
-    drawMissionZone()
+  it('shows the area editor at step 2 and nothing else', () => {
+    atStep(2)
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'Mission area' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Mission Scenario' })).not.toBeInTheDocument()
+  })
+
+  it('offers teams at step 3', () => {
+    createTeam('Red Team')
+    atStep(3)
+    settle()
 
     expect(screen.getByRole('heading', { name: 'Mission teams' })).toBeInTheDocument()
-    expect(screen.getByText(/Tick each craft’s pre-flight check/i)).toBeInTheDocument()
+  })
 
-    expect(screen.getByText(/Propellers is the only one you tick/i)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Walk the class through the Mission rules and safety brief/i),
-    ).toBeInTheDocument()
+  /*
+   * The bug this redesign fixes outright. Pre-flight used to run on `drones[0]` alone, so
+   * a Teacher ticked one craft and the other five were never asked about.
+   */
+  it('runs pre-flight for every craft a team has taken, not just the first', () => {
+    createTeam('Red Team')
+    createTeam('Blue Team')
+    const [red, blue] = readTeams()
+    assignDroneToTeam(red!.id, 'ttf-0001')
+    assignDroneToTeam(blue!.id, 'ttf-0002')
+
+    atStep(4)
+    settle()
+
+    expect(screen.getAllByText(/Propellers is the only one you tick/i)).toHaveLength(2)
+  })
+
+  it('says so plainly when step 4 has no craft to check', () => {
+    atStep(4)
+    settle()
+
+    expect(screen.getByText(/No craft on a team yet/i)).toBeInTheDocument()
+  })
+
+  it('brings the briefing and the team briefs together at step 5', () => {
+    createTeam('Red Team')
+    const teamId = readTeams()[0]!.id
+    assignDroneToTeam(teamId, 'ttf-0001')
+
+    const first = atStep(1)
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: /Search and Rescue/i }))
+    first.unmount()
+
+    atStep(5)
+    settle()
 
     expect(
       screen.getByRole('heading', { name: 'Mission rules and safety briefing' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Print a team brief for each group/i)).toBeInTheDocument()
-
     expect(screen.getByRole('heading', { name: 'Team briefs to print' })).toBeInTheDocument()
     expect(screen.getByLabelText(/Team brief: Red Team/i)).toBeInTheDocument()
   })
 
-  it('keeps the Ready wall pre-flight summary distinct until teams unlock craft checks', () => {
-    screenUnderTest()
+  it('offers a way back as well as a way on', () => {
+    atStep(3)
+    settle()
+
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
+      'href',
+      '/lesson?step=2',
+    )
+  })
+
+  it('keeps the Ready wall pre-flight summary, which is a different question', () => {
+    atStep(1)
     settle()
 
     expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
     expect(screen.queryByText(/Propellers is the only one you tick/i)).not.toBeInTheDocument()
+  })
+})
+
+describe('the rail beside the set-up', () => {
+  it('is there, with the twelve steps', () => {
+    atStep(1)
+    settle()
+
+    expect(screen.getByRole('navigation', { name: /Mission steps/i })).toBeInTheDocument()
+  })
+
+  it('says why a later step is not open yet', () => {
+    atStep(1)
+    settle()
+
+    expect(
+      screen.getByTitle(/3\. Teams and Drones · Draw the Mission Zone first/i),
+    ).toBeInTheDocument()
   })
 })

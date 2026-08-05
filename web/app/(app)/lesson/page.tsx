@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { LessonScreen } from '@/components/LessonScreen'
 
@@ -7,5 +8,11 @@ export const metadata: Metadata = {
 }
 
 export default function LessonPage() {
-  return <LessonScreen />
+  return (
+    // The set-up step is `?step=`, read on the client. `useSearchParams` suspends during
+    // prerender, so the boundary is required rather than defensive (see `/drone`).
+    <Suspense fallback={<main id="content" className="p-8" />}>
+      <LessonScreen />
+    </Suspense>
+  )
 }

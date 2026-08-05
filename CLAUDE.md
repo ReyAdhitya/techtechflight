@@ -148,6 +148,22 @@ a disclosure queue. Compacting grounded strips broke CI and hid Commands from th
 Integrator merges those fragments in issue order and deletes them — leftovers mean the wave
 never integrated.
 
+**The step rail is back, and it is not the rail that was withdrawn (ADR-0024).** A twelve-step
+left rail shipped on 2026-08-04 and was pulled the same day for being a second navigation. The
+one on Lesson and Control now carries state: done / current / live / locked, and a locked step
+says what is in the way. It minimises, and slides away on a narrow board. `live` is deliberate,
+steps 7 to 10 are not things a Teacher finishes. Marks come from `web/lib/mission-flow.ts`,
+which reads records only, and **done is checked before open** so a step whose condition stops
+holding does not read as never started. Lesson set-up is one step per screen via `?step=`, so
+`/lesson` needs its `Suspense` boundary.
+
+**A Mission is a side key, not a Logbook row.** `techtechflight:mission-draft` holds the
+Scenario, the zones and the craft; `techtechflight:clearances` holds takeoff clearances. Both
+are keyed by Lesson id, and a Mission planned before Start is adopted by the Lesson that starts
+(`adoptMissionDraft`). A Mission becomes *under way* when a Teacher opens Control with one on
+the Lesson: starting it on the first granted clearance is circular, because the queue fills
+from eligibility and eligibility needs an active Mission.
+
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
 nomination, and ceiling-breach counts each live in their own `localStorage`

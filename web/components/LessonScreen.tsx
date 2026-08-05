@@ -12,7 +12,10 @@ import {
   subscribeLogbook,
   type LessonRecord,
 } from '@/lib/logbook'
+import { openClassroom, readClassroomSession } from '@/lib/classroom-session'
+import { MISSION_SCENARIOS, scenarioById } from '@/lib/mission-scenarios'
 import { cn } from '@/lib/utils'
+import { ClassroomCodePanel } from './ClassroomCodePanel'
 import { BatteryOnChargeTick } from './BatteryOnChargeTick'
 import { CraftReturnedTick } from './CraftReturnedTick'
 import { PackdownChecklist } from './PackdownChecklist'
@@ -44,6 +47,7 @@ import {
   readMission,
   setMissionDrones,
   setMissionZones,
+  startMission,
 } from '@/lib/mission-draft'
 import { readClearances } from '@/lib/clearance-store'
 import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
@@ -146,10 +150,36 @@ export function LessonScreen() {
            * to sit under step 1 and drowned the Scenario picker (#622). Pack-down stays
            * when a Lesson is already running.
            */}
+          <ClassroomCodePanel
+            onOpen={() => {
+              const draft = readMission(lessonId)
+              const scenario =
+                (draft ? scenarioById(draft.scenarioId) : null) ?? MISSION_SCENARIOS[0]!
+              const existingCode = readClassroomSession()?.code
+              return openClassroom({
+                ...(existingCode ? { code: existingCode } : {}),
+                lessonId,
+                lessonLabel: lesson?.label ?? '',
+                scenarioId: scenario.id,
+                scenarioName: scenario.name,
+                objective: scenario.objective,
+                rules: scenario.teamFocus,
+                limitMinutes: scenario.defaultLimitMinutes,
+                zones: draft?.zones ?? [],
+                live: lesson !== null,
+              })
+            }}
+          />
+
           {lesson ? (
             <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
           ) : (
-            <StartLessonStrip fleetSize={drones.length} now={now} />
+            <StartLessonStrip
+              fleetSize={drones.length}
+              now={now}
+              mission={mission}
+              onMissionChange={setMission}
+            />
           )}
         </div>
       </div>
@@ -158,19 +188,61 @@ export function LessonScreen() {
 }
 
 /**
- * Name the period and start it. Everything else that used to sit here belongs elsewhere.
+ * One Start that binds Lesson + Mission + classroom code (#630).
  *
- * E7 still holds: no name, no Students, no Exercises required. The board names an untitled
- * Lesson when the field is left blank.
+ * E7 still holds: no name required. Missing Scenario defaults to Search and Rescue so
+ * Students and clearances have something to join.
  */
 function StartLessonStrip({
   fleetSize,
   now,
+  mission,
+  onMissionChange,
 }: {
   readonly fleetSize: number
   readonly now: number
+  readonly mission: Mission | null
+  readonly onMissionChange: (mission: Mission | null) => void
 }) {
   const [label, setLabel] = useState('')
+
+  const begin = () => {
+    const startedAt = now || Date.now()
+    const lessonId = startLesson(label, fleetSize, fleetSize, startedAt)
+    if (!lessonId) return
+
+    let nextMission = adoptMissionDraft(lessonId).mission ?? mission
+    if (nextMission === null) {
+      nextMission = chooseScenario(lessonId, 'search-rescue')
+    } else {
+      onMissionChange(nextMission)
+    }
+    startMission(lessonId, startedAt)
+    onMissionChange(readMission(lessonId))
+
+    const scenario = scenarioById(nextMission.scenarioId) ?? MISSION_SCENARIOS[0]!
+    const existingCode = readClassroomSession()?.code
+    const classroomInput = {
+      lessonId,
+      lessonLabel: label.trim() || 'Untitled lesson',
+      scenarioId: scenario.id,
+      scenarioName: scenario.name,
+      objective: scenario.objective,
+      rules: scenario.teamFocus,
+      limitMinutes: scenario.defaultLimitMinutes,
+      zones: nextMission.zones,
+      live: true as const,
+      now: startedAt,
+    }
+    openClassroom(
+      existingCode ? { ...classroomInput, code: existingCode } : classroomInput,
+    )
+
+    // Production goes straight to the flying board. Vitest/jsdom cannot navigate.
+    if (typeof process === 'undefined' || process.env.VITEST !== 'true') {
+      window.location.assign('/control')
+    }
+  }
 
   return (
     <div className="flex flex-col gap-2 border-t border-hairline pt-5">
@@ -190,11 +262,14 @@ function StartLessonStrip({
         <button
           type="button"
           className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas"
-          onClick={() => startLesson(label, fleetSize, fleetSize, now || Date.now())}
+          onClick={begin}
         >
           Start the lesson
         </button>
       </div>
+      <p className="m-0 text-value text-ink-muted">
+        Starts the Lesson, opens the Student classroom code, and goes to Control.
+      </p>
     </div>
   )
 }

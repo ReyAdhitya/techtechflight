@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'motion/react'
+import { useRouter } from 'next/navigation'
 import { SimulationLabel } from './SimulationLabel'
 import { SiteNav } from './SiteNav'
 import { ThemeToggle } from './ThemeToggle'
+import { clearBoardRole } from '@/lib/role'
 
 const EASE = [0.16, 1, 0.3, 1] as const
 
@@ -19,6 +21,7 @@ const EASE = [0.16, 1, 0.3, 1] as const
 export function SiteHeader() {
   const [floating, setFloating] = useState(false)
   const reduced = useReducedMotion()
+  const router = useRouter()
 
   useEffect(() => {
     const onScroll = () => setFloating(window.scrollY > 18)
@@ -42,6 +45,17 @@ export function SiteHeader() {
 
         <div className="site-header__controls">
           <ThemeToggle />
+          <button
+            type="button"
+            className="site-header__settings"
+            aria-label="Switch between Student and Teacher"
+            onClick={() => {
+              clearBoardRole()
+              router.push('/enter')
+            }}
+          >
+            Role
+          </button>
           {/* Not in the navigation: the room and the records, rather than a place to go. */}
           <Link href="/settings" prefetch={false} className="site-header__settings">
             Settings

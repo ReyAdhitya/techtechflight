@@ -15,6 +15,8 @@ afterEach(cleanup)
 
 beforeEach(() => {
   window.localStorage.clear()
+  // Teacher chrome is the default under test. Student screens set their own role.
+  window.localStorage.setItem('techtechflight:board-role', 'teacher')
 })
 
 // jsdom implements no layout, so it ships no ResizeObserver. Radix's dialog and tooltip

@@ -6,7 +6,12 @@ import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+// Control carries steps 6 to 11; this suite works the step that holds its subject.
+const search = vi.hoisted(() => ({ current: new URLSearchParams('step=9') }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useSearchParams: () => search.current,
+}))
 
 const settle = () =>
   act(() => {

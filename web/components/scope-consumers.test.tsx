@@ -26,7 +26,12 @@ import { HistorySections } from './HistoryScreen'
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+// Control carries steps 6 to 11; this suite works the step that holds its subject.
+const search = vi.hoisted(() => ({ current: new URLSearchParams('step=7') }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useSearchParams: () => search.current,
+}))
 
 /** Long enough for the simulated Fleet to have reported at least one position. */
 const SETTLE_MS = 3_000

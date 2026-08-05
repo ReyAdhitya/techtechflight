@@ -26,10 +26,7 @@ import {
   type AbsentReassignResult,
 } from '@/lib/absent-reassign'
 import { cn } from '@/lib/utils'
-import { BatteryOnChargeTick } from './BatteryOnChargeTick'
-import { CraftReturnedTick } from './CraftReturnedTick'
 import { LessonPrepPanel } from './LessonPrepPanel'
-import { PackdownChecklist } from './PackdownChecklist'
 import { SafetyBriefPanel } from './SafetyBriefPanel'
 import { WaitingList } from './WaitingList'
 import { useFleet } from './FleetProvider'
@@ -169,7 +166,7 @@ export function LessonScreen() {
           {step === 1 ? (
             <div className="flex flex-col gap-6 border-t border-hairline pt-6">
               {lesson ? (
-                <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
+                <LessonUnderWay lesson={lesson} now={now} book={book} />
               ) : (
                 <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
               )}
@@ -305,12 +302,10 @@ function PreFlight({
 function LessonUnderWay({
   lesson,
   now,
-  drones,
   book,
 }: {
   lesson: LessonRecord
   now: number
-  drones: readonly DroneState[]
   book: ReturnType<typeof readLogbook>
 }) {
   const storageKey = `lesson-warmup-done:${lesson.id}`
@@ -323,11 +318,6 @@ function LessonUnderWay({
     sessionStorage.setItem(storageKey, '1')
     setWarming(false)
   }
-
-  const packdownCrafts = drones.map((drone) => ({
-    droneId: drone.id,
-    droneName: drone.name,
-  }))
 
   return (
     <section className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5">
@@ -347,13 +337,6 @@ function LessonUnderWay({
       </p>
 
       <WaitingList book={book} />
-
-      <div className="flex flex-col gap-4 border-t border-hairline pt-4">
-        <h2 className="label m-0">Pack-down</h2>
-        <PackdownChecklist lessonId={lesson.id} crafts={packdownCrafts} />
-        <BatteryOnChargeTick lessonId={lesson.id} packs={packdownCrafts} />
-        <CraftReturnedTick lessonId={lesson.id} crafts={packdownCrafts} />
-      </div>
 
       <LessonBookmarkControl
         lessonId={lesson.id}

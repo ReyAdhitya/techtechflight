@@ -29,16 +29,11 @@ import {
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { formatClock } from '@/lib/telemetry-presentation'
 import { cn } from '@/lib/utils'
-import { AbsentReassignNotice } from './AbsentReassignNotice'
-import { AssignEveryoneButton } from './AssignEveryoneButton'
-import { AssignmentColumn } from './AssignmentColumn'
-import { AssignmentUndoButton } from './AssignmentUndoButton'
 import { BatteryOnChargeTick } from './BatteryOnChargeTick'
 import { CraftReturnedTick } from './CraftReturnedTick'
 import { LessonPrepPanel } from './LessonPrepPanel'
 import { PackdownChecklist } from './PackdownChecklist'
 import { SafetyBriefPanel } from './SafetyBriefPanel'
-import { SwapPupilsControl } from './SwapPupilsControl'
 import { WaitingList } from './WaitingList'
 import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
@@ -348,60 +343,6 @@ function PreFlight({
       )}
 
       <LessonPrepPanel drones={drones} book={book} />
-
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <AssignEveryoneButton
-            droneIds={drones.map((drone) => drone.id)}
-          />
-          <AssignmentUndoButton
-            canUndo={canUndoAssignment()}
-            onUndo={() => {
-              undoLastAssignment()
-              setUndoTick((n) => n + 1)
-            }}
-          />
-        </div>
-        <SwapPupilsControl
-          options={drones.map((drone) => ({
-            droneId: drone.id,
-            droneName: drone.name,
-            studentName: studentOf(book, drone.id),
-          }))}
-          onSwapped={() => setUndoTick((n) => n + 1)}
-        />
-        <AssignmentColumn drones={drones} book={book} />
-        <WaitingList book={book} />
-        {book.roster.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <h2 className="label m-0">Mark absent</h2>
-            <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-              {book.roster.map((student) =>
-                student.studentId === '' || isStudentAbsent(book, student.studentId) ? null : (
-                  <li key={student.studentId}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        withAssignmentUndo(() => {
-                          setAbsentNotice(markAbsentAndFreeCraft(student.studentId))
-                        })
-                        setUndoTick((n) => n + 1)
-                      }}
-                      className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-                    >
-                      {student.name} absent
-                    </button>
-                  </li>
-                ),
-              )}
-            </ul>
-            <AbsentReassignNotice
-              result={absentNotice}
-              droneNames={Object.fromEntries(drones.map((d) => [d.id, d.name]))}
-            />
-          </div>
-        )}
-      </div>
 
       <div className="flex flex-col gap-2 border-t border-hairline pt-5">
         {ready === 0 && vitals.length > 0 && (

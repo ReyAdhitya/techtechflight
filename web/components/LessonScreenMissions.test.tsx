@@ -97,7 +97,8 @@ describe('mission set-up, one step at a time', () => {
     expect(
       screen.getByRole('heading', { name: 'Choose the Mission Scenario' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/The objective, what counts as success/i)).toBeInTheDocument()
+    // The why paragraph under the title is gone; the title is the step (#617).
+    expect(screen.queryByText(/The objective, what counts as success/i)).not.toBeInTheDocument()
     // 'Set up' is also the rail phase heading, so read the chip beside the step count.
     expect(screen.getByText('Step 1 of 12').parentElement).toHaveTextContent('Set up')
   })

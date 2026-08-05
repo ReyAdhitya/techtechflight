@@ -15,25 +15,39 @@ export function ScenarioPicker({
   selectedScenarioId,
   onSelect,
   locked,
+  bare = false,
 }: {
   readonly selectedScenarioId: ScenarioId | null
   readonly onSelect: (id: ScenarioId) => void
   readonly locked: boolean
+  /**
+   * Drop the heading, the standfirst and the card around them.
+   *
+   * On a Mission step the step already says what this is and why, and repeating it inside
+   * a second card is the duplicate chrome the step layout exists to remove.
+   */
+  readonly bare?: boolean
 }) {
   return (
     <section
-      className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5"
-      aria-labelledby="scenario-picker-heading"
+      className={cn(
+        'flex flex-col gap-4',
+        !bare && 'rounded-surface border border-hairline bg-surface-1 p-5',
+      )}
+      aria-label={bare ? 'Mission Scenario' : undefined}
+      aria-labelledby={bare ? undefined : 'scenario-picker-heading'}
     >
-      <div className="flex flex-col gap-1">
-        <h2 id="scenario-picker-heading" className="label m-0">
-          Mission Scenario
-        </h2>
-        <p className="m-0 text-value text-ink-subtle">
-          A Lesson runs one Scenario at a time. Pick what the class is trying to achieve —
-          the flow, exercises and brief follow from here.
-        </p>
-      </div>
+      {bare ? null : (
+        <div className="flex flex-col gap-1">
+          <h2 id="scenario-picker-heading" className="label m-0">
+            Mission Scenario
+          </h2>
+          <p className="m-0 text-value text-ink-subtle">
+            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve —
+            the flow, exercises and brief follow from here.
+          </p>
+        </div>
+      )}
 
       {selectedScenarioId === null ? (
         <p className="m-0 text-value text-ink-muted">

@@ -91,6 +91,10 @@ period is running.
 to show rows — Grant takeoff and Hold are per craft on the Mission (or the whole Fleet when
 none are named) (#616).
 
+**Teacher or Student at `/enter`.** Same deploy (ADR-0025). Student UI is `/student` +
+classroom code; `/api/classroom` mirrors the session to Blob when configured. Grant takeoff
+on Control clears the Student seat. Role key: `techtechflight:board-role`.
+
 **Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
 no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
 the Simulator; Settings **Classroom setup** can prefer Radio (MAVLink) for the next launch

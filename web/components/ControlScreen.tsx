@@ -68,6 +68,13 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
 import { readClearances, writeClearances } from '@/lib/clearance-store'
 import type { ClearanceState } from '@/lib/clearance'
 import { emptyClearanceState } from '@/lib/clearance'
+import {
+  grantSeatsForDrone,
+  holdSeatClearance,
+  readClassroomSession,
+  writeClassroomSession,
+} from '@/lib/classroom-session'
+import { ClassroomCodePanel } from './ClassroomCodePanel'
 import { putMission, readMission, startMission } from '@/lib/mission-draft'
 import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
 import {
@@ -312,52 +319,69 @@ export function ControlScreen() {
        */}
       <MissionStepHead step={step} />
 
-      {step === 10 ? (
-        <AttentionBar
-          queue={queue}
-          studentFor={(droneId) => studentOf(book, droneId)}
-          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
-          onResponse={(entry, response) => {
-            if (response.command !== null) {
-              issueCommand(entry.droneId, response.command, entry.callsign)
-            }
-            acknowledge(entry.droneId, entry)
-          }}
-        />
-      ) : null}
-
-      {step === 10 ? (
+      {/*
+       * In the air is one board (#630). Steps 6–10 used to hide Scope or strips from each
+       * other; a Teacher mid-lesson needs approve, airspace, Alerts and Commands together.
+       */}
+      {step >= 6 && step <= 10 ? (
         <>
+      <ClassroomCodePanel />
+      <AttentionBar
+        queue={queue}
+        studentFor={(droneId) => studentOf(book, droneId)}
+        onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+        onResponse={(entry, response) => {
+          if (response.command !== null) {
+            issueCommand(entry.droneId, response.command, entry.callsign)
+          }
+          acknowledge(entry.droneId, entry)
+        }}
+      />
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
-      <ControlDisclosure summary="Also noting">
-        <div className="flex flex-col gap-3">
-          <NotYetAirborneNotice
-            lessonStarted={lesson !== null}
-            craft={vitals.map((entry) => ({
-              droneId: entry.droneId,
-              callsign: entry.callsign,
-              airborne: entry.airborne,
-              studentName: studentOf(book, entry.droneId),
-            }))}
-          />
-          <LongestAirborne now={now} craft={longestAirborneCraft} />
-        </div>
-      </ControlDisclosure>
-        </>
-      ) : null}
-
-      {step === 6 && mission !== null ? (
+      {mission !== null ? (
         <ClearanceQueue
           state={clearances}
           craft={clearanceCraft}
           grantedBy="Teacher"
           now={now}
-          onStateChange={(next) => setClearances(writeClearances(lessonId, next))}
+          onStateChange={(next) => {
+            const previous = clearances
+            setClearances(writeClearances(lessonId, next))
+            const classroom = readClassroomSession()
+            if (!classroom) return
+            for (const record of next.records) {
+              const was = previous.records.find(
+                (row) =>
+                  row.droneId === record.droneId &&
+                  row.missionId === record.missionId &&
+                  row.endedAt === null,
+              )
+              if (record.grantedAt !== null && (was === undefined || was.grantedAt === null)) {
+                writeClassroomSession(
+                  grantSeatsForDrone(classroom, record.droneId, record.grantedAt),
+                )
+              }
+              if (
+                record.heldAt !== null &&
+                (was === undefined || was.heldAt === null) &&
+                record.grantedAt === null
+              ) {
+                let updated = classroom
+                for (const seat of classroom.seats) {
+                  if (
+                    seat.droneId === record.droneId ||
+                    (seat.droneId === null && seat.phase === 'awaiting-clearance')
+                  ) {
+                    updated = holdSeatClearance(updated, seat.studentId, record.heldAt)
+                  }
+                }
+                writeClassroomSession(updated)
+              }
+            }
+          }}
         />
       ) : null}
-
-      {step === 7 ? (
       <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
         <Scope
@@ -390,9 +414,7 @@ export function ControlScreen() {
           }
         />
       </section>
-      ) : null}
-
-      {(step === 7 || step === 9) && airborneCount > 0 && (
+      {airborneCount > 0 && (
         <section
           className="flex flex-wrap items-center gap-3"
           aria-label="Fleet actions"
@@ -430,7 +452,6 @@ export function ControlScreen() {
         </section>
       )}
 
-      {step === 8 || step === 9 ? (
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
@@ -538,6 +559,21 @@ export function ControlScreen() {
           ))}
         </ul>
       </section>
+      <ControlDisclosure summary="Also noting">
+        <div className="flex flex-col gap-3">
+          <NotYetAirborneNotice
+            lessonStarted={lesson !== null}
+            craft={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              callsign: entry.callsign,
+              airborne: entry.airborne,
+              studentName: studentOf(book, entry.droneId),
+            }))}
+          />
+          <LongestAirborne now={now} craft={longestAirborneCraft} />
+        </div>
+      </ControlDisclosure>
+        </>
       ) : null}
 
       {step === 11 && mission !== null && mission.startedAt !== null ? (

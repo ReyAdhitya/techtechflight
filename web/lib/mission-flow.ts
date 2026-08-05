@@ -27,7 +27,12 @@ export const MISSION_FLOW_PHASES: readonly {
 
 export interface MissionFlowStep {
   readonly step: number
+  /** Short, for the rail. A noun, because the rail is a list of places in the day. */
   readonly label: string
+  /** The heading on the step itself. An instruction, because a step is work. */
+  readonly title: string
+  /** One sentence on why the step exists, above the controls. */
+  readonly why: string
   readonly phase: MissionPhaseId
   /** Where the work lives. Set-up on Lesson, flying on Control, the debrief on Reports. */
   readonly href: string
@@ -39,6 +44,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 1,
     label: 'Mission Scenario',
+    title: 'Choose the Mission Scenario',
+    why: 'What the class is trying to do today. The objective, what counts as success and the risks all follow from this, so it comes first and stays changeable until the first clearance.',
     phase: 'set-up',
     href: '/lesson?step=1',
     nextAction: 'Pick what the class is trying to achieve today.',
@@ -46,6 +53,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 2,
     label: 'Mission area',
+    title: 'Draw the Mission area',
+    why: 'Metres from the Fleet’s own origin rather than a map, so "inside this polygon" stays true even when the origin is wrong.',
     phase: 'set-up',
     href: '/lesson?step=2',
     nextAction: 'Draw the Mission Zone and any No-fly Zones.',
@@ -53,6 +62,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 3,
     label: 'Teams and Drones',
+    title: 'Put each team on a Drone',
+    why: 'Teams group the class for the Mission. Who is flying which craft still comes from the Logbook; this sits beside that, not instead of it.',
     phase: 'set-up',
     href: '/lesson?step=3',
     nextAction: 'Put each team on a craft.',
@@ -60,6 +71,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 4,
     label: 'Pre-flight check',
+    title: 'Check every craft that is flying',
+    why: 'Six items read themselves from Telemetry. Propellers is the one you look at and tick, because the board cannot see a chipped blade.',
     phase: 'set-up',
     href: '/lesson?step=4',
     nextAction: 'Work the seven items for each craft that is flying.',
@@ -67,6 +80,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 5,
     label: 'Rules and brief',
+    title: 'Brief the class',
+    why: 'Ticked as you say them, so the record shows the class was briefed and not only that a box existed.',
     phase: 'set-up',
     href: '/lesson?step=5',
     nextAction: 'Walk the class through the Mission rules and the safety brief.',
@@ -74,6 +89,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 6,
     label: 'Takeoff clearance',
+    title: 'Approve takeoff',
+    why: 'A team that is Ready, on a craft and past pre-flight enters the queue by itself. You grant or hold, and the Students still fly by hand.',
     phase: 'in-the-air',
     href: '/control',
     nextAction: 'Grant or hold each team waiting to launch.',
@@ -81,6 +98,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 7,
     label: 'Where everything is',
+    title: 'Watch the airspace',
+    why: 'Plan view in the Fleet’s own frame, with the zones you drew and the trail each craft has flown.',
     phase: 'in-the-air',
     href: '/control',
     nextAction: 'Watch the Scope for craft leaving the Mission Zone.',
@@ -88,6 +107,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 8,
     label: 'Telemetry and camera',
+    title: 'Read one craft closely',
+    why: 'The numbers and the picture together, because a battery reading means something different when you can see what the craft is over.',
     phase: 'in-the-air',
     href: '/control',
     nextAction: 'Read a craft closely when its numbers look wrong.',
@@ -95,6 +116,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 9,
     label: 'Commands',
+    title: 'Send what only you can send',
+    why: 'Five things reach the aircraft. The rest are instructions you record, so they work on real hardware too.',
     phase: 'in-the-air',
     href: '/control',
     nextAction: 'Land, Hover, Recall or Stop when a team needs help.',
@@ -102,6 +125,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 10,
     label: 'Alerts',
+    title: 'Work the Alert at the top',
+    why: 'One focused Alert with the responses already worked out, and the rest of the queue folded away.',
     phase: 'in-the-air',
     href: '/control',
     nextAction: 'Work the Alert at the top of the Attention bar.',
@@ -109,6 +134,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 11,
     label: 'Mission complete',
+    title: 'Confirm the Mission complete',
+    why: 'Seals the Mission and its score. It refuses while anything is still in the air, and that refusal is the point of the step.',
     phase: 'close-down',
     href: '/control',
     nextAction: 'Confirm the Mission once every craft is down.',
@@ -116,6 +143,8 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
   {
     step: 12,
     label: 'Logs and debrief',
+    title: 'Read the debrief',
+    why: 'What happened, measured against the criteria the Scenario stated at step 1, and honest about what the board could not measure.',
     phase: 'close-down',
     href: '/reports',
     nextAction: 'Read the score against the criteria the Scenario stated.',

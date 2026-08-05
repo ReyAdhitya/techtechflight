@@ -70,6 +70,7 @@ import {
 } from './MissionBriefing'
 import { TeamBriefPrint } from './TeamBriefPrint'
 import { StepRail } from './StepRail'
+import { ControlDisclosure } from './ControlDisclosure'
 import type { Mission } from '@/lib/mission'
 import { readTeams } from '@/lib/teams'
 import {
@@ -82,6 +83,7 @@ import {
 import { readClearances } from '@/lib/clearance-store'
 import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
 import {
+  MISSION_FLOW_PHASES,
   MISSION_FLOW_STEPS,
   MISSION_STEP_COUNT,
   currentMissionStep,
@@ -157,6 +159,7 @@ export function LessonScreen() {
         <StepRail
           facts={facts}
           activeStep={step}
+          lessonName={lesson?.label ?? null}
           open={railOpen}
           onToggle={() => setRailOpen((was) => !was)}
         />
@@ -172,20 +175,24 @@ export function LessonScreen() {
             onMissionChange={setMission}
           />
 
-          {lesson ? (
-            <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
-          ) : (
-            <PreFlight
-              drones={drones}
-              vitals={vitals}
-              book={book}
-              now={now}
-            />
-          )}
+          {/*
+           * Everything the Lesson is besides the Mission: whether the Fleet is
+           * serviceable, who is flying what, starting and ending the period, pack-down,
+           * and what happened last week. All real work, none of it the step in front of
+           * the Teacher right now, so it folds away rather than turning the step back
+           * into the top of a long page.
+           */}
+          <ControlDisclosure summary={lesson ? 'The rest of this Lesson' : 'Start a Lesson, and the rest of the day'}>
+            {lesson ? (
+              <LessonUnderWay lesson={lesson} now={now} drones={drones} book={book} />
+            ) : (
+              <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
+            )}
 
-          <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
+            <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
 
-          <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
+            <PastLessons lessons={book.lessons.filter((record) => record.endedAt !== null)} />
+          </ControlDisclosure>
         </div>
       </div>
     </main>
@@ -576,6 +583,8 @@ function MissionPrep({
   const scenarioId = mission?.scenarioId ?? null
   const zones = mission?.zones ?? []
   const definition = MISSION_FLOW_STEPS[step - 1]
+  const phaseLabel =
+    MISSION_FLOW_PHASES.find((phase) => phase.id === definition?.phase)?.label ?? ''
 
   const craftIds = missionCraftIds(teams, mission)
   const telemetryFor = (droneId: string) =>
@@ -584,15 +593,22 @@ function MissionPrep({
   return (
     <div className="flex flex-col gap-5">
       {/*
-       * The step number and the one thing to do, and no heading of its own. Every block
-       * below already names itself, and a second heading saying the same words is the
-       * kind of chrome that made the first rail feel like duplicate navigation.
+       * The step names itself as an instruction, which is deliberately not the noun the
+       * rail uses. "Mission Scenario" is a place in the day; "Choose the Mission Scenario"
+       * is the work. Saying the same words twice would be the duplicate-navigation problem
+       * that got the first rail withdrawn.
        */}
-      <div className="flex flex-col gap-1">
-        <p className="label m-0">
-          <span className="tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
-        </p>
-        <p className="m-0 text-value text-ink-subtle">{definition?.nextAction}</p>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="label rounded-pill border border-hairline px-2.5 py-0.5">
+            {phaseLabel}
+          </span>
+          <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
+        </div>
+        <h2 className="m-0 font-display text-heading font-medium text-balance">
+          {definition?.title}
+        </h2>
+        <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition?.why}</p>
       </div>
 
       {step === 1 ? (

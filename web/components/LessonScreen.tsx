@@ -241,12 +241,12 @@ function PreFlight({
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h1 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
+        <h2 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
           <span className="tnum tracking-[-0.02em]">{usable.length}</span>
           <span className="text-heading text-ink-subtle">
             of {drones.length} serviceable
           </span>
-        </h1>
+        </h2>
         <p className="m-0 text-body text-ink-muted">
           {usable.length === 0
             ? 'None serviceable yet. The list below is what stands in the way.'
@@ -497,8 +497,8 @@ function LessonUnderWay({
       {warming ? <LessonWarmUp onDone={finishWarmUp} /> : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>
-        <h1 className="m-0 font-display text-heading font-medium">{lesson.label}
-          <BeforeAfterScores scores={{ before: null, after: null }} /></h1>
+        <h2 className="m-0 font-display text-heading font-medium">{lesson.label}
+          <BeforeAfterScores scores={{ before: null, after: null }} /></h2>
         <p className="tnum m-0 text-value text-ink-subtle">
           {formatElapsed(Math.max(0, now - lesson.startedAt))} so far
         </p>
@@ -610,9 +610,9 @@ function MissionPrep({
           </span>
           <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
         </div>
-        <h2 className="m-0 font-display text-heading font-medium text-balance">
+        <h1 className="m-0 font-display text-heading font-medium text-balance">
           {definition?.title}
-        </h2>
+        </h1>
         <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition?.why}</p>
       </div>
 

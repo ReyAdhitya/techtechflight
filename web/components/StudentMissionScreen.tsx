@@ -33,11 +33,11 @@ import { cn } from '@/lib/utils'
  * everything else stays quiet until it matters.
  *
  * The screen this replaces was rejected on sight, and its faults are worth naming so they
- * do not return: a `max-w-lg` column on a tablet, six equal chips in a grid so nothing led,
- * the objective crammed into a chip beside a number, `text-heading` as the biggest thing on
- * a screen read at arm's length, a permanent classroom code, and `value="On craft"` printed
- * where a battery reading belongs. No figure here is invented: a reading the Fleet is not
- * sending is said in words.
+ * do not return: a phone-width column in the middle of a tablet, six equal chips in a grid
+ * so nothing led, the objective crammed into a chip beside a number, a heading-sized largest
+ * element on a screen read at arm's length, a permanent classroom code, and a placeholder
+ * string printed where a battery reading belongs. No figure here is invented: a reading the
+ * Fleet is not sending is said in words.
  *
  * Nothing on this screen reaches an aircraft. Asking for takeoff is a record (ADR-0021);
  * the Students fly by hand.

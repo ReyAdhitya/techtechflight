@@ -19,7 +19,10 @@ export function RoleGateScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center gap-8 p-6"
+      /* Full width. A Student meets this door on the same tablet they fly from, and a
+         phone-width column in the middle of a landscape screen is the fault that got the
+         first Student screen rejected. */
+      className="flex min-h-[100dvh] w-full flex-col justify-center gap-8 p-6 min-[48rem]:p-10"
     >
       <div className="flex flex-col gap-2">
         <p className="label m-0 text-ink-subtle">TechTech Flight Deck</p>

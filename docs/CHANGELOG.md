@@ -5,17 +5,6 @@ would notice.
 
 ## Unreleased
 
-### Added
-
-- **Teacher or Student at the door.** `/enter` chooses role. Teachers keep Lesson / Control /
-  Fleet. Students open `/student`, join with a classroom code, and walk the Mission brief →
-  request takeoff → fly → score workflow. Connected to Teacher clearances (ADR-0025).
-- **Classroom code.** Teacher board shows a short code; Student phones join it. Syncs via
-  `/api/classroom` when Blob is configured, else same-browser localStorage + BroadcastChannel.
-- **Start the lesson opens Control.** One press starts the Lesson, adopts the Mission, opens
-  the classroom for Students, and goes to Control. In-the-air steps 6–10 are one board again
-  (approve + Scope + strips + Alerts together).
-
 ### Removed
 
 - **Lesson admin under the Scenario.** Serviceable counts, ready tally, Lesson plan, remedial

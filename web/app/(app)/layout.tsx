@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react'
 import { FleetProvider } from '@/components/FleetProvider'
 import { CommandPalette } from '@/components/CommandPalette'
-import { RequireRole } from '@/components/RoleGate'
 import { SiteHeader } from '@/components/SiteHeader'
 
 /**
@@ -16,19 +15,16 @@ import { SiteHeader } from '@/components/SiteHeader'
  *
  * `/showcase` deliberately sits outside this group: it carries its own chrome and its
  * own scenario switcher, and is a comparison rather than part of the product.
- * Students are gated to `/student` (#627).
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <RequireRole role="teacher">
-      <FleetProvider>
-        <a className="skip-link" href="#content">
-          Skip to the Fleet
-        </a>
-        <SiteHeader />
-        {children}
-        <CommandPalette />
-      </FleetProvider>
-    </RequireRole>
+    <FleetProvider>
+      <a className="skip-link" href="#content">
+        Skip to the Fleet
+      </a>
+      <SiteHeader />
+      {children}
+      <CommandPalette />
+    </FleetProvider>
   )
 }

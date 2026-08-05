@@ -16,10 +16,7 @@ import { SiteHeader } from './SiteHeader'
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({
-  usePathname: () => pathname.current,
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-}))
+vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 const CSS = readFileSync(resolve(process.cwd(), 'web/app/globals.css'), 'utf8')
 

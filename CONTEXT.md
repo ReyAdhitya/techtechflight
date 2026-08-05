@@ -14,10 +14,9 @@ The person who uses the dashboard. A classroom educator, not a trained drone ope
 _Avoid_: user, operator, pilot, admin
 
 **Student**:
-A pupil who flies a drone during a lesson. Flies by hand with a controller. May also hold
-the **Student Mission** surface on a phone (`/student`) — briefing, takeoff request, and
-score — joined to the Teacher board by a classroom code. Still never sends Commands; the
-Teacher grants takeoff as a record (ADR-0021, ADR-0025).
+A pupil who flies a drone during a lesson. Does not use the dashboard. A Student is
+assigned one Drone for a Lesson, and that pairing is something the Teacher records — no
+Drone can report whose hands are on the controller.
 _Avoid_: kid, child, learner, pilot, operator, user
 
 **School**:

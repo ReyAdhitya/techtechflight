@@ -549,6 +549,25 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     return { metres: round(nearest.metres, 2), bearingDegrees: nearest.bearingDegrees }
   }
 
+  /**
+   * How well the radio is carrying, as a proportion.
+   *
+   * The simulated Fleet used to omit this, which was read correctly by the board and shown
+   * as "Link cannot report signal strength on this airframe" — an honest sentence about a
+   * Fleet that was saying nothing. Pre-flight wants all seven items to pass, so the whole
+   * Mission run stopped at step 4 on a Fleet with no hardware in the room at all.
+   *
+   * Distance from the bench does the work, because that is the thing a Teacher can act on:
+   * a craft at the far wall reads weaker than one being checked over on the desk. The floor
+   * is above the weak threshold at bench range, so pre-flight passes where pre-flight
+   * happens, and a craft that flies to the far corner can still drop below it.
+   */
+  #linkQuality(drone: SimulatedDrone): number {
+    const metres = Math.hypot(drone.eastM, drone.northM)
+    const jitter = (this.#random() - 0.5) * 0.04
+    return round(clamp(0.96 - metres / 45 + jitter), 2)
+  }
+
   #autoLanding(drone: SimulatedDrone): AutoLandingState {
     if (!drone.canAutoLand) return 'unsupported'
     if (drone.autoLanding) return 'in-progress'
@@ -577,10 +596,18 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       // Omitted entirely on an airframe without the sensor, rather than sent as a zero.
       ...(drone.hasCamera ? { camera: { streaming: drone.streaming } } : {}),
       ...(drone.hasRangefinder ? { proximity: this.#proximity(drone) ?? null } : {}),
+      linkQuality: this.#linkQuality(drone),
 
       extra: {
         satellitesVisible: Math.round(6 + this.#random() * 6),
         firmware: '1.4.2',
+        /*
+         * Ready unless something is wrong with the craft. A simulated airframe knows its
+         * own flight controller, so "cannot report" would be a lie here; a faulted one
+         * saying its altitude hold is not ready is the honest reading, and it gives a
+         * classroom a real failing item to look at.
+         */
+        altitudeHold: drone.fault === null,
       },
     }
 

@@ -78,10 +78,9 @@ describe('Every Drone on Control', () => {
       'Drone 6',
     ])
 
-    // The queue became a disclosure list rather than a live region when the Attention bar
-    // stopped swapping a single line. What this test pins is unchanged — the worst item is
-    // reachable there while the strips above it stay put.
-    const attention = screen.getByRole('list', { name: 'Items requiring action' })
-    expect(attention).toHaveTextContent('Drone 6')
+    // Alerts moved off this step entirely: the Attention bar is step 10's, and this is
+    // step 9. What this test pins is unchanged — a faulted craft does not reorder the list
+    // it is in. That the Alert is reachable on step 10 is ControlAttentionQueueDock's.
+    expect(screen.queryByText(/items? require[s]? action/i)).not.toBeInTheDocument()
   })
 })

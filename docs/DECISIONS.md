@@ -9,6 +9,33 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-05 — One screen, one question: Lesson keeps the Mission and the period.
+
+- **Decision / notes:** Lesson had grown into the whole day. Alongside the Mission set-up
+  steps it carried Fleet health with a craft-by-craft fault list, finished Lessons, the
+  remedial queue, pack-down, a second copy of the Mission briefing, and two paragraphs on
+  where records are stored. A Teacher at 08:55 read past four blocks to reach the step they
+  opened the screen for, and every one of those blocks was a second place for a fact to go
+  stale. Each moved to the screen whose question it answers, or was deleted because that
+  screen already answered it:
+
+  | Block | Went to | Because |
+  | --- | --- | --- |
+  | Fleet health, craft by craft | Fleet board | It lists every Drone with Status and fault |
+  | Finished Lessons | Reports (`LessonReports`) | Same fields, same filter, already there |
+  | Remedial queue | Reports | Follow-up belongs beside the record of what happened |
+  | Pack-down | Control step 11 | Pack-down is close-down |
+  | Second Mission briefing | Step 5 | The rail points at step 5 |
+  | Where records live | Settings | That is where a Teacher goes to ask |
+
+  One line of Fleet health stays, because "can the period run" is a question about the
+  period rather than about the Fleet. It says both numbers and links to the list.
+- **Could have gone differently:** A Lesson overview that keeps a summary of each. Rejected
+  as the disclosure that had just been removed wearing a different hat: it keeps two sources
+  of truth alive and puts the reading back in front of the step. Deleting the Fleet-health
+  block outright was also rejected — a Teacher does need to know at 08:55 whether the lesson
+  can run, and one line answers that without a list that can disagree with Fleet.
+
 ## 2026-08-05 — Land all, Hover all and Stop all lost their hold.
 
 - **Decision / notes:** All three fleet-wide buttons wanted about a second of held pointer,

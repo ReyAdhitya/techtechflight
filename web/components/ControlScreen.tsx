@@ -72,6 +72,7 @@ import { StepRail } from './StepRail'
 import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 import { readClearances, writeClearances } from '@/lib/clearance-store'
+import { grantSeatsForDrone, readClassroomSession } from '@/lib/classroom-session'
 import type { ClearanceState } from '@/lib/clearance'
 import { emptyClearanceState } from '@/lib/clearance'
 import { putMission, readMission, startMission } from '@/lib/mission-draft'
@@ -364,7 +365,28 @@ export function ControlScreen() {
           craft={clearanceCraft}
           grantedBy="Teacher"
           now={now}
-          onStateChange={(next) => setClearances(writeClearances(lessonId, next))}
+          /*
+           * Granting a craft answers the Student sitting on it. The Teacher grants craft,
+           * not people, so the seat is found by craft; a seat with no craft on it falls
+           * back to whoever is waiting, which is what `grantSeatsForDrone` does.
+           */
+          onStateChange={(next) => {
+            setClearances(writeClearances(lessonId, next))
+            const session = readClassroomSession()
+            if (session === null) return
+            const grantedNow = next.records.filter(
+              (record) =>
+                record.grantedAt !== null &&
+                !clearances.records.some(
+                  (before) =>
+                    before.droneId === record.droneId && before.grantedAt !== null,
+                ),
+            )
+            let carried = session
+            for (const record of grantedNow) {
+              carried = grantSeatsForDrone(carried, record.droneId)
+            }
+          }}
         />
       ) : null}
 

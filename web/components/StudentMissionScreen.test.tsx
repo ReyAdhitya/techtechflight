@@ -3,8 +3,11 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import {
   assignSeatCraft,
+  grantSeatClearance,
+  holdSeatClearance,
   openClassroom,
   readClassroomSession,
+  requestTakeoff,
   resetClassroomForTests,
 } from '@/lib/classroom-session'
 import { clearLogbook, saveRoll } from '@/lib/logbook'
@@ -198,5 +201,83 @@ describe('the brief', () => {
     // Named twice on purpose: once on the identity line, once as the craft that is reporting.
     expect(screen.getAllByText('Drone 1')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Ask to take off' })).toBeInTheDocument()
+  })
+})
+
+/*
+ * What a Student is doing between asking and being told: standing at the flight line
+ * looking at a tablet. The answer is the biggest thing on the screen for exactly as long
+ * as that lasts.
+ */
+describe('asking for takeoff, and the answer', () => {
+  const seatWithCraft = () => {
+    saveRoll(['Priya'])
+    classroomWithBrief()
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    const session = readClassroomSession()!
+    const seat = session.seats[0]!
+    assignSeatCraft(session, seat.studentId, 'ttf-0001', 'Drone 1')
+    cleanup()
+    studentScreen()
+    settle()
+    return seat.studentId
+  }
+
+  const reopen = () => {
+    cleanup()
+    studentScreen()
+    settle()
+  }
+
+  it('records the ask and waits, without pretending to be cleared', () => {
+    seatWithCraft()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+
+    expect(readClassroomSession()?.seats[0]?.phase).toBe('awaiting-clearance')
+    expect(screen.getByRole('status')).toHaveTextContent('Waiting for your Teacher')
+    expect(screen.queryByRole('button', { name: 'Ask to take off' })).not.toBeInTheDocument()
+  })
+
+  it('says cleared once the Teacher grants it', () => {
+    const studentId = seatWithCraft()
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+
+    grantSeatClearance(readClassroomSession()!, studentId)
+    reopen()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Cleared for takeoff')
+  })
+
+  /*
+   * Held is an instruction, never a refusal. A child who reads "denied" has been told they
+   * did something wrong; a child who reads "wait" has been told what happens next.
+   */
+  it('words a hold as an instruction, and lets them ask again', () => {
+    const studentId = seatWithCraft()
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+
+    holdSeatClearance(readClassroomSession()!, studentId)
+    reopen()
+
+    const said = screen.getByRole('status').textContent ?? ''
+    expect(said).toContain('Hold for now')
+    expect(said).not.toMatch(/denied|refused|rejected/i)
+    expect(screen.getByRole('button', { name: 'Ask to take off' })).toBeInTheDocument()
+  })
+
+  it('keeps exactly one thing to press at every step of asking', () => {
+    seatWithCraft()
+    expect(screen.getAllByRole('button')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
   })
 })

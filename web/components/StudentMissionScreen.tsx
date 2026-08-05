@@ -182,7 +182,7 @@ function MissionBrief({
 
       <PreFlightForMyCraft seat={seat} />
 
-      <AskToTakeOff seat={seat} session={session} onSession={onSession} />
+      <TakeoffAnswer seat={seat} session={session} onSession={onSession} />
     </StudentFrame>
   )
 }
@@ -400,12 +400,20 @@ function PreFlightRow({ item }: { readonly item: PreFlightSevenReading }) {
 }
 
 /**
- * The one thing to press.
+ * Asking for takeoff, and the Teacher's answer to it.
+ *
+ * The answer is the dominant thing on this screen while it is waited for, because it is the
+ * only thing a Student is doing: standing at the flight line looking at a tablet, waiting to
+ * be told. A badge in a corner would be read from two metres as nothing at all.
+ *
+ * Held is worded as an instruction and never as a refusal. A child who reads "denied" has
+ * been told they did something wrong; a child who reads "wait, your Teacher is coming" has
+ * been told what happens next, which is the true thing and the useful one.
  *
  * Asking is a record, not a Command (ADR-0021). Nothing here starts a motor; it puts the
  * Student in the Teacher's queue and the Teacher answers on their own board.
  */
-function AskToTakeOff({
+function TakeoffAnswer({
   seat,
   session,
   onSession,
@@ -416,13 +424,76 @@ function AskToTakeOff({
 }) {
   if (seat.droneId === null) return null
 
+  if (seat.phase === 'awaiting-clearance') {
+    return (
+      <AnswerPanel
+        heading="Waiting for your Teacher"
+        says="Stand by your craft. Do not take off until this says cleared."
+        tone="waiting"
+      />
+    )
+  }
+
+  if (seat.phase === 'cleared' || seat.clearedAt !== null) {
+    return (
+      <AnswerPanel
+        heading="Cleared for takeoff"
+        says="Your Teacher has cleared you. Take off when your team is ready."
+        tone="cleared"
+      />
+    )
+  }
+
   return (
-    <button
-      type="button"
-      onClick={() => onSession(requestTakeoff(session, seat.studentId))}
-      className="min-h-16 w-full cursor-pointer rounded-surface border-0 bg-ink px-6 py-4 font-display text-heading font-medium text-canvas min-[48rem]:w-fit"
+    <div className="flex flex-col gap-3">
+      {seat.heldAt === null ? null : (
+        <AnswerPanel
+          heading="Hold for now"
+          says="Your Teacher wants you to wait. Ask again when they say so."
+          tone="held"
+        />
+      )}
+      <button
+        type="button"
+        onClick={() => onSession(requestTakeoff(session, seat.studentId))}
+        className="min-h-16 w-full cursor-pointer rounded-surface border-0 bg-ink px-6 py-4 font-display text-heading font-medium text-canvas min-[48rem]:w-fit"
+      >
+        Ask to take off
+      </button>
+    </div>
+  )
+}
+
+/**
+ * The answer, at the size the phase deserves.
+ *
+ * Full bleed and `text-summary`, because between asking and being cleared this is the whole
+ * screen as far as the Student is concerned. Word and shape carry the state; the colour is
+ * the third channel and never the only one (ADR-0004).
+ */
+function AnswerPanel({
+  heading,
+  says,
+  tone,
+}: {
+  readonly heading: string
+  readonly says: string
+  readonly tone: 'waiting' | 'cleared' | 'held'
+}) {
+  return (
+    <section
+      role="status"
+      className={cn(
+        'flex flex-col gap-2 rounded-surface border-l-4 px-6 py-5',
+        tone === 'cleared' && 'border-status-ready bg-surface-1',
+        tone === 'waiting' && 'border-hairline bg-surface-1',
+        tone === 'held' && 'border-status-not-ready bg-surface-1',
+      )}
     >
-      Ask to take off
-    </button>
+      <p className="m-0 font-display text-summary font-medium text-balance text-ink">
+        {heading}
+      </p>
+      <p className="m-0 text-body text-ink-subtle">{says}</p>
+    </section>
   )
 }

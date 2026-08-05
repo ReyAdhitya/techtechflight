@@ -157,7 +157,8 @@ describe('mission set-up, one step at a time', () => {
     atStep(4)
     settle()
 
-    expect(screen.getAllByText(/Propellers is the only one you tick/i)).toHaveLength(2)
+    // One Pre-flight check panel per craft on a team, each with its own seven items.
+    expect(screen.getAllByRole('heading', { name: 'Pre-flight check' })).toHaveLength(2)
   })
 
   it('says so plainly when step 4 has no craft to check', () => {

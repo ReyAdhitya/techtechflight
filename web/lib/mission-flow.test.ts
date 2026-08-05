@@ -48,8 +48,19 @@ describe('the twelve-step Mission run', () => {
 
   it('keeps set-up on Lesson, flying on Control and the debrief on Reports', () => {
     expect(missionStepHref(1)).toBe('/lesson?step=1')
-    expect(missionStepHref(6)).toBe('/control')
+    expect(missionStepHref(6)).toBe('/control?step=6')
     expect(missionStepHref(12)).toBe('/reports')
+  })
+
+  /*
+   * The in-the-air steps all pointed at a bare `/control`, which falls back to the step the
+   * records imply. Telemetry, Commands and Alerts were unreachable from the rail: pressing
+   * any of them landed the Teacher back on the step they were already on.
+   */
+  it('names the step in the link for every step Control shows', () => {
+    for (const step of [6, 7, 8, 9, 10, 11]) {
+      expect(missionStepHref(step)).toBe(`/control?step=${step}`)
+    }
   })
 
   it('calls the first five steps set-up, because those are the ones Lesson shows', () => {

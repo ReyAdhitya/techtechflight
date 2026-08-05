@@ -33,6 +33,7 @@ import { pupilAirborneMs } from '@/lib/pupil-flight-hours'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 import { AssignNextButton } from './AssignNextButton'
+import { DroneAssignmentPanel } from './DroneAssignmentPanel'
 import { AttendanceHistory } from './AttendanceHistory'
 import { PupilFlightHours } from './PupilFlightHours'
 import { PupilNotesField } from './PupilNotesField'
@@ -94,6 +95,15 @@ export function StudentsScreen() {
         <h1 className="m-0 font-display text-summary font-medium">Students</h1>
         <LogbookLocationNote />
       </div>
+
+      {/*
+       * Who is flying what. It lived on Lesson, under the Mission set-up, on a screen about
+       * the period rather than about the class. This is the screen the navigation names.
+       */}
+      <section className="flex flex-col gap-3">
+        <h2 className="label m-0">Drone assignment</h2>
+        <DroneAssignmentPanel drones={snapshot.state?.drones ?? []} book={book} />
+      </section>
 
       <RosterCsvImport />
 

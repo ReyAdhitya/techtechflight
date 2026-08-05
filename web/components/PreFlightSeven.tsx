@@ -53,15 +53,9 @@ export function PreFlightSeven({
       aria-labelledby="preflight-seven-heading"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <div className="flex flex-col gap-1">
-          <h2 id="preflight-seven-heading" className="label m-0">
-            Pre-flight check
-          </h2>
-          <p className="m-0 text-value text-ink-subtle">
-            Seven items before takeoff. Propellers is the only one you tick; the rest read
-            from Telemetry.
-          </p>
-        </div>
+        <h2 id="preflight-seven-heading" className="label m-0">
+          Pre-flight check
+        </h2>
         <p className="m-0 text-value text-ink-subtle" role="status">
           <span className="tnum">{done}</span>
           {' of '}
@@ -69,13 +63,6 @@ export function PreFlightSeven({
           {' OK'}
         </p>
       </div>
-
-      {!lessonId ? (
-        <p className="m-0 text-value text-ink-muted">
-          Start a Lesson to keep the propeller tick for this period. Telemetry items still
-          update live.
-        </p>
-      ) : null}
 
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {readings.map((item) =>
@@ -166,7 +153,7 @@ function PreFlightSevenMark({
       )}
       aria-hidden="true"
     >
-      {checked ? '✓' : failed ? '!' : pending ? '·' : '—'}
+      {checked ? '✓' : failed ? '!' : pending ? '·' : '?'}
     </span>
   )
 }
@@ -180,9 +167,19 @@ function PreFlightSevenCopy({
 }) {
   return (
     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-      <span className="font-display text-value font-medium text-ink">{item.label}</span>
-      <span className="text-caption text-ink-muted">{item.detail}</span>
-      <span className="text-caption text-ink-subtle">{statusWord}</span>
+      <span className="flex flex-wrap items-baseline gap-x-2">
+        <span className="font-display text-value font-medium text-ink">{item.label}</span>
+        <span className="text-caption text-ink-subtle">{statusWord}</span>
+      </span>
+      {/*
+       * The detail only when it is carrying something. An item that passed read three
+       * lines deep to say "Camera / Camera fitted, ready to start. / OK", which is the
+       * same fact three times. An item that failed is the one with something to tell you,
+       * and it still does.
+       */}
+      {item.status === 'pass' ? null : (
+        <span className="text-caption text-ink-muted">{item.detail}</span>
+      )}
     </span>
   )
 }

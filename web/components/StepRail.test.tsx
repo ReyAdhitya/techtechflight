@@ -110,6 +110,8 @@ describe('the Mission step rail', () => {
     expect(screen.getByRole('navigation', { name: /Mission steps/i }))
       .toHaveAttribute('data-open', 'false')
     expect(screen.getByRole('button', { name: /Maximise the Mission steps/i })).toBeInTheDocument()
+    // Phone/tablet way back into a closed overlay rail (#625).
+    expect(screen.getByRole('button', { name: /^Steps$/i })).toBeInTheDocument()
   })
 
   it('calls back when the Teacher works the toggle', () => {
@@ -139,10 +141,11 @@ describe('how the rail opens and shuts', () => {
   it('leaves the board alone on a narrow screen by sliding over it', () => {
     const at = CSS.indexOf('@media (max-width: 60rem)', CSS.indexOf('.step-rail {'))
     expect(at, 'the rail has no narrow-screen behaviour').toBeGreaterThan(-1)
-    const block = CSS.slice(at, at + 900)
+    const block = CSS.slice(at, at + 1200)
 
     expect(block).toMatch(/position:\s*fixed/)
     expect(block).toMatch(/transform:\s*translateX\(-100%\)/)
+    expect(block).toContain('.step-rail__reveal')
   })
 
   it('holds still for a Teacher who asked for less motion', () => {

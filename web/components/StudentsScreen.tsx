@@ -38,7 +38,6 @@ import { PupilFlightHours } from './PupilFlightHours'
 import { PupilNotesField } from './PupilNotesField'
 import { RosterCsvImport } from './RosterCsvImport'
 import { useFleet } from './FleetProvider'
-import { LogbookLocationNote } from './LogbookLocationNote'
 import { PresenceBadge } from './PresenceBadge'
 import { StatusGlyph } from './StatusBadge'
 import { READING_FRAME } from '@/lib/frame'
@@ -92,7 +91,6 @@ export function StudentsScreen() {
     >
       <div className="flex flex-col gap-2">
         <h1 className="m-0 font-display text-summary font-medium">Students</h1>
-        <LogbookLocationNote />
       </div>
 
       <RosterCsvImport />

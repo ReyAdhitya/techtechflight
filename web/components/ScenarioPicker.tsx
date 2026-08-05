@@ -43,30 +43,22 @@ export function ScenarioPicker({
             Mission Scenario
           </h2>
           <p className="m-0 text-value text-ink-subtle">
-            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve —
-            the flow, exercises and brief follow from here.
+            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve.
+            The flow, exercises and brief follow from here.
           </p>
         </div>
       )}
 
-      {selectedScenarioId === null ? (
+      {/*
+       * Only the locked case is said out loud. "You can still change this" describes a
+       * control that is plainly there and pressable; the sentence was telling a Teacher
+       * something the buttons already tell them, on every visit.
+       */}
+      {locked ? (
         <p className="m-0 text-value text-ink-muted">
-          No Scenario chosen yet. Pick one below — you can change it until the first
-          Clearance is granted.
+          The first Clearance has been granted. The Scenario is set for this Lesson.
         </p>
-      ) : locked ? (
-        <p className="m-0 text-value text-ink-muted">
-          Scenario set for this Lesson. The first Clearance has been granted, so it cannot be
-          changed.
-        </p>
-      ) : (
-        <p className="m-0 text-value text-ink-subtle">
-          {MISSION_SCENARIOS.find((scenario) => scenario.id === selectedScenarioId)?.name ??
-            'Scenario chosen'}
-          {' — '}
-          you can still change it until the first Clearance is granted.
-        </p>
-      )}
+      ) : null}
 
       <ul
         className="m-0 grid list-none grid-cols-1 gap-3 p-0 min-[40rem]:grid-cols-3"

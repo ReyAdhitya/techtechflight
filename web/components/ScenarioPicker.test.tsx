@@ -22,11 +22,17 @@ describe('ScenarioPicker', () => {
     }
   })
 
-  it('says plainly when no Scenario is chosen yet', () => {
+  /*
+   * The picker used to narrate its own state: "no Scenario chosen yet, you can change it
+   * until the first Clearance", then "chosen, you can still change it". Both described
+   * buttons that were plainly there and pressable. Only the locked case says anything now,
+   * because that one is a thing the buttons cannot show.
+   */
+  it('says nothing while the choice is still open', () => {
     render(<ScenarioPicker selectedScenarioId={null} onSelect={() => {}} locked={false} />)
 
-    expect(screen.getByText(/No Scenario chosen yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/until the first Clearance is granted/i)).toBeInTheDocument()
+    expect(screen.queryByText(/until the first Clearance is granted/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Search and Rescue/i })).toBeEnabled()
   })
 
   it('calls onSelect when a card is picked and marks it pressed', () => {
@@ -50,7 +56,6 @@ describe('ScenarioPicker', () => {
       'aria-pressed',
       'false',
     )
-    expect(screen.getByText(/you can still change it until the first Clearance/i)).toBeInTheDocument()
   })
 
   it('locks the choice after the first Clearance', () => {

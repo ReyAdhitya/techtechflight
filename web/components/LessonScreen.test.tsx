@@ -4,7 +4,6 @@ import { clearLogbook, readLogbook, runningLesson } from '@/lib/logbook'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { LessonScreen } from './LessonScreen'
-import * as readyMapping from './walls/ready-mapping'
 
 /**
  * Requirement E7, which gets a screen test of its own because it is the requirement the
@@ -38,6 +37,7 @@ const screenUnderTest = () =>
 beforeEach(() => {
   clearLogbook()
   pathname.current = '/demo'
+  search.current = new URLSearchParams()
   vi.useFakeTimers()
 })
 
@@ -46,26 +46,18 @@ afterEach(() => {
 })
 
 describe('starting a lesson with nothing filled in', () => {
-  it('says Lesson records save on this laptop first, with optional Vercel copy', () => {
-    screenUnderTest()
-    settle()
-
-    expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
-    expect(screen.getByRole('note')).toHaveTextContent(/copy also goes to Vercel/)
-  })
-
   it('offers to start at all', () => {
     screenUnderTest()
     settle()
 
-    expect(screen.getByRole('button', { name: /Start now/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeEnabled()
   })
 
   it('starts, with no name, no Students and no Exercises', () => {
     screenUnderTest()
     settle()
 
-    fireEvent.click(screen.getByRole('button', { name: /Start now/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
 
     const lesson = runningLesson(readLogbook())
     expect(lesson).not.toBeNull()
@@ -79,7 +71,7 @@ describe('starting a lesson with nothing filled in', () => {
     screenUnderTest()
     settle()
 
-    fireEvent.click(screen.getByRole('button', { name: /Start now/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
     settle()
 
     expect(screen.getByRole('link', { name: /Flight Control Center/i })).toHaveAttribute(
@@ -90,32 +82,11 @@ describe('starting a lesson with nothing filled in', () => {
 })
 
 describe('pre-flight checklist', () => {
-  it('shows ready and not ready counts from the Ready wall mapping', () => {
+  it('lives on step 4, not under the Scenario', () => {
+    search.current = new URLSearchParams('step=1')
     screenUnderTest()
     settle()
 
-    expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
-    expect(
-      screen.getByText((_, element) =>
-        Boolean(element?.classList.contains('text-summary') && element.textContent?.includes('ready ·')),
-      ),
-    ).toBeInTheDocument()
-  })
-
-  it('warns calmly when none are ready but does not block Start', () => {
-    const summary = vi.spyOn(readyMapping, 'readyBoardSummary')
-    summary.mockReturnValue({ ready: 0, notReady: 6 })
-
-    screenUnderTest()
-    settle()
-
-    expect(screen.getByText(/None ready to fly yet/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Start the lesson/i })).toBeEnabled()
-
-    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
-
-    expect(runningLesson(readLogbook())?.readyAtStart).toBe(0)
-
-    summary.mockRestore()
+    expect(screen.queryByRole('heading', { name: 'Pre-flight check' })).not.toBeInTheDocument()
   })
 })

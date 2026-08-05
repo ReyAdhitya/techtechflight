@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'motion/react'
-import { DisplayScaleToggle } from './DisplayScaleToggle'
 import { SimulationLabel } from './SimulationLabel'
 import { SiteNav } from './SiteNav'
 import { ThemeToggle } from './ThemeToggle'
@@ -43,7 +42,6 @@ export function SiteHeader() {
 
         <div className="site-header__controls">
           <ThemeToggle />
-          <DisplayScaleToggle />
           {/* Not in the navigation: the room and the records, rather than a place to go. */}
           <Link href="/settings" prefetch={false} className="site-header__settings">
             Settings

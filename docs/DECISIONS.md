@@ -9,6 +9,34 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-05 — Approve takeoff fills from the craft, not from team paperwork.
+
+- **Decision / notes:** Step 6 used to wait for Ready + assigned Student + pre-flight tick
+  before a craft entered the clearance queue. A Teacher who had not built teams saw six
+  craft on the board and **0 awaiting**. The queue now fills from the craft the Mission
+  (or, when none are named, the whole Fleet) hands it, and each row is **Grant takeoff** /
+  **Hold**. Ready and pre-flight stay on step 4; they are no longer a gate on approving.
+- **Could have gone differently:** Keep the eligibility gates and teach Teachers to build
+  teams first. Rejected — the mockup is a row per craft with two buttons, and an empty
+  approve step is the step doing nothing.
+
+## 2026-08-05 — Step 1 is the Scenario; Start the lesson is a strip.
+
+- **Decision / notes:** The earlier call put the whole Lesson admin stack on step 1 so
+  Start the lesson stayed reachable. That was still too much under *Choose the Mission
+  Scenario*. The stack goes. Start the lesson is a name field and a button under every
+  set-up step. Pack-down stays when a Lesson is already running.
+- **Could have gone differently:** Park Start only on step 5. Rejected — E7 is "start with
+  nothing filled in", and forcing five steps before Start would break that.
+
+## 2026-08-05 — Large format leaves the header; theme is icon-only.
+
+- **Decision / notes:** **LIT ROOM** / **LARGE FORMAT** pills competed with Settings on a
+  short bar. Theme keeps the icon (words on `aria-label` / `title`). Large format goes from
+  the header; the root `--display-scale` path stays for anything that still sets it.
+- **Could have gone differently:** Icon-only for both. Rejected — the ask was to drop Large
+  format, not to hide it.
+
 ## 2026-08-05 — Land all, Hover all and Stop all lost their hold.
 
 - **Decision / notes:** All three fleet-wide buttons wanted about a second of held pointer,
@@ -34,17 +62,6 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **Could have gone differently:** Leave the bar mounted everywhere and shrink it.
   Rejected — a count that reads "4 items require action" above *Watch the airspace* is a
   second screen stacked on the first, whatever size it is.
-
-## 2026-08-05 — The rest of the day lives on step 1, not under every step.
-
-- **Decision / notes:** The Fleet check, the plan wizard, the remedial queue and last
-  week's lessons folded into a disclosure summarised "Start a Lesson, and the rest of the
-  day", carried on all five set-up steps. Carried is what was wrong: on step 4 it read as a
-  drawer of unexplained work under the one thing the Teacher was being asked to do. It is
-  the top of the day, so it is on step 1, in the open.
-- **Could have gone differently:** Delete it outright, which is the literal request.
-  Rejected — Start the lesson lives in there, and removing the only way to start a Lesson
-  is not decluttering.
 
 ## 2026-08-04 — The Mission area grid is always on screen, and the guidance sits under it.
 

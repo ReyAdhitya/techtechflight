@@ -24,7 +24,10 @@ import {
   type PreFlightSevenReading,
 } from '@/lib/preflight-seven'
 import { formatAge } from '@/lib/age'
+import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
+import { emptyMission } from '@/lib/mission'
+import { missionClock } from '@/lib/mission-clock'
 import { cn } from '@/lib/utils'
 
 /**
@@ -241,10 +244,12 @@ function FlyingScreen({
               : `${Math.min(seat.checkpointIndex, session.checkpointCount)} of ${session.checkpointCount}`
           }
         />
-        <QuietReading
-          name="Time left"
-          value={session.limitMinutes > 0 ? `${session.limitMinutes} min` : null}
-        />
+        {/*
+         * The remaining time, not the limit. This read `12 min` for the whole period,
+         * which is a fixed number wearing a countdown's name and the one thing this
+         * screen must never do.
+         */}
+        <QuietReading name="Time left" value={studentClock(session, now).words} />
         <QuietReading
           name="Link"
           value={
@@ -257,8 +262,54 @@ function FlyingScreen({
         />
       </dl>
 
+      <MyMap session={session} seat={seat} />
+
       {instruction ? <TeacherInstruction instruction={instruction} now={now} /> : null}
     </StudentFrame>
+  )
+}
+
+/**
+ * Where my craft is, where the Mission is, and where I must not go.
+ *
+ * The board's own Scope, read only: no view switch, no freeze, no ghost paths, no full
+ * screen, no selection, and never another Student's craft. It is a picture, not an
+ * instrument, and it is not one of the two things on this screen that can be pressed.
+ *
+ * Metres east and north of where the Fleet was set up. There is no GPS in this product and
+ * there is deliberately no map tile behind this: a zone and a craft share one origin, so
+ * "inside this polygon" stays true even when the origin is wrong.
+ */
+function MyMap({
+  session,
+  seat,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+}) {
+  const { snapshot } = useFleet()
+  const mine = snapshot.state?.drones.find((drone) => drone.id === seat.droneId) ?? null
+
+  if (mine === null) return null
+
+  const checkpoints = session.checkpoints ?? []
+  const reached = new Set(
+    checkpoints.slice(0, Math.max(0, seat.checkpointIndex)).map((point) => point.id),
+  )
+
+  return (
+    <section className="flex flex-col gap-2" aria-labelledby="student-map">
+      <h2 id="student-map" className="label m-0">
+        Where you are
+      </h2>
+      <Scope
+        drones={[mine]}
+        zones={session.zones}
+        checkpoints={checkpoints}
+        reachedCheckpointIds={reached}
+        readOnly
+      />
+    </section>
   )
 }
 
@@ -713,5 +764,23 @@ function AnswerPanel({
       </p>
       <p className="m-0 text-body text-ink-subtle">{says}</p>
     </section>
+  )
+}
+
+/**
+ * The Mission clock, from the same module the Teacher's board reads.
+ *
+ * The session carries the start and the limit rather than the Mission itself, so this
+ * builds the smallest Mission the clock needs. Before the Mission starts the clock says so
+ * rather than counting down from nothing.
+ */
+function studentClock(session: ClassroomSession, now: number) {
+  return missionClock(
+    {
+      ...emptyMission('student-clock', session.scenarioId ?? 'search-rescue', ''),
+      startedAt: session.missionStartedAt ?? null,
+      limitMinutes: session.limitMinutes > 0 ? session.limitMinutes : null,
+    },
+    now,
   )
 }

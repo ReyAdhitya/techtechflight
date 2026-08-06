@@ -48,6 +48,8 @@ export function ClassroomOpen() {
       rules: MISSION_BRIEFING_RULES.map((rule) => rule.label),
       limitMinutes: mission.limitMinutes ?? scenario.defaultLimitMinutes,
       checkpointCount: mission.checkpoints.length,
+      missionStartedAt: mission.startedAt,
+      checkpoints: mission.checkpoints,
       zones: mission.zones,
       /*
        * Live once the Mission has started. Before that the brief is readable and nothing

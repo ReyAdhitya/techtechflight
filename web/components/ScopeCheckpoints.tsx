@@ -11,6 +11,15 @@ export type ScopeCheckpointsProps = {
   /** The scope's metre → viewBox projection, same one the grid uses. */
   readonly project: (eastM: number, northM: number) => { x: number; y: number }
   readonly view: ScopeView
+  /**
+   * `number` draws the order alone and leaves the reached word to assistive tech.
+   *
+   * The Teacher's scope shows the word, because ADR-0004 was written for a board a Teacher
+   * reads across a room. A Student's map is one craft and four marks on a tablet, where
+   * four repetitions of "not reached" say nothing the diamonds have not already said and
+   * cover the room while saying it.
+   */
+  readonly labels?: 'full' | 'number'
 }
 
 /**
@@ -30,6 +39,7 @@ export function ScopeCheckpoints({
   reachedIds,
   project,
   view,
+  labels = 'full',
 }: ScopeCheckpointsProps) {
   if (view !== 'top-down' || checkpoints.length === 0) return null
 
@@ -61,6 +71,7 @@ export function ScopeCheckpoints({
           order={index + 1}
           reached={reachedIds.has(checkpoint.id)}
           project={project}
+          labels={labels}
         />
       ))}
     </g>
@@ -72,11 +83,13 @@ function CheckpointMark({
   order,
   reached,
   project,
+  labels,
 }: {
   readonly checkpoint: MissionCheckpoint
   readonly order: number
   readonly reached: boolean
   readonly project: (eastM: number, northM: number) => { x: number; y: number }
+  readonly labels: 'full' | 'number'
 }) {
   const { x, y } = project(checkpoint.at.eastM, checkpoint.at.northM)
   const statusWord = reached ? 'reached' : 'not reached'
@@ -129,11 +142,17 @@ function CheckpointMark({
         x={x}
         y={y - checkpoint.radiusM - 0.25}
         textAnchor="middle"
-        className="fill-ink text-caption"
-        fontSize="0.55"
+        className="fill-ink"
+        /*
+         * Metres, not pixels: this is inside the scope's own viewBox, so the label scales
+         * with the room. At 0.55 it was over half a metre tall, which on a classroom-sized
+         * view drew the word larger than the checkpoint it named. This component had no
+         * caller until the Student map, so nobody had seen it.
+         */
+        fontSize="0.3"
         data-checkpoint-label=""
       >
-        {order}. {statusWord}
+        {labels === 'number' ? order : `${order}. ${statusWord}`}
       </text>
     </g>
   )

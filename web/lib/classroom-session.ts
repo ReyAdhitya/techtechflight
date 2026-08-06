@@ -1,5 +1,5 @@
 import type { DroneId } from '@techtechflight/contract'
-import type { ScenarioId } from './mission.ts'
+import type { MissionCheckpoint, ScenarioId } from './mission.ts'
 import type { Zone } from './airspace.ts'
 
 /**
@@ -59,6 +59,13 @@ export interface ClassroomSession {
   readonly rules: readonly string[]
   readonly limitMinutes: number
   readonly checkpointCount: number
+  /**
+   * When the Mission started, so a Student's clock is the same clock the Teacher reads.
+   * Null before the first clearance; the session is not live then either.
+   */
+  readonly missionStartedAt?: number | null
+  /** The checkpoints themselves, so a Student's map can draw them in the Mission's order. */
+  readonly checkpoints?: readonly MissionCheckpoint[]
   readonly zones: readonly Zone[]
   readonly seats: readonly ClassroomSeat[]
   readonly instructions: readonly ClassroomInstruction[]
@@ -85,6 +92,8 @@ function emptySession(code: string, now: number): ClassroomSession {
     rules: [],
     limitMinutes: 20,
     checkpointCount: 5,
+    missionStartedAt: null,
+    checkpoints: [],
     zones: [],
     seats: [],
     instructions: [],
@@ -146,6 +155,8 @@ export function openClassroom(input: {
   readonly limitMinutes: number
   /** How many checkpoints this Mission has. Absent keeps whatever the session already had. */
   readonly checkpointCount?: number
+  readonly missionStartedAt?: number | null
+  readonly checkpoints?: readonly MissionCheckpoint[]
   readonly zones: readonly Zone[]
   readonly live?: boolean
   readonly now?: number
@@ -165,6 +176,8 @@ export function openClassroom(input: {
     rules: input.rules,
     limitMinutes: input.limitMinutes,
     checkpointCount: input.checkpointCount ?? base.checkpointCount,
+    missionStartedAt: input.missionStartedAt ?? base.missionStartedAt ?? null,
+    checkpoints: input.checkpoints ?? base.checkpoints ?? [],
     zones: input.zones,
     live: input.live ?? true,
     updatedAt: now,

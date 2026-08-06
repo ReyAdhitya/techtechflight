@@ -144,6 +144,44 @@ export function ReportsScreen() {
       <LessonReports />
 
       {/*
+       * Poster step 12 — debrief after seal. Missions already list scores; this block
+       * names the job so a Teacher hunting for "how did we do" lands here first.
+       */}
+      {(() => {
+        const sealed = withMissions.flatMap((lesson) =>
+          missionsFrom(lesson)
+            .filter((mission) => mission.outcome != null)
+            .map((mission) => ({ lesson, mission })),
+        )
+        if (sealed.length === 0) return null
+        return (
+          <section className="flex flex-col gap-3 border-t border-hairline pt-8">
+            <h2 className="m-0 font-display text-heading font-medium">Debrief</h2>
+            <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+              Sealed Mission scores for the class. Open each Mission below for criteria and
+              what was measured.
+            </p>
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {sealed.slice(0, 12).map(({ lesson, mission }) => {
+                const score = mission.outcome!.score
+                return (
+                  <li key={`${lesson.id}-${mission.id}`} className="text-value text-ink">
+                    <span className="font-medium">{lesson.label}</span>
+                    {' — '}
+                    {score === null ? (
+                      <span className="text-ink-subtle">Not scored</span>
+                    ) : (
+                      <span className="tnum">{Math.round(score * 100)}%</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )
+      })()}
+
+      {/*
        * Who to follow up with, beside the record of what happened. It used to sit on the
        * Lesson screen, which is where a Teacher sets the next period up, not where they
        * read the last one. Screen chrome, so it stays off the printed sheet.

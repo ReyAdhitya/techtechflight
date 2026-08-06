@@ -43,7 +43,8 @@ describe('the emergency stop on a flight strip', () => {
     )
     settle()
 
-    expect(screen.getAllByRole('button', { name: /^Stop$/ }).length).toBe(6)
+    // Six strips; the ATC toolbar also has a fleet Stop.
+    expect(screen.getAllByRole('button', { name: /^Stop$/ }).length).toBeGreaterThanOrEqual(6)
     expect(screen.queryByRole('button', { name: /Stop immediately/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Stop — hold/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Press again to stop/ })).not.toBeInTheDocument()
@@ -60,20 +61,22 @@ describe('the emergency stop on a flight strip', () => {
       await new Promise((resolve) => setTimeout(resolve, 1_500))
     })
 
-    const stop = screen.getAllByRole('button', { name: /^Stop$/ })[0]!
-    const strip = stop.closest('li')!
+    const stripEl = document.getElementById('control-strip-ttf-0001')
+    if (stripEl === null) throw new Error('missing strip ttf-0001')
+    const strip = within(stripEl)
+    const stop = strip.getByRole('button', { name: /^Stop$/ })
     fireEvent.click(stop)
 
     await waitFor(() => {
-      expect(within(strip).getByRole('button', { name: 'Release stop' })).toBeInTheDocument()
+      expect(strip.getByRole('button', { name: 'Release stop' })).toBeInTheDocument()
     })
-    expect(within(strip).queryByRole('button', { name: /^Stop$/ })).not.toBeInTheDocument()
-    expect(within(strip).queryByText(/Stop — done/)).not.toBeInTheDocument()
+    expect(strip.queryByRole('button', { name: /^Stop$/ })).not.toBeInTheDocument()
+    expect(strip.queryByText(/Stop — done/)).not.toBeInTheDocument()
 
-    fireEvent.click(within(strip).getByRole('button', { name: 'Release stop' }))
+    fireEvent.click(strip.getByRole('button', { name: 'Release stop' }))
     await waitFor(() => {
-      expect(within(strip).getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
+      expect(strip.getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
     })
-    expect(within(strip).queryByText(/Stop — done/)).not.toBeInTheDocument()
+    expect(strip.queryByText(/Stop — done/)).not.toBeInTheDocument()
   })
 })

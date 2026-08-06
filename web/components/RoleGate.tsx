@@ -30,7 +30,8 @@ export function RoleGateScreen() {
           Who is using this device?
         </h1>
         <p className="m-0 text-body text-ink-muted">
-          Teachers run the lesson. Students fly the Mission on their own phone.
+          Teachers run the lesson on this board. Students join on an iPad with the classroom
+          code, then fly by hand with a controller.
         </p>
       </div>
 
@@ -52,7 +53,7 @@ export function RoleGateScreen() {
         >
           I am a Student
           <span className="mt-1 block text-value font-normal text-ink-subtle">
-            Join with the classroom code and fly the Mission
+            Join with the classroom code on this iPad
           </span>
         </button>
       </div>

@@ -7,6 +7,7 @@ import { ScenarioPanel } from './ScenarioPanel'
 import { SeparationThresholdPanel } from './SeparationThresholdPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
+import { clearBoardRole } from '@/lib/role'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -33,6 +34,20 @@ export function SettingsScreen() {
       className={cn(READING_FRAME, 'flex flex-col gap-8 p-4 min-[26rem]:p-8')}
     >
       <h1 className="m-0 font-display text-summary font-medium">Settings</h1>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="label m-0">Who is using this device</h2>
+        <button
+          type="button"
+          className="min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          onClick={() => {
+            clearBoardRole()
+            window.location.assign('/enter')
+          }}
+        >
+          Switch Teacher or Student
+        </button>
+      </section>
 
       <LogbookLocationNote />
 

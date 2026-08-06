@@ -69,7 +69,9 @@ describe('with a Fleet but nothing of the Teacher’s own', () => {
   it('the Flight Control Center says nothing needs them', () => {
     show(<ControlScreen />, 2_000)
 
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+    expect(
+      screen.getByText('Nothing needs you. Every Drone in contact is behaving.'),
+    ).toBeInTheDocument()
   })
 
   it('Students says nobody has a Drone yet', () => {

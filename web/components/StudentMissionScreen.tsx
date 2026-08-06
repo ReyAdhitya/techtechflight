@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
   joinClassroomAsStudent,
+  loadClassroomByCode,
   readClassroomSession,
   readStudentSeatLocal,
   markSeatFlown,
@@ -14,6 +15,8 @@ import {
   type ClassroomSeat,
   type ClassroomSession,
 } from '@/lib/classroom-session'
+import { clearBoardRole } from '@/lib/role'
+import { useRouter } from 'next/navigation'
 import { breachesAt, type AirspaceBreach } from '@/lib/airspace'
 import { byUrgency, playbookFor, type PlaybookEntry } from '@/lib/incident-playbook'
 import type { VitalsAlert } from '@/lib/vitals'
@@ -66,11 +69,11 @@ export function StudentMissionScreen() {
 
   if (session === null) {
     return (
-      <StudentFrame>
-        <p className="m-0 text-body text-ink-muted">
-          Waiting for the Teacher to open the classroom.
-        </p>
-      </StudentFrame>
+      <JoinClassroomDoor
+        onJoined={(next) => {
+          setSession(next)
+        }}
+      />
     )
   }
 
@@ -149,11 +152,94 @@ function StudentFrame({ children }: { readonly children: React.ReactNode }) {
 }
 
 /**
- * Who is at this tablet, chosen from the class roll.
+ * Join an iPad to the Teacher's classroom by the shouted code, then pick a name.
  *
- * No typing and no classroom code. A child at a shared tablet knows their own name and
- * nothing else; a four-character code they have to be told, and then keep, is a step that
- * exists for the software rather than for them.
+ * Same-machine tabs already share localStorage; loadClassroomByCode also pulls from
+ * `/api/classroom` when Blob is configured (#628).
+ */
+function JoinClassroomDoor({
+  onJoined,
+}: {
+  readonly onJoined: (session: ClassroomSession) => void
+}) {
+  const [code, setCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  // Same laptop: Teacher opens classroom → localStorage fills without typing a code.
+  useEffect(() => {
+    const existing = readClassroomSession()
+    if (existing !== null) onJoined(existing)
+    return subscribeClassroom((session) => {
+      if (session !== null) onJoined(session)
+    })
+  }, [onJoined])
+
+  return (
+    <StudentFrame>
+      <SwitchRoleLink />
+      <h1 className="m-0 font-display text-heading font-medium text-ink">Join the classroom</h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
+        Ask your Teacher for the four-letter code on their board. You fly with the controller
+        in your hands — this screen only tells you what to do.
+      </p>
+      <label className="flex max-w-xs flex-col gap-1">
+        <span className="label">Classroom code</span>
+        <input
+          value={code}
+          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          maxLength={6}
+          autoCapitalize="characters"
+          className="tnum min-h-14 rounded-pill border border-hairline bg-surface-1 px-4 font-display text-heading tracking-[0.2em] text-ink"
+          placeholder="K7M2"
+        />
+      </label>
+      <button
+        type="button"
+        disabled={busy || code.trim().length < 4}
+        className="min-h-14 w-fit cursor-pointer rounded-pill border-0 bg-ink px-6 py-2 text-body font-medium text-canvas disabled:cursor-not-allowed disabled:opacity-50"
+        onClick={() => {
+          setBusy(true)
+          setError(null)
+          void loadClassroomByCode(code).then((session) => {
+            setBusy(false)
+            if (session === null) {
+              setError('No classroom with that code yet. Check with your Teacher.')
+              return
+            }
+            onJoined(session)
+          })
+        }}
+      >
+        Join
+      </button>
+      {error !== null ? <p className="m-0 text-body text-status-not-ready">{error}</p> : null}
+      <p className="m-0 text-value text-ink-muted">
+        Waiting for the Teacher to open the classroom also works on a second tab of their
+        laptop — the code is for iPads on the school Wi‑Fi.
+      </p>
+    </StudentFrame>
+  )
+}
+
+function SwitchRoleLink() {
+  const router = useRouter()
+  return (
+    <button
+      type="button"
+      className="min-h-11 w-fit cursor-pointer self-start rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-subtle hover:border-ink hover:text-ink"
+      onClick={() => {
+        clearBoardRole()
+        router.replace('/enter')
+      }}
+    >
+      Not a Student — switch role
+    </button>
+  )
+}
+
+/**
+ * Who is at this tablet, chosen from the class roll once the classroom session is loaded.
  */
 function TakeYourSeat({
   session,
@@ -168,6 +254,8 @@ function TakeYourSeat({
 
   return (
     <StudentFrame>
+      <SwitchRoleLink />
+      <p className="label m-0 text-ink-subtle">Classroom {session.code}</p>
       <h1 className="m-0 font-display text-heading font-medium text-ink">Who are you?</h1>
 
       {roll.length === 0 ? (

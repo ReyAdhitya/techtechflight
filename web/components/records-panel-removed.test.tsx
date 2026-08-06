@@ -27,6 +27,7 @@ const search = vi.hoisted(() => ({ current: new URLSearchParams('step=9') }))
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname.current,
   useSearchParams: () => search.current,
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
 }))
 
 const settle = () =>

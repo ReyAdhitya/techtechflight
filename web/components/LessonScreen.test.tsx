@@ -98,12 +98,14 @@ describe('Fleet health before the period', () => {
     expect(summary).toHaveTextContent(/needs? attention|nothing needs attention/)
   })
 
-  it('leaves the craft-by-craft list to the Fleet board', () => {
+  it('leaves the craft-by-craft fault list to the Fleet board', () => {
     screenUnderTest()
     settle()
 
-    expect(screen.queryByRole('heading', { name: 'Pre-flight check' })).not.toBeInTheDocument()
+    // Pre-flight check is Mission prep (per craft). The old Fleet "Standing in the way"
+    // list does not live here.
     expect(screen.queryByRole('heading', { name: 'Standing in the way' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /serviceable/ })).toHaveAttribute('href', '/')
   })
 
   it('warns calmly when none are ready but does not block Start', () => {

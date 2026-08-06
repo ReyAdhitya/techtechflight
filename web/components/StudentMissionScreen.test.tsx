@@ -12,7 +12,8 @@ import {
 } from '@/lib/classroom-session'
 import { clearLogbook, saveRoll } from '@/lib/logbook'
 import { FleetProvider } from './FleetProvider'
-import { StudentMissionScreen } from './StudentMissionScreen'
+import { StudentMissionScreen, WhatToDoNow } from './StudentMissionScreen'
+import { playbookFor } from '@/lib/incident-playbook'
 
 /**
  * The Student's screen, on a tablet.
@@ -279,5 +280,39 @@ describe('asking for takeoff, and the answer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
     settle()
     expect(screen.queryAllByRole('button')).toHaveLength(0)
+  })
+})
+
+/**
+ * The customer's "What if something happens" table.
+ *
+ * It already exists in this repository as data, so the only thing worth pinning is that the
+ * screen reads it rather than repeating it. A row typed out here would drift from the
+ * Teacher's console the first time somebody reworded one, and the two of them disagreeing
+ * about what to do in an emergency is the failure this guards.
+ */
+describe('what to do when something happens', () => {
+  it('takes its words from the playbook rather than restating them', () => {
+    const lowBattery = playbookFor('battery-low')
+    expect(lowBattery, 'the playbook has no battery-low entry').not.toBeNull()
+
+    const rendered = WhatToDoNow({
+      alerts: [
+        {
+          kind: 'battery-low',
+          severity: 'warning',
+          text: 'Charge is low.',
+          since: 0,
+        },
+      ],
+    })
+
+    const shown = JSON.stringify(rendered)
+    expect(shown).toContain(lowBattery!.teamDoes)
+    expect(shown).toContain(lowBattery!.title)
+  })
+
+  it('says nothing at all while nothing is wrong', () => {
+    expect(WhatToDoNow({ alerts: [] })).toBeNull()
   })
 })

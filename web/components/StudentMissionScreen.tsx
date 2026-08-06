@@ -13,6 +13,8 @@ import {
   type ClassroomSession,
 } from '@/lib/classroom-session'
 import { breachesAt, type AirspaceBreach } from '@/lib/airspace'
+import { byUrgency, playbookFor, type PlaybookEntry } from '@/lib/incident-playbook'
+import type { VitalsAlert } from '@/lib/vitals'
 import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
 import {
   evaluatePreFlightSeven,
@@ -265,6 +267,8 @@ function FlyingScreen({
       <MyMap session={session} seat={seat} />
 
       {instruction ? <TeacherInstruction instruction={instruction} now={now} /> : null}
+
+      <WhatToDoNow alerts={mine?.alerts ?? []} />
     </StudentFrame>
   )
 }
@@ -338,6 +342,40 @@ function FlyingWarning({ breaches }: { readonly breaches: readonly AirspaceBreac
           : 'Fly back inside the area your Teacher drew.'}
       </span>
     </p>
+  )
+}
+
+/**
+ * What to do about what is happening, in the Student's own words.
+ *
+ * The customer's "What if something happens" table is already in this repository as data:
+ * `incident-playbook.ts` carries a title, what the craft is doing about it, what the team
+ * should do, and how it ends, ordered by the five safety priorities. So this reads the
+ * words rather than repeating them, and a row that drifts on the Teacher's console drifts
+ * here in the same commit.
+ *
+ * Only live Alerts appear. A permanent table of everything that could go wrong is a poster
+ * for the wall, not a screen a child glances at with a controller in their hands.
+ */
+export function WhatToDoNow({ alerts }: { readonly alerts: readonly VitalsAlert[] }) {
+  const rows = byUrgency(alerts, (alert) => alert.kind)
+    .map((alert) => playbookFor(alert.kind))
+    .filter((entry): entry is PlaybookEntry => entry !== null)
+
+  if (rows.length === 0) return null
+
+  return (
+    <section className="flex flex-col gap-2" aria-label="What to do now">
+      {rows.map((entry) => (
+        <div
+          key={entry.kind}
+          className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border border-hairline bg-surface-1 px-4 py-3"
+        >
+          <span className="font-display text-body font-medium text-ink">{entry.title}</span>
+          <span className="min-w-0 flex-1 text-body text-ink-subtle">{entry.teamDoes}</span>
+        </div>
+      ))}
+    </section>
   )
 }
 

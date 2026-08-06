@@ -1,132 +1,219 @@
-# Handoff — 2026-07-28
+# Handoff, 2026-08-06
 
 Written so a fresh agent can pick this up without re-deriving it. Read this, then
-`docs/plans/2026-07-27-board-corrections.md`, then `CLAUDE.md`.
+`CLAUDE.md`, then the issue tracker.
 
-## What this session was
+Everything in the "Where it stands" and "What is actually left" sections was checked
+against the repository on 2026-08-06, not remembered. Where something is a judgement
+rather than a fact it says so, so it can be overturned deliberately rather than by
+accident.
 
-A product owner reviewed the running board and gave a list of corrections. They were
-turned into GitHub issues, built one at a time by a separate engineer terminal, and
-reviewed once. The repository was also made public, which required cleaning six personal
-documents out of the whole history first.
+This file replaces the 2026-07-28 handoff, which described a stack of branches that has
+since merged. The rules from it that are still true are carried forward below.
 
-Nothing here is speculative. Every issue below is written to be executed without asking
-the planner a follow-up question.
+## The product in one paragraph
 
-## Where the work is
+A ground station for a school teacher running a class of drones. The Teacher drives a
+laptop; the Students fly by hand with controllers and read a tablet. The customer supplied
+two twelve-step workflow posters, one per side, and they mirror each other: the Teacher
+grants a takeoff at their step 6 while the Student asks for it at their step 5. The product
+is those two posters made real.
 
-**Current branch: `fix/section-descriptions-full-width`** — 62 commits above `main`.
+Owner's goal, in their words: easy, tidy, few words, straight to the point, and guided
+without being confusing.
 
-The branches are a **stack**, not parallel work. Each was cut from the one above it, so the
-newest contains everything:
+## Where it stands
 
-```
-main
- └─ fix/scope-fixed-window                     #9 #16 #17 #18
-     └─ fix/end-lesson-contrast                #12
-         └─ chore/remove-records-and-keyboard-panels   #14
-             └─ feat/xyz-on-every-strip        #10
-                 └─ fix/under-observation-label #11
-                     └─ feat/scope-side-view    #19
-                         └─ fix/drop-phase-word-from-strip  #20
-                             └─ feat/professional-register  #13
-                                 └─ fix/section-descriptions-full-width  #21  ← HEAD
-```
+`main` is at `c4a56ba`. Merged today:
 
-**Merging the tip merges everything.** Do not merge the middle branches separately.
+| PR | What |
+|---|---|
+| #650 | the Student app on one machine (ADR-0025) |
+| #651 | one-page Lesson, live Control ATC, iPad classroom join |
+| #647 | the Lesson screen answers one question |
+| #646 | the Lesson screen stops offering two of everything |
+| #652 | OPEN, not merged: stop rebuilding the whole board on every page load |
 
-All are pushed to `origin`. `main` is untouched and still shows the pre-correction board.
+Live and verified in production: the Teacher's twelve steps end to end, and the Student app
+as far as "Ask to take off" and the waiting copy.
 
-## State of the gate
+## What is actually left
 
-`npm test` — 427 passing, up from 389 at the start. `npm run typecheck` clean.
+Audited against the code on 2026-08-06, not against the older plan.
 
-There is no lint and no other gate (`CLAUDE.md`). Both must pass before anything merges.
-
-## Issues
-
-Closed in code, open on GitHub (nothing is merged yet, so nothing was closed):
-
-| # | What | Done |
+| Item | State on 2026-08-06 | Evidence |
 |---|---|---|
-| 9 | Scope: hold the grid still, square half-metre cells | ✅ |
-| 16 | Cap the scope at 600px, centre on the Fleet, fix label overlap | ✅ |
-| 17 | Clear the review findings from #9 | ✅ |
-| 18 | Show altitude on the scope, drop the grid scale caption | ✅ |
-| 12 | Give "End the lesson" the contrast of a primary control | ✅ |
-| 14 | Remove "Your records" and the Keyboard panel | ✅ |
-| 10 | Show X, Y and Z on every flight strip | ✅ |
-| 11 | "Keep an eye on it" becomes "Under observation" | ✅ |
-| 19 | A side view on the scope, toggled with the top-down | ✅ |
-| 20 | Drop the phase word from the flight strip | ✅ |
-| 21 | Let the section descriptions use the width their surface has | ✅ |
-| **15** | **Read real Drones over MAVLink, developed against SITL** | ❌ **not started** |
+| Sealed Mission reaches Reports (#635) | done | `putMissionOnLesson` in `web/lib/logbook.ts`, called at `ControlScreen.tsx:619`, covered by `web/lib/sealed-mission-reaches-reports.test.tsx` |
+| The classroom session seam (#638) | done | `web/lib/classroom-session.ts` plus its test |
+| A door for each of the two people (#637) | done | `web/lib/role.ts`, `web/app/enter/page.tsx`, `web/components/RoleGate.tsx` |
+| Student steps 1 to 12 (#639 to #643) | done on one screen | `web/components/StudentMissionScreen.tsx`, 1092 lines |
+| Record the two-audience app (#645) | done | `docs/adr/0025-the-student-screen-is-a-second-audience-not-a-second-board.md` |
+| Em dashes in on-screen copy (#621) | done for copy, not for comments | one em dash left outside a comment in the whole of `web/components` and `web/app`, and it is inside a JSX comment in `showcase/DroneModel.tsx`. 134 non-test component files still carry em dashes in JSDoc |
+| Large format is icon only (#623, half of it) | already shipped | `DisplayScaleToggle.tsx` is icon only with a `title` tooltip |
+| `/api/classroom` reachable from the ground station (#644) | **not done, and it is the blocker** | `api/classroom.ts` is a Vercel function at the repo root. `ground-station/src/server.ts` serves `/api/classroom-setup` only. `web` builds `output: 'export'`, so it has no route handlers at all |
+| Ground station prints its LAN address | not done | `ground-station/src/main.ts:122` prints `http://localhost:${port}` only |
+| "Classroom ready" screen for the Teacher | not done | no component answers "what do I read out to the class" |
+| Windows Firewall rule in the launcher | not done | `Start TechTech Flight.bat` does not add one |
+| Hold a takeoff, not only grant it (#636) | not done | `ClearanceQueue.tsx` offers Grant only; there is no `holdClearance` anywhere in `web/lib` |
+| Fleet headcount check removed (#624) | not done | `web/components/FleetHeadcountCheck.tsx` still exists |
+| `?step=` still read on Lesson (#648) | not done | `web/app/(app)/lesson/page.tsx:12` still reads `?step=` on the client |
+| `text-caption` has no token (#649) | not done | no `text-caption` in `globals.css`; 20 files use the class |
+| `StepRail` is orphaned | judgement, no issue yet | `web/components/StepRail.tsx` exists and nothing imports it but its own test |
+| Vision moved out of the main nav | not done | `web/app/(app)/vision` is still a route |
+| One Room menu for Lit room, Large format, Walls | not done | still separate header controls |
+| Prose budget test | not done | nothing asserts a word count on screen copy |
 
-**#15 is the only substantial work left**, and it is the product owner's original request —
-connecting the board to real drones. It is independent of everything above and touches no
-file the others open.
+Issues #635 to #645 are largely delivered by PRs #650 and #651. Walk that list and close what
+shipped, or every plan written on top of the backlog will be wrong.
 
-## What remains, in order
+### The one that decides a demo
 
-1. **One code review over the whole stack**, not per issue. The owner explicitly wants it
-   last, once, before merging.
-2. **Merge the tip branch into `main`.** Nothing has been merged; the public repository
-   still shows the old board, and GitHub's contribution graph counts only `main`.
-3. **#15** whenever it is wanted. Approach is fully specified in the issue: MAVLink over
-   UDP against ArduPilot SITL, in a new `fleet-adapters/` workspace.
+`/api/classroom` exists only as a Vercel function. A classroom running off the laptop
+launcher serves the board from the ground station on `:4321`, and that server has no
+`/api/classroom` route. `classroomApiUrl()` in `web/lib/classroom-session.ts` can be pointed
+elsewhere, but only through `NEXT_PUBLIC_CLASSROOM_SYNC_URL`, which is a build seed and so
+is not set in the launcher build. `logbookSyncUrl()` has a `localStorage` override for
+exactly this reason and the classroom one does not.
 
-Every board correction the product owner asked for is built. Only #15 is outstanding, and it
-is a project rather than a correction.
+Consequence: iPads joining across the room work against the Vercel deploy and do not work
+against the classroom laptop. On one machine, `localStorage` plus `BroadcastChannel` still
+works, which is why this reads as fine in a single-browser test.
 
-## Rules that are not obvious and cost real time when broken
+## Decisions that should not be re-litigated
 
-**The engineer stops or carries on by one test.** One sensible fix for a plain defect →
-build it and say so in a comment. Several defensible fixes that look different on screen →
-stop and ask. The first version of this rule said stop always, and it cost a round trip on
-a scope height that had exactly one answer.
+**Students never get a Command.** Land, Hover, Recall and Stop belong to the Teacher, always
+(ADR-0011, ADR-0021). Students fly by hand; the Student tablet has exactly two pressable
+things, Ask to take off and Understood. This is also the safety story to a school: no child
+can press anything that moves an aircraft.
 
-**Five words are contract, not copy.** `'Offline' | 'Ready' | 'Not Ready' | 'Flying' |
-'Fault'` are the TypeScript type, the wire format and the display text at once, across four
-workspaces and inside stored lesson records. The professional-register sweep (#13) was
-written around them deliberately.
+**No invented readings.** An absent reading is said in words, never a zero or a dash dressed
+as live. The first Student screen printed `value="On craft"` where a figure belonged, and
+that is part of why the owner reverted it eight minutes after merging.
 
-**`ServiceState`'s `'watch'` key is serialized** in the browser logbook. #11 changed its
-label only. Renaming the key silently invalidates every stored service decision.
+**Phases derive from records and Telemetry, never from a button.** A Student cannot mark
+themselves airborne; `flownAt` is the first sighting off the ground.
 
-**jsdom cannot see layout.** A broken aspect ratio or an off-screen strip passes green.
-Every visual change needs `node scripts/shot.mjs <label> <route> <width>` — build first, and
-run it from PowerShell, since Git Bash rewrites a bare `/route` into a Windows path.
+**No GPS.** There is none in this product, deliberately. Position is metres from the Fleet's
+own origin (ADR-0019). No map tile, no GPS icon, even though the customer poster shows one.
 
-**The product is English.** Recorded in ADR-0015. The team speaks Indonesian; it never
-reaches the product.
+**The Attention bar stays pinned above every Control step**, rather than living only on step
+10. An alert arriving while a Teacher reads the Scope has to be visible where they are
+looking, and children are flying. This is a deliberate deviation and the owner has not ruled
+on it.
 
-**Six personal documents were removed from the entire history** on 2026-07-28 before the
-repository went public — `NOTES.md`, `MISSION.md`, `RESOURCES.md`, `lessons/`,
-`learning-records/`, `reference/`. They exist in the working copy and are gitignored,
-anchored to the root. The six product decisions `NOTES.md` carried survive in
-`docs/DELIBERATE-POSITIONS.md`. Do not restore any of them to the repository.
+**Large format is not deleted, and the room controls keep their text.** Judgement, and it is
+in live conflict with issue #623, which asks for icons only and for Large format to go. Half
+of #623 has shipped already: `DisplayScaleToggle` is icon only today. Settle the other half
+with the owner before touching it.
 
-## New documents from this session
+## Hazards
 
-- `docs/plans/2026-07-27-board-corrections.md` — the full plan, including the three-terminal
-  working agreement and the commit convention
-- `docs/DELIBERATE-POSITIONS.md` — six board decisions that look like defects and are not
-- `docs/adr/0014-a-fixed-scope-window.md` — why the scope window is a display property and
-  not the flight area ADR-0012 defers
-- `docs/adr/0015-a-professional-register.md` — the register conversion, superseding
-  `CONTEXT.md`'s education-first rule
-- `docs/adr/0016-a-side-view-on-the-scope.md` — the elevation view and its ground line
+**Two terminals share one working directory.** This is the biggest operational risk and it
+cost real time: six commits landed on the wrong branch, a branch was switched mid-push, and
+two agents wrote the same file within minutes of each other. Use separate git worktrees.
+
+**The em dash sweep broke a build once.** `898af04` swept dashes and middots from on-screen
+copy, `541c9be` repaired `DroneScreen` afterwards, and `dfebeb3` records a deploy blocker.
+Read all three before continuing. Rewrite sentences; do not delete characters.
+
+**`ControlCameraSlide.test.tsx` "dismisses the popup on Escape" is flaky.** Passes alone,
+fails in the suite, and nobody has touched that file recently. It did not reproduce on
+2026-08-06, when the full suite ran green at 1421 tests across 232 files in 110 seconds, so
+it is intermittent rather than broken. Needs its own ticket, not a ride-along fix.
+
+**Three things no commit can settle, and they are the owner's:**
+
+1. **Which drone the school buys.** Pixhawk or ArduPilot works with the MAVLink adapter that
+   exists. DJI, including Tello, does not speak MAVLink and needs its own adapter. This also
+   decides the network: a Wi-Fi drone and a Wi-Fi tablet may not share one card.
+2. **A tablet on the school network.** School networks block devices from seeing each other.
+   Fifteen minutes of testing now, or a failed demo. Not fixable in code.
+3. **One real lesson.** Nothing here has been used by a teacher with a class. Every "done"
+   so far means the screens look right.
+
+## How the code is arranged
+
+The twelve-step model, still present:
+
+```
+web/lib/mission-flow.ts        done / current / live / locked
+web/lib/mission-flow-*.ts      the marks
+web/components/StepRail.tsx    the rail, now imported by nothing but its own test
+web/app/globals.css            the base and the slide
+```
+
+The screens:
+
+```
+LessonScreen.tsx           Mission set-up: Scenario picker, MissionAreaEditor,
+                           TeamsPanel, MissionBriefing
+ControlScreen.tsx          steps 6 to 11: ClearanceQueue, Scope, FlightStrip,
+                           Attention, ConfirmMissionComplete
+ReportsScreen.tsx          the report
+StudentMissionScreen.tsx   all twelve Student steps on one screen
+```
+
+Where state lives:
+
+```
+web/lib/mission.ts             the Mission type
+web/lib/mission-draft.ts       techtechflight:mission-draft, the working copy
+web/lib/logbook.ts             the Lesson record and the roster
+web/lib/clearance.ts           the clearance shape
+web/lib/clearance-store.ts     where clearances are kept
+web/lib/classroom-session.ts   seats, phases, instructions
+web/lib/incident-playbook.ts   what to do, by safety priority
+api/classroom.ts               the Vercel function, Blob backed
+api/logbook.ts                 the Vercel function, Blob backed
+ground-station/src/server.ts   :4321, serves /api/classroom-setup and the board
+```
+
+Read `CLAUDE.md` before changing anything. Its Gotchas section is the accumulated list of
+what is not obvious from the code, and it is kept current.
+
+## Working rules in this repository
+
+- `npm test` and `npm run typecheck` are the whole CI gate. There is no lint. Run them at
+  every commit.
+- Semantic colour tokens (`bg-canvas`, `text-ink-subtle`, `border-hairline`), never the
+  shadcn base layer. A `px` font-size is a defect (ADR-0008).
+- No em dashes in copy a Teacher reads. The owner reads them as machine-written.
+- jsdom has no layout. Assert on `globals.css`, and look at a screenshot before believing a
+  visual claim. `scripts/shot.mjs <label> <route> <width>` serves `web/out`, so build first,
+  and pass routes from PowerShell.
+- Conventional commits. Rebase rather than squash so every commit lands on `main`; the owner
+  wants the history dense.
+- After a merge, fetch and read the strings actually shipped. A green deploy is not evidence.
+- Windows: `next build` fails with `EBUSY` if a shell sits in `web/out`.
+- **Five words are contract, not copy.** `'Offline' | 'Ready' | 'Not Ready' | 'Flying' |
+  'Fault'` are the TypeScript type, the wire format and the display text at once, across four
+  workspaces and inside stored lesson records.
+- **`ServiceState`'s `'watch'` key is serialized** in the browser logbook. Renaming the key
+  silently invalidates every stored service decision.
+- **The product is English.** The team speaks Indonesian; it never reaches the product.
+- **Six personal documents were removed from the entire history** on 2026-07-28 before the
+  repository went public: `NOTES.md`, `MISSION.md`, `RESOURCES.md`, `lessons/`,
+  `learning-records/`, `reference/`. They exist in the working copy and are gitignored. Do
+  not restore any of them to the repository.
 
 ## How the terminals work
 
 Three roles, coordinated through GitHub issues (`docs/agents/issue-tracker.md`):
 
-- **Planner** — reads code, writes specs, files issues, never writes production code
-- **Engineer** — claims one issue, one branch, implements, commits small
-- **Review** — runs `/code-review`, comments only, never commits
+- **Planner** reads code, writes specs, files issues, never writes production code
+- **Engineer** claims one issue, one branch, implements, commits small
+- **Review** runs `/code-review`, comments only, never commits
 
-One issue, one branch, one terminal. A spec disagreement goes in the issue as a comment,
-never quietly into the diff.
+One issue, one branch, one terminal, and from now on one worktree. A spec disagreement goes
+in the issue as a comment, never quietly into the diff.
 
-Commits are conventional-prefixed with a friendly specific subject, one logical change each.
-The test is whether the subject needs the word "and" — if it does, it is two commits.
+## Companion documents
+
+- `docs/DELIBERATE-POSITIONS.md`, six board decisions that look like defects and are not
+- `docs/adr/`, why each decision was made
+- `docs/POSTER-WORKFLOW-PLAN.md`, the two posters as a plan
+
+## If you do only one thing
+
+Walk issues #635 to #645, close what shipped, and reissue the remainder as a short honest
+list. The backlog currently overstates what is left.

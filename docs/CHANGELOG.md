@@ -25,6 +25,14 @@ would notice.
 
 ### Added
 
+- **The Student's screen, on one machine.** A tablet answers what a Student is doing, whether
+  they may go, and how they did: the brief with the objective as the largest thing on it, the
+  pre-flight seven for their own craft, asking the Teacher for takeoff, the Teacher's answer,
+  a flying screen that reads the Fleet, a read-only map of the Mission Zone and their own
+  checkpoints, what to do when something happens, and the score once the Teacher seals it.
+  Landscape and full width, one dominant thing at a time, two pressable things in the whole
+  app. It shares this browser with the board; an iPad on the school Wi-Fi does not reach it
+  yet. ADR-0025.
 - **A Mission step is the whole Lesson screen.** The step opens with its phase, its number,
   an instruction as the heading and one line on what it is for. Everything else the Lesson
   is (serviceable counts, the plan, assignment, exercises, pack-down, earlier lessons) folds
@@ -43,6 +51,12 @@ would notice.
 
 ### Fixed
 
+- **A held Student is told they are held.** Holding a takeoff sent the seat back to
+  "not asked yet", so a Student the Teacher had told to wait looked exactly like one who had
+  never asked and the screen could not say why they were waiting. Asking again clears a hold.
+- **A cleared Student is not told they have landed.** The way-down screen was chosen from the
+  clearance, which is permission to leave the ground rather than evidence of having left it.
+  It is now chosen from the first Telemetry sighting off the ground.
 - **Pre-flight asks about every craft.** It ran on the first Drone on the board alone, so a
   Teacher ticked one airframe and the other five were never checked. It now runs for each craft
   a team has taken.

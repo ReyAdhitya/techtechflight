@@ -10,6 +10,8 @@ import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
 import type { GhostPathStore } from '@/lib/scope-ghost-paths'
 import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
 import { enclosesAnything, type Zone } from '@/lib/airspace'
+import type { MissionCheckpoint } from '@/lib/mission'
+import { ScopeCheckpoints } from './ScopeCheckpoints'
 import { cn } from '@/lib/utils'
 
 /**
@@ -57,6 +59,9 @@ export function Scope({
   ghostPaths,
   zones,
   zonesUnsurveyed = false,
+  readOnly = false,
+  checkpoints,
+  reachedCheckpointIds,
 }: {
   drones: readonly DroneState[]
   /**
@@ -90,6 +95,22 @@ export function Scope({
    * beside the zone keys rather than letting a line read as measured (ADR-0019).
    */
   zonesUnsurveyed?: boolean
+  /**
+   * Draw the picture and nothing else. No view switch, no freeze, no ghost paths, no full
+   * screen, no selection.
+   *
+   * The Student's map is one of exactly two pressable things on their whole screen, and
+   * neither of them is this. A child at a flight line does not need a second viewpoint of
+   * their own aircraft; they need to see where it is and where it must not go.
+   */
+  readOnly?: boolean
+  /**
+   * The Mission's checkpoints, in the Mission's own order. Drawn on top-down only, because
+   * a reach radius on an elevation view would look like it had answered a question nobody
+   * asked. `ScopeCheckpoints` has existed since the Mission layer landed and had no caller.
+   */
+  checkpoints?: readonly MissionCheckpoint[]
+  reachedCheckpointIds?: ReadonlySet<string>
 }) {
   /*
    * The window already on screen — its size and where its middle sits. Held across renders
@@ -257,6 +278,7 @@ export function Scope({
        * tiny glyphs for three viewpoints are exactly that. Real buttons, so the set is
        * reachable from a keyboard (§11.3).
        */}
+      {readOnly ? null : (
       <div
         className={cn(
           'flex flex-wrap items-center gap-2',
@@ -351,6 +373,7 @@ export function Scope({
           )}
         </button>
       </div>
+      )}
 
       {/*
        * The box takes the shape of what it is drawing, so a metre up is the same length as a
@@ -517,6 +540,16 @@ export function Scope({
             view={view}
             noFlyHatchId={noFlyHatchId}
           />
+
+          {checkpoints === undefined ? null : (
+            <ScopeCheckpoints
+              checkpoints={checkpoints}
+              reachedIds={reachedCheckpointIds ?? new Set()}
+              project={scope.project}
+              view={view}
+              labels={readOnly ? 'number' : 'full'}
+            />
+          )}
 
           {view === 'top-down' && conflicts.map((pair) => {
             const from = scope.project(pair.from.eastM, pair.from.northM)

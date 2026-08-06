@@ -76,6 +76,7 @@ export function ReportsScreen() {
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const closed = book.lessons.filter((lesson) => lesson.endedAt !== null)
   const latestClosed = closed[0] ?? null
+  const withMissions = book.lessons.filter((lesson) => missionsFrom(lesson).length > 0)
 
   function onDownloadPdf() {
     const drones = snapshot.state?.drones ?? []
@@ -151,18 +152,29 @@ export function ReportsScreen() {
         <RemedialQueue queue={remedialQueueOf(book)} heading="Remedial queue" />
       </div>
 
-      {closed.some((lesson) => missionsFrom(lesson).length > 0) && (
+      {/*
+       * Every Lesson with a Mission on it, running or finished.
+       *
+       * It used to be closed Lessons only, so a Teacher who confirmed a Mission complete
+       * and came straight here found nothing: the Mission is sealed the moment they press
+       * the button, but the Lesson runs on until the period ends. A Mission on a running
+       * Lesson says so, because a sealed score beside a period still going is a different
+       * thing from a finished record.
+       */}
+      {withMissions.length > 0 && (
         <section className="flex flex-col gap-3 border-t border-hairline pt-8">
           <h2 className="label m-0">Missions</h2>
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
-            {closed
-              .filter((lesson) => missionsFrom(lesson).length > 0)
-              .slice(0, 20)
-              .map((lesson) => (
-                <li key={lesson.id}>
-                  <MissionReport lesson={lesson} />
-                </li>
-              ))}
+            {withMissions.slice(0, 20).map((lesson) => (
+              <li key={lesson.id} className="flex flex-col gap-1">
+                {lesson.endedAt === null ? (
+                  <p className="m-0 text-value text-ink-subtle">
+                    This period is still going.
+                  </p>
+                ) : null}
+                <MissionReport lesson={lesson} />
+              </li>
+            ))}
           </ul>
         </section>
       )}

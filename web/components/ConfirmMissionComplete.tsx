@@ -115,11 +115,11 @@ export function ConfirmMissionComplete({
           Mission sealed
           {mission.outcome?.score !== null && mission.outcome?.score !== undefined ? (
             <>
-              {' · score '}
+              {', score '}
               <span className="tnum">{Math.round(mission.outcome.score * 100)}</span>%
             </>
           ) : null}
-          {mission.outcome?.debrief ? ` · ${mission.outcome.debrief}` : null}
+          {mission.outcome?.debrief ? `, ${mission.outcome.debrief}` : null}
         </p>
       ) : stillAirborne.length > 0 ? (
         <p className="m-0 text-value text-status-not-ready" role="status">

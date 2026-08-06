@@ -102,9 +102,9 @@ describe('TeamBriefPrint', () => {
   it('labels map zones in words, not colour alone', () => {
     render(<TeamBriefPrint team={team} mission={mission} />)
 
-    expect(screen.getByText(/Mission Zone · solid outline/)).toBeTruthy()
-    expect(screen.getByText(/No-fly Zone · hatched/)).toBeTruthy()
-    expect(screen.getByText(/Checkpoints · numbered circles/)).toBeTruthy()
+    expect(screen.getByText(/Mission Zone, solid outline/)).toBeTruthy()
+    expect(screen.getByText(/No-fly Zone, hatched/)).toBeTruthy()
+    expect(screen.getByText(/Checkpoints, numbered circles/)).toBeTruthy()
   })
 
   it('keeps each team sheet on one page under print', () => {

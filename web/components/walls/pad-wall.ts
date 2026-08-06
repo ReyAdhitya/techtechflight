@@ -29,7 +29,7 @@ export function padWallReadout(
   readonly detail: string | null
 } {
   if (!canScan) {
-    return { state: 'no-signal', headline: '·', detail: null }
+    return { state: 'no-signal', headline: 'No feed', detail: null }
   }
   if (target === null) {
     return { state: 'not-seen', headline: 'Not seen', detail: null }

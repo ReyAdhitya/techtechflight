@@ -99,7 +99,7 @@ export function DroneDetailPanel({ drone, ageMs, dark, onClose }: DroneDetailPan
                 <Row label="Last Contact">
                   {drone.lastContact === null
                     ? 'No response yet'
-                    : `${formatAge(ageMs ?? 0)} · ${formatExactTime(drone.lastContact)}`}
+                    : `${formatAge(ageMs ?? 0)}, ${formatExactTime(drone.lastContact)}`}
                 </Row>
 
                 {telemetry && (

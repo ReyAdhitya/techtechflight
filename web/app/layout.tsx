@@ -13,7 +13,7 @@ import '@fontsource/hanken-grotesk/600.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Flight Deck · TechTech',
+  title: 'Flight Deck, TechTech',
   description: 'The state of every Drone in the classroom set.',
 }
 

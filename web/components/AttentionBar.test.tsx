@@ -118,7 +118,7 @@ describe('when several things need the Teacher', () => {
     const card = screen.getByRole('article')
     await userEvent.click(
       within(card).getByRole('button', {
-        name: /I have this · Drone 3, Separate it from Drone 1/i,
+        name: /I have this, Drone 3, Separate it from Drone 1/i,
       }),
     )
 
@@ -138,12 +138,12 @@ describe('when several things need the Teacher', () => {
 
     await userEvent.click(
       within(screen.getByRole('article')).getByRole('button', {
-        name: /Respond · Drone 3, Separate it from Drone 1/i,
+        name: /Respond, Drone 3, Separate it from Drone 1/i,
       }),
     )
 
     const dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveAccessibleName(/Respond · Drone 3/i)
+    expect(dialog).toHaveAccessibleName(/Respond, Drone 3/i)
     await userEvent.click(within(dialog).getByRole('button', { name: /Hold position/i }))
 
     expect(onResponse).toHaveBeenCalledOnce()

@@ -82,7 +82,7 @@ export function SwapPupilsControl({
 
 function labelFor(option: SwapPupilOption): string {
   if (option.studentName === null || option.studentName === '') {
-    return `${option.droneName} · unassigned`
+    return `${option.droneName}, unassigned`
   }
-  return `${option.droneName} · ${option.studentName}`
+  return `${option.droneName}, ${option.studentName}`
 }

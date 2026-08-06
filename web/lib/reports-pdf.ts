@@ -73,11 +73,11 @@ export function buildReportsPdfBytes(input: ReportsPdfInput): ArrayBuffer {
     for (const lesson of finished) {
       y += 6
       const when = `${formatClock(lesson.startedAt)}${
-        lesson.endedAt ? ` – ${formatClock(lesson.endedAt)}` : ''
+        lesson.endedAt ? ` to ${formatClock(lesson.endedAt)}` : ''
       }`
-      line(`${lesson.label}  ·  ${when}`, 12, 'bold')
+      line(`${lesson.label} ,  ${when}`, 12, 'bold')
       line(
-        `${lesson.readyAtStart} of ${lesson.fleetSize} ready at the start  ·  ${
+        `${lesson.readyAtStart} of ${lesson.fleetSize} ready at the start ,  ${
           lesson.incidents.length === 0
             ? 'No incidents'
             : `${lesson.incidents.length} ${
@@ -86,7 +86,7 @@ export function buildReportsPdfBytes(input: ReportsPdfInput): ArrayBuffer {
         }`,
       )
       if (lesson.exercises && lesson.exercises.length > 0) {
-        line(`Exercises: ${lesson.exercises.map((exercise) => exercise.name).join(' · ')}`)
+        line(`Exercises: ${lesson.exercises.map((exercise) => exercise.name).join(', ')}`)
       }
       if (lesson.assignments && Object.keys(lesson.assignments).length > 0) {
         line(
@@ -105,14 +105,14 @@ export function buildReportsPdfBytes(input: ReportsPdfInput): ArrayBuffer {
               ([droneId, tally]) =>
                 `${droneName(lesson, droneId)}: ${tally.flights} flights, ${tally.faults} faults, ${tally.dropouts} dropouts`,
             )
-            .join(' · ')}`,
+            .join(', ')}`,
         )
       }
       if (lesson.commands && lesson.commands.length > 0) {
         line(
           `Asked for: ${lesson.commands
-            .map((entry) => `${entry.droneName} · ${entry.kind}`)
-            .join(' · ')}`,
+            .map((entry) => `${entry.droneName}, ${entry.kind}`)
+            .join(', ')}`,
         )
       }
     }
@@ -126,7 +126,7 @@ export function buildReportsPdfBytes(input: ReportsPdfInput): ArrayBuffer {
   } else {
     for (const entry of input.defects) {
       line(
-        `${entry.name}  ·  ${entry.faults} ${entry.faults === 1 ? 'fault' : 'faults'}  ·  ${entry.dropouts} ${entry.dropouts === 1 ? 'dropout' : 'dropouts'}  ·  ${entry.flights} ${entry.flights === 1 ? 'flight' : 'flights'}`,
+        `${entry.name} ,  ${entry.faults} ${entry.faults === 1 ? 'fault' : 'faults'} ,  ${entry.dropouts} ${entry.dropouts === 1 ? 'dropout' : 'dropouts'} ,  ${entry.flights} ${entry.flights === 1 ? 'flight' : 'flights'}`,
       )
     }
   }

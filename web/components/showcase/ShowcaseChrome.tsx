@@ -38,7 +38,7 @@ export function ShowcaseChrome({ scenario, onScenario, liveUnavailable }: Showca
           <span className="text-[0.9375rem] font-semibold tracking-[-0.02em]">
             TechTech Flight
           </span>
-          <span className="sc-label">Fleet · maximalist variant</span>
+          <span className="sc-label">Fleet, maximalist variant</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

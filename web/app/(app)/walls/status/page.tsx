@@ -3,7 +3,7 @@ import { StatusWall } from '@/components/walls/StatusWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Status · Walls · Flight Deck · TechTech',
+  title: 'Status, Walls, Flight Deck, TechTech',
   description: 'Status, battery, and height for every Drone.',
 }
 

@@ -74,7 +74,7 @@ export function MissionPhaseBadge({
       <span className="font-medium">{label}</span>
       {exception !== null && (
         <span className="font-medium" aria-hidden="true">
-          · {EXCEPTION_WORDS[exception]}
+         , {EXCEPTION_WORDS[exception]}
         </span>
       )}
     </span>

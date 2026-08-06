@@ -114,24 +114,18 @@ export function AttentionBar({
               type="button"
               onClick={() => setRespondOpen(true)}
               className="min-h-11 w-fit cursor-pointer rounded-pill border border-ink-subtle bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+              aria-label={`Respond, ${worst.callsign}, ${worst.text}`}
             >
               Respond
-              <span className="visually-hidden">
-                {' '}
-                · {worst.callsign}, {worst.text}
-              </span>
             </button>
             {onAcknowledge && (
               <button
                 type="button"
                 onClick={() => acknowledge(worst)}
                 className="min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+                aria-label={`I have this, ${worst.callsign}, ${worst.text}`}
               >
                 I have this
-                <span className="visually-hidden">
-                  {' '}
-                  · {worst.callsign}, {worst.text}
-                </span>
               </button>
             )}
           </div>
@@ -187,12 +181,9 @@ export function AttentionBar({
                     type="button"
                     onClick={() => acknowledge(entry)}
                     className="mt-1 min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+                    aria-label={`I have this, ${entry.callsign}, ${entry.text}`}
                   >
                     I have this
-                    <span className="visually-hidden">
-                      {' '}
-                      · {entry.callsign}, {entry.text}
-                    </span>
                   </button>
                 )}
               </li>
@@ -220,7 +211,7 @@ export function AttentionBar({
                   id={titleId}
                   className="m-0 font-display text-summary font-medium text-ink"
                 >
-                  Respond · {worst.callsign}
+                  Respond, {worst.callsign}
                 </Dialog.Title>
                 <Dialog.Close asChild>
                   <button
@@ -260,12 +251,9 @@ export function AttentionBar({
                     type="button"
                     onClick={() => acknowledge(worst)}
                     className="min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+                    aria-label={`I have this, ${worst.callsign}, ${worst.text}`}
                   >
                     I have this
-                    <span className="visually-hidden">
-                      {' '}
-                      · {worst.callsign}, {worst.text}
-                    </span>
                   </button>
                 )}
                 <Link

@@ -12,7 +12,7 @@ export function LessonTemplatesPack({ onPick }: { onPick: (label: string, exerci
             onClick={() => onPick(t.label, t.exercises)}
           >
             {t.label}
-            <span className="mt-1 block text-value text-ink-subtle">{t.exercises.join(' · ')}</span>
+            <span className="mt-1 block text-value text-ink-subtle">{t.exercises.join(', ')}</span>
           </button>
         </li>
       ))}

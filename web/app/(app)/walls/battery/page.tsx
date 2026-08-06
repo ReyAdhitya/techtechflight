@@ -3,7 +3,7 @@ import { BatteryWall } from '@/components/walls/BatteryWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Battery · Walls · Flight Deck · TechTech',
+  title: 'Battery, Walls, Flight Deck, TechTech',
   description: 'Charge across every Drone in the class.',
 }
 

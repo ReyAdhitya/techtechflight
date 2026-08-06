@@ -27,7 +27,7 @@ describe('padWallReadout', () => {
   it('shows an em dash when there is no scan surface', () => {
     expect(padWallReadout(false, null)).toEqual({
       state: 'no-signal',
-      headline: '·',
+      headline: 'No feed',
       detail: null,
     })
   })
@@ -44,7 +44,7 @@ describe('padWallReadout', () => {
     expect(padWallReadout(true, target)).toEqual({
       state: 'seen',
       headline: 'Landing target: pad-A',
-      detail: 'Where to land · east 2 m · north 1 m',
+      detail: 'Where to land, east 2 m, north 1 m',
     })
   })
 })

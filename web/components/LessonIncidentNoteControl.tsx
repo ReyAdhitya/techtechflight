@@ -113,7 +113,7 @@ export function LessonIncidentNoteControl({
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {[...teacherNotes].reverse().slice(0, 5).map((incident) => (
             <li key={incident.at} className="tnum text-value text-ink-subtle">
-              {formatElapsed(Math.max(0, incident.at - startedAt))} · {incident.text}
+              {formatElapsed(Math.max(0, incident.at - startedAt))}, {incident.text}
               {incident.droneName ? ` (${incident.droneName})` : ''}
             </li>
           ))}

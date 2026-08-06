@@ -142,7 +142,7 @@ export function ObstacleReading({ telemetry }: { telemetry: Telemetry }) {
       )}
       data-close={proximity.close || undefined}
     >
-      {proximity.close ? `Too close · ${proximity.text}` : proximity.text}
+      {proximity.close ? `Too close, ${proximity.text}` : proximity.text}
     </p>
   )
 }

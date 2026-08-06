@@ -167,7 +167,7 @@ export function ReportsScreen() {
                 return (
                   <li key={`${lesson.id}-${mission.id}`} className="text-value text-ink">
                     <span className="font-medium">{lesson.label}</span>
-                    {' · '}
+                    {', '}
                     {score === null ? (
                       <span className="text-ink-subtle">Not scored</span>
                     ) : (
@@ -226,7 +226,7 @@ export function ReportsScreen() {
               return (
                 <li key={lesson.id} className="text-value text-ink-subtle">
                   <span className="font-medium text-ink">{lesson.label}</span>
-                  {' · '}
+                  {', '}
                   <span className="tnum">{formatCeilingBreachCount(count)}</span>
                 </li>
               )

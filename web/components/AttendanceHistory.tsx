@@ -25,7 +25,7 @@ export function AttendanceHistory({
       <h3 className="label m-0">Attendance</h3>
       <p className="m-0 text-value text-ink">
         <span className="tnum">{counts.present}</span>
-        {' present · '}
+        {' present, '}
         <span className="tnum">{counts.absent}</span>
         {' absent'}
       </p>

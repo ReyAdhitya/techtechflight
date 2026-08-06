@@ -3,7 +3,7 @@ import { AssignmentWall } from '@/components/walls/AssignmentWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Assignments · Walls · Flight Deck · TechTech',
+  title: 'Assignments, Walls, Flight Deck, TechTech',
   description: 'Who flies which craft. Readable across the room.',
 }
 

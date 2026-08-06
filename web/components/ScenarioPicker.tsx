@@ -63,7 +63,7 @@ export function ScenarioPicker({
         <p className="m-0 text-value text-ink-subtle">
           {MISSION_SCENARIOS.find((scenario) => scenario.id === selectedScenarioId)?.name ??
             'Scenario chosen'}
-          {' · '}
+          {', '}
           you can still change it until the first Clearance is granted.
         </p>
       )}

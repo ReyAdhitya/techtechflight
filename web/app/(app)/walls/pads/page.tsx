@@ -3,7 +3,7 @@ import { PadWall } from '@/components/walls/PadWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Landing pads · Walls · Flight Deck · TechTech',
+  title: 'Landing pads, Walls, Flight Deck, TechTech',
   description: 'Which Drones see a landing-pad QR on the camera picture.',
 }
 

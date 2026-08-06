@@ -215,9 +215,9 @@ export function InstructionStripList({
             className="rounded-sm border border-hairline bg-canvas px-3 py-2 text-value text-ink-subtle"
           >
             <span className="font-display font-medium text-ink">{instructionWords(row)}</span>
-            {' · '}
+            {', '}
             <span className="tnum">{formatClock(row.at)}</span>
-            {row.teamName ? ` · ${row.teamName}` : null}
+            {row.teamName ? `, ${row.teamName}` : null}
           </li>
         ))}
       </ul>

@@ -3,7 +3,7 @@ import { ObjectiveWall } from '@/components/walls/ObjectiveWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Objective · Walls · Flight Deck · TechTech',
+  title: 'Objective, Walls, Flight Deck, TechTech',
   description: "Today's objective in one sentence from the running Lesson.",
 }
 

@@ -115,8 +115,8 @@ export function FleetOverview({ drones, focus, focusAgeMs, dark }: FleetOverview
          */}
         {focus && (
           <p className="sc-stage__legend">
-            Height and rotors show airborne · tint and beacon show Status · the arc is
-            battery · a Stale reading fades
+            Height and rotors show airborne, tint and beacon show Status, the arc is
+            battery, a Stale reading fades
           </p>
         )}
       </div>

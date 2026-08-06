@@ -32,7 +32,7 @@ export function SeparationThresholdPanel() {
     writeSeparationThresholdM(parsed)
     setMetres(parsed)
     setDraft(String(parsed))
-    setNote(`Saved · alarm when craft are closer than ${formatSeparationThresholdM(parsed)}.`)
+    setNote(`Saved, alarm when craft are closer than ${formatSeparationThresholdM(parsed)}.`)
   }
 
   const restoreDefault = () => {

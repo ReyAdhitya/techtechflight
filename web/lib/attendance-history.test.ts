@@ -118,7 +118,7 @@ describe('sealing attendance over time', () => {
 
   it('renders zero when nothing has been sealed yet', () => {
     expect(attendanceCountsFor([], 'S-0001')).toEqual({ present: 0, absent: 0 })
-    expect(formatAttendanceCounts({ present: 0, absent: 0 })).toBe('Present 0 · Absent 0')
+    expect(formatAttendanceCounts({ present: 0, absent: 0 })).toBe('Present 0, Absent 0')
   })
 })
 

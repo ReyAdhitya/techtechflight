@@ -144,7 +144,7 @@ function batteryReading(
     meta.label,
     meta.manual,
     'pass',
-    `Charge sufficient${estimate} · ${formatBatteryTimeBudget(fraction)}`,
+    `Charge sufficient${estimate}, ${formatBatteryTimeBudget(fraction)}`,
   )
 }
 
@@ -313,7 +313,7 @@ function obstacleReading(telemetry: Telemetry | null): PreFlightSevenReading {
     meta.label,
     meta.manual,
     'pass',
-    `Sensor fitted · ${described.text}`,
+    `Sensor fitted, ${described.text}`,
   )
 }
 

@@ -3,7 +3,7 @@ import { LandedWall } from '@/components/walls/LandedWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Landed · Walls · Flight Deck · TechTech',
+  title: 'Landed, Walls, Flight Deck, TechTech',
   description: 'Who has landed and who is still in the air at the end of a lesson.',
 }
 

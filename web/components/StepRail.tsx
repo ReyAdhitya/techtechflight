@@ -79,7 +79,7 @@ function StepRow({
         /* A static export has no RSC payload behind a route, so prefetch only 404s. */
         prefetch={false}
         aria-current={active ? 'step' : undefined}
-        title={`${step.step}. ${step.label} · ${state}`}
+        title={`${step.step}. ${step.label}, ${state}`}
         className={cn(
           'step-rail__step flex min-h-11 items-center gap-3 rounded-surface px-2 py-1.5 no-underline',
           'hover:bg-muted',

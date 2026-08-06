@@ -110,7 +110,7 @@ describe('the verdict region', () => {
     // ADR-0004, without exception.
     render(<VisionCheckScreen />)
     await waitFor(() => {
-      expect(screen.getByText(/^Not working ·/)).toBeInTheDocument()
+      expect(screen.getByText(/^Not working,/)).toBeInTheDocument()
     })
   })
 })

@@ -29,7 +29,7 @@ export function downloadPlaceholderEvidence(label: string, filename: string): vo
   ctx.font = '24px sans-serif'
   ctx.fillText(label, 24, 48)
   ctx.font = '16px sans-serif'
-  ctx.fillText('Simulated feed · not a live aircraft camera', 24, 80)
+  ctx.fillText('Simulated feed, not a live aircraft camera', 24, 80)
   triggerDownload(canvas.toDataURL('image/png'), filename)
 }
 

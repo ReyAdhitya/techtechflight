@@ -35,7 +35,7 @@ export function AltitudeFloorNotice({
     >
       <span className="tnum font-medium">{below.length}</span>
       {below.length === 1 ? ' Drone' : ' Drones'} below{' '}
-      <span className="tnum">{floor}</span> m over the desks ·{' '}
+      <span className="tnum">{floor}</span> m over the desks,{' '}
       {below.map((entry) => entry.callsign).join(', ')}. Bring them up.
     </p>
   )

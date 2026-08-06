@@ -3,7 +3,7 @@ import { WallsShell } from '@/components/walls/WallsShell'
 import { ProximityWall } from '@/components/walls/ProximityWall'
 
 export const metadata: Metadata = {
-  title: 'Proximity · Walls · Flight Deck · TechTech',
+  title: 'Proximity, Walls, Flight Deck, TechTech',
   description: 'Pairs of Drones closer than the classroom separation warning.',
 }
 

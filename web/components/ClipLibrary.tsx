@@ -72,7 +72,7 @@ function ClipRow({ clip }: { readonly clip: SessionClip }) {
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="truncate text-value text-ink">{clip.droneName}</span>
         <span className="tnum text-label text-ink-subtle">
-          {formatClock(clip.capturedAt)} · {clip.filename}
+          {formatClock(clip.capturedAt)}, {clip.filename}
         </span>
       </div>
       <button

@@ -43,7 +43,7 @@ export function TrainingScenariosPanel() {
           >
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="font-display text-value font-medium text-ink">
-                {entry.id} · {entry.name}
+                {entry.id}, {entry.name}
               </span>
               <span className="text-label text-ink-muted">{entry.hits}</span>
             </div>

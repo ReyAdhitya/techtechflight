@@ -10,7 +10,7 @@ describe('FleetAllWellLine', () => {
       />,
     )
     const line = screen.getByRole('status')
-    expect(line).toHaveTextContent('Everything is fine · 0 need attention')
+    expect(line).toHaveTextContent('Everything is fine, 0 need attention')
     expect(line).toHaveAttribute('data-attention', '0')
   })
 

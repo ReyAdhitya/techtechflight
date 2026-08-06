@@ -68,7 +68,7 @@ describe('Trainer Drones inventory', () => {
     show()
     settle()
 
-    expect(screen.getByText(/Classroom quad · 2026-01-15/)).toBeInTheDocument()
+    expect(screen.getByText(/Classroom quad, 2026-01-15/)).toBeInTheDocument()
     expect(screen.getAllByText('No details yet').length).toBeGreaterThan(0)
   })
 })

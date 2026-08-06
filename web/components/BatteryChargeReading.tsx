@@ -25,7 +25,7 @@ export function BatteryChargeReading({
   }
 
   const low = isLowBatteryBudget(fraction)
-  const label = `${formatBattery(fraction)} · ${formatBatteryTimeBudget(fraction)}`
+  const label = `${formatBattery(fraction)}, ${formatBatteryTimeBudget(fraction)}`
 
   return (
     <span

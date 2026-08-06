@@ -893,7 +893,7 @@ function FlightStrip({
         {/*
          * The height, and no phase word beside it.
          *
-         * The strip read "Level · 2.6 m", which is the same fact twice: a Drone holding
+         * The strip read "Level, 2.6 m", which is the same fact twice: a Drone holding
          * 2.6 m is what "Level" means. The height carries it, and carries the number the
          * word could not. The movement — arrow and rate — stays, because that is the answer
          * to "is it going up or down", which one height cannot give.
@@ -1007,7 +1007,7 @@ function FlightStrip({
                     */}
                   {isAcknowledged(vitals.droneId, alert) && (
                     <span className="tnum text-value text-ink-muted">
-                      Acknowledged ·{' '}
+                      Acknowledged{' '}
                       {formatAge(
                         Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)),
                       )}
@@ -1139,17 +1139,17 @@ function describeCommand(tracked: TrackedCommand): string {
   const asked = COMMAND_WORDS[tracked.command.kind]
   switch (tracked.stage) {
     case 'sent':
-      return `${asked} · sent`
+      return `${asked}, sent`
     case 'waiting':
-      return `${asked} · waiting for a response`
+      return `${asked}, waiting for a response`
     case 'done':
-      return `${asked} · done`
+      return `${asked}, done`
     case 'refused':
-      return tracked.reason ?? `${asked} · refused`
+      return tracked.reason ?? `${asked}, refused`
     case 'no-response':
       // Not "failed". A Drone that ignored a request and one that stopped talking are
       // not distinguishable from here.
-      return `${asked} · sent, no response since`
+      return `${asked}, sent, no response since`
   }
 }
 

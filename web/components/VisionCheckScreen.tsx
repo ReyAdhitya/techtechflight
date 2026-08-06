@@ -243,7 +243,7 @@ export function VisionCheckScreen() {
                 selfTest.ok ? 'text-ink' : 'text-[color:var(--color-fault)]',
               )}
             >
-              {selfTest.ok ? 'Passed' : 'Failed'} · {selfTestWords(selfTest)}
+              {selfTest.ok ? 'Passed' : 'Failed'}, {selfTestWords(selfTest)}
             </span>
           )}
         </div>
@@ -336,7 +336,7 @@ function VerdictPanel({ verdict }: { verdict: Verdict }) {
       )}
     >
       <p className="m-0 text-value font-medium">
-        {verdictWord(verdict)} · {verdict.headline}
+        {verdictWord(verdict)}, {verdict.headline}
       </p>
       {verdict.fixes.length > 0 && (
         <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-body text-ink-subtle">

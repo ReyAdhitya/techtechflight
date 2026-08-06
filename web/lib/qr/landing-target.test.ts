@@ -73,7 +73,7 @@ describe('landingTargetPresentation', () => {
       }),
     ).toEqual({
       title: 'Landing target: pad-A',
-      meaning: 'Where to land · east 2 m · north 1 m',
+      meaning: 'Where to land, east 2 m, north 1 m',
     })
   })
 })

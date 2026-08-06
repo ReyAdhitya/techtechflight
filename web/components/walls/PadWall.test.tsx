@@ -27,6 +27,6 @@ describe('PadWall', () => {
       vi.advanceTimersByTime(2_000)
     })
     expect(screen.getByRole('heading', { name: 'Pads' })).toBeInTheDocument()
-    expect(screen.getAllByText(/Not seen|·|Seen/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Not seen|No feed|Seen/).length).toBeGreaterThan(0)
   })
 })

@@ -8,5 +8,5 @@ export function lessonsInLastDays(lessons: readonly DigestLesson[], days = 7, no
 export function formatWeeklyDigest(lessons: readonly DigestLesson[], now = Date.now()): string {
   const week = lessonsInLastDays(lessons, 7, now)
   const closed = week.filter((l) => l.endedAt !== null)
-  return `${closed.length} lessons finished this week · ${week.length} started`
+  return `${closed.length} lessons finished this week, ${week.length} started`
 }

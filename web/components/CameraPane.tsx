@@ -315,7 +315,7 @@ function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName:
       <div className="flex flex-wrap gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
         <PhotoEvidenceButton droneId={droneId} droneName={droneName} videoRef={videoRef} />
         <p className="m-0 self-center text-value text-ink-subtle">
-          School stream · from the stream map, not Telemetry
+          School stream, from the stream map, not Telemetry
         </p>
       </div>
     </div>
@@ -488,8 +488,8 @@ function SimulatedFeed({
             : 'Simulated feed. Not a live aircraft camera'}
           {detections.length > 0
             ? detector.demo
-              ? ` · ${detector.displayName} (not a loaded model)`
-              : ` · ${detector.displayName}`
+              ? `, ${detector.displayName} (not a loaded model)`
+              : `, ${detector.displayName}`
             : null}
         </p>
       </div>

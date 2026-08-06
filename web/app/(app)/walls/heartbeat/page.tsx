@@ -3,7 +3,7 @@ import { HeartbeatWall } from '@/components/walls/HeartbeatWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Last Contact · Walls · Flight Deck · TechTech',
+  title: 'Last Contact, Walls, Flight Deck, TechTech',
   description: 'Which Drones are still responding.',
 }
 

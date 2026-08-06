@@ -30,7 +30,7 @@ export function ScenarioWatchList({ scenarioId }: { readonly scenarioId: Scenari
       aria-label="What to watch for this Scenario"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="label m-0">You are watching · {scenario.name}</h2>
+        <h2 className="label m-0">You are watching, {scenario.name}</h2>
         {clock !== null ? (
           <p className="tnum m-0 text-value text-ink-subtle">{clock.words}</p>
         ) : null}

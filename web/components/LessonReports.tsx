@@ -64,7 +64,7 @@ export function LessonReports() {
                 <span className="font-display text-body font-medium text-ink">{lesson.label}</span>
                 <span className="tnum text-value text-ink-subtle">
                   {formatClock(lesson.startedAt)}
-                  {lesson.endedAt && ` – ${formatClock(lesson.endedAt)}`}
+                  {lesson.endedAt && ` to ${formatClock(lesson.endedAt)}`}
                 </span>
                 <span className="tnum text-value text-ink-muted">
                   {lesson.readyAtStart} of {lesson.fleetSize} ready at the start
@@ -85,7 +85,7 @@ export function LessonReports() {
 
               {lesson.exercises && lesson.exercises.length > 0 && (
                 <Line label="Exercises">
-                  {lesson.exercises.map((exercise) => exercise.name).join(' · ')}
+                  {lesson.exercises.map((exercise) => exercise.name).join(', ')}
                 </Line>
               )}
 
@@ -124,15 +124,15 @@ export function LessonReports() {
                       ([droneId, tally]) =>
                         `${droneName(lesson, droneId)}: ${tally.flights} flights, ${tally.faults} faults, ${tally.dropouts} dropouts`,
                     )
-                    .join(' · ')}
+                    .join(', ')}
                 </Line>
               )}
 
               {lesson.commands && lesson.commands.length > 0 && (
                 <Line label="Asked for">
                   {lesson.commands
-                    .map((entry) => `${entry.droneName} · ${entry.kind}`)
-                    .join(' · ')}
+                    .map((entry) => `${entry.droneName}, ${entry.kind}`)
+                    .join(', ')}
                 </Line>
               )}
             </li>

@@ -3,7 +3,7 @@ import { DetectWall } from '@/components/walls/DetectWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Detections · Walls · Flight Deck · TechTech',
+  title: 'Detections, Walls, Flight Deck, TechTech',
   description: 'Object detection counts across every Drone.',
 }
 

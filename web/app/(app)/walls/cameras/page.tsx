@@ -3,7 +3,7 @@ import { CameraWall } from '@/components/walls/CameraWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Cameras · Walls · Flight Deck · TechTech',
+  title: 'Cameras, Walls, Flight Deck, TechTech',
   description: 'Every fitted camera in the class at once.',
 }
 

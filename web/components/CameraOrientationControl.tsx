@@ -62,7 +62,7 @@ export function CameraOrientationControl({
       </button>
       <span className="tnum text-label text-ink-subtle" data-transform={transform}>
         {orientation.rotation}°
-        {orientation.mirror ? ' · mirrored' : ''}
+        {orientation.mirror ? ', mirrored' : ''}
       </span>
     </div>
   )

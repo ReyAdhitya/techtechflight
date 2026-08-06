@@ -29,7 +29,7 @@ export function fleetAllWell(
 
 /** The sentence alone, when a caller already has the count. */
 export function fleetAllWellSentence(attentionCount: number): string {
-  if (attentionCount === 0) return 'Everything is fine · 0 need attention'
+  if (attentionCount === 0) return 'Everything is fine, 0 need attention'
   if (attentionCount === 1) return '1 needs attention'
   return `${attentionCount} need attention`
 }

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { MovedToControl } from '@/components/MovedToControl'
 
 export const metadata: Metadata = {
-  title: 'Moved · Flight Deck · TechTech',
+  title: 'Moved, Flight Deck, TechTech',
   description: 'The Tower is now the Flight Control Center.',
 }
 

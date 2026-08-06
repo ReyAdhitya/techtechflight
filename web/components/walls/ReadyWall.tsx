@@ -30,7 +30,7 @@ export function ReadyWall() {
     <div className="flex flex-col gap-4">
       <p className="m-0 font-display text-summary font-medium text-ink">
         <span className="tnum">{ready}</span>
-        {' ready · '}
+        {' ready, '}
         <span className="tnum">{notReady}</span>
         {' not ready'}
       </p>

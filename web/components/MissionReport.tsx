@@ -190,7 +190,7 @@ function MissionLogEntry({ mission }: { readonly mission: Mission }) {
           <span className="tnum text-value text-ink-muted">
             {formatClock(mission.startedAt)}
             {mission.outcome?.endedAt !== undefined && mission.outcome?.endedAt !== null
-              ? ` – ${formatClock(mission.outcome.endedAt)}`
+              ? ` to ${formatClock(mission.outcome.endedAt)}`
               : ''}
           </span>
         )}
@@ -199,7 +199,7 @@ function MissionLogEntry({ mission }: { readonly mission: Mission }) {
       {scenario.successCriteria.length > 0 && (
         <p className="m-0 text-value text-ink-subtle">
           <span className="label">Stated criteria</span>{' '}
-          {scenario.successCriteria.join(' · ')}
+          {scenario.successCriteria.join(', ')}
         </p>
       )}
 
@@ -246,9 +246,9 @@ function IncidentsByCategory({
             {group.alerts.map((alert) => (
               <li key={alert.id} className="text-value text-ink-subtle">
                 <span className="font-medium text-ink">{alert.droneName}</span>
-                {' · '}
+                {', '}
                 {alert.text}
-                {alert.teacherAction ? ` · Action: ${alert.teacherAction}` : ''}
+                {alert.teacherAction ? `, Action: ${alert.teacherAction}` : ''}
               </li>
             ))}
           </ul>
@@ -264,7 +264,7 @@ export function MissionReport({ lesson }: { readonly lesson: LessonRecord }) {
 
   const alerts = alertLogForLesson(lesson.id)
   const when = `${formatClock(lesson.startedAt)}${
-    lesson.endedAt ? ` – ${formatClock(lesson.endedAt)}` : ''
+    lesson.endedAt ? ` to ${formatClock(lesson.endedAt)}` : ''
   }`
 
   return (

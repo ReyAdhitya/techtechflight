@@ -187,7 +187,7 @@ export function attendanceCountsByStudent(
 }
 
 export function formatAttendanceCounts(counts: AttendanceCounts): string {
-  return `Present ${counts.present} · Absent ${counts.absent}`
+  return `Present ${counts.present}, Absent ${counts.absent}`
 }
 
 /** Test helper — clears the side store without touching the Logbook. */

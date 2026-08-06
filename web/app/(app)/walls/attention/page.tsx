@@ -3,7 +3,7 @@ import { AttentionWall } from '@/components/walls/AttentionWall'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Attention · Walls · Flight Deck · TechTech',
+  title: 'Attention, Walls, Flight Deck, TechTech',
   description: 'Who needs the Teacher right now.',
 }
 

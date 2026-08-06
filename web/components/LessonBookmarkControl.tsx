@@ -84,7 +84,7 @@ export function LessonBookmarkControl({
         <ul className="m-0 flex list-none flex-col gap-1 p-0">
           {[...bookmarks].reverse().slice(0, 5).map((bookmark) => (
             <li key={bookmark.at} className="tnum text-value text-ink-subtle">
-              {formatElapsed(Math.max(0, bookmark.at - startedAt))} ·{' '}
+              {formatElapsed(Math.max(0, bookmark.at - startedAt))},{' '}
               {bookmark.note ?? formatClock(bookmark.at)}
             </li>
           ))}

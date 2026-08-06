@@ -57,7 +57,7 @@ export function targetFoundVerdict(input: TargetFoundInput): TargetFoundResult {
     return {
       satisfied: true,
       decidedBy: 'detection',
-      words: `Target found · ${match.label} recognised in the search area.`,
+      words: `Target found, ${match.label} recognised in the search area.`,
     }
   }
 

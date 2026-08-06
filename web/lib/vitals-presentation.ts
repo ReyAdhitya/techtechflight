@@ -54,9 +54,9 @@ export function formatVerticalMovement(vitals: DroneVitals): string | null {
   const height = `${vitals.altitudeM.toFixed(1)} m`
   if (!vitals.airborne) return height
   if (vitals.verticalRateMps === null) return height
-  if (Math.abs(vitals.verticalRateMps) < 0.05) return `${height} · steady`
+  if (Math.abs(vitals.verticalRateMps) < 0.05) return `${height}, steady`
   const arrow = vitals.verticalRateMps > 0 ? '↑' : '↓'
-  return `${height} · ${arrow} ${Math.abs(vitals.verticalRateMps).toFixed(1)} m/s`
+  return `${height}, ${arrow} ${Math.abs(vitals.verticalRateMps).toFixed(1)} m/s`
 }
 
 /**
@@ -107,7 +107,7 @@ export function formatCoordinates(reading: {
     `X ${axis(position.eastM, 'E', 'W')}`,
     `Y ${axis(position.northM, 'N', 'S')}`,
     height,
-  ].join(' · ')
+  ].join(', ')
 }
 
 /**

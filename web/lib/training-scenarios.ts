@@ -24,7 +24,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T1',
     name: 'Separation conflict',
-    hits: 'Attention NOW · strip alerts · Scope solid conflict (top-down)',
+    hits: 'Attention NOW, strip alerts, Scope solid conflict (top-down)',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
@@ -36,7 +36,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T2',
     name: 'Low charge while flying',
-    hits: 'Strip charge/endurance · Land-now alert · Fleet attention',
+    hits: 'Strip charge/endurance, Land-now alert, Fleet attention',
     run: (s) => {
       s.takeOff(D1)
       s.setAltitude(D1, 1.5)
@@ -46,7 +46,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T3',
     name: 'Lost link then restore',
-    hits: 'Fleet Offline · Control age honesty · Restore clears',
+    hits: 'Fleet Offline, Control age honesty, Restore clears',
     run: (s) => {
       s.loseLink(D2)
     },
@@ -54,7 +54,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T4',
     name: 'Fault / withdraw',
-    hits: 'Status Fault · Needs Attention · boardOrder unchanged',
+    hits: 'Status Fault, Needs Attention, boardOrder unchanged',
     run: (s) => {
       s.injectFault(D3)
     },
@@ -62,7 +62,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T5',
     name: 'Emergency stop',
-    hits: 'Emergency alert · Stop / Release path on sim',
+    hits: 'Emergency alert, Stop / Release path on sim',
     run: (s) => {
       s.takeOff(D1)
       s.setAltitude(D1, 1.5)
@@ -86,7 +86,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T7',
     name: 'Height / Side view',
-    hits: 'Strip Z · toggle Side · marks separate vertically (and on north)',
+    hits: 'Strip Z, toggle Side, marks separate vertically (and on north)',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
@@ -100,7 +100,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T7b',
     name: 'Front view',
-    hits: 'Toggle Front · classroom row spreads on east',
+    hits: 'Toggle Front, classroom row spreads on east',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
@@ -123,7 +123,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T11',
     name: 'Drone detail under Fault',
-    hits: 'Open /drone?id=ttf-0001 · instruments + service',
+    hits: 'Open /drone?id=ttf-0001, instruments + service',
     run: (s) => {
       s.injectFault(D1)
     },
@@ -131,7 +131,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T12',
     name: 'Stale / lost link honesty',
-    hits: 'Age wording · not presented as current',
+    hits: 'Age wording, not presented as current',
     run: (s) => {
       s.loseLink(D1)
     },

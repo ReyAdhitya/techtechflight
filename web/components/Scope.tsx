@@ -1206,7 +1206,7 @@ function conflictPairs(
   return pairs
 }
 
-/** "Drone 4" · "Drone 4 and Drone 5" · "Drone 4, Drone 5 and Drone 6". */
+/** "Drone 4", "Drone 4 and Drone 5", "Drone 4, Drone 5 and Drone 6". */
 function namesOf(drones: readonly DroneState[]): string {
   const names = drones.map((drone) => drone.name)
   const last = names[names.length - 1] ?? ''

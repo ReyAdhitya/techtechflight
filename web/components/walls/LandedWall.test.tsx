@@ -133,7 +133,7 @@ describe('LandedWall', () => {
     expect(
       screen.getByText((_content, element) =>
         element?.tagName === 'P'
-          ? /^\d+ landed · \d+ still flying$/.test(element.textContent ?? '')
+          ? /^\d+ landed, \d+ still flying$/.test(element.textContent ?? '')
           : false,
       ),
     ).toBeInTheDocument()

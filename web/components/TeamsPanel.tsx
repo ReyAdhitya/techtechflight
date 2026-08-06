@@ -223,7 +223,7 @@ export function TeamsPanel({
       <p className="m-0 text-value text-ink-subtle">
         <span className="tnum">{teams.length}</span>
         {teams.length === 1 ? ' team' : ' teams'}
-        {' · '}
+        {', '}
         <span className="tnum">{teams.filter((team) => team.droneId !== null).length}</span>
         {' with a Drone'}
       </p>

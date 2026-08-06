@@ -3,7 +3,7 @@ import { FaultMosaic } from '@/components/walls/FaultMosaic'
 import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
-  title: 'Faults · Walls · Flight Deck · TechTech',
+  title: 'Faults, Walls, Flight Deck, TechTech',
   description: 'Fault, stale, and emergency Drones first. The rest follow.',
 }
 

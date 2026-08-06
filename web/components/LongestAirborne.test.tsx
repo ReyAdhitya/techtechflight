@@ -25,7 +25,7 @@ describe('LongestAirborne', () => {
       />,
     )
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Drone 2 has been up longest · 3:00',
+      'Drone 2 has been up longest, 3:00',
     )
   })
 

@@ -19,8 +19,8 @@ describe('BatteryGlyph', () => {
 describe('BatteryChargeReading', () => {
   it('shows the iPhone-style glyph beside the charge words', () => {
     render(<BatteryChargeReading fraction={0.63} />)
-    expect(screen.getByLabelText(/Battery 63% · about 8 min left/)).toBeInTheDocument()
-    expect(screen.getByText('63% · about 8 min left')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Battery 63%, about 8 min left/)).toBeInTheDocument()
+    expect(screen.getByText('63%, about 8 min left')).toBeInTheDocument()
   })
 
   it('says when charge is missing', () => {

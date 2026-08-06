@@ -8,7 +8,7 @@ describe('AttendanceHistory', () => {
       <AttendanceHistory studentName="Amara" counts={{ present: 0, absent: 0 }} />,
     )
     const section = screen.getByLabelText('Attendance for Amara')
-    expect(section.textContent).toMatch(/0 present · 0 absent/)
+    expect(section.textContent).toMatch(/0 present, 0 absent/)
     expect(screen.getByRole('heading', { name: 'Attendance' })).toBeTruthy()
   })
 

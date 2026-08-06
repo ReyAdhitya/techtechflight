@@ -70,7 +70,7 @@ describe('height on the flight strip', () => {
       aVitals({ airborne: true, phase: 'climbing', altitudeM: 2.6, verticalRateMps: 0.8 }),
     )
 
-    expect(climbing).toBe('2.6 m · ↑ 0.8 m/s')
+    expect(climbing).toBe('2.6 m, ↑ 0.8 m/s')
     for (const { label } of Object.values(PHASE_PRESENTATION)) {
       expect(climbing, label).not.toContain(label)
     }
@@ -85,16 +85,16 @@ describe('height on the flight strip', () => {
 
   it('says the height plainly when the Drone is holding level', () => {
     expect(formatVerticalMovement(aVitals({ altitudeM: 1.7, verticalRateMps: 0 }))).toBe(
-      '1.7 m · steady',
+      '1.7 m, steady',
     )
   })
 
   it('attaches the direction when the Drone is moving', () => {
     expect(formatVerticalMovement(aVitals({ altitudeM: 2, verticalRateMps: 0.4 }))).toBe(
-      '2.0 m · ↑ 0.4 m/s',
+      '2.0 m, ↑ 0.4 m/s',
     )
     expect(formatVerticalMovement(aVitals({ altitudeM: 1.2, verticalRateMps: -0.4 }))).toBe(
-      '1.2 m · ↓ 0.4 m/s',
+      '1.2 m, ↓ 0.4 m/s',
     )
   })
 
@@ -119,13 +119,13 @@ describe('the coordinate group', () => {
   it('labels each axis with its letter and its direction', () => {
     expect(
       formatCoordinates(aVitals({ position: { eastM: 2.4, northM: 1.1 }, altitudeM: 1.7 })),
-    ).toBe('X 2.4 m E · Y 1.1 m N · Z 1.7 m')
+    ).toBe('X 2.4 m E, Y 1.1 m N, Z 1.7 m')
   })
 
   it('turns the sign into the direction a Teacher would say out loud', () => {
     expect(
       formatCoordinates(aVitals({ position: { eastM: -2.4, northM: -1.1 }, altitudeM: 0.5 })),
-    ).toBe('X 2.4 m W · Y 1.1 m S · Z 0.5 m')
+    ).toBe('X 2.4 m W, Y 1.1 m S, Z 0.5 m')
   })
 
   /*
@@ -136,7 +136,7 @@ describe('the coordinate group', () => {
   it('claims no direction where there is none', () => {
     expect(
       formatCoordinates(aVitals({ position: { eastM: 0, northM: 3 }, altitudeM: 0 })),
-    ).toBe('X 0.0 m · Y 3.0 m N · Z 0.0 m')
+    ).toBe('X 0.0 m, Y 3.0 m N, Z 0.0 m')
   })
 
   /*
@@ -146,14 +146,14 @@ describe('the coordinate group', () => {
   it('says a height was not reported rather than drawing a zero', () => {
     const line = formatCoordinates(aVitals({ position: { eastM: 1, northM: 1 }, altitudeM: null }))
 
-    expect(line).toBe('X 1.0 m E · Y 1.0 m N · Z not reported')
+    expect(line).toBe('X 1.0 m E, Y 1.0 m N, Z not reported')
     expect(line).not.toMatch(/Z .*0/)
   })
 
   it('draws a real zero as a reading, because that is what it is', () => {
     expect(
       formatCoordinates(aVitals({ position: { eastM: 1, northM: 1 }, altitudeM: 0 })),
-    ).toBe('X 1.0 m E · Y 1.0 m N · Z 0.0 m')
+    ).toBe('X 1.0 m E, Y 1.0 m N, Z 0.0 m')
   })
 
   /*
@@ -167,7 +167,7 @@ describe('the coordinate group', () => {
   /* The detail dialog hands it a Telemetry, where absence is `undefined` rather than `null`. */
   it('reads a Telemetry as happily as a Vitals', () => {
     expect(formatCoordinates({ position: { eastM: 2, northM: 0 } })).toBe(
-      'X 2.0 m E · Y 0.0 m · Z not reported',
+      'X 2.0 m E, Y 0.0 m, Z not reported',
     )
     expect(formatCoordinates({})).toBeNull()
   })

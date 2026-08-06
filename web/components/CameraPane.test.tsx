@@ -238,7 +238,7 @@ describe('the camera pane on a Drone', () => {
     const video = screen.getByLabelText('Live camera stream for Drone 1')
     expect(video.tagName).toBe('VIDEO')
     expect(video).toHaveAttribute('src', 'https://cam.school.example/drone1')
-    expect(screen.getByText(/School stream · from the stream map/)).toBeInTheDocument()
+    expect(screen.getByText(/School stream, from the stream map/)).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
   })
@@ -281,7 +281,7 @@ describe('the camera pane on a Drone', () => {
     await waitFor(() => {
       expect(screen.getByRole('status', { name: 'Landing target: pad-A' })).toBeInTheDocument()
     })
-    expect(screen.getByText(/Where to land · east 2 m · north 1 m/)).toBeInTheDocument()
+    expect(screen.getByText(/Where to land, east 2 m, north 1 m/)).toBeInTheDocument()
     expect(screen.getByText(/Not written into Telemetry/)).toBeInTheDocument()
   })
 

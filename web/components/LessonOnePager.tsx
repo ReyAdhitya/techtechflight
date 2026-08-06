@@ -50,7 +50,7 @@ export function LessonOnePager({
   readonly lesson: LessonRecord
 }) {
   const when = `${formatClock(lesson.startedAt)}${
-    lesson.endedAt ? ` – ${formatClock(lesson.endedAt)}` : ''
+    lesson.endedAt ? ` to ${formatClock(lesson.endedAt)}` : ''
   }`
 
   return (
@@ -70,7 +70,7 @@ export function LessonOnePager({
 
       {lesson.exercises && lesson.exercises.length > 0 && (
         <Line label="Exercises">
-          {lesson.exercises.map((exercise) => exercise.name).join(' · ')}
+          {lesson.exercises.map((exercise) => exercise.name).join(', ')}
         </Line>
       )}
 
@@ -106,7 +106,7 @@ export function LessonOnePager({
               ([droneId, tally]) =>
                 `${droneName(lesson, droneId)}: ${tally.flights} flights, ${tally.faults} faults, ${tally.dropouts} dropouts`,
             )
-            .join(' · ')}
+            .join(', ')}
         </Line>
       )}
     </article>

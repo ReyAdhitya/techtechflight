@@ -4,7 +4,7 @@ import { WallsShell } from '@/components/walls/WallsShell'
 import { DualWatch } from '@/components/walls/DualWatch'
 
 export const metadata: Metadata = {
-  title: 'Dual · Walls · Flight Deck · TechTech',
+  title: 'Dual, Walls, Flight Deck, TechTech',
   description: 'Two cameras side by side for a close comparison.',
 }
 

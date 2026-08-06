@@ -60,7 +60,7 @@ export function TrainerDronesPanel() {
             stored?.createdDate?.trim() || null,
           ]
             .filter(Boolean)
-            .join(' · ')
+            .join(', ')
 
           return (
             <li

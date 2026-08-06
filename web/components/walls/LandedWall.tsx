@@ -36,7 +36,7 @@ export function LandedWall({ emptyLabel = 'Waiting for the Fleet.' }: { emptyLab
         )}
       >
         <span className="tnum">{landed}</span>
-        {' landed · '}
+        {' landed, '}
         <span className="tnum">{stillFlying}</span>
         {' still flying'}
       </p>

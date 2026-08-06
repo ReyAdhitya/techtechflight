@@ -126,7 +126,7 @@ describe('ReadyWall', () => {
     expect(screen.getByRole('heading', { name: 'Ready' })).toBeInTheDocument()
     expect(
       screen.getByText((_, element) =>
-        Boolean(element?.classList.contains('text-summary') && element.textContent?.includes('ready ·')),
+        Boolean(element?.classList.contains('text-summary') && element.textContent?.includes('ready,')),
       ),
     ).toBeInTheDocument()
     const links = screen.getAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/drone?id='))

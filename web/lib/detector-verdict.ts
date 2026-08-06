@@ -166,5 +166,5 @@ export function verdictFor(input: VerdictInput): Verdict {
 /** What the Teacher reads about which model is loaded. Never blurs the two. */
 export function detectorLabel(detector: ObjectDetector | null): string {
   if (detector === null) return 'Loading…'
-  return detector.demo ? `${detector.displayName} · not a loaded model` : detector.displayName
+  return detector.demo ? `${detector.displayName}, not a loaded model` : detector.displayName
 }

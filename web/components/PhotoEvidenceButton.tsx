@@ -25,7 +25,7 @@ export function PhotoEvidenceButton({
   const save = () => {
     const video = videoRef?.current
     if (video && downloadPhotoFromVideo(video, filename)) return
-    downloadPlaceholderEvidence(`${droneName} — ${droneId}`, filename)
+    downloadPlaceholderEvidence(`${droneName} · ${droneId}`, filename)
   }
 
   return (

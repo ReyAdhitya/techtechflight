@@ -32,7 +32,7 @@ export function SeparationThresholdPanel() {
     writeSeparationThresholdM(parsed)
     setMetres(parsed)
     setDraft(String(parsed))
-    setNote(`Saved — alarm when craft are closer than ${formatSeparationThresholdM(parsed)}.`)
+    setNote(`Saved · alarm when craft are closer than ${formatSeparationThresholdM(parsed)}.`)
   }
 
   const restoreDefault = () => {
@@ -49,7 +49,7 @@ export function SeparationThresholdPanel() {
       <h2 className="label m-0">Separation alarm</h2>
       <p className="m-0 text-value text-ink-subtle">
         How close two Flying Drones may get before the board asks you to separate them.
-        Default is {formatSeparationThresholdM(DEFAULT_SEPARATION_THRESHOLD_M)} — the same
+        Default is {formatSeparationThresholdM(DEFAULT_SEPARATION_THRESHOLD_M)}. The same
         distance the board uses today.
       </p>
 

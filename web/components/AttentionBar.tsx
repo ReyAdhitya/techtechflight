@@ -118,7 +118,7 @@ export function AttentionBar({
               Respond
               <span className="visually-hidden">
                 {' '}
-                — {worst.callsign}, {worst.text}
+                · {worst.callsign}, {worst.text}
               </span>
             </button>
             {onAcknowledge && (
@@ -130,7 +130,7 @@ export function AttentionBar({
                 I have this
                 <span className="visually-hidden">
                   {' '}
-                  — {worst.callsign}, {worst.text}
+                  · {worst.callsign}, {worst.text}
                 </span>
               </button>
             )}
@@ -191,7 +191,7 @@ export function AttentionBar({
                     I have this
                     <span className="visually-hidden">
                       {' '}
-                      — {entry.callsign}, {entry.text}
+                      · {entry.callsign}, {entry.text}
                     </span>
                   </button>
                 )}
@@ -220,7 +220,7 @@ export function AttentionBar({
                   id={titleId}
                   className="m-0 font-display text-summary font-medium text-ink"
                 >
-                  Respond — {worst.callsign}
+                  Respond · {worst.callsign}
                 </Dialog.Title>
                 <Dialog.Close asChild>
                   <button
@@ -264,7 +264,7 @@ export function AttentionBar({
                     I have this
                     <span className="visually-hidden">
                       {' '}
-                      — {worst.callsign}, {worst.text}
+                      · {worst.callsign}, {worst.text}
                     </span>
                   </button>
                 )}

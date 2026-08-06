@@ -29,7 +29,7 @@ describe('training scenarios in Settings', () => {
 
     expect(screen.getByRole('heading', { name: 'Training scenarios' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Reset classroom' })).toBeInTheDocument()
-    expect(screen.getByText(/T1 — Separation conflict/)).toBeInTheDocument()
+    expect(screen.getByText(/T1 · Separation conflict/)).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: 'Run' }).length).toBeGreaterThan(5)
     expect(screen.getByText(/They are not Commands/i)).toBeInTheDocument()
   })

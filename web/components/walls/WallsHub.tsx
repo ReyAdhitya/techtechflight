@@ -60,7 +60,7 @@ export function WallsHub() {
     <WallsShell
       hideBack
       title="Walls"
-      description="See the whole class at once — pick a wall for the glance you need."
+      description="See the whole class at once. Pick a wall for the glance you need."
     >
       <label className="flex flex-col gap-2">
         <span className="label m-0">Find a wall</span>

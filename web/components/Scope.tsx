@@ -680,7 +680,7 @@ export function Scope({
           <span>
             {pathsReady
               ? 'Faint dashed = recent path'
-              : 'Ghost paths on — waiting for movement history'}
+              : 'Ghost paths on. Waiting for movement history'}
           </span>
         )}
         {view === 'top-down' && conflicts.length > 0 && <span>Solid = too close</span>}

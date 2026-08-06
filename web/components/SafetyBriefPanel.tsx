@@ -56,7 +56,7 @@ export function SafetyBriefPanel({
 
       {!lessonId ? (
         <p className="m-0 text-value text-ink-muted">
-          Start a Lesson to keep ticks for this period. You can still walk the brief now —
+          Start a Lesson to keep ticks for this period. You can still walk the brief now.
           marks will not be kept until a Lesson is running.
         </p>
       ) : null}

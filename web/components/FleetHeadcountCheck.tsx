@@ -66,7 +66,7 @@ export function FleetHeadcountCheck({
       <div className="flex flex-col gap-1 border-t border-hairline pt-3">
         <p className="label m-0 text-ink-subtle">Missing</p>
         {result.missing.length === 0 ? (
-          <p className="m-0 text-value text-ink-muted">None — every craft is ticked.</p>
+          <p className="m-0 text-value text-ink-muted">None. Every craft is ticked.</p>
         ) : (
           <ul className="m-0 flex list-none flex-col gap-1 p-0" aria-label="Missing craft">
             {result.missing.map((craft) => (

@@ -81,7 +81,7 @@ export function LessonPlanWizard({
             />
           </label>
           <p className="m-0 text-value text-ink-subtle">
-            Optional — blank becomes Untitled lesson when you start (E7).
+            Optional. Blank becomes Untitled lesson when you start (E7).
           </p>
         </WizardStep>
       )}

@@ -23,7 +23,7 @@ export const MISSION_BRIEFING_SECTIONS = [
     rules: [
       {
         id: 'one-scenario',
-        label: 'This Lesson runs one Scenario — follow its flow in order.',
+        label: 'This Lesson runs one Scenario. Follow its flow in order.',
       },
       {
         id: 'checkpoints-first',
@@ -45,7 +45,7 @@ export const MISSION_BRIEFING_SECTIONS = [
       },
       {
         id: 'separation',
-        label: 'Keep separation — call out if another craft is too close.',
+        label: 'Keep separation. Call out if another craft is too close.',
       },
       {
         id: 'time-limit',
@@ -53,7 +53,7 @@ export const MISSION_BRIEFING_SECTIONS = [
       },
       {
         id: 'charge',
-        label: 'Land when charge is low — do not fly until the pack is swapped.',
+        label: 'Land when charge is low. Do not fly until the pack is swapped.',
       },
     ],
   },
@@ -81,7 +81,7 @@ export const MISSION_BRIEFING_SECTIONS = [
     rules: [
       {
         id: 'hand-up',
-        label: 'Raise your hand and wait — do not shout over motors.',
+        label: 'Raise your hand and wait. Do not shout over motors.',
       },
       {
         id: 'team-call',
@@ -273,7 +273,7 @@ export function MissionBriefing({
 
       {!lessonId ? (
         <p className="m-0 text-value text-ink-muted">
-          Start a Lesson to keep ticks for this period. You can still walk the brief now —
+          Start a Lesson to keep ticks for this period. You can still walk the brief now.
           marks will not be kept until a Lesson is running.
         </p>
       ) : null}

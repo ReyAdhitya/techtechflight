@@ -48,7 +48,7 @@ export function DetectionBoxes({
           >
             {/*
               Chip sits *inside* the box at the top-left. Outside would clip under
-              overflow-hidden parents and disappear on a face filling the frame — exactly
+              overflow-hidden parents and disappear on a face filling the frame. Exactly
               when a Teacher most needs to read the label.
             */}
             <span

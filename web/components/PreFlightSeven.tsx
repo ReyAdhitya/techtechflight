@@ -166,7 +166,7 @@ function PreFlightSevenMark({
       )}
       aria-hidden="true"
     >
-      {checked ? '✓' : failed ? '!' : pending ? '·' : '—'}
+      {checked ? '✓' : failed ? '!' : pending ? '·' : '-'}
     </span>
   )
 }

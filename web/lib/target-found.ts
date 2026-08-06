@@ -40,7 +40,7 @@ export function targetFoundVerdict(input: TargetFoundInput): TargetFoundResult {
     return {
       satisfied: true,
       decidedBy: 'teacher',
-      words: 'Target found — marked by the Teacher.',
+      words: 'Target found. Marked by the Teacher.',
     }
   }
 
@@ -48,7 +48,7 @@ export function targetFoundVerdict(input: TargetFoundInput): TargetFoundResult {
     return {
       satisfied: false,
       decidedBy: 'teacher',
-      words: 'Target not found — marked by the Teacher.',
+      words: 'Target not found. Marked by the Teacher.',
     }
   }
 
@@ -57,7 +57,7 @@ export function targetFoundVerdict(input: TargetFoundInput): TargetFoundResult {
     return {
       satisfied: true,
       decidedBy: 'detection',
-      words: `Target found — ${match.label} recognised in the search area.`,
+      words: `Target found · ${match.label} recognised in the search area.`,
     }
   }
 

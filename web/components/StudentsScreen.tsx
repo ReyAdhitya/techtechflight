@@ -193,7 +193,7 @@ export function StudentsScreen() {
         <div className="flex flex-col gap-1">
           <h2 className="label m-0">The class</h2>
           <p className="m-0 text-value text-ink-subtle">
-            Type a name — the board assigns an ID for records. Strips and Alerts still show
+            Type a name. The board assigns an ID for records. Strips and Alerts still show
             the name. Notes and attendance stay on this laptop.
           </p>
         </div>

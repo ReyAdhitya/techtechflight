@@ -55,7 +55,7 @@ export function ClassroomSetupPanel() {
     setNote(
       next.restartRequired
         ? 'Saved. Close the Ground Station window, then double-click Start TechTech Flight.bat again.'
-        : 'Already on that path — no restart needed.',
+        : 'Already on that path. No restart needed.',
     )
   }
 
@@ -63,14 +63,14 @@ export function ClassroomSetupPanel() {
     <section className="flex flex-col gap-3 rounded-surface border border-hairline bg-surface-1 p-5">
       <h2 className="label m-0">Classroom setup</h2>
       <p className="m-0 text-value text-ink-subtle">
-        Pick how this laptop talks to the Fleet. The Simulator is the normal classroom path —
+        Pick how this laptop talks to the Fleet. The Simulator is the normal classroom path.
         Commands work. Radio reads real craft over MAVLink (the language drones use on the
-        wire) and is watch-only for now — Stop and Hover do not reach hardware.
+        wire) and is watch-only for now. Stop and Hover do not reach hardware.
       </p>
 
       {demo ? (
         <p className="m-0 text-value text-ink-muted">
-          Demonstration Fleet — this preview runs a Simulator in the browser. Radio needs the
+          Demonstration Fleet. This preview runs a Simulator in the browser. Radio needs the
           ground station on this laptop (:4321).
         </p>
       ) : !reachable ? (
@@ -86,7 +86,7 @@ export function ClassroomSetupPanel() {
               {status
                 ? status.active === 'simulator'
                   ? 'Simulator'
-                  : 'Radio (MAVLink) — monitoring only'
+                  : 'Radio (MAVLink), monitoring only'
                 : '…'}
             </dd>
             <dt className="label self-center">Next launch</dt>
@@ -117,7 +117,7 @@ export function ClassroomSetupPanel() {
           {note ? <p className="m-0 text-value text-ink-muted">{note}</p> : null}
           {status?.restartRequired ? (
             <p className="m-0 text-value text-ink-muted">
-              Preference differs from the running ground station — restart to apply.
+              Preference differs from the running ground station. Restart to apply.
             </p>
           ) : null}
         </>

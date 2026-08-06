@@ -131,7 +131,7 @@ export function LessonReports() {
               {lesson.commands && lesson.commands.length > 0 && (
                 <Line label="Asked for">
                   {lesson.commands
-                    .map((entry) => `${entry.droneName} — ${entry.kind}`)
+                    .map((entry) => `${entry.droneName} · ${entry.kind}`)
                     .join(' · ')}
                 </Line>
               )}

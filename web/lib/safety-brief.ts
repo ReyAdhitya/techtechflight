@@ -14,7 +14,7 @@ export const SAFETY_BRIEF_RULES = [
   },
   {
     id: 'eyes',
-    label: 'Eyes on your own craft — call out if another is too close.',
+    label: 'Eyes on your own craft. Call out if another is too close.',
   },
   {
     id: 'space',
@@ -22,7 +22,7 @@ export const SAFETY_BRIEF_RULES = [
   },
   {
     id: 'stop',
-    label: 'Stop means stop — hands off the sticks at once.',
+    label: 'Stop means stop. Hands off the sticks at once.',
   },
   {
     id: 'land',
@@ -30,7 +30,7 @@ export const SAFETY_BRIEF_RULES = [
   },
   {
     id: 'charge',
-    label: 'Hand craft back for charge — never leave a pack in a bag.',
+    label: 'Hand craft back for charge. Never leave a pack in a bag.',
   },
 ] as const
 

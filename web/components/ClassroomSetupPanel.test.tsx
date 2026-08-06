@@ -8,7 +8,10 @@ import { SettingsScreen } from './SettingsScreen'
 import { putClassroomSetup } from '@/lib/classroom-setup'
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}))
 
 const settle = () =>
   act(() => {

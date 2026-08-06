@@ -42,7 +42,7 @@ describe('parseRosterCsv', () => {
   it('refuses an empty file and says why', () => {
     expect(parseRosterCsv('')).toEqual({
       ok: false,
-      reason: 'The file is empty — add a name column and try again.',
+      reason: 'The file is empty. Add a name column and try again.',
     })
   })
 

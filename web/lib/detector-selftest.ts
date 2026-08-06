@@ -112,6 +112,6 @@ export function selfTestWords(result: SelfTestResult): string {
     const because = result.error ? ` (${result.error})` : ''
     return `The stand-in detector answered. No model is loaded, so this proves nothing${because}.`
   }
-  if (result.error) return `Inference failed — ${result.error}`
+  if (result.error) return `Inference failed · ${result.error}`
   return `Inference ran in ${result.ms} ms. The model is working.`
 }

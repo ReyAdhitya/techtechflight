@@ -35,7 +35,7 @@ export function PupilFlightHours({
       </p>
       <p className="m-0 text-caption text-ink-subtle">
         {approximate
-          ? 'Approximate — Lesson length when a takeoff was recorded; seal real intervals when available.'
+          ? 'Approximate. Lesson length when a takeoff was recorded; seal real intervals when available.'
           : 'Across closed Lessons in this browser.'}
       </p>
     </section>

@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { DisplayScaleToggle } from './DisplayScaleToggle'
 import { SimulationLabel } from './SimulationLabel'
 import { SiteNav } from './SiteNav'
+import { SwitchRoleButton } from './SwitchRoleButton'
 import { ThemeToggle } from './ThemeToggle'
 
 const EASE = [0.16, 1, 0.3, 1] as const
@@ -44,6 +45,7 @@ export function SiteHeader() {
         <div className="site-header__controls">
           <ThemeToggle />
           <DisplayScaleToggle />
+          <SwitchRoleButton label="Switch role" />
           {/* Not in the navigation: the room and the records, rather than a place to go. */}
           <Link href="/settings" prefetch={false} className="site-header__settings">
             Settings
@@ -129,7 +131,7 @@ function BrandLink({ children }: { children: ReactNode }) {
       /* Nothing to prefetch on a static export — see the note in `SiteNav`. */
       prefetch={false}
       className="brand-link"
-      aria-label="TechTech Flight Deck — go to Control"
+      aria-label="TechTech Flight Deck, go to Control"
     >
       {children}
     </Link>

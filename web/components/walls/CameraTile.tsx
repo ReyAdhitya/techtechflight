@@ -119,7 +119,7 @@ export function CameraTile({
   return (
     <div className={SURFACE} role="status">
       <p className="m-0 text-value text-ink">
-        Camera is streaming. A picture on this board needs a school stream map — not yet
+        Camera is streaming. A picture on this board needs a school stream map, not yet
         configured. Telemetry does not carry a URL.
       </p>
     </div>

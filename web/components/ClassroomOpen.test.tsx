@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { readClassroomSession, resetClassroomForTests } from '@/lib/classroom-session'
-import { clearLogbook, readLogbook, runningLesson, startLesson } from '@/lib/logbook'
+import { clearLogbook, readLogbook, runningLesson, saveRoll, startLesson } from '@/lib/logbook'
 import {
   MISSION_DRAFT_KEY,
   chooseScenario,
@@ -151,5 +151,16 @@ describe('opening the classroom from the Mission', () => {
     render(<ClassroomOpen />)
 
     expect(readClassroomSession()!.code).toBe(first)
+  })
+
+  it('copies the class roll onto the session for Student tablets', () => {
+    saveRoll(['Priya', 'Sam'])
+    startLesson('Year 8', 6, 6, 1_000, [])
+    const lessonId = runningLesson(readLogbook())!.id
+    chooseScenario(lessonId, 'search-rescue')
+
+    render(<ClassroomOpen />)
+
+    expect(readClassroomSession()?.roster?.map((row) => row.name)).toEqual(['Priya', 'Sam'])
   })
 })

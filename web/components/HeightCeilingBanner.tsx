@@ -22,7 +22,7 @@ export function HeightCeilingBanner({ vitals }: { vitals: readonly DroneVitals[]
     >
       <span className="tnum font-medium">{over.length}</span>
       {over.length === 1 ? ' Drone' : ' Drones'} above{' '}
-      <span className="tnum">{CLASSROOM_CEILING_M}</span> m — {over.map((entry) => entry.callsign).join(', ')}
+      <span className="tnum">{CLASSROOM_CEILING_M}</span> m · {over.map((entry) => entry.callsign).join(', ')}
     </p>
   )
 }

@@ -4,14 +4,14 @@ import { WallsShell } from '@/components/walls/WallsShell'
 
 export const metadata: Metadata = {
   title: 'Faults · Walls · Flight Deck · TechTech',
-  description: 'Fault, stale, and emergency Drones first — the rest follow.',
+  description: 'Fault, stale, and emergency Drones first. The rest follow.',
 }
 
 export default function FaultMosaicPage() {
   return (
     <WallsShell
       title="Faults"
-      description="Fault, stale, and emergency Drones first — the rest follow."
+      description="Fault, stale, and emergency Drones first. The rest follow."
     >
       <FaultMosaic />
     </WallsShell>

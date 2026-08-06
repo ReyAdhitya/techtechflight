@@ -46,7 +46,7 @@ export function ScenarioWatchList({ scenarioId }: { readonly scenarioId: Scenari
         ))}
       </ul>
       <p className="m-0 text-value text-ink-muted">
-        Progress the Fleet is not measuring prints as Not measured — never invented.
+        Progress the Fleet is not measuring prints as Not measured. Never invented.
       </p>
     </section>
   )

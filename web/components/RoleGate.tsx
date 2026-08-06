@@ -2,10 +2,16 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { readBoardRole, writeBoardRole, type BoardRole } from '@/lib/role'
+import {
+  BOARD_ROLE_EVENT,
+  BOARD_ROLE_KEY,
+  readBoardRole,
+  writeBoardRole,
+  type BoardRole,
+} from '@/lib/role'
 
 /**
- * The door. Teacher board or Student Mission phone (#627).
+ * The door. Teacher board or Student Mission tablet — side by side.
  */
 
 export function RoleGateScreen() {
@@ -19,9 +25,6 @@ export function RoleGateScreen() {
     <main
       id="content"
       tabIndex={-1}
-      /* Full width. A Student meets this door on the same tablet they fly from, and a
-         phone-width column in the middle of a landscape screen is the fault that got the
-         first Student screen rejected. */
       className="flex min-h-[100dvh] w-full flex-col justify-center gap-8 p-6 min-[48rem]:p-10"
     >
       <div className="flex flex-col gap-2">
@@ -29,30 +32,30 @@ export function RoleGateScreen() {
         <h1 className="m-0 font-display text-heading font-medium text-balance">
           Who is using this device?
         </h1>
-        <p className="m-0 text-body text-ink-muted">
+        <p className="m-0 max-w-[50ch] text-body text-ink-muted">
           Teachers run the lesson on this board. Students join on an iPad with the classroom
           code, then fly by hand with a controller.
         </p>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="grid w-full max-w-[56rem] grid-cols-1 gap-3 min-[40rem]:grid-cols-2">
         <button
           type="button"
           onClick={() => choose('teacher')}
-          className="min-h-14 cursor-pointer rounded-surface border-0 bg-ink px-5 py-4 text-left text-body font-medium text-canvas"
+          className="min-h-28 cursor-pointer rounded-surface border-0 bg-ink px-5 py-5 text-left text-body font-medium text-canvas"
         >
           I am the Teacher
-          <span className="mt-1 block text-value font-normal text-canvas/80">
+          <span className="mt-2 block text-value font-normal text-canvas/80">
             Lesson, Control, Fleet, clearances
           </span>
         </button>
         <button
           type="button"
           onClick={() => choose('student')}
-          className="min-h-14 cursor-pointer rounded-surface border border-hairline bg-surface-1 px-5 py-4 text-left text-body font-medium text-ink"
+          className="min-h-28 cursor-pointer rounded-surface border border-hairline bg-surface-1 px-5 py-5 text-left text-body font-medium text-ink"
         >
           I am a Student
-          <span className="mt-1 block text-value font-normal text-ink-subtle">
+          <span className="mt-2 block text-value font-normal text-ink-subtle">
             Join with the classroom code on this iPad
           </span>
         </button>
@@ -61,7 +64,20 @@ export function RoleGateScreen() {
   )
 }
 
-/** Redirect Teacher chrome away from Students, and the reverse. */
+function Opening() {
+  return (
+    <main id="content" tabIndex={-1} className="p-8">
+      <p className="m-0 text-body text-ink-muted">Opening…</p>
+    </main>
+  )
+}
+
+/**
+ * Teacher chrome never mounts for a Student device, and the reverse.
+ *
+ * Role is read on the client before children render (not only in an effect), so a Student
+ * who types `/lesson` or `/control` never sees Teacher UI flash past "Opening…".
+ */
 export function RequireRole({
   role,
   children,
@@ -71,7 +87,8 @@ export function RequireRole({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [ready, setReady] = useState(false)
+  // Re-read when another tab clears or changes the role, or after we redirect.
+  const [generation, setGeneration] = useState(0)
 
   useEffect(() => {
     const current = readBoardRole()
@@ -81,18 +98,29 @@ export function RequireRole({
     }
     if (current !== role) {
       router.replace(current === 'student' ? '/student' : '/lesson')
-      return
     }
-    setReady(true)
-  }, [role, router, pathname])
+  }, [role, router, pathname, generation])
 
-  if (!ready) {
-    return (
-      <main id="content" tabIndex={-1} className="p-8">
-        <p className="m-0 text-body text-ink-muted">Opening…</p>
-      </main>
-    )
-  }
+  useEffect(() => {
+    const bump = () => setGeneration((n) => n + 1)
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === BOARD_ROLE_KEY || event.key === null) bump()
+    }
+    window.addEventListener('storage', onStorage)
+    // Same-tab writes do not fire `storage`; Switch role navigates away, but a rare
+    // in-place clear still needs a re-check.
+    window.addEventListener(BOARD_ROLE_EVENT, bump)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener(BOARD_ROLE_EVENT, bump)
+    }
+  }, [])
+
+  // Static export / SSR: never paint gated chrome until the client knows the role.
+  if (typeof window === 'undefined') return <Opening />
+
+  const current = readBoardRole()
+  if (current !== role) return <Opening />
 
   return <>{children}</>
 }

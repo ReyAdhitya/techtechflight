@@ -118,7 +118,7 @@ export function DroneScreen() {
         {drone.lastContact === null
           ? 'No response yet'
           : `Response ${formatAge(age ?? 0)} · ${formatExactTime(drone.lastContact)}`}
-        {drone.stale && ' — these are last known values, not current ones.'}
+        {drone.stale && . These are last known values, not current ones.'}
       </p>
 
       {telemetry ? (
@@ -131,7 +131,7 @@ export function DroneScreen() {
               </span>
               {telemetry.batteryIsEstimate && (
                 <span className="text-value text-ink-subtle">
-                  estimated — this airframe cannot measure charge precisely
+                  estimated. This airframe cannot measure charge precisely
                 </span>
               )}
             </div>
@@ -282,7 +282,7 @@ function NotePanel({ droneId, text }: { droneId: string; text: string }) {
         id={`note-${droneId}`}
         value={value}
         rows={3}
-        placeholder="Airframe notes — a loose arm, a sticky control…"
+        placeholder="Airframe notes. A loose arm, a sticky control…"
         className="rounded-surface border border-hairline bg-surface-1 p-3 text-value text-ink"
         onChange={(event) => setDraft(event.target.value)}
         onBlur={() => {

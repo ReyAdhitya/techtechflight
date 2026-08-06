@@ -90,7 +90,7 @@ export function ShowcaseChrome({ scenario, onScenario, liveUnavailable }: Showca
             <>
               {' '}
               <strong className="font-semibold">
-                No ground station on this machine — start it with{' '}
+                No ground station on this machine. Start it with{' '}
                 <code>npm run dev:ground-station</code>.
               </strong>
             </>

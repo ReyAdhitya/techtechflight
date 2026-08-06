@@ -23,7 +23,7 @@ const teams = [
 const position = { eastM: 3.5, northM: -1.2 }
 
 describe('recordAssignTargetInstruction', () => {
-  it('appends an Instruction on the Mission — never a Command (ADR-0021)', () => {
+  it('appends an Instruction on the Mission. Never a Command (ADR-0021)', () => {
     const next = recordAssignTargetInstruction(mission(), {
       team: teams[0]!,
       position,

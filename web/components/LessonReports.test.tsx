@@ -81,7 +81,7 @@ describe('a Lesson that has finished', () => {
 
     // A Command that produced nothing is still a thing that happened, and arguably the
     // more interesting one.
-    expect(screen.getByText(/Drone 3 — land/)).toBeInTheDocument()
+    expect(screen.getByText(/Drone 3 · land/)).toBeInTheDocument()
   })
 
   it('still reads correctly with nothing left in the ground station', () => {

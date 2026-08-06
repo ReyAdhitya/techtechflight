@@ -13,7 +13,7 @@ import {
   writeClassroomSession,
 } from '@/lib/classroom-session'
 import type { MissionOutcome } from '@/lib/mission'
-import { clearLogbook, saveRoll } from '@/lib/logbook'
+import { clearLogbook, legacyStudentIdFor } from '@/lib/logbook'
 import { FleetProvider } from './FleetProvider'
 import { StudentMissionScreen, WhatToDoNow } from './StudentMissionScreen'
 import { playbookFor } from '@/lib/incident-playbook'
@@ -45,7 +45,7 @@ const studentScreen = () =>
     </FleetProvider>,
   )
 
-function classroomWithBrief() {
+function classroomWithBrief(names: readonly string[] = []) {
   const session = openClassroom({
     lessonId: 'L-0001',
     lessonLabel: 'Year 8',
@@ -55,6 +55,7 @@ function classroomWithBrief() {
     rules: ['Stay inside the Mission Zone.', 'Land when the Teacher says land.'],
     limitMinutes: 12,
     zones: [],
+    roster: names.map((name) => ({ studentId: legacyStudentIdFor(name), name })),
   })
   return session
 }
@@ -85,9 +86,8 @@ describe('taking a seat', () => {
    * No typing and no classroom code. A child at a shared tablet knows their own name and
    * nothing else, and a four-character code is a step that exists for the software.
    */
-  it('offers the class roll, and nothing to type', () => {
-    saveRoll(['Priya', 'Sam'])
-    classroomWithBrief()
+  it('offers the class roll from the session, and nothing to type', () => {
+    classroomWithBrief(['Priya', 'Sam'])
 
     studentScreen()
     settle()
@@ -97,18 +97,18 @@ describe('taking a seat', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
   })
 
-  it('says so plainly when there is no class list yet', () => {
+  it('says so plainly when there is no class list yet, and lets them type a name', () => {
     classroomWithBrief()
 
     studentScreen()
     settle()
 
     expect(screen.getByText(/class list is empty/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument()
   })
 
   it('seats the Student who picked their name', () => {
-    saveRoll(['Priya', 'Sam'])
-    classroomWithBrief()
+    classroomWithBrief(['Priya', 'Sam'])
 
     studentScreen()
     settle()
@@ -121,8 +121,7 @@ describe('taking a seat', () => {
 
 describe('the brief', () => {
   const seatPriya = () => {
-    saveRoll(['Priya'])
-    classroomWithBrief()
+    classroomWithBrief(['Priya'])
     studentScreen()
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
@@ -215,8 +214,7 @@ describe('the brief', () => {
  */
 describe('asking for takeoff, and the answer', () => {
   const seatWithCraft = () => {
-    saveRoll(['Priya'])
-    classroomWithBrief()
+    classroomWithBrief(['Priya'])
     studentScreen()
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
@@ -276,13 +274,20 @@ describe('asking for takeoff, and the answer', () => {
     expect(screen.getByRole('button', { name: 'Ask to take off' })).toBeInTheDocument()
   })
 
-  it('keeps exactly one thing to press at every step of asking', () => {
+  it('keeps exactly one Mission thing to press at every step of asking', () => {
+    // Switch role is escape chrome on every Student screen; Ask / Understood are the
+    // Mission presses (ADR-0025).
+    const missionButtons = () =>
+      screen
+        .queryAllByRole('button')
+        .filter((button) => !/switch role/i.test(button.textContent ?? ''))
+
     seatWithCraft()
-    expect(screen.getAllByRole('button')).toHaveLength(1)
+    expect(missionButtons()).toHaveLength(1)
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
     settle()
-    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    expect(missionButtons()).toHaveLength(0)
   })
 
   /*
@@ -327,8 +332,7 @@ describe('asking for takeoff, and the answer', () => {
  */
 describe('the score after landing', () => {
   const landedStudent = (outcome: MissionOutcome | null) => {
-    saveRoll(['Priya'])
-    classroomWithBrief()
+    classroomWithBrief(['Priya'])
     studentScreen()
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Priya' }))

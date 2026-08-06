@@ -10,7 +10,7 @@ export function LogbookLocationNote() {
     <div className="flex flex-col gap-2" role="note">
       <p className="m-0 text-value text-ink-subtle">
         Lesson and Student records save in this browser on this laptop first. When a cloud
-        sync secret is set (Settings), a copy also goes to Vercel while you are online —
+        sync secret is set (Settings), a copy also goes to Vercel while you are online,
         so the preview board can show the same Students and Reports.
       </p>
       <p className="m-0 text-value text-ink-subtle">

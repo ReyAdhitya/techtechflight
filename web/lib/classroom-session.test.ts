@@ -3,6 +3,7 @@ import {
   grantSeatClearance,
   holdSeatClearance,
   joinClassroomAsStudent,
+  loadClassroomByCode,
   markSeatFlown,
   mintClassroomCode,
   normalizeClassroomCode,
@@ -38,15 +39,18 @@ describe('classroom session', () => {
       rules: ['Stay inside the zone'],
       limitMinutes: 15,
       zones: [],
+      roster: [{ studentId: 'stu-ada', name: 'Ada' }],
       live: true,
       now: 1_000,
     })
 
     expect(session.code).toHaveLength(4)
     expect(session.live).toBe(true)
+    expect(session.roster).toEqual([{ studentId: 'stu-ada', name: 'Ada' }])
 
-    const joined = joinClassroomAsStudent(session, 'Ada', 2_000)
+    const joined = joinClassroomAsStudent(session, 'Ada', 2_000, 'stu-ada')
     expect(joined.seat.name).toBe('Ada')
+    expect(joined.seat.studentId).toBe('stu-ada')
     expect(joined.session.seats).toHaveLength(1)
 
     const requested = requestTakeoff(joined.session, joined.seat.studentId, 3_000)
@@ -55,6 +59,25 @@ describe('classroom session', () => {
     const granted = grantSeatClearance(requested, joined.seat.studentId, 4_000)
     expect(granted.seats[0]?.phase).toBe('cleared')
     expect(granted.seats[0]?.clearedAt).toBe(4_000)
+  })
+
+  it('loads a classroom by code from localStorage before asking the cloud', async () => {
+    const session = openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 8',
+      scenarioId: 'search-rescue',
+      scenarioName: 'Search and Rescue',
+      objective: 'Find the target.',
+      rules: [],
+      limitMinutes: 15,
+      zones: [],
+      live: true,
+      now: 1_000,
+    })
+
+    const found = await loadClassroomByCode(session.code)
+    expect(found?.code).toBe(session.code)
+    expect(found?.lessonLabel).toBe('Year 8')
   })
 })
 

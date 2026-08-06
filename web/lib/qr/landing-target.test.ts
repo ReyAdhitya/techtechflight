@@ -58,7 +58,7 @@ describe('landingTargetPresentation', () => {
   it('names the pad as where to land', () => {
     expect(landingTargetPresentation({ kind: 'identity', id: 'pad-A', raw: 'ttf-land:pad-A' })).toEqual({
       title: 'Landing target: pad-A',
-      meaning: 'Where to land — pad identity only (no classroom metres in the code)',
+      meaning: 'Where to land. Pad identity only (no classroom metres in the code)',
     })
   })
 
@@ -73,7 +73,7 @@ describe('landingTargetPresentation', () => {
       }),
     ).toEqual({
       title: 'Landing target: pad-A',
-      meaning: 'Where to land — east 2 m · north 1 m',
+      meaning: 'Where to land · east 2 m · north 1 m',
     })
   })
 })

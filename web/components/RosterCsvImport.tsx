@@ -62,7 +62,7 @@ export function RosterCsvImport({
     <section className="flex flex-col gap-2" aria-label="Roster CSV import">
       <h3 className="label m-0">Import class list</h3>
       <p className="m-0 text-value text-ink-subtle">
-        CSV with a Name column — or one name per line. A bad file changes nothing and
+        CSV with a Name column, or one name per line. A bad file changes nothing and
         says why.
       </p>
       <input

@@ -57,6 +57,14 @@ export function ClassroomOpen() {
        * brief did rather than by a second one.
        */
       outcome: mission.outcome,
+      /*
+       * The roll travels with the session so an iPad can offer names without the Teacher's
+       * Logbook. Without this, join-by-code succeeded and then said the class list was empty.
+       */
+      roster: book.roster.map((student) => ({
+        studentId: student.studentId,
+        name: student.name,
+      })),
       zones: mission.zones,
       /*
        * Live once the Mission has started. Before that the brief is readable and nothing

@@ -11,7 +11,7 @@ export default function DetectWallPage() {
   return (
     <WallsShell
       title="Detections"
-      description="Object detection counts across every Drone — sim cameras with an active feed only."
+      description="Object detection counts across every Drone. Sim cameras with an active feed only."
     >
       <DetectWall />
     </WallsShell>

@@ -5,13 +5,28 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **Classroom code join works on iPads.** The class roll travels on the classroom session
+  (not only the Teacher Logbook), join checks this laptop first, and the Teacher board
+  shows sync status with Retry. Empty roll still lets a Student type their name.
+- **Role is sticky and reversible.** `/enter` skips when Teacher or Student is already
+  chosen; Switch role in the header, Settings, and Student chrome returns to the door.
+  Teacher and Student sit side by side on `/enter`.
+- **Students cannot open Teacher chrome.** A Student role never mounts Lesson, Control,
+  Settings, showcase, or any other Teacher route. Typed URLs bounce to `/student`.
+
 ### Changed
 
+- **Room controls in the header are icon-only:** sun/moon for lit ↔ dark room, projector
+  for large format. Words stay in the accessible name and hover title; the bar stays quiet.
+- **UI copy drops em dashes.** Separators use middots or plain sentences so the board does
+  not read like generated prose.
 - **Lesson is one scrolling page again; the Mission-run rail is gone.** Scenario, zones,
   teams, pre-flight, brief and Start sit on `/lesson` without `?step=`. Control is one live
   board: Attention, classroom code, Scenario watch-list, clearances, Teacher ATC toolbar,
-  Scope, strips, Mission seal and pack-down — always on, not step-gated. ADR-0024 superseded.
-- **Attention speaks Teacher words again** — “things need you” / “behaving”, not “nominal”.
+  Scope, strips, Mission seal and pack-down, always on, not step-gated. ADR-0024 superseded.
+- **Attention speaks Teacher words again:** “things need you” / “behaving”, not “nominal”.
 - **Students join on an iPad with the classroom code** (`/api/classroom` + join door). Same
   laptop still shares via localStorage. Role switch from Settings and the Student chrome.
 - **Reports opens with a Debrief** of sealed Mission scores.
@@ -25,10 +40,10 @@ would notice.
 
 ### Removed
 
-- **Run bar (“Step N of 12”).** Gone from the app frame — no step banner above Control.
+- **Run bar (“Step N of 12”).** Gone from the app frame. No step banner above Control.
 - **Lock screen.** Toggle and command lock are gone; Commands stay available.
 - **Quiet mode / training wheels.** Stop-hiding practice chrome is gone; Stop stays on strips.
-- **Mission run rail (left).** Already withdrawn — top SiteNav only.
+- **Mission run rail (left).** Already withdrawn. Top SiteNav only.
 
 ### Added
 

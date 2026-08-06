@@ -138,12 +138,12 @@ describe('Recall on the command row', () => {
     fireEvent.click(within(strip).getByRole('button', { name: /^Recall$/ }))
 
     // The demo Fleet answers in the same turn — waiting is the first receipt on screen.
-    expect(within(strip).getByText('Recall — waiting for a response')).toBeInTheDocument()
-    expect(within(strip).queryByText(/Recall — done/)).not.toBeInTheDocument()
+    expect(within(strip).getByText('Recall · waiting for a response')).toBeInTheDocument()
+    expect(within(strip).queryByText(/Recall · done/)).not.toBeInTheDocument()
 
     act(() => {
       vi.advanceTimersByTime(5_000)
     })
-    expect(within(strip).getByText('Recall — done')).toBeInTheDocument()
+    expect(within(strip).getByText('Recall · done')).toBeInTheDocument()
   })
 })

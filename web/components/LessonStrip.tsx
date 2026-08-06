@@ -56,7 +56,7 @@ export function LessonStrip({
     for (const event of incidents) {
       addIncident(lesson.id, {
         at: event.at,
-        text: `${describeEvent(event)}${event.detail ? ` — ${event.detail}` : ''}`,
+        text: `${describeEvent(event)}${event.detail ? ` · ${event.detail}` : ''}`,
         severity: event.severity === 'fault' ? 'fault' : 'attention',
         droneId: event.droneId,
         droneName: event.droneName,

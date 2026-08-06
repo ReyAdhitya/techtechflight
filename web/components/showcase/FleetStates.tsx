@@ -57,7 +57,7 @@ export function EmptyFleet() {
       </h2>
       <p className="m-0 max-w-[46ch] text-[0.9375rem] text-[var(--sc-ink-muted)]">
         The ground station is answering, and it says this School has no Drones registered
-        yet. Nothing is wrong with the board — there is simply nothing to show.
+        yet. Nothing is wrong with the board. There is simply nothing to show.
       </p>
     </motion.div>
   )

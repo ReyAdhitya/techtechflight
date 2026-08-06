@@ -74,7 +74,7 @@ export function TeamsPanel({
           </h2>
           <p className="m-0 text-value text-ink-subtle">
             Group Students into named teams and give each team a Drone. Individual
-            who-is-flying assignments in the Logbook stay as they are — teams sit beside them
+            who-is-flying assignments in the Logbook stay as they are. Teams sit beside them
             for Mission prep.
           </p>
         </div>
@@ -99,7 +99,7 @@ export function TeamsPanel({
       </div>
 
       {teams.length === 0 ? (
-        <p className="m-0 text-value text-ink-muted">No teams yet — name the first one above.</p>
+        <p className="m-0 text-value text-ink-muted">No teams yet. Name the first one above.</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-4 p-0">
           {teams.map((team) => {

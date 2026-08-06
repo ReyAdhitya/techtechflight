@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils'
  */
 export const DESTINATIONS = [
   { href: '/lesson', label: 'Lesson', hint: 'Plan it, then start it' },
-  { href: '/control', label: 'Control', hint: 'The Flight Control Center — the lesson as it runs' },
+  { href: '/control', label: 'Control', hint: 'The Flight Control Center. The lesson as it runs' },
   { href: '/walls', label: 'Walls', hint: 'See the whole class at once' },
   { href: '/', label: 'Fleet', hint: 'Every Drone, and what needs doing to it' },
   { href: '/students', label: 'Students', hint: 'The class, and Drone assignment' },

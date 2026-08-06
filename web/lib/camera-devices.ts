@@ -10,7 +10,7 @@ export const CAMERA_DEVICE_KEY = 'techtechflight:camera-device'
 
 /** Shown when the page is not a secure origin — camera APIs stay blocked. */
 export const NON_SECURE_ORIGIN_WORDS =
-  'The browser will not open a camera on this address. Open the board at http://localhost:4321 on the machine itself — a plain http:// network address is not a secure origin.'
+  'The browser will not open a camera on this address. Open the board at http://localhost:4321 on the machine itself. A plain http:// network address is not a secure origin.'
 
 export interface CameraDevice {
   readonly deviceId: string

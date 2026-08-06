@@ -43,7 +43,7 @@ export function ScenarioPicker({
             Mission Scenario
           </h2>
           <p className="m-0 text-value text-ink-subtle">
-            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve —
+            A Lesson runs one Scenario at a time. Pick what the class is trying to achieve:
             the flow, exercises and brief follow from here.
           </p>
         </div>
@@ -51,7 +51,7 @@ export function ScenarioPicker({
 
       {selectedScenarioId === null ? (
         <p className="m-0 text-value text-ink-muted">
-          No Scenario chosen yet. Pick one below — you can change it until the first
+          No Scenario chosen yet. Pick one below. You can change it until the first
           Clearance is granted.
         </p>
       ) : locked ? (
@@ -63,7 +63,7 @@ export function ScenarioPicker({
         <p className="m-0 text-value text-ink-subtle">
           {MISSION_SCENARIOS.find((scenario) => scenario.id === selectedScenarioId)?.name ??
             'Scenario chosen'}
-          {' — '}
+          {' · '}
           you can still change it until the first Clearance is granted.
         </p>
       )}

@@ -111,7 +111,7 @@ export function buildReportsPdfBytes(input: ReportsPdfInput): ArrayBuffer {
       if (lesson.commands && lesson.commands.length > 0) {
         line(
           `Asked for: ${lesson.commands
-            .map((entry) => `${entry.droneName} — ${entry.kind}`)
+            .map((entry) => `${entry.droneName} · ${entry.kind}`)
             .join(' · ')}`,
         )
       }

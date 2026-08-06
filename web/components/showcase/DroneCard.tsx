@@ -69,7 +69,7 @@ export function DroneCard({
             {drone.name}
             <span className="sc-visually-hidden">
               {' '}
-              — show on the 3D stage
+              · show on the 3D stage
             </span>
           </button>
         </h3>

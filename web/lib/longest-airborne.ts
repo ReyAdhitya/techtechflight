@@ -54,7 +54,7 @@ export function longestAirborne(
 /** Teacher-facing sentence, or null when nobody is up with a known start. */
 export function longestAirborneSentence(result: LongestAirborne | null): string | null {
   if (result === null) return null
-  return `${result.callsign} has been up longest — ${formatAirborneDuration(result.durationMs)}`
+  return `${result.callsign} has been up longest · ${formatAirborneDuration(result.durationMs)}`
 }
 
 /**

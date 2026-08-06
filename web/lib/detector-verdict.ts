@@ -99,7 +99,7 @@ export function verdictFor(input: VerdictInput): Verdict {
       headline: 'The camera was refused, so there are no pixels to detect in.',
       fixes: [
         'Allow camera access for this site in the browser, then reload.',
-        'The model is loaded and ready — this is the only thing in the way.',
+        'The model is loaded and ready. This is the only thing in the way.',
       ],
     }
   }
@@ -157,7 +157,7 @@ export function verdictFor(input: VerdictInput): Verdict {
     state: 'inconclusive',
     headline: 'The model is running and has not recognised anything yet.',
     fixes: [
-      'Point the camera at a person or a chair — both are things this model knows.',
+      'Point the camera at a person or a chair. Both are things this model knows.',
       'An empty wall producing no boxes is the model working, not failing.',
     ],
   }
@@ -166,5 +166,5 @@ export function verdictFor(input: VerdictInput): Verdict {
 /** What the Teacher reads about which model is loaded. Never blurs the two. */
 export function detectorLabel(detector: ObjectDetector | null): string {
   if (detector === null) return 'Loading…'
-  return detector.demo ? `${detector.displayName} — not a loaded model` : detector.displayName
+  return detector.demo ? `${detector.displayName} · not a loaded model` : detector.displayName
 }

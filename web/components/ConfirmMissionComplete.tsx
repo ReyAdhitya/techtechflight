@@ -115,7 +115,7 @@ export function ConfirmMissionComplete({
           Mission sealed
           {mission.outcome?.score !== null && mission.outcome?.score !== undefined ? (
             <>
-              {' — score '}
+              {' · score '}
               <span className="tnum">{Math.round(mission.outcome.score * 100)}</span>%
             </>
           ) : null}

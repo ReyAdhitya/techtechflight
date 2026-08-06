@@ -633,17 +633,12 @@
 
   /*
    * Mobile browsers shrink a page to fit any unbreakable row wider than the device.
-   * Keep both controls as full touch targets, but let their icons carry the compact
-   * phone treatment so the header never changes the layout viewport width.
+   * Room controls are icon-only pills now, so the header stays within the viewport.
    */
   @media (max-width: 48rem) {
     .site-header {
       gap: 0.5rem;
       padding-inline: 0.5rem;
-    }
-
-    .room-control-label {
-      display: none;
     }
   }
 

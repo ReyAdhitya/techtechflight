@@ -56,6 +56,12 @@ export interface ClassroomSeat {
   readonly joinedAt: number
 }
 
+/** Names the Student tablet can pick without reading the Teacher's Logbook. */
+export interface ClassroomRosterEntry {
+  readonly studentId: string
+  readonly name: string
+}
+
 export interface ClassroomSession {
   readonly code: string
   readonly openedAt: number
@@ -83,6 +89,11 @@ export interface ClassroomSession {
    * the Teacher confirms the Mission complete: a score before then would be a guess.
    */
   readonly outcome?: MissionOutcome | null
+  /**
+   * Class roll copied onto the session so an iPad can offer names without the Logbook.
+   * Absent on older sessions — the tablet then falls back to typing a name.
+   */
+  readonly roster?: readonly ClassroomRosterEntry[]
   readonly zones: readonly Zone[]
   readonly seats: readonly ClassroomSeat[]
   readonly instructions: readonly ClassroomInstruction[]
@@ -112,6 +123,7 @@ function emptySession(code: string, now: number): ClassroomSession {
     missionStartedAt: null,
     checkpoints: [],
     outcome: null,
+    roster: [],
     zones: [],
     seats: [],
     instructions: [],
@@ -158,6 +170,9 @@ export function writeClassroomSession(session: ClassroomSession): ClassroomSessi
   } catch {
     /* ignore */
   }
+  // Immediate push so an iPad that joins within a second of the Teacher opening still
+  // finds the code; the debounced schedule covers rapid follow-up edits.
+  void pushClassroomToCloud(next)
   scheduleClassroomCloudPush(next)
   return next
 }
@@ -177,6 +192,8 @@ export function openClassroom(input: {
   readonly checkpoints?: readonly MissionCheckpoint[]
   /** The sealed outcome, once there is one. Absent leaves whatever the session already had. */
   readonly outcome?: MissionOutcome | null
+  /** Class roll for Student tablets. Absent keeps whatever the session already had. */
+  readonly roster?: readonly ClassroomRosterEntry[]
   readonly zones: readonly Zone[]
   readonly live?: boolean
   readonly now?: number
@@ -199,6 +216,7 @@ export function openClassroom(input: {
     missionStartedAt: input.missionStartedAt ?? base.missionStartedAt ?? null,
     checkpoints: input.checkpoints ?? base.checkpoints ?? [],
     outcome: input.outcome ?? base.outcome ?? null,
+    roster: input.roster ?? base.roster ?? [],
     zones: input.zones,
     live: input.live ?? true,
     updatedAt: now,
@@ -230,13 +248,18 @@ export function joinClassroomAsStudent(
   session: ClassroomSession,
   name: string,
   now = Date.now(),
+  studentId?: string,
 ): { readonly session: ClassroomSession; readonly seat: ClassroomSeat } {
   const trimmed = name.trim() || 'Student'
+  const preferredId = studentId?.trim() || null
   const local = readStudentSeatLocal()
   const existing =
-    local && local.code === session.code
+    (preferredId !== null
+      ? session.seats.find((row) => row.studentId === preferredId)
+      : undefined) ??
+    (local && local.code === session.code
       ? session.seats.find((row) => row.studentId === local.studentId)
-      : undefined
+      : undefined)
 
   if (existing) {
     const seat = { ...existing, name: trimmed }
@@ -247,7 +270,8 @@ export function joinClassroomAsStudent(
   }
 
   const seat: ClassroomSeat = {
-    studentId: `stu-${now.toString(36)}-${Math.floor(Math.random() * 1e4).toString(36)}`,
+    studentId:
+      preferredId ?? `stu-${now.toString(36)}-${Math.floor(Math.random() * 1e4).toString(36)}`,
     name: trimmed,
     droneId: null,
     droneName: null,
@@ -518,6 +542,9 @@ export async function pullClassroomFromCloud(
 export async function loadClassroomByCode(code: string): Promise<ClassroomSession | null> {
   const normalized = normalizeClassroomCode(code)
   if (!normalized) return null
+  // Local first — same laptop / second tab never needs the cloud round trip.
+  const local = readClassroomSession()
+  if (local && local.code === normalized) return local
   const remote = await pullClassroomFromCloud(normalized)
   if (remote) {
     try {
@@ -527,8 +554,6 @@ export async function loadClassroomByCode(code: string): Promise<ClassroomSessio
     }
     return remote
   }
-  const local = readClassroomSession()
-  if (local && local.code === normalized) return local
   return null
 }
 

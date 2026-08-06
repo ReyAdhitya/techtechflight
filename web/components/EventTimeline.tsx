@@ -68,7 +68,7 @@ export function EventTimeline({ events, now, emptyMessage, limit }: EventTimelin
                 {EVENT_VERB[event.kind]}
               </span>
               {event.detail && (
-                <span className="text-value text-ink-subtle">— {event.detail}</span>
+                <span className="text-value text-ink-subtle">· {event.detail}</span>
               )}
               <span className="tnum ml-auto text-value text-ink-subtle">
                 {formatAge(Math.max(0, now - event.at))}

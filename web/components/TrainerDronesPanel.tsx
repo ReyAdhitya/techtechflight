@@ -29,7 +29,7 @@ export function TrainerDronesPanel() {
       <section className="flex flex-col gap-3 rounded-surface border border-hairline bg-surface-1 p-5">
         <h2 className="label m-0">Trainer Drones</h2>
         <p className="m-0 text-value text-ink-subtle">
-          Waiting for the Fleet — trainer rows attach to registered Drone IDs.
+          Waiting for the Fleet. Trainer rows attach to registered Drone IDs.
         </p>
       </section>
     )
@@ -40,7 +40,7 @@ export function TrainerDronesPanel() {
       <div className="flex flex-col gap-1">
         <h2 className="label m-0">Trainer Drones</h2>
         <p className="m-0 text-value text-ink-subtle">
-          Classroom inventory for the set. Model and created date are optional — open Add
+          Classroom inventory for the set. Model and created date are optional. Open Add
           details only if you know them. Nothing here is required to teach.
         </p>
       </div>
@@ -94,7 +94,7 @@ export function TrainerDronesPanel() {
 
               {open && (
                 <div className="flex flex-col gap-3 rounded-surface border border-dashed border-hairline bg-canvas p-4">
-                  <p className="m-0 text-value text-ink-subtle">Optional — leave blank if unused.</p>
+                  <p className="m-0 text-value text-ink-subtle">Optional. Leave blank if unused.</p>
                   <div className="flex flex-wrap items-end gap-3">
                     <label className="flex flex-col gap-1">
                       <span className="label">Model (optional)</span>

@@ -11,7 +11,7 @@ export default function ObjectiveWallPage() {
   return (
     <WallsShell
       title="Objective"
-      description="One sentence from the running Lesson — large enough for the class."
+      description="One sentence from the running Lesson. Large enough for the class."
     >
       <ObjectiveWall />
     </WallsShell>

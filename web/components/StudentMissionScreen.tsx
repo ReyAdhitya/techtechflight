@@ -5,6 +5,7 @@ import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
   joinClassroomAsStudent,
   loadClassroomByCode,
+  normalizeClassroomCode,
   readClassroomSession,
   readStudentSeatLocal,
   markSeatFlown,
@@ -12,15 +13,15 @@ import {
   seatHasFlown,
   subscribeClassroom,
   type ClassroomInstruction,
+  type ClassroomRosterEntry,
   type ClassroomSeat,
   type ClassroomSession,
 } from '@/lib/classroom-session'
-import { clearBoardRole } from '@/lib/role'
-import { useRouter } from 'next/navigation'
 import { breachesAt, type AirspaceBreach } from '@/lib/airspace'
 import { byUrgency, playbookFor, type PlaybookEntry } from '@/lib/incident-playbook'
 import type { VitalsAlert } from '@/lib/vitals'
 import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
+import { SwitchRoleButton } from './SwitchRoleButton'
 import {
   evaluatePreFlightSeven,
   LINK_QUALITY_WEAK,
@@ -56,6 +57,7 @@ import { cn } from '@/lib/utils'
  * the Students fly by hand.
  */
 export function StudentMissionScreen() {
+  const [hydrated, setHydrated] = useState(false)
   const [session, setSession] = useState<ClassroomSession | null>(null)
   const [studentId, setStudentId] = useState<string | null>(null)
 
@@ -64,8 +66,17 @@ export function StudentMissionScreen() {
   useEffect(() => {
     setSession(readClassroomSession())
     setStudentId(readStudentSeatLocal()?.studentId ?? null)
+    setHydrated(true)
     return subscribeClassroom((next) => setSession(next))
   }, [])
+
+  if (!hydrated) {
+    return (
+      <StudentFrame>
+        <p className="m-0 text-body text-ink-muted">Opening…</p>
+      </StudentFrame>
+    )
+  }
 
   if (session === null) {
     return (
@@ -146,6 +157,9 @@ function StudentFrame({ children }: { readonly children: React.ReactNode }) {
       tabIndex={-1}
       className="flex min-h-[100dvh] w-full flex-col gap-6 bg-canvas p-6 min-[48rem]:p-8"
     >
+      <div className="flex justify-end">
+        <SwitchRoleButton label="Switch role" />
+      </div>
       {children}
     </main>
   )
@@ -170,33 +184,37 @@ function JoinClassroomDoor({
   useEffect(() => {
     const existing = readClassroomSession()
     if (existing !== null) onJoined(existing)
-    return subscribeClassroom((session) => {
-      if (session !== null) onJoined(session)
+    return subscribeClassroom((next) => {
+      if (next !== null) onJoined(next)
     })
   }, [onJoined])
 
   return (
     <StudentFrame>
-      <SwitchRoleLink />
       <h1 className="m-0 font-display text-heading font-medium text-ink">Join the classroom</h1>
       <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
         Ask your Teacher for the four-letter code on their board. You fly with the controller
-        in your hands — this screen only tells you what to do.
+        in your hands. This screen only tells you what to do.
       </p>
       <label className="flex max-w-xs flex-col gap-1">
         <span className="label">Classroom code</span>
         <input
           value={code}
-          onChange={(event) => setCode(event.target.value.toUpperCase())}
+          onChange={(event) =>
+            setCode(normalizeClassroomCode(event.target.value))
+          }
           maxLength={6}
           autoCapitalize="characters"
+          autoComplete="off"
+          spellCheck={false}
           className="tnum min-h-14 rounded-pill border border-hairline bg-surface-1 px-4 font-display text-heading tracking-[0.2em] text-ink"
           placeholder="K7M2"
+          aria-label="Classroom code"
         />
       </label>
       <button
         type="button"
-        disabled={busy || code.trim().length < 4}
+        disabled={busy || code.length < 4}
         className="min-h-14 w-fit cursor-pointer rounded-pill border-0 bg-ink px-6 py-2 text-body font-medium text-canvas disabled:cursor-not-allowed disabled:opacity-50"
         onClick={() => {
           setBusy(true)
@@ -204,42 +222,31 @@ function JoinClassroomDoor({
           void loadClassroomByCode(code).then((session) => {
             setBusy(false)
             if (session === null) {
-              setError('No classroom with that code yet. Check with your Teacher.')
+              setError(
+                'No classroom with that code yet. On the Teacher board, open Lesson so the code is live, then tap Retry sync. Same laptop: switch role after the Teacher plans the Mission. You skip this screen.',
+              )
               return
             }
             onJoined(session)
           })
         }}
       >
-        Join
+        {busy ? 'Joining…' : 'Join'}
       </button>
       {error !== null ? <p className="m-0 text-body text-status-not-ready">{error}</p> : null}
       <p className="m-0 text-value text-ink-muted">
         Waiting for the Teacher to open the classroom also works on a second tab of their
-        laptop — the code is for iPads on the school Wi‑Fi.
+        laptop. The code is for iPads on the school Wi‑Fi.
       </p>
     </StudentFrame>
   )
 }
 
-function SwitchRoleLink() {
-  const router = useRouter()
-  return (
-    <button
-      type="button"
-      className="min-h-11 w-fit cursor-pointer self-start rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-subtle hover:border-ink hover:text-ink"
-      onClick={() => {
-        clearBoardRole()
-        router.replace('/enter')
-      }}
-    >
-      Not a Student — switch role
-    </button>
-  )
-}
-
 /**
- * Who is at this tablet, chosen from the class roll once the classroom session is loaded.
+ * Who is at this tablet, chosen from the class roll on the classroom session.
+ *
+ * The roll travels with the session so an iPad never needs the Teacher's Logbook
+ * (ADR-0025). When the roll is empty, typing a name is the fallback.
  */
 function TakeYourSeat({
   session,
@@ -248,21 +255,49 @@ function TakeYourSeat({
   readonly session: ClassroomSession
   readonly onSeated: (session: ClassroomSession, seat: ClassroomSeat) => void
 }) {
-  const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+  const [typedName, setTypedName] = useState('')
   const taken = new Set(session.seats.map((row) => row.name))
-  const roll = book.roster.filter((student) => !taken.has(student.name))
+  const roster: readonly ClassroomRosterEntry[] = session.roster ?? []
+  const roll = roster.filter((student) => !taken.has(student.name))
+
+  const seatAs = (name: string, studentId?: string) => {
+    const joined = joinClassroomAsStudent(session, name, Date.now(), studentId)
+    onSeated(joined.session, joined.seat)
+  }
 
   return (
     <StudentFrame>
-      <SwitchRoleLink />
       <p className="label m-0 text-ink-subtle">Classroom {session.code}</p>
       <h1 className="m-0 font-display text-heading font-medium text-ink">Who are you?</h1>
 
-      {roll.length === 0 ? (
+      {roster.length === 0 ? (
+        <div className="flex max-w-md flex-col gap-3">
+          <p className="m-0 text-body text-ink-muted">
+            The class list is empty. Ask your Teacher to add names on Students, or type your
+            name here.
+          </p>
+          <label className="flex flex-col gap-1">
+            <span className="label">Your name</span>
+            <input
+              type="text"
+              value={typedName}
+              onChange={(event) => setTypedName(event.target.value)}
+              className="min-h-14 rounded-pill border border-hairline bg-surface-1 px-4 text-body text-ink"
+              aria-label="Your name"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={typedName.trim() === ''}
+            className="min-h-14 w-fit cursor-pointer rounded-pill border-0 bg-ink px-6 py-2 text-body font-medium text-canvas disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => seatAs(typedName)}
+          >
+            Take seat
+          </button>
+        </div>
+      ) : roll.length === 0 ? (
         <p className="m-0 text-body text-ink-muted">
-          {book.roster.length === 0
-            ? 'The class list is empty. Ask your Teacher to add it.'
-            : 'Everyone on the class list has taken a tablet already. Ask your Teacher.'}
+          Everyone on the class list has taken a tablet already. Ask your Teacher.
         </p>
       ) : (
         <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 min-[48rem]:grid-cols-4">
@@ -270,10 +305,7 @@ function TakeYourSeat({
             <li key={student.studentId}>
               <button
                 type="button"
-                onClick={() => {
-                  const joined = joinClassroomAsStudent(session, student.name)
-                  onSeated(joined.session, joined.seat)
-                }}
+                onClick={() => seatAs(student.name, student.studentId)}
                 className="min-h-14 w-full cursor-pointer rounded-surface border border-hairline bg-surface-1 px-4 py-3 font-display text-body font-medium text-ink hover:border-ink"
               >
                 {student.name}

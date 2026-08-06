@@ -236,7 +236,7 @@ function LandingTargetReadout({
       <p className="m-0 text-value text-ink">{title}</p>
       <p className="m-0 text-value text-ink-subtle">{meaning}</p>
       <p className="m-0 text-value text-ink-subtle">
-        Decoded from the camera picture — not written into Telemetry.
+        Decoded from the camera picture. Not written into Telemetry.
       </p>
       {scenarios && target.kind === 'pose' && (
         <button
@@ -276,7 +276,7 @@ function HardwareStreamingNotice() {
       role="status"
     >
       <p className="m-0 text-center text-value text-ink">
-        Camera is streaming. A picture on this board needs a school stream map — not yet
+        Camera is streaming. A picture on this board needs a school stream map, not yet
         configured. Telemetry does not carry a URL.
       </p>
     </div>
@@ -315,7 +315,7 @@ function SchoolStream({ droneId, droneName, src }: { droneId: string; droneName:
       <div className="flex flex-wrap gap-2 border-t border-hairline bg-surface-1 px-3 py-2">
         <PhotoEvidenceButton droneId={droneId} droneName={droneName} videoRef={videoRef} />
         <p className="m-0 self-center text-value text-ink-subtle">
-          School stream — from the stream map, not Telemetry
+          School stream · from the stream map, not Telemetry
         </p>
       </div>
     </div>
@@ -484,8 +484,8 @@ function SimulatedFeed({
         />
         <p className="m-0 text-value text-ink-subtle">
           {live
-            ? 'Laptop camera — detection runs in this browser, not on Telemetry'
-            : 'Simulated feed — not a live aircraft camera'}
+            ? 'Laptop camera. Detection runs in this browser, not on Telemetry'
+            : 'Simulated feed. Not a live aircraft camera'}
           {detections.length > 0
             ? detector.demo
               ? ` · ${detector.displayName} (not a loaded model)`

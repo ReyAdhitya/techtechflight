@@ -16,7 +16,10 @@ import { SiteHeader } from './SiteHeader'
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
+vi.mock('next/navigation', () => ({
+  usePathname: () => pathname.current,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}))
 
 const CSS = readFileSync(resolve(process.cwd(), 'web/app/globals.css'), 'utf8')
 
@@ -89,7 +92,7 @@ describe('the bar every screen carries', () => {
     )
 
     const label = screen.getByRole('status')
-    expect(label).toHaveTextContent(/Simulated Fleet — no aircraft are being contacted/i)
+    expect(label).toHaveTextContent(/Simulated Fleet. No aircraft are being contacted/i)
 
     // Under the bar, not inside it. The label is the sticky layer's own line, and a
     // Teacher reads it as a statement about the screen rather than as another control.

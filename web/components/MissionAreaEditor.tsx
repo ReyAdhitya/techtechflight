@@ -428,7 +428,7 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
           {zones.map((zone) => (
             <li key={zone.id}>
               <span className="font-medium text-ink">{zone.name}</span>
-              {' — '}
+              {' · '}
               <span className="tnum">{zone.points.length}</span>
               {zone.points.length === 1 ? ' point' : ' points'}
               {enclosesAnything(zone) ? '' : ' (still drawing)'}

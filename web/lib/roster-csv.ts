@@ -85,7 +85,7 @@ export function parseRosterCsv(text: string): RosterCsvResult {
     .filter((line) => line !== '')
 
   if (lines.length === 0) {
-    return { ok: false, reason: 'The file is empty — add a name column and try again.' }
+    return { ok: false, reason: 'The file is empty. Add a name column and try again.' }
   }
 
   const first = splitCsvLine(lines[0]!)

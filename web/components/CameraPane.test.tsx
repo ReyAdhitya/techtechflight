@@ -120,7 +120,7 @@ describe('the camera pane on a Drone', () => {
     expect(
       screen.getByRole('img', { name: 'Simulated camera feed for Drone 1' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Simulated feed — not a live aircraft camera/)).toBeInTheDocument()
+    expect(screen.getByText(/Simulated feed\. Not a live aircraft camera/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Stop camera' }))
     expect(controls.stopCamera).toHaveBeenCalledWith('ttf-0001')
@@ -238,7 +238,7 @@ describe('the camera pane on a Drone', () => {
     const video = screen.getByLabelText('Live camera stream for Drone 1')
     expect(video.tagName).toBe('VIDEO')
     expect(video).toHaveAttribute('src', 'https://cam.school.example/drone1')
-    expect(screen.getByText(/School stream — from the stream map/)).toBeInTheDocument()
+    expect(screen.getByText(/School stream · from the stream map/)).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /camera/i })).not.toBeInTheDocument()
   })
@@ -281,8 +281,8 @@ describe('the camera pane on a Drone', () => {
     await waitFor(() => {
       expect(screen.getByRole('status', { name: 'Landing target: pad-A' })).toBeInTheDocument()
     })
-    expect(screen.getByText(/Where to land — east 2 m · north 1 m/)).toBeInTheDocument()
-    expect(screen.getByText(/not written into Telemetry/)).toBeInTheDocument()
+    expect(screen.getByText(/Where to land · east 2 m · north 1 m/)).toBeInTheDocument()
+    expect(screen.getByText(/Not written into Telemetry/)).toBeInTheDocument()
   })
 
   it('stays quiet when the picture has no landing QR', async () => {

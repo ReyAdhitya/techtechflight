@@ -69,4 +69,4 @@ export function createFrameClock(): FrameClock {
  * Words for the Teacher — shape and text together (ADR-0004). Kept here so tests
  * and the notice stay in lockstep.
  */
-export const FROZEN_FEED_MESSAGE = 'Picture has stopped — no new frame in the last few seconds.'
+export const FROZEN_FEED_MESSAGE = 'Picture has stopped. No new frame in the last few seconds.'

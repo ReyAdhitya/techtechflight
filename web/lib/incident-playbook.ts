@@ -229,7 +229,7 @@ const ENTRIES: readonly PlaybookEntry[] = [
     craftDoes: 'Nothing. It has flown on.',
     systemDoes: 'Records the miss and leaves the checkpoint outstanding.',
     responses: [
-      TELL_THE_TEAM('Go back for it, or skip it and carry on — tell them which.'),
+      TELL_THE_TEAM('Go back for it, or skip it and carry on. Tell them which.'),
       { label: 'Skip the checkpoint', detail: 'It stops counting against the score.', command: null },
     ],
     teamDoes: 'Turn back for it, or carry on, as instructed.',

@@ -74,7 +74,7 @@ export function LessonNameConfirm({
         </label>
         {!canConfirm && (
           <p className="m-0 text-value text-ink-muted" role="status">
-            Enter a name to close — Untitled is not enough.
+            Enter a name to close. Untitled is not enough.
           </p>
         )}
         <div className="flex flex-wrap gap-2">

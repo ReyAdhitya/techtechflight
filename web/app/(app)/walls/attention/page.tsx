@@ -11,7 +11,7 @@ export default function AttentionWallPage() {
   return (
     <WallsShell
       title="Attention"
-      description="Who needs you — fault, emergency, stale, and alerts still on the queue."
+      description="Who needs you. Fault, emergency, stale, and alerts still on the queue."
     >
       <AttentionWall />
     </WallsShell>

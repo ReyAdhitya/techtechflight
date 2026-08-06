@@ -9,6 +9,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-06 · Class roll rides the classroom session; role is sticky and reversible.
+
+- **Decision / notes:** Student tablets pick names from `session.roster` copied by
+  `ClassroomOpen`, not from the Teacher Logbook. Join-by-code reads localStorage first,
+  then `/api/classroom`. Board role stays in `techtechflight:board-role` so a return visit
+  skips `/enter`; Switch role clears it. `RequireRole` reads the role before mounting
+  children so a Student who types `/lesson` never sees Teacher UI. Cross-device codes still
+  need `BLOB_READ_WRITE_TOKEN` on Vercel.
+- **Could have gone differently:** Keep reading the Logbook on the tablet. Rejected: an
+  iPad never has that Logbook. Force `/enter` every launch. Rejected: sticky role matches
+  a classroom device that stays Teacher or Student for the period. Server middleware for
+  roles. Rejected: static export has no middleware; the client gate is the gate.
+
 ## 2026-08-06 · Mission-run rail withdrawn for a one-page Lesson and always-on Control.
 
 - **Decision / notes:** The left twelve-step rail (ADR-0024) is removed again. Lesson shows

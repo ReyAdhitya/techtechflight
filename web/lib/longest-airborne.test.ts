@@ -38,7 +38,7 @@ describe('longestAirborne', () => {
       durationMs: 180_000,
     })
     expect(longestAirborneSentence(result)).toBe(
-      'Drone 2 has been up longest — 3:00',
+      'Drone 2 has been up longest · 3:00',
     )
   })
 

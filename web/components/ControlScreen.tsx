@@ -1007,7 +1007,7 @@ function FlightStrip({
                     */}
                   {isAcknowledged(vitals.droneId, alert) && (
                     <span className="tnum text-value text-ink-muted">
-                      Acknowledged —{' '}
+                      Acknowledged ·{' '}
                       {formatAge(
                         Math.max(0, now - (acknowledgedAt(vitals.droneId, alert) ?? now)),
                       )}
@@ -1099,7 +1099,7 @@ function CommandRow({
               Release stop
             </button>
             <span className="text-value text-ink-muted">
-              Stop is held — this Fleet cannot release it from here
+              Stop is held. This Fleet cannot release it from here
             </span>
           </span>
         )
@@ -1139,17 +1139,17 @@ function describeCommand(tracked: TrackedCommand): string {
   const asked = COMMAND_WORDS[tracked.command.kind]
   switch (tracked.stage) {
     case 'sent':
-      return `${asked} — sent`
+      return `${asked} · sent`
     case 'waiting':
-      return `${asked} — waiting for a response`
+      return `${asked} · waiting for a response`
     case 'done':
-      return `${asked} — done`
+      return `${asked} · done`
     case 'refused':
-      return tracked.reason ?? `${asked} — refused`
+      return tracked.reason ?? `${asked} · refused`
     case 'no-response':
       // Not "failed". A Drone that ignored a request and one that stopped talking are
       // not distinguishable from here.
-      return `${asked} — sent, no response since`
+      return `${asked} · sent, no response since`
   }
 }
 

@@ -10,8 +10,8 @@ export function scoreDelta(scores: LessonScores): number | null {
 }
 
 export function formatScorePair(scores: LessonScores): string {
-  const before = scores.before === null ? '—' : String(scores.before)
-  const after = scores.after === null ? '—' : String(scores.after)
+  const before = scores.before === null ? '-' : String(scores.before)
+  const after = scores.after === null ? '-' : String(scores.after)
   const delta = scoreDelta(scores)
   if (delta === null) return `${before} → ${after}`
   const sign = delta > 0 ? '+' : ''

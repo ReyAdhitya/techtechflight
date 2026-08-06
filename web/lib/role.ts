@@ -7,6 +7,13 @@
 export type BoardRole = 'teacher' | 'student'
 
 export const BOARD_ROLE_KEY = 'techtechflight:board-role'
+/** Same-tab signal — `storage` only fires across tabs. */
+export const BOARD_ROLE_EVENT = 'techtechflight:board-role'
+
+function notifyBoardRoleChanged(): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(BOARD_ROLE_EVENT))
+}
 
 export function readBoardRole(): BoardRole | null {
   if (typeof window === 'undefined') return null
@@ -26,6 +33,7 @@ export function writeBoardRole(role: BoardRole): void {
   } catch {
     /* ignore */
   }
+  notifyBoardRoleChanged()
 }
 
 export function clearBoardRole(): void {
@@ -35,4 +43,5 @@ export function clearBoardRole(): void {
   } catch {
     /* ignore */
   }
+  notifyBoardRoleChanged()
 }

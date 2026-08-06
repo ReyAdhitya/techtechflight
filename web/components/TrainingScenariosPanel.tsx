@@ -20,7 +20,7 @@ export function TrainingScenariosPanel() {
         <h2 className="label m-0">Training scenarios</h2>
         <p className="m-0 text-value text-ink-subtle">
           Named drills that make the simulated Fleet misbehave so every Teacher screen can be
-          exercised. They are not Commands — nothing here asks an aircraft to do something
+          exercised. They are not Commands. Nothing here asks an aircraft to do something
           that could exist on hardware. See docs/training-scenarios.md.
         </p>
       </div>
@@ -43,7 +43,7 @@ export function TrainingScenariosPanel() {
           >
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="font-display text-value font-medium text-ink">
-                {entry.id} — {entry.name}
+                {entry.id} · {entry.name}
               </span>
               <span className="text-label text-ink-muted">{entry.hits}</span>
             </div>
@@ -62,7 +62,7 @@ export function TrainingScenariosPanel() {
       </ul>
 
       <p className="m-0 text-label text-ink-muted">
-        T9 (Lesson + Students) and T10 (Reports) are checklist steps — assign, start a lesson,
+        T9 (Lesson + Students) and T10 (Reports) are checklist steps. Assign, start a lesson,
         then run T1/T4 underneath. Full drill order: T9 → T1 → T2 → T5 → T10.
       </p>
     </section>

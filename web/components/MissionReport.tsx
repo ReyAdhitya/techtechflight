@@ -119,7 +119,7 @@ function MissionScoreBreakdown({ mission }: { readonly mission: Mission }) {
 
   if (outcome === null) {
     return (
-      <p className="m-0 text-value text-ink-subtle">Mission not sealed — no score recorded.</p>
+      <p className="m-0 text-value text-ink-subtle">Mission not sealed. No score recorded.</p>
     )
   }
 
@@ -133,7 +133,7 @@ function MissionScoreBreakdown({ mission }: { readonly mission: Mission }) {
           <span className="tnum font-medium">{Math.round(outcome.score * 100)}</span>%
         </p>
       ) : (
-        <p className="m-0 text-value text-ink-subtle">Score not recorded — too little measured.</p>
+        <p className="m-0 text-value text-ink-subtle">Score not recorded. Too little measured.</p>
       )}
 
       {judged.length > 0 && (
@@ -246,7 +246,7 @@ function IncidentsByCategory({
             {group.alerts.map((alert) => (
               <li key={alert.id} className="text-value text-ink-subtle">
                 <span className="font-medium text-ink">{alert.droneName}</span>
-                {' — '}
+                {' · '}
                 {alert.text}
                 {alert.teacherAction ? ` · Action: ${alert.teacherAction}` : ''}
               </li>

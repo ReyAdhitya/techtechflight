@@ -83,12 +83,12 @@ export function landingTargetPresentation(target: LandingTarget): {
   if (target.kind === 'pose') {
     return {
       title: `Landing target: ${label}`,
-      meaning: `Where to land — east ${formatMetres(target.eastM)} · north ${formatMetres(target.northM)}`,
+      meaning: `Where to land · east ${formatMetres(target.eastM)} · north ${formatMetres(target.northM)}`,
     }
   }
   return {
     title: `Landing target: ${label}`,
-    meaning: 'Where to land — pad identity only (no classroom metres in the code)',
+    meaning: 'Where to land. Pad identity only (no classroom metres in the code)',
   }
 }
 

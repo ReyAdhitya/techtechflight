@@ -410,7 +410,7 @@ describe('what the scope shows', () => {
    * distinct horizontal nudges so neighbours do not share one unreadable spot. jsdom
    * cannot measure overlap; the attributes are the seam (CLAUDE.md).
    */
-  it('keeps every crowded-row name above its mark, with a horizontal stagger — never anonymous dots', () => {
+  it('keeps every crowded-row name above its mark, with a horizontal stagger. Never anonymous dots', () => {
     const row = [0, 1, 2, 3, 4, 5].map((eastM) => at(`Drone ${eastM + 1}`, eastM, 0))
     render(<Scope drones={row} />)
 

@@ -34,7 +34,7 @@ export function LostLinkSiren() {
         {lost.length === 1 ? 'Drone has' : 'Drones have'} lost link
       </strong>
       <span className="text-value text-ink-muted">
-        Last known Status is still on the wall — check the craft that went quiet.
+        Last known Status is still on the wall. Check the craft that went quiet.
       </span>
     </div>
   )

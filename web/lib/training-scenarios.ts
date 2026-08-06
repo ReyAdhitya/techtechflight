@@ -86,7 +86,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T7',
     name: 'Height / Side view',
-    hits: 'Strip Z · toggle Side — marks separate vertically (and on north)',
+    hits: 'Strip Z · toggle Side · marks separate vertically (and on north)',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
@@ -100,7 +100,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T7b',
     name: 'Front view',
-    hits: 'Toggle Front — classroom row spreads on east',
+    hits: 'Toggle Front · classroom row spreads on east',
     run: (s) => {
       s.takeOff(D1)
       s.takeOff(D2)
@@ -123,7 +123,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T11',
     name: 'Drone detail under Fault',
-    hits: 'Open /drone?id=ttf-0001 — instruments + service',
+    hits: 'Open /drone?id=ttf-0001 · instruments + service',
     run: (s) => {
       s.injectFault(D1)
     },
@@ -131,7 +131,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
   {
     id: 'T12',
     name: 'Stale / lost link honesty',
-    hits: 'Age wording — not presented as current',
+    hits: 'Age wording · not presented as current',
     run: (s) => {
       s.loseLink(D1)
     },

@@ -36,7 +36,7 @@ export function ConnectionBanner({ connection, demo = false }: ConnectionBannerP
       >
         <strong className="text-body font-medium">Demonstration Fleet</strong>
         <span className="text-value text-ink-muted">
-          Sample classroom data — not live Drone telemetry.
+          Sample classroom data. Not live Drone telemetry.
         </span>
       </div>
     )

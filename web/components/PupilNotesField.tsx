@@ -31,7 +31,7 @@ export function PupilNotesField({
         id={fieldId}
         value={value}
         rows={3}
-        placeholder={`Notes about ${studentName} — warm-up needs, landing confidence…`}
+        placeholder={`Notes about ${studentName}: warm-up needs, landing confidence…`}
         aria-label={`Note for ${studentName}`}
         className="rounded-surface border border-hairline bg-surface-1 p-3 text-value text-ink"
         onChange={(event) => setDraft(event.target.value)}

@@ -121,7 +121,7 @@ export function ReportsScreen() {
       </div>
 
       <p className="print-hide m-0 max-w-prose text-value text-ink-subtle">
-        Download PDF saves a file with the Lessons and recurring defects — no browser page
+        Download PDF saves a file with the Lessons and recurring defects. No browser page
         URL or clock on the sheet. Print remains available; if you use it, turn off Headers
         and footers under More settings.
       </p>
@@ -167,7 +167,7 @@ export function ReportsScreen() {
                 return (
                   <li key={`${lesson.id}-${mission.id}`} className="text-value text-ink">
                     <span className="font-medium">{lesson.label}</span>
-                    {' — '}
+                    {' · '}
                     {score === null ? (
                       <span className="text-ink-subtle">Not scored</span>
                     ) : (
@@ -226,7 +226,7 @@ export function ReportsScreen() {
               return (
                 <li key={lesson.id} className="text-value text-ink-subtle">
                   <span className="font-medium text-ink">{lesson.label}</span>
-                  {' — '}
+                  {' · '}
                   <span className="tnum">{formatCeilingBreachCount(count)}</span>
                 </li>
               )

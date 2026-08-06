@@ -60,7 +60,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     }
 
     if (req.method === 'PUT') {
-      const body = req.body as { code?: string; updatedAt?: number } | null
+      const raw = req.body
+      const body = (
+        typeof raw === 'string'
+          ? (JSON.parse(raw) as { code?: string; updatedAt?: number })
+          : raw
+      ) as { code?: string; updatedAt?: number } | null
       if (!body || typeof body !== 'object' || typeof body.updatedAt !== 'number') {
         res.status(400).json({ error: 'Body must be a classroom session with updatedAt.' })
         return

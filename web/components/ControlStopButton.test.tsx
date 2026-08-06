@@ -35,7 +35,7 @@ afterEach(() => {
 })
 
 describe('the emergency stop on a flight strip', () => {
-  it('reads Stop, never Stop immediately or Stop — hold', () => {
+  it('reads Stop, never Stop immediately or Stop. Hold', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
@@ -46,7 +46,7 @@ describe('the emergency stop on a flight strip', () => {
     // Six strips; the ATC toolbar also has a fleet Stop.
     expect(screen.getAllByRole('button', { name: /^Stop$/ }).length).toBeGreaterThanOrEqual(6)
     expect(screen.queryByRole('button', { name: /Stop immediately/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Stop — hold/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Stop · hold/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Press again to stop/ })).not.toBeInTheDocument()
   })
 
@@ -71,12 +71,12 @@ describe('the emergency stop on a flight strip', () => {
       expect(strip.getByRole('button', { name: 'Release stop' })).toBeInTheDocument()
     })
     expect(strip.queryByRole('button', { name: /^Stop$/ })).not.toBeInTheDocument()
-    expect(strip.queryByText(/Stop — done/)).not.toBeInTheDocument()
+    expect(strip.queryByText(/Stop · done/)).not.toBeInTheDocument()
 
     fireEvent.click(strip.getByRole('button', { name: 'Release stop' }))
     await waitFor(() => {
       expect(strip.getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
     })
-    expect(strip.queryByText(/Stop — done/)).not.toBeInTheDocument()
+    expect(strip.queryByText(/Stop · done/)).not.toBeInTheDocument()
   })
 })

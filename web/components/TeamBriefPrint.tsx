@@ -96,7 +96,7 @@ function BriefMap({
   if (!hasGeometry) {
     return (
       <p className="m-0 text-value text-ink-muted">
-        No Mission area drawn yet — ask the Teacher for the map before takeoff.
+        No Mission area drawn yet. Ask the Teacher for the map before takeoff.
       </p>
     )
   }
@@ -185,9 +185,9 @@ function BriefMap({
         ))}
       </svg>
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-ink-muted">
-        <span>Mission Zone — solid outline</span>
-        <span>No-fly Zone — hatched / dashed</span>
-        <span>Checkpoints — numbered circles</span>
+        <span>Mission Zone · solid outline</span>
+        <span>No-fly Zone · hatched / dashed</span>
+        <span>Checkpoints · numbered circles</span>
       </figcaption>
     </figure>
   )
@@ -251,7 +251,7 @@ export function TeamBriefPrint({
                 ) : null}
                 <span className="tnum text-ink-subtle">
                   {' '}
-                  — {index + 1} on map
+                  · {index + 1} on map
                 </span>
               </li>
             ))}

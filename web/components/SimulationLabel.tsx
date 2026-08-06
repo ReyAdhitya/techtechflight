@@ -20,7 +20,7 @@ export function SimulationLabel() {
 
   return (
     <p className="simulation-label" role="status">
-      Simulated Fleet — no aircraft are being contacted
+      Simulated Fleet. No aircraft are being contacted
     </p>
   )
 }

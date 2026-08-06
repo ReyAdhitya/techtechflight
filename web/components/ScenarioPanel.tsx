@@ -36,7 +36,7 @@ export function ScenarioPanel() {
         <h2 className="label m-0">Demonstration</h2>
         <p className="m-0 text-value text-ink-subtle">
           These make the simulated Fleet misbehave, so a fault or a lost link can be shown
-          without waiting for one. They are not Commands — nothing here asks a Drone to do
+          without waiting for one. They are not Commands. Nothing here asks a Drone to do
           something, and none of it could work on a real aircraft.
         </p>
       </div>

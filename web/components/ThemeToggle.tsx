@@ -1,33 +1,28 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import { Moon, SunMedium } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { readServerTheme, readTheme, subscribeTheme, writeTheme } from '@/lib/theme'
 
 /**
- * Switches the board between the lit-room and darkened-room themes.
+ * Lit room ↔ dark room — icon only, in the header control cluster.
  *
- * The board is read in a classroom, and classrooms have the lights on and the board
- * projected — the condition a dark canvas is least readable in (ADR-0006). The machine's
- * preference is followed by default and overridable, because a projector often disagrees
- * with the laptop driving it.
- *
- * Deliberately the quietest control on screen: it is set once when a room is set up, not
- * touched during a lesson.
+ * Set once when the room is set up (lights on vs projector), not during a lesson.
+ * The words stay in the accessible name; the bar stays quiet.
  */
 export function ThemeToggle() {
   const dark = useSyncExternalStore(subscribeTheme, readTheme, readServerTheme) === 'dark'
-  const ThemeIcon = dark ? SunMedium : Moon
+  const ThemeIcon = dark ? Sun : Moon
 
   return (
     <button
       type="button"
-      className="label inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-2 rounded-pill border border-console-line bg-transparent px-3 py-1.5 text-console-muted transition-colors hover:border-ink hover:text-ink"
+      className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-pill border border-hairline bg-transparent text-ink-muted transition-colors hover:border-ink hover:text-ink"
       onClick={() => writeTheme(dark ? 'light' : 'dark')}
-      aria-label={`Switch to the ${dark ? 'lit-room' : 'darkened-room'} theme`}
+      aria-label={dark ? 'Switch to lit room' : 'Switch to dark room'}
+      title={dark ? 'Lit room' : 'Dark room'}
     >
       <ThemeIcon className="size-4" strokeWidth={1.75} aria-hidden="true" />
-      <span className="room-control-label">{dark ? 'Lit room' : 'Dark room'}</span>
     </button>
   )
 }

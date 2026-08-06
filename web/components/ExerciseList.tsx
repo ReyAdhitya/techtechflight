@@ -122,7 +122,7 @@ export function ExerciseList({
           <input
             value={minutes}
             inputMode="numeric"
-            placeholder="—"
+            placeholder="-"
             onChange={(event) => setMinutes(event.target.value)}
             className="tnum min-h-11 w-20 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
           />

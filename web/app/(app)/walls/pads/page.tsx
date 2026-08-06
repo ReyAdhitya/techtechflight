@@ -11,7 +11,7 @@ export default function PadWallPage() {
   return (
     <WallsShell
       title="Landing pads"
-      description="Landing-pad QR seen or not on each Drone's camera picture. Read-only — never written into Telemetry."
+      description="Landing-pad QR seen or not on each Drone's camera picture. Read-only. Never written into Telemetry."
     >
       <PadWall />
     </WallsShell>

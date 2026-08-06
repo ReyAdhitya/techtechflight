@@ -7,7 +7,7 @@ import { ScenarioPanel } from './ScenarioPanel'
 import { SeparationThresholdPanel } from './SeparationThresholdPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
-import { clearBoardRole } from '@/lib/role'
+import { SwitchRoleButton } from './SwitchRoleButton'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -37,16 +37,10 @@ export function SettingsScreen() {
 
       <section className="flex flex-col gap-2">
         <h2 className="label m-0">Who is using this device</h2>
-        <button
-          type="button"
-          className="min-h-11 w-fit cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
-          onClick={() => {
-            clearBoardRole()
-            window.location.assign('/enter')
-          }}
-        >
-          Switch Teacher or Student
-        </button>
+        <p className="m-0 text-value text-ink-subtle">
+          Go back to the door to pick Teacher or Student again.
+        </p>
+        <SwitchRoleButton label="Switch Teacher or Student" />
       </section>
 
       <LogbookLocationNote />
@@ -60,12 +54,12 @@ export function SettingsScreen() {
           <dt className="label self-center">Connection</dt>
           <dd className="m-0 text-value">
             {demo
-              ? 'Demonstration Fleet — no ground station is being contacted'
+              ? 'Demonstration Fleet. No ground station is being contacted'
               : snapshot.connection === 'live'
                 ? 'Connected'
                 : snapshot.connection === 'connecting'
                   ? 'Connecting'
-                  : 'Cannot be reached — retrying'}
+                  : 'Cannot be reached, retrying'}
           </dd>
           <dt className="label self-center">Drones registered</dt>
           <dd className="tnum m-0 text-value">{snapshot.state?.drones.length ?? 0}</dd>

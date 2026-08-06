@@ -108,7 +108,7 @@ describe('saying which Fleet this is', () => {
     )
 
     expect(screen.getByRole('status')).toHaveTextContent(
-      /Simulated Fleet — no aircraft are being contacted/i,
+      /Simulated Fleet. No aircraft are being contacted/i,
     )
   })
 

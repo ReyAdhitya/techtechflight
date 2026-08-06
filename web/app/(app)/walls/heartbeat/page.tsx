@@ -11,7 +11,7 @@ export default function HeartbeatWallPage() {
   return (
     <WallsShell
       title="Last Contact"
-      description="One dot per Drone — filled when the link is live, hollow when Telemetry is Stale."
+      description="One dot per Drone. Filled when the link is live, hollow when Telemetry is Stale."
     >
       <HeartbeatWall />
     </WallsShell>

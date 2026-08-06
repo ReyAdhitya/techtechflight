@@ -118,7 +118,7 @@ export function DroneScreen() {
         {drone.lastContact === null
           ? 'No response yet'
           : `Response ${formatAge(age ?? 0)}, ${formatExactTime(drone.lastContact)}`}
-        {drone.stale && . These are last known values, not current ones.'}
+        {drone.stale && '. These are last known values, not current ones.'}
       </p>
 
       {telemetry ? (

@@ -21,7 +21,8 @@ would notice.
 - **Room controls in the header are icon-only:** sun/moon for lit ↔ dark room, projector
   for large format. Words stay in the accessible name and hover title; the bar stays quiet.
 - **UI copy drops dash-like separators.** Em dashes and middots between phrases are gone;
-  the board uses commas and plain sentences instead.
+  the board uses commas and plain sentences instead. A broken string from that sweep that
+  blocked typecheck (and kept production on the old build) is repaired.
 - **Lesson is one scrolling page again; the Mission-run rail is gone.** Scenario, zones,
   teams, pre-flight, brief and Start sit on `/lesson` without `?step=`. Control is one live
   board: Attention, classroom code, Scenario watch-list, clearances, Teacher ATC toolbar,

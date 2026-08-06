@@ -8,9 +8,11 @@ import {
   readStudentSeatLocal,
   requestTakeoff,
   subscribeClassroom,
+  type ClassroomInstruction,
   type ClassroomSeat,
   type ClassroomSession,
 } from '@/lib/classroom-session'
+import { breachesAt, type AirspaceBreach } from '@/lib/airspace'
 import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
 import {
   evaluatePreFlightSeven,
@@ -78,7 +80,35 @@ export function StudentMissionScreen() {
     )
   }
 
-  return <MissionBrief session={session} seat={seat} onSession={setSession} />
+  return <SeatedStudent session={session} seat={seat} onSession={setSession} />
+}
+
+/**
+ * Which screen a Student is on is decided by the aircraft, not by them.
+ *
+ * Off the ground is flying, and there is no button anywhere that says otherwise. This sits
+ * in its own component so the Telemetry read happens unconditionally, after the seat is
+ * known: the screen above it returns early twice before a seat exists.
+ */
+function SeatedStudent({
+  session,
+  seat,
+  onSession,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+  readonly onSession: (session: ClassroomSession) => void
+}) {
+  const { vitals } = useFleet()
+  const airborne =
+    seat.droneId !== null &&
+    vitals.find((entry) => entry.droneId === seat.droneId)?.airborne === true
+
+  return airborne ? (
+    <FlyingScreen session={session} seat={seat} />
+  ) : (
+    <MissionBrief session={session} seat={seat} onSession={onSession} />
+  )
 }
 
 /**
@@ -146,6 +176,194 @@ function TakeYourSeat({
         </ul>
       )}
     </StudentFrame>
+  )
+}
+
+/**
+ * The screen while the craft is up.
+ *
+ * A Student looks at this for two seconds at a time, standing outside, between looks at the
+ * aircraft. So one figure is large and the rest is small, and which figure is large changes
+ * with what matters: the checkpoint while one is close, the battery otherwise. Nothing here
+ * is pressable except acknowledging the Teacher, because the Students fly by hand and this
+ * tablet has never been able to move an aircraft (ADR-0021).
+ */
+function FlyingScreen({
+  session,
+  seat,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+}) {
+  const { snapshot, vitals, now } = useFleet()
+  const mine = vitals.find((entry) => entry.droneId === seat.droneId) ?? null
+  const telemetry =
+    snapshot.state?.drones.find((drone) => drone.id === seat.droneId)?.telemetry ?? null
+
+  const breaches = mine?.position ? breachesAt(session.zones, mine.position) : []
+  const checkpointsLeft = Math.max(0, session.checkpointCount - seat.checkpointIndex)
+  const nearACheckpoint = session.checkpointCount > 0 && checkpointsLeft <= 1
+
+  const battery = mine?.batteryFraction ?? null
+  const instruction = session.instructions.at(-1) ?? null
+
+  return (
+    <StudentFrame>
+      <FlyingWarning breaches={breaches} />
+
+      <IdentityLine seat={seat} />
+
+      {/*
+       * The one big number. Which one is chosen by what is about to matter, not by a
+       * preference: a last checkpoint outranks a battery that is still fine.
+       */}
+      {nearACheckpoint && session.checkpointCount > 0 ? (
+        <BigReading
+          value={`${Math.min(seat.checkpointIndex + 1, session.checkpointCount)} of ${session.checkpointCount}`}
+          name="Checkpoints"
+        />
+      ) : battery === null ? (
+        <BigReading value="Not reporting" name="Battery" quiet />
+      ) : (
+        <BigReading value={`${Math.round(battery * 100)}%`} name="Battery" />
+      )}
+
+      <dl className="m-0 grid grid-cols-2 gap-x-8 gap-y-3 min-[48rem]:grid-cols-4">
+        <QuietReading
+          name="Height"
+          value={mine?.altitudeM === null || mine === null ? null : `${mine.altitudeM.toFixed(1)} m`}
+        />
+        <QuietReading
+          name="Checkpoints"
+          value={
+            session.checkpointCount === 0
+              ? null
+              : `${Math.min(seat.checkpointIndex, session.checkpointCount)} of ${session.checkpointCount}`
+          }
+        />
+        <QuietReading
+          name="Time left"
+          value={session.limitMinutes > 0 ? `${session.limitMinutes} min` : null}
+        />
+        <QuietReading
+          name="Link"
+          value={
+            telemetry?.linkQuality === undefined || telemetry.linkQuality === null
+              ? null
+              : telemetry.linkQuality < LINK_QUALITY_WEAK
+                ? 'Weak'
+                : 'Strong'
+          }
+        />
+      </dl>
+
+      {instruction ? <TeacherInstruction instruction={instruction} now={now} /> : null}
+    </StudentFrame>
+  )
+}
+
+/**
+ * Out of place, across the whole width, or absent.
+ *
+ * Not one tile among six. A No-fly Zone is the only thing on this screen that must be seen
+ * without being looked for, and the way a warning fails is that the eye stops noticing it,
+ * so it is not drawn at all when there is nothing to say.
+ */
+function FlyingWarning({ breaches }: { readonly breaches: readonly AirspaceBreach[] }) {
+  const worst = breaches[0]
+  if (!worst) return null
+
+  return (
+    <p
+      role="status"
+      className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-4 border-status-fault bg-surface-1 px-4 py-3"
+    >
+      <span className="font-display text-heading font-medium text-status-fault">
+        {worst.kind === 'entered-no-fly' ? 'No-fly Zone' : 'Outside the Mission Zone'}
+      </span>
+      <span className="text-body text-ink">
+        {worst.kind === 'entered-no-fly'
+          ? `You are inside ${worst.zoneName}. Come out the way you went in.`
+          : 'Fly back inside the area your Teacher drew.'}
+      </span>
+    </p>
+  )
+}
+
+/** The figure that matters right now, at the size it can be read from the flight line. */
+function BigReading({
+  value,
+  name,
+  quiet = false,
+}: {
+  readonly value: string
+  readonly name: string
+  readonly quiet?: boolean
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="label">{name}</span>
+      <span
+        className={cn(
+          'tnum font-display text-summary font-medium',
+          quiet ? 'text-ink-muted' : 'text-ink',
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  )
+}
+
+/** A reading that is only worth a glance. Null says so in words rather than showing a zero. */
+function QuietReading({
+  name,
+  value,
+}: {
+  readonly name: string
+  readonly value: string | null
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="label m-0">{name}</dt>
+      <dd
+        className={cn('tnum m-0 text-body', value === null ? 'text-ink-muted' : 'text-ink')}
+      >
+        {value ?? 'Not reporting'}
+      </dd>
+    </div>
+  )
+}
+
+/**
+ * What the Teacher just said, and the one button a Student has while flying.
+ *
+ * Acknowledging is a record, not a Command. It tells the Teacher the message landed, which
+ * is the whole of what a radio call does in a real tower.
+ */
+function TeacherInstruction({
+  instruction,
+  now,
+}: {
+  readonly instruction: ClassroomInstruction
+  readonly now: number
+}) {
+  const [seen, setSeen] = useState<string | null>(null)
+  if (seen === instruction.id) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 rounded-surface border border-brand bg-brand-wash px-4 py-3">
+      <span className="label">Your Teacher</span>
+      <span className="min-w-0 flex-1 text-body text-ink">{instruction.text}</span>
+      <span className="tnum text-label text-ink-muted">{formatAge(Math.max(0, now - instruction.at))}</span>
+      <button
+        type="button"
+        onClick={() => setSeen(instruction.id)}
+        className="min-h-14 shrink-0 cursor-pointer rounded-pill border-0 bg-ink px-6 py-2 font-display text-body font-medium text-canvas"
+      >
+        Understood
+      </button>
+    </div>
   )
 }
 

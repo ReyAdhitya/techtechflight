@@ -15,6 +15,8 @@ import { emptyMission, type Mission, type MissionOutcome, type ScenarioId } from
  */
 
 export const MISSION_DRAFT_KEY = 'techtechflight:mission-draft'
+/** Same-tab signal. `storage` only fires across tabs. */
+export const MISSION_DRAFT_EVENT = 'techtechflight:mission-draft'
 
 export interface MissionDraft {
   /** The Lesson this Mission belongs to. A different Lesson starts a new draft. */
@@ -26,6 +28,11 @@ export function emptyMissionDraft(lessonId: string | null): MissionDraft {
   return { lessonId, mission: null }
 }
 
+function notifyMissionDraftChanged(): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event(MISSION_DRAFT_EVENT))
+}
+
 function write(draft: MissionDraft): MissionDraft {
   if (typeof window === 'undefined') return draft
   try {
@@ -33,7 +40,28 @@ function write(draft: MissionDraft): MissionDraft {
   } catch {
     // A full or blocked store must not take the board down mid-lesson.
   }
+  notifyMissionDraftChanged()
   return draft
+}
+
+/**
+ * Re-read when the Teacher changes Scenario, zones, or seals the Mission.
+ *
+ * ClassroomOpen depends on this: without it the classroom code never appears after
+ * picking a Scenario, because that write does not touch the Logbook.
+ */
+export function subscribeMissionDraft(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === MISSION_DRAFT_KEY || event.key === null) onChange()
+  }
+  window.addEventListener('storage', onStorage)
+  window.addEventListener(MISSION_DRAFT_EVENT, onChange)
+  return () => {
+    window.removeEventListener('storage', onStorage)
+    window.removeEventListener(MISSION_DRAFT_EVENT, onChange)
+  }
 }
 
 /** Load the Mission for this Lesson. A draft left by another Lesson does not carry over. */

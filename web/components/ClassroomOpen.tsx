@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { openClassroom } from '@/lib/classroom-session'
 import { readLogbook, readServerLogbook, runningLesson, subscribeLogbook } from '@/lib/logbook'
-import { readMission } from '@/lib/mission-draft'
+import { readMission, subscribeMissionDraft } from '@/lib/mission-draft'
 import { MISSION_BRIEFING_RULES } from './MissionBriefing'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 
@@ -20,6 +19,9 @@ import { scenarioOrUnknown } from '@/lib/mission-scenarios'
  * Mounted once in the Teacher shell rather than on Lesson and again on Control, so there is
  * one writer and the two screens cannot disagree about what the class was told.
  *
+ * Re-runs when the Mission draft changes (Scenario, zones, seal), not only when the Logbook
+ * does. Without that, picking a Scenario never minted a classroom code.
+ *
  * Nothing here reaches an aircraft, and nothing here is a Command (ADR-0011). It copies the
  * brief a Teacher wrote onto a document the Student's tablet can read.
  */
@@ -28,6 +30,10 @@ export function ClassroomOpen() {
   const lesson = runningLesson(book)
   const lessonId = lesson?.id ?? null
   const lessonLabel = lesson?.label ?? ''
+  // Bump when the Mission draft is written so openClassroom runs after Scenario / zones.
+  const [missionTick, setMissionTick] = useState(0)
+
+  useEffect(() => subscribeMissionDraft(() => setMissionTick((n) => n + 1)), [])
 
   useEffect(() => {
     const mission = readMission(lessonId)
@@ -72,7 +78,7 @@ export function ClassroomOpen() {
        */
       live: mission.startedAt !== null,
     })
-  }, [lessonId, lessonLabel, book])
+  }, [lessonId, lessonLabel, book, missionTick])
 
   return null
 }

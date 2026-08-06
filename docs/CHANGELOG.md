@@ -7,6 +7,10 @@ would notice.
 
 ### Fixed
 
+- **`/enter` shows the door** when no role is stored, instead of hanging on Opening.
+- **Classroom code appears when a Scenario is picked.** `ClassroomOpen` listens to the
+  Mission draft, not only the Logbook. Cloud join needs `BLOB_READ_WRITE_TOKEN` (Blob store
+  linked on Vercel). Class roll still rides the session for Student tablets.
 - **Classroom code join works on iPads.** The class roll travels on the classroom session
   (not only the Teacher Logbook), join checks this laptop first, and the Teacher board
   shows sync status with Retry. Empty roll still lets a Student type their name.

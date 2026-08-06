@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { act, render } from '@testing-library/react'
 import { readClassroomSession, resetClassroomForTests } from '@/lib/classroom-session'
 import { clearLogbook, readLogbook, runningLesson, saveRoll, startLesson } from '@/lib/logbook'
 import {
@@ -162,5 +162,24 @@ describe('opening the classroom from the Mission', () => {
     render(<ClassroomOpen />)
 
     expect(readClassroomSession()?.roster?.map((row) => row.name)).toEqual(['Priya', 'Sam'])
+  })
+
+  /*
+   * The Mission draft is its own key. Choosing a Scenario after ClassroomOpen has mounted
+   * must still mint a code; listening only to the Logbook left the code panel empty forever.
+   */
+  it('opens the classroom when a Scenario is chosen after mount', () => {
+    startLesson('Year 8', 6, 6, 1_000, [])
+    const lessonId = runningLesson(readLogbook())!.id
+
+    render(<ClassroomOpen />)
+    expect(readClassroomSession()).toBeNull()
+
+    act(() => {
+      chooseScenario(lessonId, 'search-rescue')
+    })
+
+    expect(readClassroomSession()?.code).toHaveLength(4)
+    expect(readClassroomSession()?.scenarioId).toBe('search-rescue')
   })
 })

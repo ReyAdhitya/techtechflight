@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
   joinClassroomAsStudent,
@@ -61,6 +61,10 @@ export function StudentMissionScreen() {
   const [session, setSession] = useState<ClassroomSession | null>(null)
   const [studentId, setStudentId] = useState<string | null>(null)
 
+  const onJoinedClassroom = useCallback((next: ClassroomSession) => {
+    setSession(next)
+  }, [])
+
   // Read on mount rather than in an initialiser: the server render has no localStorage and
   // must not disagree with the first client paint.
   useEffect(() => {
@@ -79,13 +83,7 @@ export function StudentMissionScreen() {
   }
 
   if (session === null) {
-    return (
-      <JoinClassroomDoor
-        onJoined={(next) => {
-          setSession(next)
-        }}
-      />
-    )
+    return <JoinClassroomDoor onJoined={onJoinedClassroom} />
   }
 
   const seat = session.seats.find((row) => row.studentId === studentId) ?? null
@@ -179,15 +177,17 @@ function JoinClassroomDoor({
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const onJoinedRef = useRef(onJoined)
+  onJoinedRef.current = onJoined
 
   // Same laptop: Teacher opens classroom → localStorage fills without typing a code.
   useEffect(() => {
     const existing = readClassroomSession()
-    if (existing !== null) onJoined(existing)
+    if (existing !== null) onJoinedRef.current(existing)
     return subscribeClassroom((next) => {
-      if (next !== null) onJoined(next)
+      if (next !== null) onJoinedRef.current(next)
     })
-  }, [onJoined])
+  }, [])
 
   return (
     <StudentFrame>

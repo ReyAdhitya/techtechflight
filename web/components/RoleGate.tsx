@@ -11,7 +11,7 @@ import {
 } from '@/lib/role'
 
 /**
- * The door. Teacher board or Student Mission tablet — side by side.
+ * The door. Teacher board or Student Mission tablet, side by side.
  */
 
 export function RoleGateScreen() {
@@ -76,7 +76,7 @@ function Opening() {
  * Teacher chrome never mounts for a Student device, and the reverse.
  *
  * Role is read on the client before children render (not only in an effect), so a Student
- * who types `/lesson` or `/control` never sees Teacher UI flash past "Opening…".
+ * who types `/lesson` or `/control` never sees Teacher UI. Wrong role always redirects.
  */
 export function RequireRole({
   role,
@@ -87,7 +87,6 @@ export function RequireRole({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  // Re-read when another tab clears or changes the role, or after we redirect.
   const [generation, setGeneration] = useState(0)
 
   useEffect(() => {
@@ -97,6 +96,7 @@ export function RequireRole({
       return
     }
     if (current !== role) {
+      // Student devices stay on /student. Teacher devices stay in Teacher chrome.
       router.replace(current === 'student' ? '/student' : '/lesson')
     }
   }, [role, router, pathname, generation])
@@ -107,8 +107,6 @@ export function RequireRole({
       if (event.key === BOARD_ROLE_KEY || event.key === null) bump()
     }
     window.addEventListener('storage', onStorage)
-    // Same-tab writes do not fire `storage`; Switch role navigates away, but a rare
-    // in-place clear still needs a re-check.
     window.addEventListener(BOARD_ROLE_EVENT, bump)
     return () => {
       window.removeEventListener('storage', onStorage)
@@ -116,7 +114,6 @@ export function RequireRole({
     }
   }, [])
 
-  // Static export / SSR: never paint gated chrome until the client knows the role.
   if (typeof window === 'undefined') return <Opening />
 
   const current = readBoardRole()

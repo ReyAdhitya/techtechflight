@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  BOARD_ROLE_EVENT,
-  BOARD_ROLE_KEY,
   readBoardRole,
+  readServerBoardRole,
+  subscribeBoardRole,
   writeBoardRole,
   type BoardRole,
 } from '@/lib/role'
@@ -77,6 +77,14 @@ function Opening() {
  *
  * Role is read on the client before children render (not only in an effect), so a Student
  * who types `/lesson` or `/control` never sees Teacher UI. Wrong role always redirects.
+ *
+ * The read goes through `useSyncExternalStore` rather than calling `readBoardRole()` in the
+ * render body. Reading `localStorage` while rendering made the exported HTML (which has no
+ * device to read, so it showed the door) disagree with the browser's very first render
+ * (which had a role, so it showed the whole board). That is a hydration mismatch: React
+ * threw error #418 on every page load in production and rebuilt the entire tree client-side.
+ * The server snapshot keeps both sides on `Opening`, and the device's real role lands on the
+ * commit straight after, still before anything is painted.
  */
 export function RequireRole({
   role,
@@ -87,36 +95,25 @@ export function RequireRole({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const [generation, setGeneration] = useState(0)
+  const current = useSyncExternalStore(subscribeBoardRole, readBoardRole, readServerBoardRole)
 
   useEffect(() => {
-    const current = readBoardRole()
-    if (current === null) {
+    /*
+     * Read again rather than trusting `current`: on the hydrating commit that is still the
+     * server's null, and redirecting on it would send a legitimate Teacher back to the door.
+     * Inside an effect the device is always there to ask.
+     */
+    const actual = readBoardRole()
+    if (actual === null) {
       router.replace('/enter')
       return
     }
-    if (current !== role) {
+    if (actual !== role) {
       // Student devices stay on /student. Teacher devices stay in Teacher chrome.
-      router.replace(current === 'student' ? '/student' : '/lesson')
+      router.replace(actual === 'student' ? '/student' : '/lesson')
     }
-  }, [role, router, pathname, generation])
+  }, [role, router, pathname, current])
 
-  useEffect(() => {
-    const bump = () => setGeneration((n) => n + 1)
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === BOARD_ROLE_KEY || event.key === null) bump()
-    }
-    window.addEventListener('storage', onStorage)
-    window.addEventListener(BOARD_ROLE_EVENT, bump)
-    return () => {
-      window.removeEventListener('storage', onStorage)
-      window.removeEventListener(BOARD_ROLE_EVENT, bump)
-    }
-  }, [])
-
-  if (typeof window === 'undefined') return <Opening />
-
-  const current = readBoardRole()
   if (current !== role) return <Opening />
 
   return <>{children}</>

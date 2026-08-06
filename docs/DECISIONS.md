@@ -9,6 +9,26 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-06 · The role gate reads through a store, and Fleet stops restating its own tiles.
+
+- **Decision / notes:** `RequireRole` read `localStorage` in its render body, so the exported
+  HTML (no device, so: the door) disagreed with the browser's first render (a role, so: the
+  whole board). Every page load in production threw React #418 and rebuilt the tree
+  client-side. It now reads through `useSyncExternalStore` with a null server snapshot, the
+  same shape the Logbook already uses, and the redirect effect re-reads the device rather
+  than trusting the hydrating commit, which would otherwise send a Teacher back to `/enter`.
+  On Fleet, the Headcount panel and the spare-craft picker are unmounted (#624): Headcount
+  asked a Teacher to tick craft that Telemetry was already reporting present, so the screen
+  said "5 of 6 ready" at the top and "0 of 6 present, all missing" at the bottom.
+- **Could have gone differently:** Blame the boot script in `layout.tsx`. Tested and rejected:
+  #418 survives its removal, and routing it through `next/script` is worse — `beforeInteractive`
+  serialises it into the RSC payload, so the theme stamp lands after the bundle and the board
+  flashes the wrong theme at a class. Gate the role in an effect only. Rejected: a Student
+  typing `/lesson` would see Teacher chrome for a frame. Delete `FleetHeadcountCheck` and
+  `SpareNomination` outright. Not taken here: both keep their tests and `SpareNomination`
+  still persists; unmounting answers the report with the smaller diff, and whether they get
+  re-homed or deleted is a separate call.
+
 ## 2026-08-06 · Class roll rides the classroom session; role is sticky and reversible.
 
 - **Decision / notes:** Student tablets pick names from `session.roster` copied by

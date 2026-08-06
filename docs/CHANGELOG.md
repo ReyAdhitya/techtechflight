@@ -7,7 +7,14 @@ would notice.
 
 ### Fixed
 
-- **`/enter` shows the door** when no role is stored, instead of hanging on Opening.
+- **Every page load stopped throwing away the page it was given.** The role gate read the
+  device's role while rendering, so the exported HTML and the browser's first render
+  disagreed and React rebuilt the whole board client-side on every visit, on every screen
+  including the Student tablet. The gate still keeps Teacher chrome away from a Student.
+- **The Fleet screen no longer contradicts itself.** It said "5 of 6 ready" at the top, then
+  a Headcount panel underneath listed all six craft as missing, then repeated their names,
+  then offered a spare-craft picker. Headcount and the picker are gone, and the screen is one
+  screenful again instead of three.
 - **Classroom code appears when a Scenario is picked.** `ClassroomOpen` listens to the
   Mission draft, not only the Logbook. Cloud join needs `BLOB_READ_WRITE_TOKEN` (Blob store
   linked on Vercel). Class roll still rides the session for Student tablets.

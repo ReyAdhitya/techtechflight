@@ -40,6 +40,18 @@ tokens (`--background`, `--card`) and a semantic layer over them (`--color-canva
 `--color-surface-1`, `--color-ink-subtle`). **Markup uses the semantic layer** — `bg-canvas`,
 `text-ink-subtle`, `border-hairline`. Writing `bg-background` works but is foreign.
 
+**jsdom cannot catch a hydration bug either, and the board is a static export, so every
+visit is a hydration.** Testing Library's `render()` is a fresh client render and never
+hydrates, so reading `localStorage` (or anything else only a device has) in a render body
+passes all 1,400 tests and still throws React #418 in production, which silently rebuilds
+the whole tree in the browser on every page load. Read device state through
+`useSyncExternalStore` with a server snapshot that matches what the export contains, the way
+`readServerLogbook` does. `RoleGate.test.tsx` has the one test in the suite that actually
+hydrates (`renderToString` then `hydrateRoot`, asserting `console.error` stayed silent);
+copy it when a component starts reading the device. Minified #418 only ever says `args[]=HTML`,
+which tells you an element mismatched and nothing about where — bisect by deleting subtrees,
+and do not assume the boot script in `layout.tsx` is the culprit, because it is not.
+
 **jsdom cannot catch a layout bug.** The whole test suite is jsdom, so a broken flex axis
 or a wrong aspect ratio passes green. Two defences: assert on the stylesheet directly when
 the invariant is a layout one (see `SiteHeader.test.tsx`, and `vercel-routing.test.ts` for

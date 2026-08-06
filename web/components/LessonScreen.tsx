@@ -2,29 +2,17 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { isUsable, needsAttention, type DroneState } from '@techtechflight/contract'
 import {
-  isStudentAbsent,
   readLogbook,
   readServerLogbook,
   runningLesson,
   serviceStateOf,
   startLesson,
-  studentOf,
   subscribeLogbook,
   type Exercise,
   type LessonRecord,
 } from '@/lib/logbook'
-import {
-  canUndoAssignment,
-  undoLastAssignment,
-  withAssignmentUndo,
-} from '@/lib/assignment-undo'
-import {
-  markAbsentAndFreeCraft,
-  type AbsentReassignResult,
-} from '@/lib/absent-reassign'
 import { cn } from '@/lib/utils'
 import { LessonPrepPanel } from './LessonPrepPanel'
 import { SafetyBriefPanel } from './SafetyBriefPanel'
@@ -42,13 +30,9 @@ import { ScenarioPicker } from './ScenarioPicker'
 import { MissionAreaEditor } from './MissionAreaEditor'
 import { TeamsPanel } from './TeamsPanel'
 import { PreFlightSeven } from './PreFlightSeven'
-import {
-  MissionBriefing,
-  isMissionBriefingComplete,
-  readMissionBriefing,
-} from './MissionBriefing'
+import { MissionBriefing } from './MissionBriefing'
 import { TeamBriefPrint } from './TeamBriefPrint'
-import { StepRail } from './StepRail'
+import { ClassroomCodePanel } from './ClassroomCodePanel'
 import type { Mission } from '@/lib/mission'
 import { readTeams } from '@/lib/teams'
 import {
@@ -58,41 +42,16 @@ import {
   setMissionDrones,
   setMissionZones,
 } from '@/lib/mission-draft'
-import { readClearances } from '@/lib/clearance-store'
-import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
-import {
-  MISSION_FLOW_PHASES,
-  MISSION_FLOW_STEPS,
-  MISSION_STEP_COUNT,
-  currentMissionStep,
-  isSetUpStep,
-} from '@/lib/mission-flow'
-import { readPreFlightSeven } from '@/lib/preflight-seven'
+import { missionCraftIds } from '@/lib/mission-flow-facts'
 import type { FleetSnapshot } from '@/lib/fleet-link'
 
 /**
  * Set this Mission up, and start or end the period. That is the whole screen.
  *
- * It used to be the whole day: Fleet health with a craft-by-craft fault list, finished
- * Lessons, the remedial queue, pack-down, a second copy of the Mission briefing, and two
- * paragraphs on where records are stored. Every one of those answered a question another
- * screen already owns, so a Teacher at 08:55 read past four blocks to reach the step they
- * came for, and each block was a second place for the same fact to go stale.
- *
- * Where they went, and why each one is that screen's question rather than this one's:
- *
- * - Fleet health, craft by craft → the Fleet board, which lists every Drone with its
- *   Status and fault. One line survives here, because "can the period run" is a question
- *   about the period. It links to the list.
- * - Finished Lessons → Reports (`LessonReports`), which already listed the same fields
- *   from the same filter.
- * - The remedial queue → Reports, beside the record of what happened.
- * - Pack-down → Control step 11, under the confirmation that ends the Mission.
- * - The second Mission briefing → step 5, which is the one the rail points at.
- * - Where records live → Settings, which is where a Teacher goes to ask.
- *
- * What is left is the step pane, one line of Fleet health, which craft are in this period
- * (`LessonPrepPanel`), and starting or ending it.
+ * One scrolling page — Scenario, zones, teams, pre-flight, brief, then start. The
+ * Mission-run left rail and `?step=` gating are gone: a Teacher at 08:55 should see the
+ * work, not a wizard. Fleet health craft-by-craft, finished Lessons, pack-down and where
+ * records live stay on Fleet, Reports, Control and Settings.
  */
 export function LessonScreen() {
   const { snapshot, now, vitals } = useFleet()
@@ -101,37 +60,11 @@ export function LessonScreen() {
   const lessonId = lesson?.id ?? null
   const drones = snapshot.state?.drones ?? []
 
-  const [railOpen, setRailOpen] = useState(true)
   const [mission, setMission] = useState<Mission | null>(null)
 
-  /*
-   * Set-up happens before Start, so the Mission is drawn with no Lesson id and adopted by
-   * the Lesson that starts. Reading on mount rather than in the initialiser keeps the
-   * server render and the first client render agreeing about an empty board.
-   */
   useEffect(() => {
     setMission(lessonId === null ? readMission(null) : adoptMissionDraft(lessonId).mission)
   }, [lessonId])
-
-  const requestedStep = Number(useSearchParams().get('step'))
-  const teams = readTeams()
-
-  const facts = missionFlowFactsFrom({
-    mission,
-    teams,
-    preFlight: readPreFlightSeven(lessonId),
-    briefed: isMissionBriefingComplete(readMissionBriefing(lessonId)),
-    clearances: readClearances(lessonId),
-    telemetryFor: (droneId) =>
-      snapshot.state?.drones.find((drone) => drone.id === droneId)?.telemetry ?? null,
-    anyAirborne: vitals.some((entry) => entry.airborne),
-  })
-
-  // A step the Teacher asked for wins. Otherwise the records choose, clamped to set-up,
-  // because the later steps are not on this screen.
-  const step = isSetUpStep(requestedStep)
-    ? requestedStep
-    : Math.min(5, Math.max(1, currentMissionStep(facts)))
 
   if (!snapshot.state) {
     return (
@@ -145,62 +78,36 @@ export function LessonScreen() {
     <main
       id="content"
       tabIndex={-1}
-      className={cn(READING_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
+      className={cn(READING_FRAME, 'flex flex-col gap-8 p-4 min-[26rem]:p-8')}
     >
+      <header className="flex flex-col gap-2">
+        <h1 className="m-0 font-display text-heading font-medium text-balance">
+          Set this Mission up
+        </h1>
+        <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+          Choose the Scenario, draw the airspace, put teams on craft, tick pre-flight, brief
+          the class, then start the period. Live flying is on Control.
+        </p>
+      </header>
 
-      <div className="flex items-start gap-5">
-        <StepRail
-          facts={facts}
-          activeStep={step}
-          lessonName={lesson?.label ?? null}
-          open={railOpen}
-          onToggle={() => setRailOpen((was) => !was)}
-        />
+      {lesson ? (
+        <LessonUnderWay lesson={lesson} now={now} book={book} />
+      ) : (
+        <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
+      )}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-6">
-          <MissionPrep
-            step={step}
-            drones={drones}
-            book={book}
-            snapshot={snapshot}
-            lessonId={lessonId}
-            mission={mission}
-            onMissionChange={setMission}
-          />
-
-          {/*
-           * Everything the Lesson is besides the Mission: whether the Fleet is
-           * serviceable, who is flying what, starting and ending the period, pack-down,
-           * and what happened last week.
-           *
-           * It used to fold into a disclosure summarised "Start a Lesson, and the rest of
-           * the day", carried on every step. A Teacher on step 4 read it as a drawer of
-           * unexplained work under the one thing they were being asked to do. It is the
-           * top of the day, so it sits at the top of the day: step 1, in the open, and
-           * nowhere else.
-           */}
-          {step === 1 ? (
-            <div className="flex flex-col gap-6 border-t border-hairline pt-6">
-              {lesson ? (
-                <LessonUnderWay lesson={lesson} now={now} book={book} />
-              ) : (
-                <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
-              )}
-            </div>
-          ) : null}
-        </div>
-      </div>
+      <MissionPrep
+        drones={drones}
+        book={book}
+        snapshot={snapshot}
+        lessonId={lessonId}
+        mission={mission}
+        onMissionChange={setMission}
+      />
     </main>
   )
 }
 
-/**
- * The check before the lesson.
- *
- * Deliberately not just the board again. The board says what every Drone is; this says
- * whether the lesson can go ahead, and lists the things standing in the way in the order
- * a Teacher can act on them.
- */
 function PreFlight({
   drones,
   vitals,
@@ -213,14 +120,10 @@ function PreFlight({
   now: number
 }) {
   const [label, setLabel] = useState('')
-  const [exercises, setExercises] = useState<readonly Exercise[]>([])
-  const [absentNotice, setAbsentNotice] = useState<AbsentReassignResult | null>(null)
-  const [undoTick, setUndoTick] = useState(0)
-  void undoTick
+  const [exercises] = useState<readonly Exercise[]>([])
 
   const withheld = drones.filter((drone) => serviceStateOf(book, drone.id) === 'out-of-service')
   const withheldIds = new Set(withheld.map((drone) => drone.id))
-  // A Drone the Teacher has taken out of service is not available however healthy it is.
   const usable = drones.filter((drone) => isUsable(drone.status) && !withheldIds.has(drone.id))
   const blocking = drones.filter(
     (drone) => needsAttention(drone.status) && !withheldIds.has(drone.id),
@@ -230,19 +133,6 @@ function PreFlight({
 
   return (
     <section className="flex flex-col gap-5">
-      {/*
-       * Fleet health in one line, and then out of the way.
-       *
-       * This block used to be the serviceable headline, a ready / not-ready count, and a
-       * list of every craft standing in the way. All three answered "what is wrong with
-       * the Fleet", which is the question the Fleet board exists for and answers better:
-       * it lists every Drone with its Status and its fault. Two screens holding the same
-       * list means one of them is stale, and a Teacher at 08:55 reading past it to reach
-       * the step they came for.
-       *
-       * What survives is the one thing they need before the period: can this run. The
-       * numbers are said in words as well as digits, and the line is the way to the list.
-       */}
       <Link
         href="/"
         prefetch={false}
@@ -306,15 +196,6 @@ function PreFlight({
   )
 }
 
-/**
- * The lesson while it is happening — which is not here.
- *
- * A controller does not change position mid-sector. Everything about a running lesson now
- * lives on the Flight Control Center: what needs the Teacher, where every Drone is, what
- * each one is doing, and the way to finish. This screen says so and gets out of the way,
- * rather than offering a second, quieter version of the same thing to be watched by
- * mistake.
- */
 function LessonUnderWay({
   lesson,
   now,
@@ -340,16 +221,20 @@ function LessonUnderWay({
       {warming ? <LessonWarmUp onDone={finishWarmUp} /> : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>
-        <h2 className="m-0 font-display text-heading font-medium">{lesson.label}
-          <BeforeAfterScores scores={{ before: null, after: null }} /></h2>
+        <h2 className="m-0 font-display text-heading font-medium">
+          {lesson.label}
+          <BeforeAfterScores scores={{ before: null, after: null }} />
+        </h2>
         <p className="tnum m-0 text-value text-ink-subtle">
           {formatElapsed(Math.max(0, now - lesson.startedAt))} so far
         </p>
       </div>
 
+      <ClassroomCodePanel />
+
       <p className="m-0 text-body text-ink-muted">
-        Monitor from the Flight Control Center. Every item requiring action is listed there, in
-        the order it requires action, and the lesson is ended from there.
+        Monitor from the Flight Control Center. Students join on an iPad with the classroom
+        code. The lesson is ended from Control.
       </p>
 
       <WaitingList book={book} />
@@ -378,29 +263,10 @@ function LessonUnderWay({
   )
 }
 
-
-function NextStepHint({ children }: { readonly children: string }) {
-  return (
-    <p className="m-0 text-value text-ink-muted">
-      <span className="label">Next — </span>
-      {children}
-    </p>
-  )
-}
-
 /**
- * Mission set-up, one step at a time.
- *
- * This was a single column with five blocks that appeared as their turn came, and a
- * Teacher part-way down it had no way to tell how much was left or to go back and change
- * an answer. The five blocks have not changed. What changed is that one is on screen at a
- * time, the rail beside it says which, and the Scenario and the zones outlive the screen.
- *
- * The step comes from `?step=` rather than component state so the rail, the browser's back
- * button and a bookmarked half-finished set-up all agree.
+ * Mission set-up as one column — every block visible, no step rail.
  */
 function MissionPrep({
-  step,
   drones,
   book,
   snapshot,
@@ -408,7 +274,6 @@ function MissionPrep({
   mission,
   onMissionChange,
 }: {
-  readonly step: number
   readonly drones: readonly DroneState[]
   readonly book: ReturnType<typeof readLogbook>
   readonly snapshot: FleetSnapshot
@@ -419,68 +284,76 @@ function MissionPrep({
   const teams = readTeams()
   const scenarioId = mission?.scenarioId ?? null
   const zones = mission?.zones ?? []
-  const definition = MISSION_FLOW_STEPS[step - 1]
-  const phaseLabel =
-    MISSION_FLOW_PHASES.find((phase) => phase.id === definition?.phase)?.label ?? ''
-
   const craftIds = missionCraftIds(teams, mission)
   const telemetryFor = (droneId: string) =>
     snapshot.state?.drones.find((drone) => drone.id === droneId)?.telemetry ?? null
 
   return (
-    <div className="flex flex-col gap-5">
-      {/*
-       * The step names itself as an instruction, which is deliberately not the noun the
-       * rail uses. "Mission Scenario" is a place in the day; "Choose the Mission Scenario"
-       * is the work. Saying the same words twice would be the duplicate-navigation problem
-       * that got the first rail withdrawn.
-       */}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="label rounded-pill bg-muted px-2.5 py-1 text-ink-subtle">
-            {phaseLabel}
-          </span>
-          <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
+    <div className="flex flex-col gap-10">
+      <section className="flex flex-col gap-4" aria-labelledby="mission-scenario-heading">
+        <div className="flex flex-col gap-1">
+          <h2 id="mission-scenario-heading" className="m-0 font-display text-heading font-medium">
+            Choose the Mission Scenario
+          </h2>
+          <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+            The objective, what counts as success, and what the class focuses on. One Scenario
+            per period.
+          </p>
         </div>
-        <h1 className="m-0 font-display text-heading font-medium text-balance">
-          {definition?.title}
-        </h1>
-        <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition?.why}</p>
-      </div>
-
-      {step === 1 ? (
         <ScenarioPicker
           selectedScenarioId={scenarioId}
           onSelect={(id) => onMissionChange(chooseScenario(lessonId, id))}
           locked={false}
           bare
         />
-      ) : null}
+      </section>
 
-      {step === 2 ? (
+      <section className="flex flex-col gap-4" aria-labelledby="mission-area-heading">
+        <div className="flex flex-col gap-1">
+          <h2 id="mission-area-heading" className="m-0 font-display text-heading font-medium">
+            Draw the Mission area
+          </h2>
+          <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+            Mission Zone and No-fly Zones in the Fleet&apos;s own frame — not GPS.
+          </p>
+        </div>
         <MissionAreaEditor
           zones={zones}
           onChange={(next) => onMissionChange(setMissionZones(lessonId, next))}
           bare
         />
-      ) : null}
+      </section>
 
-      {step === 3 ? (
-        <>
-          <TeamsPanel book={book} drones={drones} bare />
-          <SetMissionCraftButton
-            lessonId={lessonId}
-            craftIds={craftIds}
-            mission={mission}
-            onMissionChange={onMissionChange}
-          />
-        </>
-      ) : null}
+      <section className="flex flex-col gap-4" aria-labelledby="mission-teams-heading">
+        <div className="flex flex-col gap-1">
+          <h2 id="mission-teams-heading" className="m-0 font-display text-heading font-medium">
+            Teams and Drones
+          </h2>
+          <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+            Put each team on a craft. Those craft become this Mission&apos;s fleet.
+          </p>
+        </div>
+        <TeamsPanel book={book} drones={drones} bare />
+        <SetMissionCraftButton
+          lessonId={lessonId}
+          craftIds={craftIds}
+          mission={mission}
+          onMissionChange={onMissionChange}
+        />
+      </section>
 
-      {step === 4 ? (
-        craftIds.length === 0 ? (
+      <section className="flex flex-col gap-4" aria-labelledby="mission-preflight-heading">
+        <div className="flex flex-col gap-1">
+          <h2 id="mission-preflight-heading" className="m-0 font-display text-heading font-medium">
+            Pre-flight check
+          </h2>
+          <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+            Every craft on a team, not only the first. Propellers is the tick you make by hand.
+          </p>
+        </div>
+        {craftIds.length === 0 ? (
           <p className="m-0 text-value text-ink-muted">
-            No craft on a team yet. Go back to Teams and Drones.
+            No craft on a team yet. Assign teams and Drones above.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
@@ -493,40 +366,35 @@ function MissionPrep({
               />
             ))}
           </div>
-        )
-      ) : null}
+        )}
+      </section>
 
-      {step === 5 ? (
-        <>
-          <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} bare />
-          {/* The classroom rules, which are a different list from the Mission rules and
-              used to sit on this screen twice over. */}
-          <SafetyBriefPanel lessonId={lessonId} />
-          {mission !== null && teams.length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <h2 className="label m-0">Team briefs to print</h2>
-              <div className="grid grid-cols-1 gap-4 min-[48rem]:grid-cols-2">
-                {teams.map((team) => (
-                  <TeamBriefPrint key={team.id} team={team} mission={mission} />
-                ))}
-              </div>
+      <section className="flex flex-col gap-4" aria-labelledby="mission-brief-heading">
+        <div className="flex flex-col gap-1">
+          <h2 id="mission-brief-heading" className="m-0 font-display text-heading font-medium">
+            Mission rules and safety briefing
+          </h2>
+          <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+            What the class hears before anyone asks to take off.
+          </p>
+        </div>
+        <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} bare />
+        <SafetyBriefPanel lessonId={lessonId} />
+        {mission !== null && teams.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            <h3 className="label m-0">Team briefs to print</h3>
+            <div className="grid grid-cols-1 gap-4 min-[48rem]:grid-cols-2">
+              {teams.map((team) => (
+                <TeamBriefPrint key={team.id} team={team} mission={mission} />
+              ))}
             </div>
-          ) : null}
-        </>
-      ) : null}
-
-      <MissionPrepFoot step={step} />
+          </div>
+        ) : null}
+      </section>
     </div>
   )
 }
 
-/**
- * Which craft this Mission is flown by, written onto the Mission itself.
- *
- * Teams already say it, and the rail reads teams directly. The Mission needs its own copy
- * because the clearance queue and the completion check are both about *this Mission's*
- * craft, and a team taking a different Drone tomorrow must not rewrite what happened today.
- */
 function SetMissionCraftButton({
   lessonId,
   craftIds,
@@ -561,44 +429,5 @@ function SetMissionCraftButton({
     >
       Put these {craftIds.length} craft on the Mission
     </button>
-  )
-}
-
-/**
- * Back and on, in the flow rather than only in the rail.
- *
- * The forward control says **Next** and nothing else. It used to be labelled with the next
- * step's whole `nextAction` sentence, which put a paragraph inside a button and gave the
- * one control a Teacher presses twelve times a day a different width and a different
- * wrapping on every step. Where it goes is said beside it, as text, where a changing
- * length costs nothing.
- */
-function MissionPrepFoot({ step }: { readonly step: number }) {
-  const next = MISSION_FLOW_STEPS[step]
-
-  return (
-    <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
-      {step > 1 ? (
-        <Link
-          href={`/lesson?step=${step - 1}`}
-          prefetch={false}
-          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink no-underline hover:border-ink"
-        >
-          Back
-        </Link>
-      ) : null}
-      {next ? (
-        <>
-          <Link
-            href={next.href}
-            prefetch={false}
-            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
-          >
-            Next
-          </Link>
-          <span className="text-value text-ink-subtle">{next.label}</span>
-        </>
-      ) : null}
-    </div>
   )
 }

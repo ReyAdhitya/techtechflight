@@ -58,10 +58,18 @@ describe('Recall on the command row', () => {
     )
     settle()
 
-    expect(screen.getAllByRole('button', { name: /^Land$/ })).toHaveLength(6)
-    expect(screen.getAllByRole('button', { name: /^Hover$/ })).toHaveLength(6)
-    expect(screen.getAllByRole('button', { name: /^Recall$/ })).toHaveLength(6)
-    expect(screen.getAllByRole('button', { name: /^Stop$/ })).toHaveLength(6)
+    // Six strips + the fleet ATC toolbar also exposes Recall / Stop.
+    expect(screen.getAllByRole('button', { name: /^Land$/ }).length).toBeGreaterThanOrEqual(6)
+    expect(screen.getAllByRole('button', { name: /^Hover$/ }).length).toBeGreaterThanOrEqual(6)
+    expect(screen.getAllByRole('button', { name: /^Recall$/ }).length).toBeGreaterThanOrEqual(6)
+    expect(screen.getAllByRole('button', { name: /^Stop$/ }).length).toBeGreaterThanOrEqual(6)
+    for (const id of ['ttf-0001', 'ttf-0002', 'ttf-0003', 'ttf-0004', 'ttf-0005', 'ttf-0006']) {
+      const strip = within(stripFor(id))
+      expect(strip.getByRole('button', { name: /^Land$/ })).toBeInTheDocument()
+      expect(strip.getByRole('button', { name: /^Hover$/ })).toBeInTheDocument()
+      expect(strip.getByRole('button', { name: /^Recall$/ })).toBeInTheDocument()
+      expect(strip.getByRole('button', { name: /^Stop$/ })).toBeInTheDocument()
+    }
   })
 
   it('is disabled while a Drone is on the ground', () => {
@@ -72,8 +80,8 @@ describe('Recall on the command row', () => {
     )
     settle()
 
-    for (const button of screen.getAllByRole('button', { name: /^Recall$/ })) {
-      expect(button).toBeDisabled()
+    for (const id of ['ttf-0001', 'ttf-0002', 'ttf-0003', 'ttf-0004', 'ttf-0005', 'ttf-0006']) {
+      expect(within(stripFor(id)).getByRole('button', { name: /^Recall$/ })).toBeDisabled()
     }
   })
 

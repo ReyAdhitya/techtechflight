@@ -48,10 +48,10 @@ export function AttentionBar({
       <section className="attention-bar flex flex-col gap-2">
         <h2 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
           <span className="tnum tracking-[-0.02em]">0</span>
-          <span className="text-heading text-ink-subtle">items require action</span>
+          <span className="text-heading text-ink-subtle">things need you</span>
         </h2>
         <p className="m-0 text-body text-ink-muted">
-          No items require action. All Drones in contact are nominal.
+          Nothing needs you. Every Drone in contact is behaving.
         </p>
       </section>
     )
@@ -78,7 +78,7 @@ export function AttentionBar({
       <h2 className="m-0 flex items-baseline gap-3 font-display text-summary font-medium">
         <span className="tnum tracking-[-0.02em]">{queue.length}</span>
         <span className="text-heading text-ink-subtle">
-          {queue.length === 1 ? 'item requires action' : 'items require action'}
+          {queue.length === 1 ? 'thing needs you' : 'things need you'}
         </span>
       </h2>
 

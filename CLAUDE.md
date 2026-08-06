@@ -148,14 +148,11 @@ a disclosure queue. Compacting grounded strips broke CI and hid Commands from th
 Integrator merges those fragments in issue order and deletes them — leftovers mean the wave
 never integrated.
 
-**The step rail is back, and it is not the rail that was withdrawn (ADR-0024).** A twelve-step
-left rail shipped on 2026-08-04 and was pulled the same day for being a second navigation. The
-one on Lesson and Control now carries state: done / current / live / locked, and a locked step
-says what is in the way. It minimises, and slides away on a narrow board. `live` is deliberate,
-steps 7 to 10 are not things a Teacher finishes. Marks come from `web/lib/mission-flow.ts`,
-which reads records only, and **done is checked before open** so a step whose condition stops
-holding does not read as never started. Lesson set-up is one step per screen via `?step=`, so
-`/lesson` needs its `Suspense` boundary.
+**The Mission-run step rail is gone again (ADR-0024 superseded 2026-08-06).** Lesson is one
+scrolling page for Mission set-up. Control is one live board (Attention, clearances, Scope,
+ATC toolbar, strips, seal, pack-down) with no `?step=` gating. Poster twelve steps are a
+checklist of work, not a left nav. `web/lib/mission-flow.ts` may still exist for facts; do not
+re-mount `StepRail` without a new ADR.
 
 **Lesson is the Mission and the period, and nothing else.** Set the Mission up, start or end
 the period. Everything that used to sit under the steps now lives on the screen whose
@@ -174,16 +171,15 @@ from eligibility and eligibility needs an active Mission.
 
 **The Student's tablet is a second audience, not a narrow board (ADR-0025).** It reads the
 classroom session (`techtechflight:classroom-session`), which `ClassroomOpen` writes from the
-Mission the Teacher already planned, including the sealed `outcome` once step 11 confirms.
-Landscape and full width, one dominant thing at a time and it changes with the phase, and
-**exactly two pressable things in the whole app**: Ask to take off, and Understood. No classroom
-code on screen, no phase counter, and no figure the Fleet is not sending. Which screen a Student
-is on comes from Telemetry and the Teacher's answer, never from a press: `flownAt` is the first
-sighting off the ground and is what separates a landed Student from a cleared one, and `held` is
-its own phase because a hold sent back to `request-takeoff` reads as never having asked. Three
-limits it states out loud: one machine only (no iPad transport yet), nothing here reaches an
-aircraft (ADR-0021), and an absent reading is printed as absent. The first Student screen was
-reverted eight minutes after merging for breaking the first of these.
+Mission the Teacher already planned, including the sealed `outcome`. Landscape and full width,
+one dominant thing at a time and it changes with the phase, and **exactly two pressable things
+in the whole app**: Ask to take off, and Understood. Join on an iPad with the Teacher's
+classroom code (`/api/classroom` + Blob when configured; localStorage + BroadcastChannel on one
+machine). No permanent classroom code on the Student chrome after join, no phase counter, and no
+figure the Fleet is not sending. Which screen a Student is on comes from Telemetry and the
+Teacher's answer, never from a press: `flownAt` is the first sighting off the ground, and `held`
+is its own phase. Limits: nothing here reaches an aircraft (ADR-0021), and an absent reading is
+printed as absent.
 
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare

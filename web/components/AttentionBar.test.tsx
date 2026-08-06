@@ -34,7 +34,7 @@ describe('when nothing needs the Teacher', () => {
     bar([aVitals()])
 
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('0')
-    expect(screen.getByText(/No items require action/i)).toBeInTheDocument()
+    expect(screen.getByText(/Nothing needs you/i)).toBeInTheDocument()
   })
 
   it('still shows the count, so its return is a number changing', () => {

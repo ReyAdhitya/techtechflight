@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useSyncExternalStore, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import {
   assignStudent,
   assignNextRosterName,
@@ -68,33 +67,35 @@ import { ClearanceQueue, type ClearanceQueueCraft } from './ClearanceQueue'
 import { ConfirmMissionComplete } from './ConfirmMissionComplete'
 import { CraftReturnedTick } from './CraftReturnedTick'
 import { PackdownChecklist } from './PackdownChecklist'
-import { StepRail } from './StepRail'
+import { TeacherAtcToolbar } from './TeacherAtcToolbar'
+import { ClassroomCodePanel } from './ClassroomCodePanel'
+import { ScenarioWatchList } from './ScenarioWatchList'
 import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 import { readClearances, writeClearances } from '@/lib/clearance-store'
-import { grantSeatsForDrone, readClassroomSession } from '@/lib/classroom-session'
+import {
+  grantSeatsForDrone,
+  pushClassroomInstruction,
+  readClassroomSession,
+} from '@/lib/classroom-session'
 import type { ClearanceState } from '@/lib/clearance'
 import { emptyClearanceState } from '@/lib/clearance'
 import { putMission, readMission, startMission } from '@/lib/mission-draft'
-import { missionCraftIds, missionFlowFactsFrom } from '@/lib/mission-flow-facts'
-import {
-  MISSION_FLOW_PHASES,
-  MISSION_FLOW_STEPS,
-  MISSION_STEP_COUNT,
-  currentMissionStep,
-} from '@/lib/mission-flow'
+import { missionCraftIds } from '@/lib/mission-flow-facts'
 import type { Mission } from '@/lib/mission'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 import { readPreFlightSeven, propellersTicked } from '@/lib/preflight-seven'
 import { readTeams, teamForStudent } from '@/lib/teams'
-import { isMissionBriefingComplete, readMissionBriefing } from './MissionBriefing'
+import type { MissionWithInstructions } from './AssignTargetControl'
+import { AssignTargetControl } from './AssignTargetControl'
+import { InstructionControls } from './InstructionControls'
+import type { LocalPosition } from '@techtechflight/contract'
 
 /**
  * The Flight Control Center: calm while the Mission runs.
  *
- * Order is fixed and short: what needs you (one Alert), where everything is (Scope),
- * three fleet actions, then compact strips. Per-Drone Commands and dense Telemetry stay
- * behind selection so a Teacher glancing up for two seconds is not hunting past chrome.
+ * One live board — Attention, clearances, Scope, ATC toolbar, strips, seal and pack-down.
+ * The Mission-run step rail is gone; a Teacher does not change "pages" mid-sector.
  */
 export function ControlScreen() {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
@@ -107,12 +108,14 @@ export function ControlScreen() {
   // Camera slide is watch-only chrome — not a Command (C9). Settings still owns the map.
   const [cameraDroneId, setCameraDroneId] = useState<string | null>(null)
   const [ghostPaths, setGhostPaths] = useState<GhostPathStore>(() => new Map())
-  const [railOpen, setRailOpen] = useState(true)
-  const requestedStep = Number(useSearchParams().get('step'))
   // The Mission and its clearances are read on mount, not in an initialiser: the server
   // render has no localStorage and must not disagree with the first client paint.
   const [mission, setMission] = useState<Mission | null>(null)
   const [clearances, setClearances] = useState<ClearanceState>(() => emptyClearanceState())
+  const [pickedTarget, setPickedTarget] = useState<LocalPosition | null>(null)
+  const clearanceRef = useRef<HTMLElement | null>(null)
+  const scopeRef = useRef<HTMLElement | null>(null)
+  const targetRef = useRef<HTMLElement | null>(null)
   const airborneTracker = useRef(new AirborneTracker())
   const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
   const ceilingLessonId = useRef<string | null>(null)
@@ -176,6 +179,22 @@ export function ControlScreen() {
     writeLessonCeilingBreachCount(lesson.id, next.count)
   }, [lesson, vitals])
 
+  const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
+
+  // New-target picker: use the selected craft's present position when the Teacher has
+  // not tapped a different point yet (Scope tap wiring can replace this later).
+  useEffect(() => {
+    if (selectedVitals === null || !state) {
+      setPickedTarget(null)
+      return
+    }
+    const drone = state.drones.find((row) => row.id === selectedVitals.droneId)
+    const position = drone?.telemetry?.position
+    if (position) {
+      setPickedTarget({ eastM: position.eastM, northM: position.northM })
+    }
+  }, [selectedVitals, state])
+
   if (!state) {
     return (
       <main id="content" tabIndex={-1} className="p-8">
@@ -190,7 +209,6 @@ export function ControlScreen() {
   const strips = vitals
   const airborneCount = vitals.filter((entry) => entry.airborne).length
   const groundedCount = vitals.length - airborneCount
-  const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
   const cameraDrone =
     cameraDroneId === null
       ? null
@@ -198,11 +216,6 @@ export function ControlScreen() {
   const boardDroneIds = state.drones.map((drone) => drone.id)
   const nextRosterName = nextRosterNameForAssign(book)
 
-  /*
-   * Step 6 and step 11 of the Mission run, which were built, tested and never mounted.
-   * Both are records rather than Commands (ADR-0021): granting a clearance is the
-   * Teacher's answer on record, and confirming completion seals what was observed.
-   */
   const teams = readTeams()
   const preFlight = readPreFlightSeven(lessonId)
   const missionCraft = missionCraftIds(teams, mission)
@@ -226,27 +239,6 @@ export function ControlScreen() {
         studentName: studentOf(book, drone.id),
       }
     })
-
-  const missionFacts = missionFlowFactsFrom({
-    mission,
-    teams,
-    preFlight,
-    briefed: isMissionBriefingComplete(readMissionBriefing(lessonId)),
-    clearances,
-    telemetryFor: (droneId) =>
-      state.drones.find((drone) => drone.id === droneId)?.telemetry ?? null,
-    anyAirborne: airborneCount > 0,
-  })
-
-  /*
-   * Which step is on screen. Control carries steps 6 to 11, so a `?step=` outside that
-   * range falls back to whatever the records say the Teacher is on.
-   */
-  const fromRecords = currentMissionStep(missionFacts)
-  const step =
-    requestedStep >= 6 && requestedStep <= 11
-      ? requestedStep
-      : Math.min(11, Math.max(6, fromRecords))
 
   // Board order, both fields, from the Fleet State this screen already has.
   const packdownCrafts = state.drones.map((drone) => ({
@@ -289,21 +281,53 @@ export function ControlScreen() {
     reset()
   }
 
+  const selectedCraftOption =
+    selectedVitals === null
+      ? null
+      : {
+          droneId: selectedVitals.droneId,
+          droneName: selectedVitals.callsign,
+          teamId: (() => {
+            const sid = studentIdOf(book, selectedVitals.droneId)
+            return sid === null ? null : (teamForStudent(teams, sid)?.id ?? null)
+          })(),
+          teamName: (() => {
+            const sid = studentIdOf(book, selectedVitals.droneId)
+            return sid === null ? null : (teamForStudent(teams, sid)?.name ?? null)
+          })(),
+        }
+
+  const assignTargetTeams = teams
+    .map((team) => {
+      const droneId = team.droneId
+      if (droneId === null) return null
+      return { teamId: team.id, teamName: team.name, droneId }
+    })
+    .filter((row): row is { teamId: string; teamName: string; droneId: string } => row !== null)
+
+  const persistMission = (next: MissionWithInstructions) => {
+    setMission(putMission(lessonId, next as Mission))
+    const session = readClassroomSession()
+    if (session === null) return
+    const previous: readonly { readonly id: string }[] =
+      mission !== null && Array.isArray((mission as MissionWithInstructions).instructions)
+        ? ((mission as MissionWithInstructions).instructions ?? [])
+        : []
+    const added = (next.instructions ?? []).filter(
+      (row) => !previous.some((before) => before.id === row.id),
+    )
+    let carried = session
+    for (const row of added) {
+      carried = pushClassroomInstruction(carried, row.detail, 'info')
+    }
+  }
+
   return (
     <main
       id="content"
       tabIndex={-1}
-      className={cn(INSTRUMENT_FRAME, 'flex items-start gap-5 p-4 min-[26rem]:p-8')}
+      className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
-      <StepRail
-        facts={missionFacts}
-        activeStep={step}
-        lessonName={lesson?.label ?? null}
-        open={railOpen}
-        onToggle={() => setRailOpen((was) => !was)}
-      />
-
-      <div className="flex min-w-0 flex-1 flex-col gap-6">
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
@@ -313,33 +337,22 @@ export function ControlScreen() {
         <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
       </div>
 
-      {/*
-       * Alerts belong to step 10 and to nowhere else.
-       *
-       * The bar used to sit above every step as an `<h1>` counting "4 items require
-       * action", with a focused Alert and a folded queue under it. On a screen whose whole
-       * point is one step at a time it was a second screen stacked on the first, and the
-       * count won the race for the Teacher's eye against the step heading every time.
-       * Step 10 is *Work the Alert at the top*, so that is where the top is.
-       */}
-      <MissionStepHead step={step} />
+      {lesson ? <ClassroomCodePanel /> : null}
 
-      {step === 10 ? (
-        <AttentionBar
-          queue={queue}
-          studentFor={(droneId) => studentOf(book, droneId)}
-          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
-          onResponse={(entry, response) => {
-            if (response.command !== null) {
-              issueCommand(entry.droneId, response.command, entry.callsign)
-            }
-            acknowledge(entry.droneId, entry)
-          }}
-        />
-      ) : null}
+      {mission !== null ? <ScenarioWatchList scenarioId={mission.scenarioId} /> : null}
 
-      {step === 10 ? (
-        <>
+      <AttentionBar
+        queue={queue}
+        studentFor={(droneId) => studentOf(book, droneId)}
+        onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+        onResponse={(entry, response) => {
+          if (response.command !== null) {
+            issueCommand(entry.droneId, response.command, entry.callsign)
+          }
+          acknowledge(entry.droneId, entry)
+        }}
+      />
+
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
       <ControlDisclosure summary="Also noting">
@@ -356,42 +369,52 @@ export function ControlScreen() {
           <LongestAirborne now={now} craft={longestAirborneCraft} />
         </div>
       </ControlDisclosure>
-        </>
+
+      {mission !== null ? (
+        <section ref={clearanceRef} className="flex flex-col gap-3 scroll-mt-4">
+          <ClearanceQueue
+            state={clearances}
+            craft={clearanceCraft}
+            grantedBy="Teacher"
+            now={now}
+            onStateChange={(next) => {
+              setClearances(writeClearances(lessonId, next))
+              const session = readClassroomSession()
+              if (session === null) return
+              const grantedNow = next.records.filter(
+                (record) =>
+                  record.grantedAt !== null &&
+                  !clearances.records.some(
+                    (before) =>
+                      before.droneId === record.droneId && before.grantedAt !== null,
+                  ),
+              )
+              let carried = session
+              for (const record of grantedNow) {
+                carried = grantSeatsForDrone(carried, record.droneId)
+              }
+            }}
+          />
+        </section>
       ) : null}
 
-      {step === 6 && mission !== null ? (
-        <ClearanceQueue
-          state={clearances}
-          craft={clearanceCraft}
-          grantedBy="Teacher"
-          now={now}
-          /*
-           * Granting a craft answers the Student sitting on it. The Teacher grants craft,
-           * not people, so the seat is found by craft; a seat with no craft on it falls
-           * back to whoever is waiting, which is what `grantSeatsForDrone` does.
-           */
-          onStateChange={(next) => {
-            setClearances(writeClearances(lessonId, next))
-            const session = readClassroomSession()
-            if (session === null) return
-            const grantedNow = next.records.filter(
-              (record) =>
-                record.grantedAt !== null &&
-                !clearances.records.some(
-                  (before) =>
-                    before.droneId === record.droneId && before.grantedAt !== null,
-                ),
-            )
-            let carried = session
-            for (const record of grantedNow) {
-              carried = grantSeatsForDrone(carried, record.droneId)
-            }
-          }}
-        />
-      ) : null}
+      <TeacherAtcToolbar
+        mission={mission}
+        selectedCraft={selectedCraftOption}
+        airborneCount={airborneCount}
+        givenBy="Teacher"
+        onCommandFleet={(kind) => {
+          for (const entry of vitals) {
+            if (entry.airborne) issueCommand(entry.droneId, kind, entry.callsign)
+          }
+        }}
+        onMissionChange={persistMission}
+        onFocusClearance={() => clearanceRef.current?.scrollIntoView({ behavior: 'smooth' })}
+        onFocusScope={() => scopeRef.current?.scrollIntoView({ behavior: 'smooth' })}
+        onFocusNewTarget={() => targetRef.current?.scrollIntoView({ behavior: 'smooth' })}
+      />
 
-      {step === 7 ? (
-      <section className="flex flex-col gap-3">
+      <section ref={scopeRef} className="flex flex-col gap-3 scroll-mt-4">
         <h2 className="label m-0">Where everything is</h2>
         <Scope
           drones={state.drones}
@@ -422,14 +445,13 @@ export function ControlScreen() {
             ) : null
           }
         />
+        <p className="m-0 text-value text-ink-muted">
+          Draw or change No-fly Zones on Lesson under Mission area. Scope shows them live.
+        </p>
       </section>
-      ) : null}
 
-      {(step === 7 || step === 9) && airborneCount > 0 && (
-        <section
-          className="flex flex-wrap items-center gap-3"
-          aria-label="Fleet actions"
-        >
+      {airborneCount > 0 && (
+        <section className="flex flex-wrap items-center gap-3" aria-label="Fleet actions">
           <LandAllButton
             fleet={vitals.map((entry) => ({
               droneId: entry.droneId,
@@ -463,7 +485,30 @@ export function ControlScreen() {
         </section>
       )}
 
-      {step === 8 || step === 9 ? (
+      {mission !== null && selectedCraftOption !== null ? (
+        <section ref={targetRef} className="flex flex-col gap-3 scroll-mt-4">
+          <h2 className="label m-0">Instructions for the selected craft</h2>
+          <InstructionControls
+            mission={mission}
+            craft={selectedCraftOption}
+            givenBy="Teacher"
+            onRecorded={persistMission}
+          />
+          {assignTargetTeams.length > 0 ? (
+            <AssignTargetControl
+              mission={mission}
+              teams={assignTargetTeams}
+              pickedPosition={pickedTarget}
+              givenBy="Teacher"
+              onRecorded={(next) => {
+                persistMission(next)
+                setPickedTarget(null)
+              }}
+            />
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
@@ -515,23 +560,6 @@ export function ControlScreen() {
             )}
           </div>
         </ControlDisclosure>
-        {/*
-         * Fixed anatomy, and it has to be fixed across strips rather than within one.
-         *
-         * §1.1 of docs/DESIGN.md justifies this whole format on being "scannable by
-         * position rather than by reading — the eye learns where charge is and stops
-         * re-finding it". The row was a `flex flex-wrap`, so every cell was sized by its
-         * own content and each strip found its own column positions. It looked aligned
-         * only because every Drone was in the same phase: the moment one took off,
-         * "On the ground" became "Level", ~70px narrower, and that row's charge and
-         * response slid left — on exactly the strip something was happening to.
-         *
-         * The columns therefore live here, on the list, and each strip takes them by
-         * subgrid. Freespace is the **response** column (`1fr`), not charge — charge
-         * stays snug after height so the eye does not cross a cavern to find Response.
-         * Below the breakpoint there is not room for five columns and the strip falls
-         * back to wrapping, where alignment is not what a phone is doing anyway.
-         */}
         <ul
           className={cn(
             'm-0 flex list-none flex-col gap-2 p-0',
@@ -544,7 +572,9 @@ export function ControlScreen() {
               vitals={entry}
               student={studentOf(book, entry.droneId)}
               selected={selected === entry.droneId}
-              onSelect={() => setSelected((current) => (current === entry.droneId ? null : entry.droneId))}
+              onSelect={() =>
+                setSelected((current) => (current === entry.droneId ? null : entry.droneId))
+              }
               swapTargetId={selected}
               onSwap={
                 selected !== null && selected !== entry.droneId
@@ -571,30 +601,19 @@ export function ControlScreen() {
           ))}
         </ul>
       </section>
-      ) : null}
 
-      {step === 11 && mission !== null && mission.startedAt !== null ? (
+      {mission !== null && mission.startedAt !== null ? (
         <section className="flex flex-col gap-3 border-t border-hairline pt-5">
           <h2 className="label m-0">Mission complete</h2>
           <ConfirmMissionComplete
             mission={mission}
             craft={missionCraftStatus}
             judges={scenarioOrUnknown(mission.scenarioId).judges}
-            /*
-             * Only what the board actually watched. Everything it did not measure stays
-             * absent rather than defaulting to true, so an unknown scores as unknown.
-             */
             evidence={{
               hadCollision: null,
               noFlyViolations: null,
               routeCoverageKnown: null,
             }}
-            /*
-             * Two writes, deliberately. The side key is the working copy Control reads
-             * while the period runs; the Logbook is the record Reports and the Student
-             * screen read afterwards. Without the second one a confirmed score was
-             * unreadable the moment the next period overwrote the key.
-             */
             onConfirmed={(sealed) => {
               setMission(putMission(lessonId, sealed))
               if (lessonId !== null) putMissionOnLesson(lessonId, sealed)
@@ -603,24 +622,13 @@ export function ControlScreen() {
         </section>
       ) : null}
 
-      {/*
-       * Pack-down is close-down, so it is step 11's.
-       *
-       * These three lived on the Lesson screen, inside the running-Lesson block, which is
-       * the screen a Teacher sets the *next* period up on. Putting the craft away happens
-       * at the end of this one, under the confirmation that ends it.
-       */}
-      {step === 11 && lesson !== null ? (
+      {lesson !== null ? (
         <section className="flex flex-col gap-4 border-t border-hairline pt-5">
-          {/* PackdownChecklist supplies the Pack-down heading; Lesson wrapped it in a
-              second one saying the same word. */}
           <PackdownChecklist lessonId={lesson.id} crafts={packdownCrafts} />
           <BatteryOnChargeTick lessonId={lesson.id} packs={packdownCrafts} />
           <CraftReturnedTick lessonId={lesson.id} crafts={packdownCrafts} />
         </section>
       ) : null}
-
-      <MissionStepFoot step={step} />
 
       {cameraDrone && (
         <CameraSlide
@@ -631,7 +639,6 @@ export function ControlScreen() {
           onClose={() => setCameraDroneId(null)}
         />
       )}
-      </div>
     </main>
   )
 }
@@ -1144,75 +1151,6 @@ function describeCommand(tracked: TrackedCommand): string {
       // not distinguishable from here.
       return `${asked} — sent, no response since`
   }
-}
-
-/**
- * The step, named the way the Lesson screen names it.
- *
- * Phase, number, an instruction as the heading, one line on what the step is for. Same
- * shape on both screens so crossing from set-up to flying does not feel like arriving
- * somewhere else.
- */
-function MissionStepHead({ step }: { readonly step: number }) {
-  const definition = MISSION_FLOW_STEPS[step - 1]
-  const phase = MISSION_FLOW_PHASES.find((entry) => entry.id === definition?.phase)
-  if (!definition) return null
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="label rounded-pill bg-muted px-2.5 py-1 text-ink-subtle">
-          {phase?.label}
-        </span>
-        <span className="label tnum">{`Step ${step} of ${MISSION_STEP_COUNT}`}</span>
-      </div>
-      <h1 className="m-0 font-display text-heading font-medium text-balance">
-        {definition.title}
-      </h1>
-      <p className="m-0 max-w-[62ch] text-value text-ink-subtle">{definition.why}</p>
-    </div>
-  )
-}
-
-/**
- * Back and Next, the same pair the Lesson steps carry.
- *
- * Control had no way between steps but the rail, which minimises and slides away on a
- * narrow board. Both ends stay on Control: step 6 does not walk back into set-up, and step
- * 11 is the last thing Control does, so the debrief on Reports is left to the rail.
- */
-function MissionStepFoot({ step }: { readonly step: number }) {
-  const back = step > 6 ? step - 1 : null
-  const next = step < 11 ? step + 1 : null
-  const nextLabel = next === null ? null : MISSION_FLOW_STEPS[next - 1]?.label
-
-  if (back === null && next === null) return null
-
-  return (
-    <div className="flex flex-wrap items-center gap-3 border-t border-hairline pt-4">
-      {back !== null ? (
-        <Link
-          href={`/control?step=${back}`}
-          prefetch={false}
-          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink no-underline hover:border-ink"
-        >
-          Back
-        </Link>
-      ) : null}
-      {next !== null ? (
-        <>
-          <Link
-            href={`/control?step=${next}`}
-            prefetch={false}
-            className="min-h-11 cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
-          >
-            Next
-          </Link>
-          <span className="text-value text-ink-subtle">{nextLabel}</span>
-        </>
-      ) : null}
-    </div>
-  )
 }
 
 const COMMAND_WORDS: Readonly<Record<CommandKind, string>> = {

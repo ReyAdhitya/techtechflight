@@ -17,27 +17,14 @@ import { ControlScreen } from './ControlScreen'
 import { FleetProvider } from './FleetProvider'
 
 /**
- * Steps 6 and 11 of the Mission run, which existed as code and as tests and were never
- * mounted on a screen.
- *
- * `ClearanceQueue` and `ConfirmMissionComplete` both shipped with their own passing tests
- * and neither was imported by anything a Teacher could open, so approving a takeoff and
- * sealing a Mission were unreachable in the product. These assertions are about the wiring
- * rather than the components: that Control renders them, and that granting a clearance
- * survives being written down.
+ * Clearance and Mission seal on the always-on Control board (no step rail).
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
-// The step under test, since Control now shows one at a time.
-const search = vi.hoisted(() => ({ current: new URLSearchParams('step=6') }))
 vi.mock('next/navigation', () => ({
   usePathname: () => pathname.current,
-  useSearchParams: () => search.current,
+  useSearchParams: () => new URLSearchParams(),
 }))
-
-const atStep = (step: number) => {
-  search.current = new URLSearchParams(`step=${step}`)
-}
 
 const settle = () =>
   act(() => {
@@ -61,7 +48,6 @@ const wipe = () => {
   }
 }
 
-/** A Lesson with a Mission on it, one team, one craft, propellers ticked. */
 function classReadyToFly(): string {
   startLesson('Year 8', 6, 6, Date.now(), [])
   const lessonId = runningLesson(readLogbook())!.id
@@ -90,7 +76,6 @@ const control = () =>
 
 beforeEach(() => {
   pathname.current = '/demo'
-  atStep(6)
   clearLogbook()
   wipe()
   vi.useFakeTimers()
@@ -102,7 +87,7 @@ afterEach(() => {
   wipe()
 })
 
-describe('step 6, approving takeoff', () => {
+describe('approving takeoff on the live board', () => {
   it('is not on the board at all until there is a Mission to clear', () => {
     control()
     settle()
@@ -118,10 +103,6 @@ describe('step 6, approving takeoff', () => {
     expect(screen.getByRole('heading', { name: /Awaiting clearance/i })).toBeInTheDocument()
   })
 
-  /*
-   * The count stays visible at zero. A queue that vanishes when nobody is waiting reads as
-   * a layout bug rather than as information (DELIBERATE-POSITIONS 3).
-   */
   it('keeps the queue on screen when nobody is waiting', () => {
     startLesson('Year 8', 6, 6, Date.now(), [])
     const lessonId = runningLesson(readLogbook())!.id
@@ -153,14 +134,11 @@ describe('step 6, approving takeoff', () => {
     control()
     settle()
 
-    // The queue fills itself from eligibility, and eligibility needs an active Mission.
     expect(readMission(lessonId)?.startedAt).not.toBeNull()
   })
 })
 
-describe('step 11, confirming the Mission complete', () => {
-  beforeEach(() => atStep(11))
-
+describe('confirming the Mission complete', () => {
   it('stays off the board when there is no Mission to confirm', () => {
     control()
     settle()
@@ -181,39 +159,30 @@ describe('step 11, confirming the Mission complete', () => {
     expect(readMission(lessonId)?.outcome ?? null).toBeNull()
   })
 
-  /*
-   * Pack-down lived on the Lesson screen, which is where a Teacher sets the *next* period
-   * up. Putting the craft away happens at the end of this one, under the confirmation
-   * that ends it.
-   */
   it('carries pack-down under the confirmation', () => {
     classReadyToFly()
     control()
     settle()
 
-    // One heading, not two: the checklist supplies its own and Lesson wrapped it in a
-    // second one saying the same word.
     expect(screen.getAllByRole('heading', { name: 'Pack-down' })).toHaveLength(1)
     expect(screen.getByRole('heading', { name: 'Craft returned' })).toBeInTheDocument()
   })
-
-  it('leaves pack-down off the flying steps', () => {
-    classReadyToFly()
-    atStep(7)
-    control()
-    settle()
-
-    expect(screen.queryByRole('heading', { name: 'Pack-down' })).not.toBeInTheDocument()
-  })
 })
 
-describe('the rail on Control', () => {
-  beforeEach(() => atStep(6))
-
-  it('is there, so a Teacher does not lose their place crossing screens', () => {
+describe('the live Control board', () => {
+  it('has no Mission step rail', () => {
     control()
     settle()
 
-    expect(screen.getByRole('navigation', { name: /Mission steps/i })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: /Mission steps/i })).not.toBeInTheDocument()
+  })
+
+  it('shows the Teacher ATC toolbar', () => {
+    classReadyToFly()
+    control()
+    settle()
+
+    expect(screen.getByRole('region', { name: /Teacher ATC actions/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Approve takeoff' })).toBeInTheDocument()
   })
 })

@@ -7,13 +7,20 @@ would notice.
 
 ### Changed
 
+- **Lesson is one scrolling page again; the Mission-run rail is gone.** Scenario, zones,
+  teams, pre-flight, brief and Start sit on `/lesson` without `?step=`. Control is one live
+  board: Attention, classroom code, Scenario watch-list, clearances, Teacher ATC toolbar,
+  Scope, strips, Mission seal and pack-down — always on, not step-gated. ADR-0024 superseded.
+- **Attention speaks Teacher words again** — “things need you” / “behaving”, not “nominal”.
+- **Students join on an iPad with the classroom code** (`/api/classroom` + join door). Same
+  laptop still shares via localStorage. Role switch from Settings and the Student chrome.
+- **Reports opens with a Debrief** of sealed Mission scores.
 - **Lesson answers one question: set this Mission up, and start or end the period.**
   Everything else it carried moved to the screen whose question it answers, or went because
   that screen already answered it. Fleet health, craft by craft, is the **Fleet** board's;
   one line stays on Lesson saying whether the period can run, and links there. Finished
-  Lessons and the remedial queue are **Reports**'. Pack-down is **Control** step 11, under
-  the confirmation that ends the Mission. The second copy of the Mission briefing goes;
-  step 5 is the one the rail points at. Where records are stored is said on **Settings**
+  Lessons and the remedial queue are **Reports**'. Pack-down is on **Control**, under the
+  confirmation that ends the Mission. Where records are stored is said on **Settings**
   alone, not on four screens.
 
 ### Removed

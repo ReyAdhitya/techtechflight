@@ -9,6 +9,19 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-06 · Mission-run rail withdrawn for a one-page Lesson and always-on Control.
+
+- **Decision / notes:** The left twelve-step rail (ADR-0024) is removed again. Lesson shows
+  every set-up block in one scroll. Control shows Attention, clearances, Scope, ATC toolbar,
+  strips, seal and pack-down together. Poster steps remain a checklist of work, not a second
+  nav. Classroom code sync for iPads ships as `/api/classroom` (Blob keyed by code); Teacher
+  chrome shows/copies the code; Student door joins by code then name. Approve takeoff stays a
+  Clearance (ADR-0021). See `docs/POSTER-WORKFLOW-PLAN.md`.
+- **Could have gone differently:** Keep the rail and only fix empty step 6. Rejected: the
+  owner asked for one-page Lesson, and the rail was already withdrawn once for being a second
+  navigation. Hide pack-down until “step 11”. Rejected: with no steps, close-down belongs at
+  the bottom of Control whenever a Lesson is running.
+
 ## 2026-08-06 · The Student's score is copied onto the classroom session, not looked up.
 
 - **Decision / notes:** The Teacher seals a Mission on Control step 11, which writes the sealed

@@ -1,5 +1,11 @@
 # The Mission run rail returns, carrying state and able to be put away
 
+> **Superseded 2026-08-06.** The rail is withdrawn again. Lesson is one scrolling page for
+> Mission set-up; Control is one live board (Attention, clearances, Scope, strips, seal,
+> pack-down) with no `?step=` gating. The twelve poster steps remain a checklist of work, not
+> a second navigation. See `docs/POSTER-WORKFLOW-PLAN.md` Wave A and `docs/DECISIONS.md`
+> (2026-08-06 · Mission-run rail withdrawn for a one-page Lesson).
+
 The twelve steps of the operational workflow are back as a left rail on Lesson and Control. This
 reverses the decision of 2026-08-04, which withdrew a twelve-step left rail the same day it
 shipped. The reversal is narrow, and it rests on what was wrong with the first one rather than

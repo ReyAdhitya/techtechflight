@@ -9,6 +9,7 @@ import {
   readClassroomSession,
   requestTakeoff,
   resetClassroomForTests,
+  updateSeatPhase,
 } from '@/lib/classroom-session'
 import { clearLogbook, saveRoll } from '@/lib/logbook'
 import { FleetProvider } from './FleetProvider'
@@ -280,6 +281,37 @@ describe('asking for takeoff, and the answer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
     settle()
     expect(screen.queryAllByRole('button')).toHaveLength(0)
+  })
+
+  /*
+   * A clearance is permission to leave the ground, not evidence of having left it. This is
+   * the whole reason the screen reads `flownAt` and not `clearedAt`: a Student cleared and
+   * still standing on the pad was being told they had landed.
+   */
+  it('leaves a cleared Student on the brief until the craft actually leaves the ground', () => {
+    const studentId = seatWithCraft()
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+
+    grantSeatClearance(readClassroomSession()!, studentId)
+    reopen()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Cleared for takeoff')
+    expect(screen.queryByText('You are down')).not.toBeInTheDocument()
+  })
+
+  /*
+   * And once it has flown, the way back is its own screen. Nothing a Student presses puts
+   * them here: `flownAt` is written from Telemetry, and the craft being on the ground is
+   * read from Telemetry too.
+   */
+  it('shows the way down once the craft has flown and is down again', () => {
+    const studentId = seatWithCraft()
+    updateSeatPhase(readClassroomSession()!, studentId, 'returning', { flownAt: 5_000 })
+    reopen()
+
+    expect(screen.getByText('You are down')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ask to take off' })).not.toBeInTheDocument()
   })
 })
 

@@ -6,7 +6,9 @@ import {
   joinClassroomAsStudent,
   readClassroomSession,
   readStudentSeatLocal,
+  markSeatFlown,
   requestTakeoff,
+  seatHasFlown,
   subscribeClassroom,
   type ClassroomInstruction,
   type ClassroomSeat,
@@ -105,15 +107,26 @@ function SeatedStudent({
   readonly onSession: (session: ClassroomSession) => void
 }) {
   const { vitals } = useFleet()
-  const airborne =
-    seat.droneId !== null &&
-    vitals.find((entry) => entry.droneId === seat.droneId)?.airborne === true
+  const mine = seat.droneId === null
+    ? null
+    : (vitals.find((entry) => entry.droneId === seat.droneId) ?? null)
+  const airborne = mine?.airborne === true
 
-  return airborne ? (
-    <FlyingScreen session={session} seat={seat} />
-  ) : (
-    <MissionBrief session={session} seat={seat} onSession={onSession} />
-  )
+  /*
+   * Down after flying is not the same as never having left, and neither is decided by a
+   * button. The first sighting off the ground is recorded once, from Telemetry, so a
+   * Student cleared and still standing on the pad is not told they have landed.
+   */
+  const hasFlown = seatHasFlown(seat)
+
+  useEffect(() => {
+    if (!airborne || hasFlown) return
+    onSession(markSeatFlown(session, seat.studentId))
+  }, [airborne, hasFlown, onSession, seat.studentId, session])
+
+  if (airborne) return <FlyingScreen session={session} seat={seat} />
+  if (hasFlown) return <BackOnTheGround session={session} seat={seat} />
+  return <MissionBrief session={session} seat={seat} onSession={onSession} />
 }
 
 /**
@@ -180,6 +193,42 @@ function TakeYourSeat({
           ))}
         </ul>
       )}
+    </StudentFrame>
+  )
+}
+
+/**
+ * Down, after having flown.
+ *
+ * Poster step 11 is "Return Home / Land Safely" and it is a phase with a screen of its own,
+ * not a line at the bottom of another one. A Student who has just landed is being told what
+ * to do with the aircraft in their hands, which is a different question from either the
+ * brief or the flying screen.
+ *
+ * The Mission is over for them when the Teacher seals it, not when they land, so the score
+ * only appears once there is one.
+ */
+function BackOnTheGround({
+  session,
+  seat,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+}) {
+  void session
+
+  return (
+    <StudentFrame>
+      <IdentityLine seat={seat} />
+
+      <h1 className="m-0 max-w-[24ch] font-display text-summary font-medium text-balance text-ink">
+        You are down
+      </h1>
+
+      <p className="m-0 max-w-[60ch] text-body text-ink-subtle">
+        Land gently on the pad your Teacher pointed out, then stand clear of the propellers
+        and wait. Your Teacher closes the Mission when every craft is down.
+      </p>
     </StudentFrame>
   )
 }

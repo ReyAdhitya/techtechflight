@@ -21,6 +21,7 @@ export type StudentMissionPhase =
   | 'connect'
   | 'request-takeoff'
   | 'awaiting-clearance'
+  | 'held'
   | 'cleared'
   | 'flying'
   | 'returning'
@@ -42,6 +43,14 @@ export interface ClassroomSeat {
   readonly takeoffRequestedAt: number | null
   readonly clearedAt: number | null
   readonly heldAt: number | null
+  /**
+   * When this craft was first seen off the ground.
+   *
+   * Written from Telemetry, never from a press, and never cleared. It is what separates a
+   * Student who has landed from one who is cleared and still standing on the pad, which a
+   * clearance alone cannot tell you.
+   */
+  readonly flownAt: number | null
   readonly checkpointIndex: number
   readonly score: number | null
   readonly joinedAt: number
@@ -230,10 +239,11 @@ export function joinClassroomAsStudent(
     name: trimmed,
     droneId: null,
     droneName: null,
-    phase: session.live ? 'briefing' : 'briefing',
+    phase: 'briefing',
     takeoffRequestedAt: null,
     clearedAt: null,
     heldAt: null,
+    flownAt: null,
     checkpointIndex: 0,
     score: null,
     joinedAt: now,
@@ -263,6 +273,28 @@ export function assignSeatCraft(
       row.studentId === studentId ? { ...row, droneId, droneName } : row,
     ),
   })
+}
+
+/**
+ * Whether this seat's craft has been off the ground.
+ *
+ * Tolerates a seat written before `flownAt` existed: a session sits in `localStorage`
+ * across a reload, and a missing field read as "has flown" would put a Student who never
+ * left the pad on the landed screen.
+ */
+export function seatHasFlown(seat: ClassroomSeat): boolean {
+  return (seat.flownAt ?? null) !== null
+}
+
+/** Record that this craft has left the ground. Idempotent; the first sighting wins. */
+export function markSeatFlown(
+  session: ClassroomSession,
+  studentId: string,
+  now = Date.now(),
+): ClassroomSession {
+  const seat = session.seats.find((row) => row.studentId === studentId)
+  if (seat === undefined || seatHasFlown(seat)) return session
+  return updateSeatPhase(session, studentId, 'flying', { flownAt: now })
 }
 
 export function updateSeatPhase(
@@ -307,7 +339,12 @@ export function holdSeatClearance(
   studentId: string,
   now = Date.now(),
 ): ClassroomSession {
-  return updateSeatPhase(session, studentId, 'request-takeoff', {
+  /*
+   * Held is its own phase. Sending the seat back to `request-takeoff` made a held Student
+   * indistinguishable from one who had never asked, so the screen could not tell them why
+   * they were waiting. They may ask again; that is what clears it.
+   */
+  return updateSeatPhase(session, studentId, 'held', {
     heldAt: now,
     takeoffRequestedAt: null,
     clearedAt: null,

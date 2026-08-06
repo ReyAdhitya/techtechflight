@@ -9,6 +9,37 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-06 · The Student's score is copied onto the classroom session, not looked up.
+
+- **Decision / notes:** The Teacher seals a Mission on Control step 11, which writes the sealed
+  Mission to `techtechflight:mission-draft` and to the Logbook. The Student's tablet needs that
+  score. `ClassroomOpen` copies `mission.outcome` onto the classroom session, so the score
+  reaches a tablet by the route the objective, the rules, the zones and the checkpoints already
+  travel. The tablet renders the number and never recomputes it.
+- **Could have gone differently:** Point the Student screen at the Logbook. It is the same
+  browser today, so it would work, and it saves a field. Rejected on two counts: the Logbook is
+  the Teacher's record and would have to be unpicked the moment the session crosses a network,
+  and it puts every Lesson a School has ever run within reach of a child's device. Recomputing
+  the score on the tablet from the same evidence was also rejected: two arithmetics for one
+  grade is one of them being wrong, and a child's tablet is the worst place to find out.
+
+## 2026-08-06 · Held is a phase, and a clearance is not a flight.
+
+- **Decision / notes:** Two seat fields that looked like they said enough, and did not.
+  `holdSeatClearance` sent the seat back to `request-takeoff`, which made a Student the Teacher
+  had held indistinguishable from one who had never asked; `held` is its own phase now, and
+  asking again is what clears it rather than the Teacher being asked to un-hold. And the
+  way-down screen was chosen from `clearedAt`, so a Student cleared and still standing on the
+  pad read "You are down"; the seat carries `flownAt`, written once from the first Telemetry
+  sighting off the ground. `seatHasFlown` tolerates a seat written before the field existed,
+  because a session outlives a deploy in `localStorage` and a missing field read as "has flown"
+  would land a Student who never took off.
+- **Could have gone differently:** Derive landing from the craft being on the ground while the
+  clearance stands, with no new field. Rejected: that is true of a Student who has just been
+  cleared, which is the bug. A `landedAt` written on the way down was also considered and
+  dropped as one field too many: the first sighting off the ground is the fact that cannot be
+  reconstructed, and the ground is Telemetry either way.
+
 ## 2026-08-05 — One screen, one question: Lesson keeps the Mission and the period.
 
 - **Decision / notes:** Lesson had grown into the whole day. Alongside the Mission set-up

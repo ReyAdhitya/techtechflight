@@ -172,6 +172,19 @@ are keyed by Lesson id, and a Mission planned before Start is adopted by the Les
 the Lesson: starting it on the first granted clearance is circular, because the queue fills
 from eligibility and eligibility needs an active Mission.
 
+**The Student's tablet is a second audience, not a narrow board (ADR-0025).** It reads the
+classroom session (`techtechflight:classroom-session`), which `ClassroomOpen` writes from the
+Mission the Teacher already planned, including the sealed `outcome` once step 11 confirms.
+Landscape and full width, one dominant thing at a time and it changes with the phase, and
+**exactly two pressable things in the whole app**: Ask to take off, and Understood. No classroom
+code on screen, no phase counter, and no figure the Fleet is not sending. Which screen a Student
+is on comes from Telemetry and the Teacher's answer, never from a press: `flownAt` is the first
+sighting off the ground and is what separates a landed Student from a cleared one, and `held` is
+its own phase because a hold sent back to `request-takeoff` reads as never having asked. Three
+limits it states out loud: one machine only (no iPad transport yet), nothing here reaches an
+aircraft (ADR-0021), and an absent reading is printed as absent. The first Student screen was
+reverted eight minutes after merging for breaking the first of these.
+
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
 nomination, and ceiling-breach counts each live in their own `localStorage`

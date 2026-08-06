@@ -2,7 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { readClassroomSession, resetClassroomForTests } from '@/lib/classroom-session'
 import { clearLogbook, readLogbook, runningLesson, startLesson } from '@/lib/logbook'
-import { MISSION_DRAFT_KEY, chooseScenario, setMissionZones, startMission } from '@/lib/mission-draft'
+import {
+  MISSION_DRAFT_KEY,
+  chooseScenario,
+  putMission,
+  readMission,
+  setMissionZones,
+  startMission,
+} from '@/lib/mission-draft'
 import type { Zone } from '@/lib/airspace'
 import { ClassroomOpen } from './ClassroomOpen'
 
@@ -91,6 +98,44 @@ describe('opening the classroom from the Mission', () => {
     startMission(lessonId, 2_000)
     render(<ClassroomOpen />)
     expect(readClassroomSession()?.live).toBe(true)
+  })
+
+  /*
+   * The score reaches the tablets by the route the brief did. Confirming the Mission
+   * complete writes the sealed Mission back to the side key, and this is what carries it
+   * onto the document a Student's screen reads; without it a Teacher could seal a score no
+   * child ever saw.
+   */
+  it('carries the sealed outcome once the Teacher confirms, and not before', () => {
+    startLesson('Year 8', 6, 6, 1_000, [])
+    const lessonId = runningLesson(readLogbook())!.id
+    const mission = chooseScenario(lessonId, 'search-rescue')
+    startMission(lessonId, 2_000)
+
+    const { unmount } = render(<ClassroomOpen />)
+    expect(readClassroomSession()?.outcome ?? null).toBeNull()
+    unmount()
+
+    putMission(lessonId, {
+      ...readMission(lessonId)!,
+      outcome: {
+        endedAt: 9_000,
+        criteria: {
+          'tasks-completed': true,
+          'safe-route': null,
+          'no-collisions': true,
+          'no-no-fly-violations': true,
+          'procedures-followed': null,
+        },
+        failures: [],
+        score: 1,
+        debrief: 'All criteria met.',
+      },
+    })
+    render(<ClassroomOpen />)
+
+    expect(readClassroomSession()?.outcome?.score).toBe(1)
+    expect(mission.scenarioId).toBe('search-rescue')
   })
 
   it('keeps one code across a re-open, so a joined Student stays joined', () => {

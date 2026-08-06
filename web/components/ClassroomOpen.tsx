@@ -50,6 +50,13 @@ export function ClassroomOpen() {
       checkpointCount: mission.checkpoints.length,
       missionStartedAt: mission.startedAt,
       checkpoints: mission.checkpoints,
+      /*
+       * The score, once the Teacher has confirmed the Mission complete and not a moment
+       * before. Confirming writes the sealed Mission back to the side key, which is what
+       * this effect re-reads, so the answer reaches the tablets by the same route the
+       * brief did rather than by a second one.
+       */
+      outcome: mission.outcome,
       zones: mission.zones,
       /*
        * Live once the Mission has started. Before that the brief is readable and nothing

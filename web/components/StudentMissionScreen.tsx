@@ -30,7 +30,8 @@ import {
 import { formatAge } from '@/lib/age'
 import { Scope } from './Scope'
 import { useFleet } from './FleetProvider'
-import { emptyMission } from '@/lib/mission'
+import { CRITERION_WORDS, emptyMission, type MissionOutcome } from '@/lib/mission'
+import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 import { missionClock } from '@/lib/mission-clock'
 import { cn } from '@/lib/utils'
 
@@ -215,21 +216,119 @@ function BackOnTheGround({
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
 }) {
-  void session
+  const outcome = session.outcome ?? null
+
+  if (outcome === null) {
+    return (
+      <StudentFrame>
+        <IdentityLine seat={seat} />
+
+        <h1 className="m-0 max-w-[24ch] font-display text-summary font-medium text-balance text-ink">
+          You are down
+        </h1>
+
+        <p className="m-0 max-w-[60ch] text-body text-ink-subtle">
+          Land gently on the pad your Teacher pointed out, then stand clear of the propellers
+          and wait. Your Teacher closes the Mission when every craft is down.
+        </p>
+      </StudentFrame>
+    )
+  }
 
   return (
     <StudentFrame>
       <IdentityLine seat={seat} />
 
-      <h1 className="m-0 max-w-[24ch] font-display text-summary font-medium text-balance text-ink">
-        You are down
-      </h1>
+      <h1 className="m-0 font-display text-heading font-medium text-ink">Mission complete</h1>
 
-      <p className="m-0 max-w-[60ch] text-body text-ink-subtle">
-        Land gently on the pad your Teacher pointed out, then stand clear of the propellers
-        and wait. Your Teacher closes the Mission when every craft is down.
-      </p>
+      <MissionScore session={session} outcome={outcome} />
     </StudentFrame>
+  )
+}
+
+/**
+ * The score, and the criteria the Scenario said it would judge.
+ *
+ * The score is the dominant figure once a Student is down, the way the objective was
+ * before takeoff and the battery was in the air. It is the Teacher's sealed number read
+ * back, never recomputed here: two arithmetics for one grade is one of them being wrong.
+ *
+ * Which criteria appear is the Scenario's answer and not this screen's. Delivery is not
+ * judged on collisions and Inspection is not judged on a safe route, so listing all five
+ * would show a child a red mark against work the brief never asked for.
+ *
+ * Not measured is printed as not measured. A criterion the board never had an opinion
+ * about is not a fail, and a screen that quietly rounded it into one would be inventing a
+ * reading (ADR-0007's rule, applied to a grade).
+ */
+function MissionScore({
+  session,
+  outcome,
+}: {
+  readonly session: ClassroomSession
+  readonly outcome: MissionOutcome
+}) {
+  const judges =
+    session.scenarioId === null ? [] : scenarioOrUnknown(session.scenarioId).judges
+
+  return (
+    <div className="flex flex-col gap-6">
+      {outcome.score === null ? (
+        <BigReading value="Not scored" name="Your score" quiet />
+      ) : (
+        <BigReading value={`${Math.round(outcome.score * 100)}%`} name="Your score" />
+      )}
+
+      {judges.length > 0 && (
+        <ul className="m-0 grid list-none grid-cols-1 gap-2 p-0 min-[48rem]:grid-cols-2">
+          {judges.map((criterion) => (
+            <CriterionRow
+              key={criterion}
+              label={CRITERION_WORDS[criterion]}
+              met={outcome.criteria[criterion] ?? null}
+            />
+          ))}
+        </ul>
+      )}
+
+      {outcome.debrief === null ? null : (
+        <p className="m-0 max-w-[60ch] text-body text-ink-subtle">{outcome.debrief}</p>
+      )}
+    </div>
+  )
+}
+
+/** One judged criterion. Shape as well as colour, always (ADR-0004). */
+function CriterionRow({
+  label,
+  met,
+}: {
+  readonly label: string
+  readonly met: boolean | null
+}) {
+  return (
+    <li
+      className="flex min-h-11 items-start gap-3 rounded-sm border border-hairline bg-surface-1 px-3 py-2"
+      aria-label={`${label}: ${met === null ? 'Not measured' : met ? 'Met' : 'Not met'}`}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-sm border text-label',
+          met === true
+            ? 'border-ink bg-ink text-canvas'
+            : met === false
+              ? 'border-status-not-ready text-status-not-ready'
+              : 'border-hairline text-ink-muted',
+        )}
+      >
+        {met === true ? '✓' : met === false ? '!' : '?'}
+      </span>
+      <span className="flex flex-wrap items-baseline gap-x-2">
+        <span className="font-display text-value font-medium text-ink">{label}</span>
+        {met === null ? <span className="text-value text-ink-muted">Not measured</span> : null}
+      </span>
+    </li>
   )
 }
 

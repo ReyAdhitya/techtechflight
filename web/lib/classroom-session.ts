@@ -1,5 +1,5 @@
 import type { DroneId } from '@techtechflight/contract'
-import type { MissionCheckpoint, ScenarioId } from './mission.ts'
+import type { MissionCheckpoint, MissionOutcome, ScenarioId } from './mission.ts'
 import type { Zone } from './airspace.ts'
 
 /**
@@ -75,6 +75,14 @@ export interface ClassroomSession {
   readonly missionStartedAt?: number | null
   /** The checkpoints themselves, so a Student's map can draw them in the Mission's order. */
   readonly checkpoints?: readonly MissionCheckpoint[]
+  /**
+   * How the Mission was judged, once the Teacher has sealed it.
+   *
+   * Copied onto the session rather than looked up in the Logbook, because the Logbook is
+   * the Teacher's record and this document is what a Student's tablet reads. Null until
+   * the Teacher confirms the Mission complete: a score before then would be a guess.
+   */
+  readonly outcome?: MissionOutcome | null
   readonly zones: readonly Zone[]
   readonly seats: readonly ClassroomSeat[]
   readonly instructions: readonly ClassroomInstruction[]
@@ -103,6 +111,7 @@ function emptySession(code: string, now: number): ClassroomSession {
     checkpointCount: 5,
     missionStartedAt: null,
     checkpoints: [],
+    outcome: null,
     zones: [],
     seats: [],
     instructions: [],
@@ -166,6 +175,8 @@ export function openClassroom(input: {
   readonly checkpointCount?: number
   readonly missionStartedAt?: number | null
   readonly checkpoints?: readonly MissionCheckpoint[]
+  /** The sealed outcome, once there is one. Absent leaves whatever the session already had. */
+  readonly outcome?: MissionOutcome | null
   readonly zones: readonly Zone[]
   readonly live?: boolean
   readonly now?: number
@@ -187,6 +198,7 @@ export function openClassroom(input: {
     checkpointCount: input.checkpointCount ?? base.checkpointCount,
     missionStartedAt: input.missionStartedAt ?? base.missionStartedAt ?? null,
     checkpoints: input.checkpoints ?? base.checkpoints ?? [],
+    outcome: input.outcome ?? base.outcome ?? null,
     zones: input.zones,
     live: input.live ?? true,
     updatedAt: now,

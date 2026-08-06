@@ -10,7 +10,9 @@ import {
   requestTakeoff,
   resetClassroomForTests,
   updateSeatPhase,
+  writeClassroomSession,
 } from '@/lib/classroom-session'
+import type { MissionOutcome } from '@/lib/mission'
 import { clearLogbook, saveRoll } from '@/lib/logbook'
 import { FleetProvider } from './FleetProvider'
 import { StudentMissionScreen, WhatToDoNow } from './StudentMissionScreen'
@@ -312,6 +314,88 @@ describe('asking for takeoff, and the answer', () => {
 
     expect(screen.getByText('You are down')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ask to take off' })).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * The score, once the Teacher has sealed it.
+ *
+ * Two things are worth pinning and nothing else is: that the number is the Teacher's own
+ * rather than one this screen worked out again, and that the criteria shown are the ones
+ * the Scenario said it would judge. Search and Rescue does not judge procedures, and a red
+ * mark against work the brief never asked for is the failure mode here.
+ */
+describe('the score after landing', () => {
+  const landedStudent = (outcome: MissionOutcome | null) => {
+    saveRoll(['Priya'])
+    classroomWithBrief()
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    const seated = readClassroomSession()!
+    const studentId = seated.seats[0]!.studentId
+    assignSeatCraft(seated, studentId, 'ttf-0001', 'Drone 1')
+    updateSeatPhase(readClassroomSession()!, studentId, 'returning', { flownAt: 5_000 })
+    if (outcome !== null) {
+      writeClassroomSession({ ...readClassroomSession()!, outcome })
+    }
+    cleanup()
+    studentScreen()
+    settle()
+  }
+
+  const sealed = (score: number | null): MissionOutcome => ({
+    endedAt: 9_000,
+    criteria: {
+      'tasks-completed': true,
+      'safe-route': null,
+      'no-collisions': true,
+      'no-no-fly-violations': false,
+      'procedures-followed': true,
+    },
+    failures: [],
+    score,
+    debrief: 'No no-fly violations not met.',
+  })
+
+  it('says nothing about a score until the Teacher has sealed one', () => {
+    landedStudent(null)
+
+    expect(screen.getByText('You are down')).toBeInTheDocument()
+    expect(screen.queryByText('Your score')).not.toBeInTheDocument()
+  })
+
+  it("reads back the Teacher's sealed number rather than working one out again", () => {
+    landedStudent(sealed(0.75))
+
+    expect(screen.getByText('Your score')).toBeInTheDocument()
+    expect(screen.getByText('75%')).toBeInTheDocument()
+    expect(screen.getByText('No no-fly violations not met.')).toBeInTheDocument()
+  })
+
+  /*
+   * Search and Rescue judges four of the five. Procedures is not one of them, and showing
+   * it would grade a child on something the brief never mentioned.
+   */
+  it('shows the criteria the Scenario judges, and no others', () => {
+    landedStudent(sealed(0.75))
+
+    expect(screen.getByLabelText('Required tasks completed: Met')).toBeInTheDocument()
+    expect(screen.getByLabelText('Safe route followed: Not measured')).toBeInTheDocument()
+    expect(screen.getByLabelText('No no-fly violations: Not met')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/^Correct procedures followed/)).not.toBeInTheDocument()
+  })
+
+  /*
+   * Too little measured is a real answer and never a nought. Printing 0% for a Mission the
+   * board could not judge is the invented reading this screen exists to refuse.
+   */
+  it('says a Mission it could not judge was not scored, rather than printing nought', () => {
+    landedStudent(sealed(null))
+
+    expect(screen.getByText('Not scored')).toBeInTheDocument()
+    expect(screen.queryByText('0%')).not.toBeInTheDocument()
   })
 })
 

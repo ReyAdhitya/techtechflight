@@ -661,6 +661,20 @@ export function ControlScreen({
         </ul>
       </section>
 
+      {cameraDrone && (
+        <CameraSlide
+          droneId={cameraDrone.id}
+          droneName={cameraDrone.name}
+          camera={cameraDrone.telemetry?.camera}
+          scenarios={scenarios}
+          onClose={() => setCameraDroneId(null)}
+        />
+      )}
+    </>
+  )
+
+  const closeDown = (
+    <>
       {mission !== null && mission.startedAt !== null ? (
         <section ref={sealRef} className="flex scroll-mt-4 flex-col gap-3 border-t border-hairline pt-5">
           <h2 className="label m-0">Mission complete</h2>
@@ -688,20 +702,26 @@ export function ControlScreen({
           <CraftReturnedTick lessonId={lesson.id} crafts={packdownCrafts} />
         </section>
       ) : null}
-
-      {cameraDrone && (
-        <CameraSlide
-          droneId={cameraDrone.id}
-          droneName={cameraDrone.name}
-          camera={cameraDrone.telemetry?.camera}
-          scenarios={scenarios}
-          onClose={() => setCameraDroneId(null)}
-        />
-      )}
     </>
   )
 
-  if (bare) return <div className="flex flex-col gap-6">{board}</div>
+  /*
+   * Step 11 is the close-down and only that. It is the one step where hiding the strips is
+   * safe rather than reckless, because it does not open until every craft is down: there is
+   * no Command left to send. Steps 6 to 10 keep the whole board and this under it.
+   */
+  if (bare && step === 11) {
+    return <div className="flex flex-col gap-6">{closeDown}</div>
+  }
+
+  if (bare) {
+    return (
+      <div className="flex flex-col gap-6">
+        {board}
+        {closeDown}
+      </div>
+    )
+  }
 
   return (
     <main
@@ -710,6 +730,7 @@ export function ControlScreen({
       className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
       {board}
+      {closeDown}
     </main>
   )
 }

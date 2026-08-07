@@ -46,14 +46,23 @@ import { missionCraftIds } from '@/lib/mission-flow-facts'
 import type { FleetSnapshot } from '@/lib/fleet-link'
 
 /**
- * Set this Mission up, and start or end the period. That is the whole screen.
+ * Set this Mission up, and start or end the period. Steps 1 to 5 of the Mission run.
  *
- * One scrolling page — Scenario, zones, teams, pre-flight, brief, then start. The
- * Mission-run left rail and `?step=` gating are gone: a Teacher at 08:55 should see the
- * work, not a wizard. Fleet health craft-by-craft, finished Lessons, pack-down and where
- * records live stay on Fleet, Reports, Control and Settings.
+ * Scenario, zones, teams, pre-flight, brief, and the period itself. On `/mission` this is
+ * mounted one step at a time by `MissionRunScreen`, which supplies the heading and the
+ * reason for the step from the rail's own model; on its own it shows all five at once and
+ * carries its own heading. Fleet health craft by craft, finished Lessons, pack-down and
+ * where records live stay on Fleet, Reports, step 11 and Settings.
  */
-export function LessonScreen() {
+export function LessonScreen({
+  bare = false,
+  step,
+}: {
+  /** Mounted inside another screen's `main`, so it renders neither one nor a heading. */
+  readonly bare?: boolean
+  /** Which of the five set-up steps to show. All of them when it is not said. */
+  readonly step?: number
+} = {}) {
   const { snapshot, now, vitals } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const lesson = runningLesson(book)
@@ -67,12 +76,46 @@ export function LessonScreen() {
   }, [lessonId])
 
   if (!snapshot.state) {
+    const waiting = (
+      <p className="m-0 text-body text-ink-muted">Waiting for the first Fleet State.</p>
+    )
+    if (bare) return waiting
     return (
       <main id="content" tabIndex={-1} className="p-8">
-        <p className="m-0 text-body text-ink-muted">Waiting for the first Fleet State.</p>
+        {waiting}
       </main>
     )
   }
+
+  /*
+   * The period sits with step 1. Starting a Lesson is the same moment as choosing what the
+   * class is going to do, and repeating it above every set-up step would be four restatements
+   * of a control a Teacher presses once.
+   */
+  const showsPeriod = !bare || step === 1
+
+  const body = (
+    <>
+      {showsPeriod &&
+        (lesson ? (
+          <LessonUnderWay lesson={lesson} now={now} book={book} />
+        ) : (
+          <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
+        ))}
+
+      <MissionPrep
+        drones={drones}
+        book={book}
+        snapshot={snapshot}
+        lessonId={lessonId}
+        mission={mission}
+        onMissionChange={setMission}
+        step={bare ? step : undefined}
+      />
+    </>
+  )
+
+  if (bare) return <div className="flex flex-col gap-8">{body}</div>
 
   return (
     <main
@@ -86,24 +129,11 @@ export function LessonScreen() {
         </h1>
         <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
           Choose the Scenario, draw the airspace, put teams on craft, tick pre-flight, brief
-          the class, then start the period. Live flying is on Control.
+          the class, then start the period. Live flying is step 6 onwards.
         </p>
       </header>
 
-      {lesson ? (
-        <LessonUnderWay lesson={lesson} now={now} book={book} />
-      ) : (
-        <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
-      )}
-
-      <MissionPrep
-        drones={drones}
-        book={book}
-        snapshot={snapshot}
-        lessonId={lessonId}
-        mission={mission}
-        onMissionChange={setMission}
-      />
+      {body}
     </main>
   )
 }
@@ -233,8 +263,8 @@ function LessonUnderWay({
       <ClassroomCodePanel />
 
       <p className="m-0 text-body text-ink-muted">
-        Monitor from the Flight Control Center. Students join on an iPad with the classroom
-        code. The lesson is ended from Control.
+        Students join on an iPad with the classroom code. Watch the class from step 7, and
+        end the period at step 11.
       </p>
 
       <WaitingList book={book} />
@@ -254,17 +284,22 @@ function LessonUnderWay({
       />
 
       <Link
-        href="/control"
+        href="/mission?step=6"
+        prefetch={false}
         className="min-h-11 w-fit cursor-pointer rounded-pill border-0 bg-ink px-5 py-2 text-body font-medium text-canvas no-underline"
       >
-        Go to the Flight Control Center
+        Open the clearance queue
       </Link>
     </section>
   )
 }
 
 /**
- * Mission set-up as one column — every block visible, no step rail.
+ * Mission set-up: every block at once, or the one the rail asked for.
+ *
+ * With a `step` the section headings go, because `MissionRunScreen` has already said what
+ * the step is and why it exists at the top of the surface. Two headings for one block is
+ * the restatement the collapsed navigation exists to remove.
  */
 function MissionPrep({
   drones,
@@ -273,6 +308,7 @@ function MissionPrep({
   lessonId,
   mission,
   onMissionChange,
+  step,
 }: {
   readonly drones: readonly DroneState[]
   readonly book: ReturnType<typeof readLogbook>
@@ -280,6 +316,7 @@ function MissionPrep({
   readonly lessonId: string | null
   readonly mission: Mission | null
   readonly onMissionChange: (mission: Mission | null) => void
+  readonly step?: number | undefined
 }) {
   const teams = readTeams()
   const scenarioId = mission?.scenarioId ?? null
@@ -288,9 +325,14 @@ function MissionPrep({
   const telemetryFor = (droneId: string) =>
     snapshot.state?.drones.find((drone) => drone.id === droneId)?.telemetry ?? null
 
+  const shows = (which: number) => step === undefined || step === which
+  const heading = step === undefined
+
   return (
     <div className="flex flex-col gap-10">
+      {shows(1) && (
       <section className="flex flex-col gap-4" aria-labelledby="mission-scenario-heading">
+        {heading && (
         <div className="flex flex-col gap-1">
           <h2 id="mission-scenario-heading" className="m-0 font-display text-heading font-medium">
             Choose the Mission Scenario
@@ -300,6 +342,7 @@ function MissionPrep({
             per period.
           </p>
         </div>
+        )}
         <ScenarioPicker
           selectedScenarioId={scenarioId}
           onSelect={(id) => onMissionChange(chooseScenario(lessonId, id))}
@@ -307,8 +350,11 @@ function MissionPrep({
           bare
         />
       </section>
+      )}
 
+      {shows(2) && (
       <section className="flex flex-col gap-4" aria-labelledby="mission-area-heading">
+        {heading && (
         <div className="flex flex-col gap-1">
           <h2 id="mission-area-heading" className="m-0 font-display text-heading font-medium">
             Draw the Mission area
@@ -317,14 +363,18 @@ function MissionPrep({
             Mission Zone and No-fly Zones in the Fleet&apos;s own frame. Not GPS.
           </p>
         </div>
+        )}
         <MissionAreaEditor
           zones={zones}
           onChange={(next) => onMissionChange(setMissionZones(lessonId, next))}
           bare
         />
       </section>
+      )}
 
+      {shows(3) && (
       <section className="flex flex-col gap-4" aria-labelledby="mission-teams-heading">
+        {heading && (
         <div className="flex flex-col gap-1">
           <h2 id="mission-teams-heading" className="m-0 font-display text-heading font-medium">
             Teams and Drones
@@ -333,6 +383,7 @@ function MissionPrep({
             Put each team on a craft. Those craft become this Mission&apos;s fleet.
           </p>
         </div>
+        )}
         <TeamsPanel book={book} drones={drones} bare />
         <SetMissionCraftButton
           lessonId={lessonId}
@@ -341,8 +392,11 @@ function MissionPrep({
           onMissionChange={onMissionChange}
         />
       </section>
+      )}
 
+      {shows(4) && (
       <section className="flex flex-col gap-4" aria-labelledby="mission-preflight-heading">
+        {heading && (
         <div className="flex flex-col gap-1">
           <h2 id="mission-preflight-heading" className="m-0 font-display text-heading font-medium">
             Pre-flight check
@@ -351,9 +405,10 @@ function MissionPrep({
             Every craft on a team, not only the first. Propellers is the tick you make by hand.
           </p>
         </div>
+        )}
         {craftIds.length === 0 ? (
           <p className="m-0 text-value text-ink-muted">
-            No craft on a team yet. Assign teams and Drones above.
+            No craft on a team yet. Put teams on Drones at step 3.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
@@ -368,8 +423,11 @@ function MissionPrep({
           </div>
         )}
       </section>
+      )}
 
+      {shows(5) && (
       <section className="flex flex-col gap-4" aria-labelledby="mission-brief-heading">
+        {heading && (
         <div className="flex flex-col gap-1">
           <h2 id="mission-brief-heading" className="m-0 font-display text-heading font-medium">
             Mission rules and safety briefing
@@ -378,6 +436,7 @@ function MissionPrep({
             What the class hears before anyone asks to take off.
           </p>
         </div>
+        )}
         <MissionBriefing lessonId={lessonId} scenarioId={scenarioId} bare />
         <SafetyBriefPanel lessonId={lessonId} />
         {mission !== null && teams.length > 0 ? (
@@ -391,6 +450,7 @@ function MissionPrep({
           </div>
         ) : null}
       </section>
+      )}
     </div>
   )
 }

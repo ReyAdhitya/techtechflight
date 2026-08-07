@@ -1,18 +1,12 @@
-import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { LessonScreen } from '@/components/LessonScreen'
+import { MissionStepForward } from '@/components/MissionStepForward'
 
 export const metadata: Metadata = {
   title: 'Lesson, Flight Deck, TechTech',
-  description: 'The pre-flight check, the lesson while it runs, and what happened afterwards.',
+  description: 'Setting a Mission up is the first five steps of the Mission run.',
 }
 
 export default function LessonPage() {
-  return (
-    // The set-up step is `?step=`, read on the client. `useSearchParams` suspends during
-    // prerender, so the boundary is required rather than defensive (see `/drone`).
-    <Suspense fallback={<main id="content" className="p-8" />}>
-      <LessonScreen />
-    </Suspense>
-  )
+  // Set-up is steps 1 to 5 on `/mission` now (ADR-0026). The route still resolves.
+  return <MissionStepForward step={1} what="Setting the Mission up" />
 }

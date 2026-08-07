@@ -1,18 +1,12 @@
-import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import { ControlScreen } from '@/components/ControlScreen'
+import { MissionStepForward } from '@/components/MissionStepForward'
 
 export const metadata: Metadata = {
   title: 'Flight Control Center, Flight Deck, TechTech',
-  description: 'Every Drone in the lesson at once, in board order, with what to do about each.',
+  description: 'The live board is steps 6 to 11 of the Mission run.',
 }
 
 export default function ControlPage() {
-  return (
-    // Control carries steps 6 to 11, chosen with `?step=` and read on the client.
-    // `useSearchParams` suspends during prerender, so the boundary is required.
-    <Suspense fallback={<main id="content" className="p-8" />}>
-      <ControlScreen />
-    </Suspense>
-  )
+  // The live board is steps 6 to 11 on `/mission` now (ADR-0026). The route still resolves.
+  return <MissionStepForward step={6} what="The Flight Control Center" />
 }

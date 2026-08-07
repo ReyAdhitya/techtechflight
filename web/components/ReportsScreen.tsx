@@ -70,7 +70,12 @@ function printReports(stamp: HTMLElement | null): void {
  * from the primary navigation. Both are about the past, and neither is something a Teacher
  * opens while six Drones are up.
  */
-export function ReportsScreen() {
+export function ReportsScreen({
+  bare = false,
+}: {
+  /** Mounted as Mission run step 12, so it renders neither a `main` nor its own title. */
+  readonly bare?: boolean
+} = {}) {
   const printedAtRef = useRef<HTMLTimeElement>(null)
   const { snapshot } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
@@ -93,14 +98,11 @@ export function ReportsScreen() {
     })
   }
 
-  return (
-    <main
-      id="content"
-      tabIndex={-1}
-      className={cn(READING_FRAME, 'flex flex-col gap-10 p-4 min-[26rem]:p-8')}
-    >
+  const body = (
+    <>
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h1 className="m-0 font-display text-summary font-medium">Reports</h1>
+        {/* Step 12 already carries "Logs, scores and the debrief" above this. */}
+        {!bare && <h1 className="m-0 font-display text-summary font-medium">Reports</h1>}
         <div className="print-hide flex flex-wrap gap-2">
           <button
             type="button"
@@ -254,6 +256,18 @@ export function ReportsScreen() {
       </div>
       <EndOfDayExportButton lessons={book.lessons} />
       <WeeklyDigest lessons={book.lessons} />
+    </>
+  )
+
+  if (bare) return <div className="flex flex-col gap-10">{body}</div>
+
+  return (
+    <main
+      id="content"
+      tabIndex={-1}
+      className={cn(READING_FRAME, 'flex flex-col gap-10 p-4 min-[26rem]:p-8')}
+    >
+      {body}
     </main>
   )
 }

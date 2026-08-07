@@ -16,6 +16,11 @@
  *
  * Windows: Git Bash rewrites a bare `/route` into a path, so pass routes from PowerShell,
  * or without the leading slash.
+ *
+ * The board asks who is using the device before it renders anything (`RequireRole`), and a
+ * fresh browser profile has never answered. Without a seeded role every shot of every
+ * Teacher screen is a photograph of that door, which looks enough like a screen to be
+ * mistaken for one. So the role is seeded, and `TTF_SHOT_ROLE=student` seeds the other one.
  */
 import { createServer } from 'node:http'
 import { readdir, readFile, stat } from 'node:fs/promises'
@@ -88,6 +93,11 @@ const port = server.address().port
 
 const browser = await chromium.launch({ executablePath })
 const page = await browser.newPage({ viewport: { width: Number(width), height: 900 } })
+// Answered before the first script runs, or the board redirects to the door and stays there.
+const role = process.env.TTF_SHOT_ROLE ?? 'teacher'
+await page.addInitScript((chosen) => {
+  window.localStorage.setItem('techtechflight:board-role', chosen)
+}, role)
 await page.goto(`http://localhost:${port}${route}`, { waitUntil: 'networkidle' })
 // The board settles: fonts land, the first Fleet State arrives, ages start counting.
 await page.waitForTimeout(2500)

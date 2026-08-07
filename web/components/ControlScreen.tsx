@@ -92,12 +92,24 @@ import { InstructionControls } from './InstructionControls'
 import type { LocalPosition } from '@techtechflight/contract'
 
 /**
- * The Flight Control Center: calm while the Mission runs.
+ * The Flight Control Center: calm while the Mission runs. Steps 6 to 11 of the Mission run.
  *
- * One live board — Attention, clearances, Scope, ATC toolbar, strips, seal and pack-down.
- * The Mission-run step rail is gone; a Teacher does not change "pages" mid-sector.
+ * One live board: Attention, clearances, Scope, ATC toolbar, strips, seal and pack-down.
+ * The rail marks which of steps 6 to 11 a Teacher is on and brings that section into view,
+ * and it does **not** hide the other five. The prototype says so itself against step 7, and
+ * the safety reason is the stronger one: Land, Hover, Recall and Stop live on the strips,
+ * and a Command that a navigation press can hide is a Command a Teacher cannot reach in the
+ * ten seconds they have. Only close-down and the debrief are surfaces of their own.
  */
-export function ControlScreen() {
+export function ControlScreen({
+  bare = false,
+  step,
+}: {
+  /** Mounted inside another screen's `main`, so it renders neither one nor a frame. */
+  readonly bare?: boolean
+  /** Which of steps 6 to 11 to settle the board on. Nothing scrolls when it is not said. */
+  readonly step?: number
+} = {}) {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
     useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
@@ -116,6 +128,10 @@ export function ControlScreen() {
   const clearanceRef = useRef<HTMLElement | null>(null)
   const scopeRef = useRef<HTMLElement | null>(null)
   const targetRef = useRef<HTMLElement | null>(null)
+  const attentionRef = useRef<HTMLElement | null>(null)
+  const commandsRef = useRef<HTMLElement | null>(null)
+  const stripsRef = useRef<HTMLElement | null>(null)
+  const sealRef = useRef<HTMLElement | null>(null)
   const airborneTracker = useRef(new AirborneTracker())
   const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
   const ceilingLessonId = useRef<string | null>(null)
@@ -143,6 +159,28 @@ export function ControlScreen() {
     if (!state) return
     setGhostPaths((current) => recordGhostPaths(current, state.drones, now))
   }, [state, now])
+
+  /*
+   * The rail keeps the Teacher's place on a board that stays whole. Changing step brings
+   * the section for that step into view; nothing is unmounted, so a Command is never more
+   * than a scroll away.
+   */
+  useEffect(() => {
+    if (step === undefined) return
+    const sections: Readonly<Record<number, typeof clearanceRef>> = {
+      6: clearanceRef,
+      7: scopeRef,
+      8: stripsRef,
+      9: commandsRef,
+      10: attentionRef,
+      11: sealRef,
+    }
+    const target = sections[step]?.current
+    // jsdom has no layout, and no `scrollIntoView` on an element to call either.
+    if (typeof target?.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    }
+  }, [step])
 
   const lessonId = lesson?.id ?? null
   useEffect(() => {
@@ -196,9 +234,13 @@ export function ControlScreen() {
   }, [selectedVitals, state])
 
   if (!state) {
+    const waiting = (
+      <p className="m-0 text-body text-ink-muted">Waiting for the first Fleet State.</p>
+    )
+    if (bare) return waiting
     return (
       <main id="content" tabIndex={-1} className="p-8">
-        <p className="m-0 text-body text-ink-muted">Waiting for the first Fleet State.</p>
+        {waiting}
       </main>
     )
   }
@@ -322,12 +364,8 @@ export function ControlScreen() {
     }
   }
 
-  return (
-    <main
-      id="content"
-      tabIndex={-1}
-      className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
-    >
+  const board = (
+    <>
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
       )}
@@ -341,17 +379,19 @@ export function ControlScreen() {
 
       {mission !== null ? <ScenarioWatchList scenarioId={mission.scenarioId} /> : null}
 
-      <AttentionBar
-        queue={queue}
-        studentFor={(droneId) => studentOf(book, droneId)}
-        onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
-        onResponse={(entry, response) => {
-          if (response.command !== null) {
-            issueCommand(entry.droneId, response.command, entry.callsign)
-          }
-          acknowledge(entry.droneId, entry)
-        }}
-      />
+      <section ref={attentionRef} className="scroll-mt-4" aria-label="Attention">
+        <AttentionBar
+          queue={queue}
+          studentFor={(droneId) => studentOf(book, droneId)}
+          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+          onResponse={(entry, response) => {
+            if (response.command !== null) {
+              issueCommand(entry.droneId, response.command, entry.callsign)
+            }
+            acknowledge(entry.droneId, entry)
+          }}
+        />
+      </section>
 
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
@@ -398,21 +438,23 @@ export function ControlScreen() {
         </section>
       ) : null}
 
-      <TeacherAtcToolbar
-        mission={mission}
-        selectedCraft={selectedCraftOption}
-        airborneCount={airborneCount}
-        givenBy="Teacher"
-        onCommandFleet={(kind) => {
-          for (const entry of vitals) {
-            if (entry.airborne) issueCommand(entry.droneId, kind, entry.callsign)
-          }
-        }}
-        onMissionChange={persistMission}
-        onFocusClearance={() => clearanceRef.current?.scrollIntoView({ behavior: 'smooth' })}
-        onFocusScope={() => scopeRef.current?.scrollIntoView({ behavior: 'smooth' })}
-        onFocusNewTarget={() => targetRef.current?.scrollIntoView({ behavior: 'smooth' })}
-      />
+      <section ref={commandsRef} className="scroll-mt-4">
+        <TeacherAtcToolbar
+          mission={mission}
+          selectedCraft={selectedCraftOption}
+          airborneCount={airborneCount}
+          givenBy="Teacher"
+          onCommandFleet={(kind) => {
+            for (const entry of vitals) {
+              if (entry.airborne) issueCommand(entry.droneId, kind, entry.callsign)
+            }
+          }}
+          onMissionChange={persistMission}
+          onFocusClearance={() => clearanceRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          onFocusScope={() => scopeRef.current?.scrollIntoView({ behavior: 'smooth' })}
+          onFocusNewTarget={() => targetRef.current?.scrollIntoView({ behavior: 'smooth' })}
+        />
+      </section>
 
       <section ref={scopeRef} className="flex flex-col gap-3 scroll-mt-4">
         <h2 className="label m-0">Where everything is</h2>
@@ -509,7 +551,7 @@ export function ControlScreen() {
         </section>
       ) : null}
 
-      <section className="flex flex-col gap-3">
+      <section ref={stripsRef} className="flex scroll-mt-4 flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -603,7 +645,7 @@ export function ControlScreen() {
       </section>
 
       {mission !== null && mission.startedAt !== null ? (
-        <section className="flex flex-col gap-3 border-t border-hairline pt-5">
+        <section ref={sealRef} className="flex scroll-mt-4 flex-col gap-3 border-t border-hairline pt-5">
           <h2 className="label m-0">Mission complete</h2>
           <ConfirmMissionComplete
             mission={mission}
@@ -639,6 +681,18 @@ export function ControlScreen() {
           onClose={() => setCameraDroneId(null)}
         />
       )}
+    </>
+  )
+
+  if (bare) return <div className="flex flex-col gap-6">{board}</div>
+
+  return (
+    <main
+      id="content"
+      tabIndex={-1}
+      className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
+    >
+      {board}
     </main>
   )
 }

@@ -110,12 +110,34 @@ describe('the Mission step rail', () => {
     expect(screen.getByTitle('10. Alerts, 1 critical')).toBeInTheDocument()
   })
 
+  /*
+   * A Teacher looking ahead down the rail sees the step they are reading marked, and only
+   * that one. Two rows both saying "You are here" is the rail contradicting itself.
+   */
+  it('marks one step as current even when the Teacher is looking ahead', () => {
+    render(
+      <StepRail
+        facts={facts()}
+        summary={counts()}
+        activeStep={9}
+        open
+        onToggle={() => {}}
+      />,
+    )
+
+    expect(screen.getAllByText('You are here')).toHaveLength(1)
+    expect(screen.getByTitle('9. Commands, You are here')).toBeInTheDocument()
+    expect(screen.getByTitle('1. Mission Scenario, Not chosen yet')).toBeInTheDocument()
+  })
+
   /* Colour is never the only channel (ADR-0004), so each mark carries a word as well. */
   it('gives every mark a word, not only a fill', () => {
     railFor({ ...allSetUp, cleared: true, airborne: true }, true, { airborne: 2 })
 
     expect(screen.getByRole('link', { name: /^Done\. Mission Scenario/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /^Happening now\. Where everything is/ }))
+    expect(screen.getByRole('link', { name: /^Happening now\. Telemetry and camera/ }))
+      .toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^You are here\. Where everything is/ }))
       .toBeInTheDocument()
     expect(screen.getByRole('link', { name: /^Not open yet\. Logs and debrief/ }))
       .toBeInTheDocument()

@@ -72,11 +72,29 @@ function StepGlyph({ mark, step }: { readonly mark: MissionStepMark; readonly st
 }
 
 /**
- * What the step reads under its name.
+ * How one row paints.
  *
- * Locked says what is in the way, current says so, and a step that is done or live says
- * what it decided. "Done" on its own is the version that made a Teacher open the step to
- * find out what they had chosen.
+ * Exactly one row reads as current, and it is the one the Teacher is looking at. The
+ * records name a current step too, and the two are usually the same; when a Teacher looks
+ * ahead down the rail they are not, and two rows both saying "You are here" is the rail
+ * contradicting itself. The records' step then paints as not started, which is what it is.
+ */
+function rowMark(
+  step: number,
+  facts: MissionFlowFacts,
+  active: boolean,
+): MissionStepMark {
+  if (active) return 'current'
+  const mark = missionStepMark(step, facts)
+  return mark === 'current' ? 'locked' : mark
+}
+
+/**
+ * What the row reads under its name.
+ *
+ * Current says so. Anything else says what is standing in the way, or, when nothing is,
+ * what the step decided. "Done" on its own is the version that made a Teacher open the
+ * step to find out what they had chosen.
  */
 function stateWords(
   step: number,
@@ -84,9 +102,8 @@ function stateWords(
   facts: MissionFlowFacts,
   summary: MissionFlowSummary,
 ): string {
-  if (mark === 'locked') return missionStepBlockedBy(step, facts) ?? MARK_WORDS.locked
   if (mark === 'current') return MARK_WORDS.current
-  return missionStepDone(step, summary)
+  return missionStepBlockedBy(step, facts) ?? missionStepDone(step, summary)
 }
 
 function StepRow({
@@ -100,8 +117,8 @@ function StepRow({
   readonly summary: MissionFlowSummary
   readonly active: boolean
 }) {
-  const mark = missionStepMark(step.step, facts)
-  const state = stateWords(step.step, active ? 'current' : mark, facts, summary)
+  const mark = rowMark(step.step, facts, active)
+  const state = stateWords(step.step, mark, facts, summary)
 
   return (
     <li>

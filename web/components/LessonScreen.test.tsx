@@ -67,16 +67,16 @@ describe('starting a lesson with nothing filled in', () => {
     expect(lesson?.label).toBe('Untitled lesson')
   })
 
-  it('hands over to the Flight Control Center once it is running', () => {
+  it('hands over to the clearance queue once it is running', () => {
     screenUnderTest()
     settle()
 
     fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
     settle()
 
-    expect(screen.getByRole('link', { name: /Flight Control Center/i })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Open the clearance queue/i })).toHaveAttribute(
       'href',
-      '/control',
+      '/mission?step=6',
     )
   })
 })

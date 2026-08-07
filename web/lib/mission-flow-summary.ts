@@ -61,21 +61,29 @@ const plural = (count: number, one: string, many: string) =>
   `${count} ${count === 1 ? one : many}`
 
 /**
- * The state line for a step that is behind the Teacher, or live right now.
+ * The state line for a step that is not locked: behind the Teacher, live, or open and not
+ * started yet.
  *
- * Never called for a locked step: `missionStepBlockedBy` has the words for those, and a
- * count of a thing that has not happened yet would read as a reading rather than as a gap.
+ * A step that is open and untouched says so in words rather than as a row of noughts.
+ * "0 teams, 0 craft" reads as a measurement of a class that has none, and a Teacher has to
+ * stop and work out which it meant.
  */
 export function missionStepDone(step: number, summary: MissionFlowSummary): string {
   switch (step) {
     case 1:
-      return summary.scenarioName ?? 'Scenario chosen'
+      return summary.scenarioName ?? 'Not chosen yet'
     case 2:
-      return `${plural(summary.missionZones, 'zone', 'zones')}, ${summary.noFlyZones} no-fly`
+      return summary.missionZones === 0 && summary.noFlyZones === 0
+        ? 'Nothing drawn yet'
+        : `${plural(summary.missionZones, 'zone', 'zones')}, ${summary.noFlyZones} no-fly`
     case 3:
-      return `${plural(summary.teams, 'team', 'teams')}, ${summary.craft} craft`
+      return summary.teams === 0
+        ? 'No teams yet'
+        : `${plural(summary.teams, 'team', 'teams')}, ${summary.craft} craft`
     case 4:
-      return `${summary.craftPastPreFlight} of ${summary.craft} past it`
+      return summary.craft === 0
+        ? 'No craft on a team yet'
+        : `${summary.craftPastPreFlight} of ${summary.craft} past it`
     case 5:
       return `${summary.briefSectionsTicked} of ${summary.briefSections} ticked`
     case 6:

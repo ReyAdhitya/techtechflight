@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
+import { hydrateRoot } from 'react-dom/client'
+import { renderToString } from 'react-dom/server'
 import { BOARD_ROLE_KEY, clearBoardRole, writeBoardRole } from '@/lib/role'
 import { RequireRole } from './RoleGate'
 
@@ -93,5 +95,46 @@ describe('RequireRole', () => {
 
     expect(screen.queryByText('Teacher secret')).not.toBeInTheDocument()
     expect(replace).toHaveBeenCalledWith('/student')
+  })
+
+  /*
+   * The board ships as a static export, so every visit is a hydration. Reading the role in
+   * the render body made the exported HTML and the browser's first render disagree, and
+   * React threw #418 and rebuilt the whole tree client-side on every page load. Nothing in
+   * a jsdom suite noticed, because `render()` is a fresh client render and never hydrates.
+   * This is the only test in the suite that actually hydrates, so it is the only one that
+   * can see the defect at all.
+   */
+  it('hydrates the exported page without a mismatch', () => {
+    writeBoardRole('teacher')
+    const tree = (
+      <RequireRole role="teacher">
+        <p>Teacher secret</p>
+      </RequireRole>
+    )
+
+    // What the export contains: built with no device to read a role from.
+    const exported = renderToString(tree)
+    expect(exported).toContain('Opening')
+    expect(exported).not.toContain('Teacher secret')
+
+    const complaints: unknown[][] = []
+    const consoleError = vi.spyOn(console, 'error').mockImplementation((...args) => {
+      complaints.push(args)
+    })
+    const host = document.createElement('div')
+    host.innerHTML = exported
+    document.body.appendChild(host)
+
+    act(() => {
+      hydrateRoot(host, tree)
+    })
+
+    expect(complaints).toEqual([])
+    // And the Teacher still gets their board, on the commit after hydration.
+    expect(host.textContent).toContain('Teacher secret')
+
+    consoleError.mockRestore()
+    host.remove()
   })
 })

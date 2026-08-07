@@ -526,21 +526,51 @@
   }
 
   /*
-   * Sections.
+   * Sections, behind one button.
    *
    * Quiet by default and marked by weight and a rule rather than by a filled pill: the
    * bar sits above an instrument, and chrome that competed with a Fault colour on a tile
    * would be spending the one signal this board has on navigation.
+   *
+   * Seven links across the top became one button when the twelve-step rail returned
+   * (ADR-0026). The panel is positioned against this element, so the nav is a positioning
+   * context and no longer a scroller: there is nothing left in it wide enough to scroll.
    */
   .site-nav {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
+    position: relative;
+    flex: 0 0 auto;
   }
 
-  .site-nav::-webkit-scrollbar {
-    display: none;
+  .site-nav__button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--console-line);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted-foreground);
+    font: inherit;
+    font-size: var(--text-value);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 160ms var(--chrome-ease), border-color 160ms var(--chrome-ease);
+  }
+
+  .site-nav__button:hover {
+    color: var(--foreground);
+    border-color: var(--foreground);
+  }
+
+  /*
+   * Open, the button is the anchor of the thing below it and should read as pressed rather
+   * than as merely hovered.
+   */
+  .site-nav__button[aria-expanded='true'] {
+    color: var(--foreground);
+    border-color: var(--foreground);
   }
 
   /*
@@ -562,32 +592,46 @@
   }
 
   /*
-   * Wraps rather than scrolls. The bar is a scroller with its scrollbar hidden, which on
-   * a 380px phone cut Settings off at the edge with nothing on screen to say it could be
-   * swiped — indistinguishable from a section that had simply failed to render. Five
-   * sections do not fit legibly in one row on a phone and pretending otherwise hid one
-   * of them; two rows is honest and needs nothing discovered.
+   * A column under the button rather than a row across the bar.
+   *
+   * A row was a scroller with its scrollbar hidden, which on a 380px phone cut the last
+   * section off at the edge with nothing on screen to say it could be swiped, and that is
+   * indistinguishable from a section that failed to render. A column of four cannot do
+   * that at any width.
    */
   .site-nav__list {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    inset-inline-start: 0;
+    z-index: 40;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem;
-    row-gap: 0.125rem;
+    flex-direction: column;
+    min-width: 14rem;
+    gap: 0.125rem;
     margin: 0;
-    padding: 0;
+    padding: 0.375rem;
     list-style: none;
+    border: 1px solid var(--console-line);
+    border-radius: var(--radius-lg);
+    background: var(--console-elev);
+    box-shadow: var(--console-shadow);
+  }
+
+  /* `display: flex` above beats the attribute's own default, so it is said again here. */
+  .site-nav__list[hidden] {
+    display: none;
   }
 
   .site-nav__link {
     /*
-     * 44px tall, hit-tested rather than assumed. At 0.5rem of padding these came to 40px
-     * — close enough to look right and four pixels short of what a finger reliably lands
+     * 44px tall, hit-tested rather than assumed. At 0.5rem of padding these came to 40px,
+     * close enough to look right and four pixels short of what a finger reliably lands
      * on, on every screen and every device. The navigation is the one thing a Teacher
      * uses on all of them.
      */
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    gap: 0.5rem;
     min-height: 2.75rem;
     padding: 0.5rem 0.7rem;
     border-radius: var(--radius-md);
@@ -597,6 +641,20 @@
     text-decoration: none;
     white-space: nowrap;
     transition: color 160ms var(--chrome-ease), background-color 160ms var(--chrome-ease);
+  }
+
+  /*
+   * The current section, marked without colour so it survives a projector: a rule down its
+   * leading edge, plus the weight change. Present and transparent on every row, so an
+   * inactive one is not indented differently from the one beside it.
+   */
+  .site-nav__link::before {
+    content: '';
+    flex: 0 0 auto;
+    align-self: stretch;
+    width: 2px;
+    border-radius: var(--radius-pill);
+    background: transparent;
   }
 
   .site-nav__link:hover {
@@ -609,26 +667,8 @@
     font-weight: 600;
   }
 
-  /* The current section, marked without colour so it survives a projector. */
-  .site-nav__link--active::after {
-    content: '';
-    display: block;
-    height: 2px;
-    margin-top: 0.25rem;
-    border-radius: var(--radius-pill);
+  .site-nav__link--active::before {
     background: var(--foreground);
-  }
-
-  /* Below this the bar cannot hold identity, five sections and two controls at once. */
-  @media (max-width: 60rem) {
-    .site-nav {
-      order: 3;
-      flex-basis: 100%;
-    }
-
-    .site-header {
-      flex-wrap: wrap;
-    }
   }
 
   /*

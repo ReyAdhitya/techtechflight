@@ -1,60 +1,94 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { DESTINATIONS, SiteNav } from './SiteNav'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { DESTINATIONS, MISSION_RUN_DESTINATION, SiteNav } from './SiteNav'
 
 const pathname = vi.hoisted(() => ({ current: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 /**
- * Six places, ordered by a Teacher's day.
+ * Four places, behind one button.
  *
- * The count matters. Every destination added past what a Teacher actually visits is one
- * more thing to read past while looking for the one they wanted.
+ * The count matters, and so does the fact that they are shut. Seven links across the top of
+ * a screen that also carries a twelve-step rail is two navigations competing, which is the
+ * confusion ADR-0026 exists to remove.
  */
 describe('where a Teacher can go', () => {
-  it('offers exactly the seven places, in the order of a Teacher day', () => {
+  it('shows one button rather than a row of links', () => {
+    pathname.current = '/'
     render(<SiteNav />)
 
-    /*
-     * Vision is last and is the odd one out — a check rather than a place in the day. It
-     * is here at all because a check nobody can find is a check nobody runs, and it
-     * answers a question no other screen can: whether this machine can see.
-     */
+    const button = screen.getByRole('button', { name: /go to/i })
+    expect(button).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
+  })
+
+  it('offers the four places that are not part of a Mission run', () => {
+    pathname.current = '/'
+    render(<SiteNav />)
+
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
+
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
-      'Lesson',
-      'Control',
-      'Walls',
       'Fleet',
+      'Walls',
       'Students',
-      'Reports',
       'Vision',
     ])
   })
 
-  it('does not offer Settings, which is not a place in the workflow', () => {
+  /*
+   * The three that left. They are steps on the Mission run page now, and the rail is how a
+   * Teacher reaches them. Offering them here as well would put a Teacher on `/lesson` and
+   * `/mission?step=1` by two different routes to the same work.
+   */
+  it('does not offer Lesson, Control or Reports, which are steps now', () => {
+    pathname.current = '/'
     render(<SiteNav />)
+
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
+
+    for (const gone of ['Lesson', 'Control', 'Reports']) {
+      expect(screen.queryByRole('link', { name: gone })).not.toBeInTheDocument()
+    }
+  })
+
+  it('does not offer Settings, which is not a place in the workflow', () => {
+    pathname.current = '/'
+    render(<SiteNav />)
+
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
 
     expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument()
   })
 
   it('does not offer the screens that were folded into others', () => {
-    // History and Maintenance still exist as routes and still forward; they are simply no
-    // longer somewhere a Teacher is invited to go mid-lesson.
+    pathname.current = '/'
+    render(<SiteNav />)
+
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
+
     for (const gone of ['History', 'Maintenance', 'Tower']) {
       expect(screen.queryByRole('link', { name: gone })).not.toBeInTheDocument()
     }
   })
 
   it('marks the screen a Teacher is on', () => {
-    pathname.current = '/reports'
+    pathname.current = '/students'
     render(<SiteNav />)
 
-    expect(screen.getByRole('link', { name: 'Reports' })).toHaveAttribute('aria-current', 'page')
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
+
+    expect(screen.getByRole('link', { name: 'Students' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 
   it('marks Walls active on wall subroutes', () => {
     pathname.current = '/walls/cameras'
     render(<SiteNav />)
+
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
 
     expect(screen.getByRole('link', { name: 'Walls' })).toHaveAttribute('aria-current', 'page')
   })
@@ -63,18 +97,47 @@ describe('where a Teacher can go', () => {
     pathname.current = '/demo'
     render(<SiteNav />)
 
+    fireEvent.click(screen.getByRole('button', { name: /go to/i }))
+
     expect(screen.getByRole('link', { name: 'Fleet' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  /* Escape has to bring the focus back, or the next Tab starts from the top of the page. */
+  it('shuts on Escape and gives the focus back to the button', () => {
+    pathname.current = '/'
+    render(<SiteNav />)
+
+    const button = screen.getByRole('button', { name: /go to/i })
+    fireEvent.click(button)
+    expect(button).toHaveAttribute('aria-expanded', 'true')
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(button).toHaveAttribute('aria-expanded', 'false')
+    expect(button).toHaveFocus()
+  })
+
+  it('shuts when a Teacher goes somewhere', () => {
+    pathname.current = '/'
+    render(<SiteNav />)
+
+    const button = screen.getByRole('button', { name: /go to/i })
+    fireEvent.click(button)
+
+    const walls = screen.getByRole('link', { name: 'Walls' })
+    // jsdom cannot navigate, and says so on stderr unless the default is stopped first.
+    walls.addEventListener('click', (event) => event.preventDefault())
+    fireEvent.click(walls)
+
+    expect(button).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('every destination is a real route', () => {
     expect(DESTINATIONS.map((destination) => destination.href)).toEqual([
-      '/lesson',
-      '/control',
-      '/walls',
       '/',
+      '/walls',
       '/students',
-      '/reports',
       '/vision',
     ])
+    expect(MISSION_RUN_DESTINATION.href).toBe('/mission')
   })
 })

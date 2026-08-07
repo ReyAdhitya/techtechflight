@@ -3,6 +3,12 @@
 Planner output. Every verdict below was checked against the code on `main` at `c4a56ba`
 today. Nothing here is inferred from the old backlog.
 
+> **The priority order here is superseded by
+> [`2026-08-07-rail-rebuild-handover.md`](./2026-08-07-rail-rebuild-handover.md).**
+> R1, the ground station `/api/classroom` gap, is not a blocker for the owner's demo,
+> which runs on the Vercel deploy. It stays true for a real classroom. The triage of the
+> issues below is still accurate.
+
 ## Part 1: triage of the open backlog
 
 ### Close, delivered

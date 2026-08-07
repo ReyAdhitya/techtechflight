@@ -5,6 +5,35 @@ would notice.
 
 ## Unreleased
 
+### Changed
+
+- **The Mission run is one page with the twelve-step rail on it.** `/mission` carries all
+  twelve: set-up one block at a time for steps 1 to 5, the live board whole for 6 to 10,
+  close-down at 11, the debrief at 12. `/lesson`, `/control` and `/reports` still resolve
+  and forward to the step that answers them. ADR-0026 reverses the 2026-08-06 supersession
+  of ADR-0024.
+- **The seven-item navigation collapses behind one Go to button.** Lesson, Control and
+  Reports leave it, because they are steps. Fleet, Walls, Students and Vision stay behind
+  it and Settings keeps its own control. Two navigations on one screen was the confusion
+  being removed. `Ctrl` + `K` still reaches the Mission run.
+- **Every rail step says what it decided, not that it is finished.** Step 1 reads "Search
+  and Rescue", step 3 reads "4 teams, 3 craft", step 12 reads "Sealed 09:44". Steps 7 to
+  10 read as live while the class is up and settle to done when the Mission is sealed.
+  A step that is not open says why, in the prototype's own words: "Choose a Scenario
+  first", "Grant a takeoff first", "Seal the Mission first".
+- **A step that is not open still opens, and says what is in the way,** rather than
+  bouncing a Teacher back to step 1. The bounce was the dead end the first rail had.
+- **The header logo goes to the Mission run.** It used to go to Control, which is the same
+  place under its old name.
+- **Reprioritise is spelled the way the rest of the board is.**
+
+### Added
+
+- **A Teacher can hold a takeoff, not only grant it.** Hold sits beside Grant in the
+  clearance queue; the held team stays on the list and reads Held rather than Waiting, and
+  the Student's tablet says "Hold for now" in words. A hold is a record and reaches no
+  aircraft (ADR-0021). Granting supersedes it, so there are two answers rather than three.
+
 ### Fixed
 
 - **`/enter` shows the door** when no role is stored, instead of hanging on Opening.

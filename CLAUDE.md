@@ -164,7 +164,26 @@ string* (`missionStepDone` in `web/lib/mission-flow-summary.ts`) and a *lock rea
 (`missionStepBlockedBy`), and both are the prototype's own wording: "Search and Rescue",
 "1 zone, 2 no-fly", "Grant a takeoff first". A tick alone tells a Teacher they did something
 and not what they chose. Steps 7 to 10 read `live` while the class is up and settle to `done`
-when the Mission is sealed; they never read as ticked off mid-lesson.
+when the Mission is sealed; they never read as ticked off mid-lesson. **Only a locked row
+consults the blocker** — a step can be behind a Teacher *and* have its condition stop
+holding (untick the brief after granting), and a tick beside "Pre-flight one craft first" is
+the rail arguing with itself. **Exactly one row reads `current`, and it is the active one**,
+so a Teacher looking ahead does not see two rows saying "You are here".
+
+**A Mission becomes under way when the flying board mounts, so step 11 needs step 6 first.**
+`ControlScreen`'s effect calls `startMission`, and `isMissionStepOpen(11)` needs
+`mission.startedAt`. A test that jumps straight to step 11 has to call `startMission` itself.
+
+**`scripts/shot.mjs` seeds the board role.** `RequireRole` sends a fresh browser profile to
+`/enter`, so every Teacher screenshot taken between the role gate shipping and 2026-08-07 was
+a photograph of that door. `TTF_SHOT_ROLE=student` seeds the other one. A shot needs
+`NEXT_PUBLIC_DEMO_ONLY=1` at build time too, or the board waits for a ground station.
+
+**A saved theme does not survive hydration, and this predates the rail.** The boot script in
+`layout.tsx` stamps `data-theme` on `<html>` before paint, and after React hydrates the
+attribute is gone: `document.documentElement.dataset.theme` reads `undefined` on a load where
+`localStorage.theme` is `dark`. The **toggle** works, so the dark theme itself is fine. Not
+fixed here, and not caused by ADR-0026.
 
 **Lesson set-up is steps 1 to 5, and nothing else.** Choose the Scenario, draw the airspace,
 put teams on craft, tick pre-flight, brief the class. Everything that is not one of those
@@ -173,6 +192,13 @@ board's, finished Lessons and the remedial queue are **Reports**', pack-down is 
 where records are stored is said on **Settings** alone. Before adding a block to a set-up
 step, ask which step or screen already answers it. Two surfaces holding one list means one of
 them is stale.
+
+**Grant and Hold are both records, and there is no Release.** `holdClearance` sits beside
+`grantClearance` in `web/lib/clearance.ts` and `holdSeatsForDrone` beside
+`grantSeatsForDrone` so the answer reaches the tablet in words. A held request **stays in the
+queue** reading *Held*, because dropping it would make the Teacher's own answer invisible to
+them. Granting supersedes a hold; a third button on a row read at a glance costs more than it
+answers. Neither reaches an aircraft (ADR-0021).
 
 **A Mission is a side key, not a Logbook row.** `techtechflight:mission-draft` holds the
 Scenario, the zones and the craft; `techtechflight:clearances` holds takeoff clearances. Both

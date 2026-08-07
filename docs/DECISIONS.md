@@ -9,6 +9,37 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-07 · The rail is the navigation, and the top bar is what collapses.
+
+- **Decision / notes:** ADR-0026. The twelve steps live on `/mission` and the seven-item
+  `SiteNav` becomes one **Go to** button holding Fleet, Walls, Students and Vision.
+  `/lesson`, `/control` and `/reports` forward with a link as well as a `router.replace`,
+  because a static export is served off a memory stick as often as off Vercel and a
+  redirect that needs JavaScript is not a redirect. `LessonScreen`, `ControlScreen` and
+  `ReportsScreen` gained a `bare` prop rather than being rewritten: the work has not moved,
+  only the way in. Steps 6 to 10 render the whole live board and only bring the section for
+  the step into view; step 11 is close-down alone.
+- **Could have gone differently:** Gate steps 6 to 10 the way 1 to 5 are gated, one pane
+  each, as the prototype draws them. Rejected on safety: Land, Hover, Recall and Stop live
+  on the strips, and a Command a navigation press can hide is a Command a Teacher cannot
+  reach in the ten seconds they have. The prototype says so itself against step 7. Step 11
+  is the exception because it does not open until every craft is down. Bounce a Teacher who
+  presses a locked step back to the step the records imply. Rejected: a link that goes
+  nowhere reads as broken, which is exactly what the first rail did.
+
+## 2026-08-07 · Hold is the Teacher's second answer, and there is no third.
+
+- **Decision / notes:** `holdClearance` beside `grantClearance`, and `holdSeatsForDrone`
+  beside `grantSeatsForDrone` so the answer reaches the tablet. A held request stays in the
+  queue and reads **Held**; the Student reads "Hold for now" in the words the held screen
+  already shipped with. Records written before the field exists read as not held, because
+  absent is not held. No free-text reason: the prototype's Hold is a bare button and a
+  Teacher answering four teams has no spare press.
+- **Could have gone differently:** A Release control so a Teacher can un-hold without
+  granting. Rejected: granting already supersedes a hold, and a third button on a row a
+  Teacher reads at a glance costs more than it answers. Drop a held team out of the queue.
+  Rejected: it would make the Teacher's own answer invisible to them.
+
 ## 2026-08-06 · Class roll rides the classroom session; role is sticky and reversible.
 
 - **Decision / notes:** Student tablets pick names from `session.roster` copied by

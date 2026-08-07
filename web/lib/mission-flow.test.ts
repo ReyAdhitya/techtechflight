@@ -46,20 +46,25 @@ describe('the twelve-step Mission run', () => {
     })
   })
 
-  it('keeps set-up on Lesson, flying on Control and the debrief on Reports', () => {
-    expect(missionStepHref(1)).toBe('/lesson?step=1')
-    expect(missionStepHref(6)).toBe('/control?step=6')
-    expect(missionStepHref(12)).toBe('/reports')
+  /*
+   * One page holds all twelve (ADR-0026). Lesson, Control and Reports were three
+   * destinations for one run, and a Teacher mid-lesson had to know which of them answered
+   * the question they had.
+   */
+  it('puts every step on the one Mission run page', () => {
+    for (const step of MISSION_FLOW_STEPS) {
+      expect(missionStepHref(step.step)).toBe(`/mission?step=${step.step}`)
+    }
   })
 
   /*
-   * The in-the-air steps all pointed at a bare `/control`, which falls back to the step the
-   * records imply. Telemetry, Commands and Alerts were unreachable from the rail: pressing
-   * any of them landed the Teacher back on the step they were already on.
+   * The step number has to be in the link. Without it the page falls back to the step the
+   * records imply, and Telemetry, Commands and Alerts were unreachable from the rail:
+   * pressing any of them landed the Teacher back on the step they were already on.
    */
-  it('names the step in the link for every step Control shows', () => {
+  it('names the step in the link rather than leaving the page to guess', () => {
     for (const step of [6, 7, 8, 9, 10, 11]) {
-      expect(missionStepHref(step)).toBe(`/control?step=${step}`)
+      expect(missionStepHref(step)).toContain(`step=${step}`)
     }
   })
 
@@ -78,12 +83,31 @@ describe('what is open', () => {
     }
   })
 
-  it('says what is standing in the way rather than going quiet', () => {
+  /*
+   * The wording is the prototype's, not a paraphrase of it, and it is checked exactly. A
+   * generic "not available yet" is the version this whole rail exists to replace.
+   */
+  it('says what is standing in the way, in the words the prototype uses', () => {
     const nothing = facts()
     expect(missionStepBlockedBy(1, nothing)).toBeNull()
-    expect(missionStepBlockedBy(2, nothing)).toMatch(/Scenario/i)
-    expect(missionStepBlockedBy(3, nothing)).toMatch(/Mission Zone/i)
-    expect(missionStepBlockedBy(7, nothing)).toMatch(/clearance/i)
+    expect(missionStepBlockedBy(2, nothing)).toBe('Choose a Scenario first')
+    expect(missionStepBlockedBy(3, nothing)).toBe('Draw the Mission Zone first')
+    expect(missionStepBlockedBy(4, nothing)).toBe('Put a team on a craft first')
+    expect(missionStepBlockedBy(5, nothing)).toBe('Pre-flight one craft first')
+    expect(missionStepBlockedBy(6, nothing)).toBe('Brief the class first')
+    for (const step of [7, 8, 9, 10]) {
+      expect(missionStepBlockedBy(step, nothing), `step ${step}`).toBe('Grant a takeoff first')
+    }
+    expect(missionStepBlockedBy(11, nothing)).toBe('Nothing has flown yet')
+    expect(missionStepBlockedBy(12, nothing)).toBe('Seal the Mission first')
+  })
+
+  /* A lock reason sits on one line under the step name, beside a done string. */
+  it('ends no lock reason in a full stop', () => {
+    for (const step of MISSION_FLOW_STEPS) {
+      const words = missionStepBlockedBy(step.step, facts())
+      if (words !== null) expect(words.endsWith('.'), `step ${step.step}`).toBe(false)
+    }
   })
 
   /*
@@ -119,7 +143,7 @@ describe('what is open', () => {
   it('closes Confirm mission complete again while anything is airborne', () => {
     const flying = facts({ cleared: true, airborne: true })
     expect(isMissionStepOpen(11, flying)).toBe(false)
-    expect(missionStepBlockedBy(11, flying)).toMatch(/Land or Recall/i)
+    expect(missionStepBlockedBy(11, flying)).toBe('Land or Recall every craft first')
 
     const down = facts({ cleared: true, airborne: false })
     expect(isMissionStepOpen(11, down)).toBe(true)

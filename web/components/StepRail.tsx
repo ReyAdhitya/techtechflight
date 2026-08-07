@@ -13,20 +13,27 @@ import {
   type MissionFlowStep,
   type MissionStepMark,
 } from '@/lib/mission-flow'
+import {
+  missionStepDone,
+  noMissionSummaryYet,
+  type MissionFlowSummary,
+} from '@/lib/mission-flow-summary'
 import { cn } from '@/lib/utils'
 
 /**
  * The twelve steps of a Mission run, down the left, put away when they are in the way.
  *
- * The first rail was withdrawn for being a second navigation (DECISIONS, 2026-08-04). Two
- * things are different. It carries state the top bar cannot: each step reads as done,
- * current, live or locked, and a locked step says what is standing in the way. And it
- * minimises to a column of numbers, so a Teacher who knows the day can have the width back.
+ * This is the navigation on the Mission run page rather than a column beside one (ADR-0026).
+ * Two rails were withdrawn before it for being a second navigation; what changed is that the
+ * seven-item top bar collapsed instead. Each step reads as done, current, live or locked, a
+ * locked step says what is standing in the way, and a finished step says what it decided.
+ * It minimises to a column of numbers, so a Teacher who knows the day can have the width back.
  *
- * Nothing here decides anything. Marks come from `mission-flow`, which reads records.
+ * Nothing here decides anything. Marks come from `mission-flow`, which reads records, and
+ * the words for a finished step come from `mission-flow-summary`, which counts them.
  */
 
-/** How each mark reads, in words. Colour is never the only channel (ADR-0006). */
+/** How each mark reads, in words. Colour is never the only channel (ADR-0004). */
 const MARK_WORDS: Readonly<Record<MissionStepMark, string>> = {
   done: 'Done',
   current: 'You are here',
@@ -45,7 +52,6 @@ const MARK_WORDS: Readonly<Record<MissionStepMark, string>> = {
 function StepGlyph({ mark, step }: { readonly mark: MissionStepMark; readonly step: number }) {
   return (
     <span
-      aria-hidden="true"
       className={cn(
         'tnum inline-grid size-7 shrink-0 place-items-center rounded-pill border bg-canvas font-display text-label font-medium',
         mark === 'done' && 'border-brand bg-brand text-primary-foreground',
@@ -54,23 +60,48 @@ function StepGlyph({ mark, step }: { readonly mark: MissionStepMark; readonly st
         mark === 'locked' && 'border-hairline text-ink-muted',
       )}
     >
-      {mark === 'done' ? '✓' : step}
+      {/*
+       * The mark in a word, for anything that cannot see the fill. The rail says done with
+       * marigold and live with a dashed info ring, and neither is allowed to be the only
+       * carrier (ADR-0004). Sighted readers get the same word in the hover title.
+       */}
+      <span className="sr-only">{MARK_WORDS[mark]}. </span>
+      <span aria-hidden="true">{mark === 'done' ? '✓' : step}</span>
     </span>
   )
+}
+
+/**
+ * What the step reads under its name.
+ *
+ * Locked says what is in the way, current says so, and a step that is done or live says
+ * what it decided. "Done" on its own is the version that made a Teacher open the step to
+ * find out what they had chosen.
+ */
+function stateWords(
+  step: number,
+  mark: MissionStepMark,
+  facts: MissionFlowFacts,
+  summary: MissionFlowSummary,
+): string {
+  if (mark === 'locked') return missionStepBlockedBy(step, facts) ?? MARK_WORDS.locked
+  if (mark === 'current') return MARK_WORDS.current
+  return missionStepDone(step, summary)
 }
 
 function StepRow({
   step,
   facts,
+  summary,
   active,
 }: {
   readonly step: MissionFlowStep
   readonly facts: MissionFlowFacts
+  readonly summary: MissionFlowSummary
   readonly active: boolean
 }) {
   const mark = missionStepMark(step.step, facts)
-  const blockedBy = missionStepBlockedBy(step.step, facts)
-  const state = blockedBy ?? (active ? MARK_WORDS.current : MARK_WORDS[mark])
+  const state = stateWords(step.step, active ? 'current' : mark, facts, summary)
 
   return (
     <li>
@@ -106,6 +137,7 @@ function StepRow({
 
 export function StepRail({
   facts,
+  summary,
   activeStep,
   lessonName,
   open,
@@ -113,6 +145,8 @@ export function StepRail({
   className,
 }: {
   readonly facts: MissionFlowFacts
+  /** Counts behind the done strings. Defaults to a board where nothing has happened. */
+  readonly summary?: MissionFlowSummary
   /** The step this screen is showing. Defaults to whatever the records say. */
   readonly activeStep?: number
   /** The running Lesson, so the rail says whose day this is. */
@@ -123,7 +157,7 @@ export function StepRail({
 }) {
   const current = activeStep ?? currentMissionStep(facts)
   const done = missionStepsDone(facts)
-  const stepNow = MISSION_FLOW_STEPS[current - 1]
+  const counted = summary ?? noMissionSummaryYet()
 
   return (
     <nav
@@ -198,6 +232,7 @@ export function StepRail({
                   key={step.step}
                   step={step}
                   facts={facts}
+                  summary={counted}
                   active={step.step === current}
                 />
               ))}

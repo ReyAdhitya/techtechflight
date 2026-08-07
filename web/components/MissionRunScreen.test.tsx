@@ -7,6 +7,7 @@ import {
   chooseScenario,
   setMissionDrones,
   setMissionZones,
+  startMission,
 } from '@/lib/mission-draft'
 import { PRE_FLIGHT_SEVEN_KEY, togglePropellersTick } from '@/lib/preflight-seven'
 import { TEAMS_KEY, addStudentToTeam, assignDroneToTeam, createTeam, readTeams } from '@/lib/teams'
@@ -235,6 +236,26 @@ describe('the Mission run page', () => {
     settle()
 
     expect(screen.getByRole('status')).toHaveTextContent('Seal the Mission first')
+  })
+
+  /*
+   * The one step where hiding the strips is safe rather than reckless: step 11 does not
+   * open until every craft is down, so there is no Command left to send.
+   */
+  it('gives close-down a surface of its own, without the live board under it', () => {
+    const lessonId = classReadyToFly()
+    // Opening the flying board is what starts a Mission, and step 11 needs one under way.
+    startMission(lessonId, Date.now())
+    at(11)
+    missionRun()
+    settle()
+
+    expect(surface().getByRole('heading', { name: 'Mission complete' })).toBeInTheDocument()
+    expect(surface().getByRole('heading', { name: 'Pack-down' })).toBeInTheDocument()
+    expect(surface().queryByRole('heading', { name: 'Every Drone' })).not.toBeInTheDocument()
+    expect(
+      surface().queryByRole('heading', { name: /Awaiting clearance/i }),
+    ).not.toBeInTheDocument()
   })
 
   it('has exactly one main for the skip link to land on', () => {

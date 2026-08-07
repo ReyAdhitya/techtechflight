@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDrones } from './FleetProvider'
-import { DESTINATIONS } from './SiteNav'
+import { DESTINATIONS, MISSION_RUN_DESTINATION } from './SiteNav'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 
@@ -33,7 +33,12 @@ export function CommandPalette() {
 
   const commands = useMemo<Command[]>(
     () => [
-      ...DESTINATIONS.map((destination) => ({
+      /*
+       * The Mission run leads, and is here rather than in the header button on purpose:
+       * the rail is how a Teacher walks the twelve steps, and this is the way back to them
+       * from one of the four screens that are not part of a Mission.
+       */
+      ...[MISSION_RUN_DESTINATION, ...DESTINATIONS].map((destination) => ({
         id: `go:${destination.href}`,
         label: destination.label,
         hint: destination.hint,

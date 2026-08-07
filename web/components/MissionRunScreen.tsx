@@ -67,7 +67,28 @@ export function MissionRunScreen() {
   const lesson = runningLesson(book)
   const lessonId = lesson?.id ?? null
 
+  /*
+   * Open on a board, shut on anything narrow. Under 60rem the rail leaves the flow and
+   * slides over the surface, so an open one on arrival is a drawer covering the work with
+   * nothing on screen saying why. The server render has no viewport, so it says open and
+   * the effect corrects it, which is the one order that hydrates cleanly.
+   */
   const [railOpen, setRailOpen] = useState(true)
+  const [narrow, setNarrow] = useState(false)
+
+  useEffect(() => {
+    // jsdom has no `matchMedia`, and neither does an old browser. A board is the honest
+    // default when nothing can be asked: the rail is in the flow and hides nothing.
+    if (typeof window.matchMedia !== 'function') return
+    const query = window.matchMedia('(max-width: 60rem)')
+    const apply = () => {
+      setNarrow(query.matches)
+      if (query.matches) setRailOpen(false)
+    }
+    apply()
+    query.addEventListener('change', apply)
+    return () => query.removeEventListener('change', apply)
+  }, [])
 
   /*
    * The rail reads eight localStorage keys, and this is a static export, so every visit is
@@ -115,8 +136,27 @@ export function MissionRunScreen() {
   const open = isMissionStepOpen(step, facts)
   const blockedBy = missionStepBlockedBy(step, facts)
 
+  // Pressing a step in a drawer is asking to be taken there, not to keep the drawer.
+  useEffect(() => {
+    if (narrow) setRailOpen(false)
+  }, [narrow, step])
+
   return (
     <div className="mission-run flex items-start gap-0 p-4 min-[26rem]:p-5">
+      {/*
+       * The way back out of the drawer. Only ever on screen while the rail is over the
+       * board, and it is a button rather than a bare div so a keyboard can reach it too.
+       */}
+      {narrow && railOpen && (
+        <button
+          type="button"
+          className="mission-run__scrim"
+          onClick={() => setRailOpen(false)}
+        >
+          <span className="sr-only">Close the Mission steps</span>
+        </button>
+      )}
+
       <StepRail
         facts={facts}
         summary={summary}
@@ -131,6 +171,28 @@ export function MissionRunScreen() {
         tabIndex={-1}
         className={cn(INSTRUMENT_FRAME, 'mission-run__surface flex flex-col gap-6')}
       >
+        {/* On a board the rail is always there, so this is the narrow screen's only way in. */}
+        <button
+          type="button"
+          className="mission-run__steps"
+          aria-expanded={railOpen}
+          onClick={() => setRailOpen(true)}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          >
+            <path d="M2 4h12M2 8h12M2 12h12" />
+          </svg>
+          Steps
+        </button>
+
         <header className="flex flex-col gap-1.5">
           <p className="m-0 flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <span className="rounded-pill bg-muted px-2.5 py-0.5 text-label font-semibold uppercase tracking-[0.07em] text-ink-subtle">

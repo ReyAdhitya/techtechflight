@@ -881,6 +881,43 @@
     padding-inline-start: 1.25rem;
   }
 
+  /*
+   * The way into the rail once it has left the flow. Not on a board, where the rail is
+   * already there and a button that opens what is open is a second thing to read.
+   */
+  .mission-run__steps {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    align-self: flex-start;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid var(--console-line);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--muted-foreground);
+    font: inherit;
+    font-size: var(--text-value);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .mission-run__steps:hover {
+    color: var(--foreground);
+    border-color: var(--foreground);
+  }
+
+  .mission-run__scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    border: 0;
+    padding: 0;
+    background: rgb(0 0 0 / 0.45);
+    cursor: pointer;
+  }
+
   .step-rail[data-open='false'] {
     width: 4.25rem;
   }
@@ -934,6 +971,11 @@
     /* The rail is out of the flow here, so the gutter it was holding open goes too. */
     .mission-run__surface {
       padding-inline-start: 0;
+    }
+
+    .mission-run__steps,
+    .mission-run__scrim {
+      display: flex;
     }
   }
 

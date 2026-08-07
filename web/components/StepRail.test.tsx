@@ -111,6 +111,22 @@ describe('the Mission step rail', () => {
   })
 
   /*
+   * A Teacher can untick the brief after granting a clearance. Step 5 is behind them and
+   * its condition has stopped holding, and a tick beside "Pre-flight one craft first" is
+   * the rail arguing with itself.
+   */
+  it('never shows a tick beside a reason the step is not open', () => {
+    railFor(
+      { scenarioChosen: true, briefed: true },
+      true,
+      { scenarioName: 'Delivery', briefSections: 5, briefSectionsTicked: 5 },
+    )
+
+    expect(screen.getByTitle('5. Rules and brief, 5 of 5 ticked')).toBeInTheDocument()
+    expect(screen.queryByText('Pre-flight one craft first')).not.toBeInTheDocument()
+  })
+
+  /*
    * A Teacher looking ahead down the rail sees the step they are reading marked, and only
    * that one. Two rows both saying "You are here" is the rail contradicting itself.
    */

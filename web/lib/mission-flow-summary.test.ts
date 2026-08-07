@@ -25,6 +25,10 @@ describe('what a step says it decided', () => {
       .toBe('Search and Rescue')
   })
 
+  it('says a count of none in words on the set-up steps too', () => {
+    expect(missionStepDone(5, summary({ briefSections: 5 }))).toBe('0 of 5 ticked')
+  })
+
   it('counts the airspace as zones and no-fly zones', () => {
     expect(missionStepDone(2, summary({ missionZones: 1, noFlyZones: 2 })))
       .toBe('1 zone, 2 no-fly')
@@ -40,6 +44,18 @@ describe('what a step says it decided', () => {
   it('says how many craft are past pre-flight, out of how many are flying', () => {
     expect(missionStepDone(4, summary({ craft: 3, craftPastPreFlight: 2 })))
       .toBe('2 of 3 past it')
+  })
+
+  /*
+   * A step a Teacher has not reached yet reads on the rail too, and a row of noughts is a
+   * measurement of a class that has none rather than a gap. It has to be readable as a gap.
+   */
+  it('says an untouched set-up step is untouched, not a row of noughts', () => {
+    const nothing = summary()
+    expect(missionStepDone(1, nothing)).toBe('Not chosen yet')
+    expect(missionStepDone(2, nothing)).toBe('Nothing drawn yet')
+    expect(missionStepDone(3, nothing)).toBe('No teams yet')
+    expect(missionStepDone(4, nothing)).toBe('No craft on a team yet')
   })
 
   it('says how much of the brief has been said out loud', () => {

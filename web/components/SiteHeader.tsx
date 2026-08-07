@@ -118,8 +118,12 @@ function BrandMark() {
  * The logo's hit area.
  *
  * Height comes from CSS rather than from a larger image: the mark is 1.75rem tall and a
- * finger needs 2.75rem, which is what every other control in this bar already stands at — so
+ * finger needs 2.75rem, which is what every other control in this bar already stands at, so
  * the target grows to the row it sits in without the row growing at all.
+ *
+ * It goes to the Mission run, which is where it always went: that used to be called Control
+ * and is now the one page holding all twelve steps. A Teacher who has wandered off to Fleet
+ * or Walls presses the logo to get back to the hour they are teaching.
  *
  * **Enter activates it, not Space.** It goes somewhere, so it is a link; Space belongs to
  * buttons and to scrolling the page, and taking it here would break both.
@@ -127,11 +131,11 @@ function BrandMark() {
 function BrandLink({ children }: { children: ReactNode }) {
   return (
     <Link
-      href="/control"
-      /* Nothing to prefetch on a static export — see the note in `SiteNav`. */
+      href="/mission"
+      /* Nothing to prefetch on a static export. See the note in `SiteNav`. */
       prefetch={false}
       className="brand-link"
-      aria-label="TechTech Flight Deck, go to Control"
+      aria-label="TechTech Flight Deck, go to the Mission run"
     >
       {children}
     </Link>

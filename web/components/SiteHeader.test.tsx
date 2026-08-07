@@ -46,11 +46,12 @@ describe('the bar every screen carries', () => {
   })
 
   /*
-   * The logo goes to Control, which is not where a header logo conventionally goes. The
-   * reasoning is in `docs/DECISIONS.md`; what matters here is that it is a real link with a
-   * name that says where it leads, because the mark on its own says nothing about that.
+   * The logo goes to the hour a Teacher is teaching, which is not where a header logo
+   * conventionally goes. The reasoning is in `docs/DECISIONS.md`; what matters here is that
+   * it is a real link with a name that says where it leads, because the mark on its own
+   * says nothing about that.
    */
-  it('makes the logo a link to Control', () => {
+  it('makes the logo a link to the Mission run', () => {
     pathname.current = '/'
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
@@ -58,8 +59,8 @@ describe('the bar every screen carries', () => {
       </FleetProvider>,
     )
 
-    const brand = screen.getByRole('link', { name: /go to Control/i })
-    expect(brand).toHaveAttribute('href', '/control')
+    const brand = screen.getByRole('link', { name: /go to the Mission run/i })
+    expect(brand).toHaveAttribute('href', '/mission')
     expect(brand).toContainElement(screen.getByRole('img', { name: /TechTech Flight Deck/i }))
   })
 
@@ -76,7 +77,7 @@ describe('the bar every screen carries', () => {
       </FleetProvider>,
     )
 
-    expect(screen.getByRole('link', { name: /go to Control/i })).not.toHaveTextContent(
+    expect(screen.getByRole('link', { name: /go to the Mission run/i })).not.toHaveTextContent(
       /Flight Deck/,
     )
     // Still on screen — outside the link, not removed from it.

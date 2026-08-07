@@ -862,11 +862,23 @@
    * than trusting a render.
    */
   .step-rail {
+    position: sticky;
+    top: 5.5rem;
     flex: 0 0 auto;
     width: 18.5rem;
     overflow: hidden;
     box-shadow: var(--shadow);
     transition: width var(--chrome-duration) var(--chrome-ease);
+  }
+
+  /*
+   * The surface keeps its own page frame and the rail sits outside it, so the board is
+   * still 80rem wide where the viewport allows rather than 80rem minus a rail. Padding is
+   * on the surface rather than the row, so a minimised rail gives the width back.
+   */
+  .mission-run__surface {
+    min-width: 0;
+    padding-inline-start: 1.25rem;
   }
 
   .step-rail[data-open='false'] {
@@ -917,6 +929,11 @@
     .step-rail[data-open='false'] .step-rail__text,
     .step-rail[data-open='false'] .step-rail__phase {
       display: block;
+    }
+
+    /* The rail is out of the flow here, so the gutter it was holding open goes too. */
+    .mission-run__surface {
+      padding-inline-start: 0;
     }
   }
 

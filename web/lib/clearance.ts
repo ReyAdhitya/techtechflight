@@ -16,7 +16,18 @@ export interface ClearanceRecord {
   readonly requestedAt: number
   readonly grantedAt: number | null
   readonly grantedBy: string | null
-  /** Set when the Mission ends — the clearance no longer applies. */
+  /**
+   * When the Teacher held this request, and who held it.
+   *
+   * Held is not refused and it is not still waiting. A team the Teacher has answered with
+   * "not yet" reads differently on both boards from one nobody has looked at, which is the
+   * distinction `holdSeatClearance` already makes on the Student's tablet. There is no
+   * release: granting is what supersedes a hold, so the Teacher has two answers rather
+   * than three.
+   */
+  readonly heldAt: number | null
+  readonly heldBy: string | null
+  /** Set when the Mission ends: the clearance no longer applies. */
   readonly endedAt: number | null
 }
 
@@ -150,6 +161,8 @@ export function syncClearanceQueue(
           requestedAt: now,
           grantedAt: null,
           grantedBy: null,
+          heldAt: null,
+          heldBy: null,
           endedAt: null,
         },
       ],
@@ -195,10 +208,54 @@ export function grantClearance(
         requestedAt: now,
         grantedAt: now,
         grantedBy: trimmed,
+        heldAt: null,
+        heldBy: null,
         endedAt: null,
       },
     ],
   }
+}
+
+/**
+ * Hold clearance — records that the Teacher answered, and said not yet.
+ *
+ * Not a Command, for the same reason granting is not one (ADR-0021): it is addressed to a
+ * person, it reaches no aircraft, and the Student is still flying by hand. It is the answer
+ * a Teacher had no way to give before, and its absence made a team the Teacher had seen and
+ * deliberately kept on the ground indistinguishable from one nobody had looked at.
+ *
+ * A held request stays in the queue. There is no release: granting supersedes the hold, so
+ * a Teacher standing in front of a class has two answers rather than three. Holding one
+ * that is already cleared does nothing, because the craft is already up.
+ */
+export function holdClearance(
+  state: ClearanceState,
+  droneId: DroneId,
+  missionId: string,
+  heldBy: string,
+  now: number,
+): ClearanceState {
+  const trimmed = heldBy.trim()
+  if (trimmed === '') return state
+
+  const pending = pendingRecord(state, droneId, missionId)
+  if (pending === null) return state
+
+  return {
+    records: state.records.map((record) =>
+      record === pending ? { ...record, heldAt: now, heldBy: trimmed } : record,
+    ),
+  }
+}
+
+/** Whether the Teacher has held this craft's request and not yet granted it. */
+export function isHeld(
+  state: ClearanceState,
+  droneId: DroneId,
+  missionId: string,
+): boolean {
+  const record = openRecord(state, droneId, missionId)
+  return record !== null && record.grantedAt === null && record.heldAt !== null
 }
 
 /** End every clearance for a Mission — called when the Mission ends. */

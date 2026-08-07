@@ -160,3 +160,108 @@ describe('ClearanceQueue', () => {
     expect(screen.getByRole('button', { name: 'Grant clearance' })).toBeDisabled()
   })
 })
+
+/**
+ * Hold beside Grant.
+ *
+ * Both are reachable without selecting anything first, because a Teacher answering a queue
+ * of four has no spare press. A held team stays on the list and reads as held: sending it
+ * away would make the Teacher's own answer invisible to them.
+ */
+describe('holding a team on the ground', () => {
+  const held = () => {
+    const state = syncClearanceQueue(
+      emptyClearanceState(),
+      [readyCraft('ttf-0001').input],
+      2_000,
+    )
+    return state
+  }
+
+  it('offers Hold next to Grant, with nothing selected first', () => {
+    render(
+      <ClearanceQueue
+        state={held()}
+        craft={[readyCraft('ttf-0001')]}
+        grantedBy="Ms Chen"
+        now={3_000}
+      />,
+    )
+
+    const row = screen.getAllByRole('listitem')[0]!
+    expect(within(row).getByRole('button', { name: 'Grant clearance' })).toBeEnabled()
+    expect(within(row).getByRole('button', { name: 'Hold' })).toBeEnabled()
+  })
+
+  it('reads as held rather than as still waiting, and stays on the list', async () => {
+    const user = userEvent.setup()
+
+    function Harness() {
+      const [state, setState] = useState(held)
+      return (
+        <ClearanceQueue
+          state={state}
+          craft={[readyCraft('ttf-0001')]}
+          grantedBy="Ms Chen"
+          now={3_000}
+          onStateChange={setState}
+        />
+      )
+    }
+
+    render(<Harness />)
+
+    expect(within(screen.getAllByRole('listitem')[0]!).getByText('Waiting')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Hold' }))
+
+    const row = screen.getAllByRole('listitem')[0]!
+    expect(within(row).getByText('Held')).toBeInTheDocument()
+    expect(within(row).queryByText('Waiting')).not.toBeInTheDocument()
+    // The answer is already given, so pressing it again is not offered.
+    expect(within(row).getByRole('button', { name: 'Hold' })).toBeDisabled()
+    expect(within(row).getByRole('button', { name: 'Grant clearance' })).toBeEnabled()
+    // Still the Teacher's to answer, so still on the Teacher's list.
+    expect(
+      screen.getByText((_, element) => element?.textContent === '1 awaiting'),
+    ).toBeInTheDocument()
+  })
+
+  it('records who held it, and never clears it', async () => {
+    const user = userEvent.setup()
+    let latest = held()
+
+    render(
+      <ClearanceQueue
+        state={latest}
+        craft={[readyCraft('ttf-0001')]}
+        grantedBy="Ms Chen"
+        now={3_000}
+        onStateChange={(next) => {
+          latest = next
+        }}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Hold' }))
+
+    expect(latest.records[0]?.heldAt).toBe(3_000)
+    expect(latest.records[0]?.heldBy).toBe('Ms Chen')
+    expect(isCleared(latest, 'ttf-0001', 'm1')).toBe(false)
+  })
+
+  it('refuses to hold when disabled or the Teacher name is blank', () => {
+    render(
+      <ClearanceQueue
+        state={held()}
+        craft={[readyCraft('ttf-0001')]}
+        grantedBy="Ms Chen"
+        disabled
+        now={3_000}
+        onStateChange={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Hold' })).toBeDisabled()
+  })
+})

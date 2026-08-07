@@ -92,9 +92,15 @@ function rowMark(
 /**
  * What the row reads under its name.
  *
- * Current says so. Anything else says what is standing in the way, or, when nothing is,
- * what the step decided. "Done" on its own is the version that made a Teacher open the
- * step to find out what they had chosen.
+ * Current says so. A row that is not open says what is standing in the way. Everything
+ * else says what the step decided, which for an untouched one is that it is untouched.
+ * "Done" on its own is the version that made a Teacher open the step to find out what
+ * they had chosen.
+ *
+ * Only a locked row consults the blocker. A step can be behind a Teacher *and* have its
+ * condition stop holding, which is what happens when they untick the brief after granting
+ * a clearance, and a row that showed a tick beside "Pre-flight one craft first" was the
+ * rail arguing with itself.
  */
 function stateWords(
   step: number,
@@ -103,7 +109,10 @@ function stateWords(
   summary: MissionFlowSummary,
 ): string {
   if (mark === 'current') return MARK_WORDS.current
-  return missionStepBlockedBy(step, facts) ?? missionStepDone(step, summary)
+  if (mark === 'locked') {
+    return missionStepBlockedBy(step, facts) ?? missionStepDone(step, summary)
+  }
+  return missionStepDone(step, summary)
 }
 
 function StepRow({

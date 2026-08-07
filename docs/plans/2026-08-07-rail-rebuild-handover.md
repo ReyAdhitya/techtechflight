@@ -42,7 +42,7 @@ stubbornness, it was the rulebook.
 | 2 | The two diagrams | planner, done | Section 5 |
 | 3 | Build the rail and the twelve steps | coder | Prompt 1 |
 | 4 | Review it against the artifact | reviewer | Prompt 2 |
-| 5 | Switch on Vercel Blob so iPads can join | **the owner** | nobody else can |
+| 5 | ~~Switch on Vercel Blob so iPads can join~~ | done | verified 2026-08-07, see section 8 |
 | 6 | Rehearse on the real laptop and the real iPad | **the owner** | not automatable |
 
 ### The cut line if the demo is close
@@ -322,6 +322,12 @@ that row has no answer in the app.
 - `web/components/StepRail.tsx` exists and nothing imports it but its own test
 - `web/app/(app)/lesson/page.tsx` still reads `?step=` on the client
 - The full suite was green on 2026-08-06: 1421 tests across 232 files
+- **The Vercel classroom store is already live.** `BLOB_READ_WRITE_TOKEN` exists on the
+  `techtechflight` project across Production, Preview and Development, created
+  2026-08-06. `GET https://techtechflight.vercel.app/api/classroom?code=TEST` answers
+  `HTTP 200` with a stored session labelled `probe`, so reads and writes both work. The
+  iPad join path is not blocked. Re-check with that one URL if it ever looks broken: a
+  reply of "Classroom store is not configured" means the token went missing
 
 ## 9. Still open
 
@@ -329,5 +335,6 @@ that row has no answer in the app.
   coder does all five commits instead of stopping after four.
 - **The Student side has no artifact.** The poster is its spec. If the owner has a
   picture in mind that is not on the poster, it needs saying before the coder starts.
-- **Vercel Blob.** If it is not switched on, iPads silently never join and it reads as a
-  broken app rather than as missing configuration.
+- **A rehearsal on the real iPad.** The classroom API answers correctly, which is not the
+  same as a child joining a lesson on a tablet and reading the right thing. Nothing here
+  has been through that.

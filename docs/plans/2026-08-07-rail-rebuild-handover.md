@@ -1,5 +1,13 @@
 # The rail comes back, and the demo runs on Vercel
 
+> **Built on 2026-08-07.** Prompt 1 is done: ADR-0026, the rail, the twelve steps on
+> `/mission`, the collapsed navigation, and Hold beside Grant. Prompt 2, the front end
+> review, has not been run. Rows 5 and 6 of the plan below are still the owner's.
+>
+> Two things this document said that are no longer true, left in place so the reasoning
+> reads in order: `holdClearance` now exists, and `StepRail` is imported by
+> `MissionRunScreen`. The `?step=` reader has moved off `/lesson` onto `/mission`.
+
 Handover, 2026-08-07. Written by the planner terminal. Everything here was decided by
 the product owner in conversation on 2026-08-06 and 2026-08-07, and every fact about the
 code was checked against `main` rather than remembered.

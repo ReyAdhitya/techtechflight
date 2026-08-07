@@ -15,7 +15,7 @@ import type { MissionWithInstructions } from './AssignTargetControl'
  *
  * Approve takeoff scrolls to the clearance queue (a Clearance, not a Command).
  * Pause / Recall / Stop are Commands to the simulated Fleet only.
- * New Target / Reroute / Reprioritize are Instructions (records).
+ * New Target / Reroute / Reprioritise are Instructions (records).
  * Add NFZ is an airspace edit — Teacher draws on Scope / Lesson.
  */
 export function TeacherAtcToolbar({
@@ -102,7 +102,7 @@ export function TeacherAtcToolbar({
           disabled={!canInstruct}
           onClick={() => instruct('reprioritise')}
         >
-          Reprioritize
+          Reprioritise
         </button>
         <button
           type="button"
@@ -115,7 +115,7 @@ export function TeacherAtcToolbar({
       </div>
       {!craft && live ? (
         <p className="m-0 text-value text-ink-muted">
-          Select a craft for New target, Reprioritize, or Reroute.
+          Select a craft for New target, Reprioritise, or Reroute.
         </p>
       ) : null}
     </section>

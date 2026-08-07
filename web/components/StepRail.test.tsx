@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { noMissionYet, type MissionFlowFacts } from '@/lib/mission-flow'
+import { noMissionSummaryYet, type MissionFlowSummary } from '@/lib/mission-flow-summary'
 import { StepRail } from './StepRail'
 
 /**
@@ -26,8 +27,28 @@ const facts = (over: Partial<MissionFlowFacts> = {}): MissionFlowFacts => ({
   ...over,
 })
 
-const railFor = (over: Partial<MissionFlowFacts> = {}, open = true) =>
-  render(<StepRail facts={facts(over)} open={open} onToggle={() => {}} />)
+/** Everything the set-up asks for, so a clearance below is a reachable one. */
+const allSetUp: Partial<MissionFlowFacts> = {
+  scenarioChosen: true,
+  missionZoneDrawn: true,
+  teamOnCraft: true,
+  preFlightPassed: true,
+  briefed: true,
+}
+
+const counts = (over: Partial<MissionFlowSummary> = {}): MissionFlowSummary => ({
+  ...noMissionSummaryYet(),
+  ...over,
+})
+
+const railFor = (
+  over: Partial<MissionFlowFacts> = {},
+  open = true,
+  summary: Partial<MissionFlowSummary> = {},
+) =>
+  render(
+    <StepRail facts={facts(over)} summary={counts(summary)} open={open} onToggle={() => {}} />,
+  )
 
 describe('the Mission step rail', () => {
   it('names all twelve steps under their three phases', () => {
@@ -47,9 +68,56 @@ describe('the Mission step rail', () => {
   it('says what is standing in the way of a step that is not open', () => {
     railFor()
 
-    expect(screen.getByTitle(/2\. Mission area, Pick a Mission Scenario first/i))
+    expect(screen.getByTitle('2. Mission area, Choose a Scenario first')).toBeInTheDocument()
+    expect(screen.getByTitle('7. Where everything is, Grant a takeoff first')).toBeInTheDocument()
+  })
+
+  /*
+   * The other half of the same idea. A step behind the Teacher says what it decided, so
+   * they do not have to open it to find out which Scenario they picked half an hour ago.
+   */
+  it('says what a finished step decided rather than only that it is finished', () => {
+    railFor(
+      { scenarioChosen: true, missionZoneDrawn: true },
+      true,
+      { scenarioName: 'Search and Rescue', missionZones: 1, noFlyZones: 2, teams: 4, craft: 3 },
+    )
+
+    expect(screen.getByTitle('1. Mission Scenario, Search and Rescue')).toBeInTheDocument()
+    expect(screen.getByText('Search and Rescue')).toBeInTheDocument()
+    expect(screen.getByText('1 zone, 2 no-fly')).toBeInTheDocument()
+  })
+
+  /*
+   * Steps 7 to 10 are true at the same time while a class is up. A rail that ticked them
+   * off in order would be describing a workflow nobody has, so they read as live and carry
+   * a count rather than a tick.
+   */
+  it('reads the flying steps as live, with what is happening rather than a tick', () => {
+    render(
+      <StepRail
+        facts={facts({ ...allSetUp, cleared: true, airborne: true })}
+        summary={counts({ airborne: 3, selectedCraftName: 'Kestrel', criticalAlerts: 1 })}
+        activeStep={6}
+        open
+        onToggle={() => {}}
+      />,
+    )
+
+    expect(screen.getByTitle('7. Where everything is, 3 airborne')).toBeInTheDocument()
+    expect(screen.getByTitle('8. Telemetry and camera, Kestrel selected')).toBeInTheDocument()
+    expect(screen.getByTitle('9. Commands, Nothing sent yet')).toBeInTheDocument()
+    expect(screen.getByTitle('10. Alerts, 1 critical')).toBeInTheDocument()
+  })
+
+  /* Colour is never the only channel (ADR-0004), so each mark carries a word as well. */
+  it('gives every mark a word, not only a fill', () => {
+    railFor({ ...allSetUp, cleared: true, airborne: true }, true, { airborne: 2 })
+
+    expect(screen.getByRole('link', { name: /^Done\. Mission Scenario/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^Happening now\. Where everything is/ }))
       .toBeInTheDocument()
-    expect(screen.getByTitle(/7\. Where everything is, Grant a takeoff clearance first/i))
+    expect(screen.getByRole('link', { name: /^Not open yet\. Logs and debrief/ }))
       .toBeInTheDocument()
   })
 
@@ -61,6 +129,7 @@ describe('the Mission step rail', () => {
     )
     expect(current).toHaveLength(1)
     expect(current[0]).toHaveAccessibleName(/Mission area/i)
+    expect(current[0]).toHaveAttribute('title', '2. Mission area, You are here')
   })
 
   it('counts finished steps without counting the ones still happening', () => {
@@ -75,7 +144,7 @@ describe('the Mission step rail', () => {
     })
 
     expect(screen.getByText('6 of 12 done')).toBeInTheDocument()
-    expect(screen.getByTitle(/9\. Commands, Happening now/i)).toBeInTheDocument()
+    expect(screen.getByTitle('9. Commands, Nothing sent yet')).toBeInTheDocument()
   })
 
   it('shows how far through the run it is, as a bar as well as a count', () => {
@@ -98,6 +167,14 @@ describe('the Mission step rail', () => {
       <StepRail facts={facts()} lessonName="Year 8, period 3" open onToggle={() => {}} />,
     )
     expect(screen.getByText('Year 8, period 3')).toBeInTheDocument()
+  })
+
+  it('sends every step to the one Mission run page, naming the step', () => {
+    railFor()
+
+    expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual(
+      Array.from({ length: 12 }, (_, index) => `/mission?step=${index + 1}`),
+    )
   })
 
   it('says whether it is open, and offers the other state as the button', () => {

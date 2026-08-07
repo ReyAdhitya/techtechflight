@@ -1,12 +1,15 @@
 /**
  * Where a Teacher is in the twelve-step Mission run, and what is not open to them yet.
  *
- * The twelve words are the customer's own operational workflow. They were shipped once as
- * the Mission run rail and withdrawn the same day (DECISIONS, 2026-08-04) because that rail
- * was a second navigation: always mounted, no state of its own, saying nothing the top bar
- * did not. This module is the half that was missing. Every step reports one of four marks,
- * and a step that is not open says in words what is standing in the way, which is the thing
- * a Teacher could not find out before.
+ * The twelve words are the customer's own operational workflow. A rail carrying them shipped
+ * twice and was withdrawn twice, both times for being a second navigation beside a top bar
+ * that already named seven places. ADR-0026 settles it the other way round: the rail is the
+ * navigation on the Mission run page and the top bar is what collapses. Every step reports
+ * one of four marks, and a step that is not open says in words what is standing in the way.
+ *
+ * The words here are the prototype's own, down to the lock reasons. Copy for the state line
+ * a finished step carries is in `mission-flow-summary.ts`, because it needs counts this
+ * module deliberately does not take.
  *
  * Derived from records the Teacher already made. Nothing here is a tour script or a counter
  * that a screen bumps on mount.
@@ -35,16 +38,16 @@ export interface MissionFlowStep {
   readonly why: string
   readonly phase: MissionPhaseId
   /**
-   * Where the work lives. Set-up on Lesson, flying on Control, the debrief on Reports.
+   * Where the work lives. One page, and the step number in the query.
    *
-   * The step number is in the query, and it has to be. The in-the-air steps all pointed at
-   * a bare `/control`, which reads the step from the records when the URL does not say —
-   * so pressing Telemetry, or Commands, or Alerts in the rail put the Teacher back on
-   * whichever step the records implied and there was no way to reach the other three.
+   * All twelve are on `/mission` now (ADR-0026). The number has to be in the URL: without
+   * it the page falls back to the step the records imply, so pressing Telemetry, or
+   * Commands, or Alerts in the rail would put the Teacher back on whichever step the
+   * records implied and there would be no way to reach the other three.
    */
   readonly href: string
-  /** The one thing to do while this step is where the Teacher is. */
-  readonly nextAction: string
+  /** The primary button at the foot of the step, or null on the last one. */
+  readonly next: string | null
 }
 
 export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
@@ -52,109 +55,109 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     step: 1,
     label: 'Mission Scenario',
     title: 'Choose the Mission Scenario',
-    why: 'What the class is trying to do today. The objective, what counts as success and the risks all follow from this, so it comes first and stays changeable until the first clearance.',
+    why: 'What the class is trying to do today. The objective, what counts as success, and the risks all follow from this, so it comes first. It stays changeable until the first clearance.',
     phase: 'set-up',
-    href: '/lesson?step=1',
-    nextAction: 'Pick what the class is trying to achieve today.',
+    href: '/mission?step=1',
+    next: 'Draw the Mission area',
   },
   {
     step: 2,
     label: 'Mission area',
-    title: 'Draw the Mission area',
-    why: 'Metres from the Fleet’s own origin rather than a map, so "inside this polygon" stays true even when the origin is wrong.',
+    title: 'Draw the Mission area and the No-fly Zones',
+    why: 'Metres from the Fleet’s own origin, not a map, so "inside this polygon" stays true even when the origin is wrong. Tap the grid to add a corner; three corners make a zone.',
     phase: 'set-up',
-    href: '/lesson?step=2',
-    nextAction: 'Draw the Mission Zone and any No-fly Zones.',
+    href: '/mission?step=2',
+    next: 'Put teams on craft',
   },
   {
     step: 3,
     label: 'Teams and Drones',
     title: 'Put each team on a Drone',
-    why: 'Teams group the class for the Mission. Who is flying which craft still comes from the Logbook; this sits beside that, not instead of it.',
+    why: 'Teams group the class for the Mission. Who is flying which craft still comes from the Logbook. This sits beside that, not instead of it.',
     phase: 'set-up',
-    href: '/lesson?step=3',
-    nextAction: 'Put each team on a craft.',
+    href: '/mission?step=3',
+    next: 'Pre-flight each craft',
   },
   {
     step: 4,
     label: 'Pre-flight check',
-    title: 'Check every craft that is flying',
-    why: 'Six items read themselves from Telemetry. Propellers is the one you look at and tick, because the board cannot see a chipped blade.',
+    title: 'Pre-flight check, craft by craft',
+    why: 'Six items read themselves from Telemetry. Propellers is the one a Teacher looks at and ticks, because the board cannot see a chipped blade.',
     phase: 'set-up',
-    href: '/lesson?step=4',
-    nextAction: 'Work the seven items for each craft that is flying.',
+    href: '/mission?step=4',
+    next: 'The rules and the safety brief',
   },
   {
     step: 5,
     label: 'Rules and brief',
-    title: 'Brief the class',
-    why: 'Ticked as you say them, so the record shows the class was briefed and not only that a box existed.',
+    title: 'Walk the class through the rules and the safety brief',
+    why: 'Ticked as you say them, so the record shows the class was briefed and not just that a box existed.',
     phase: 'set-up',
-    href: '/lesson?step=5',
-    nextAction: 'Walk the class through the Mission rules and the safety brief.',
+    href: '/mission?step=5',
+    next: 'Open the clearance queue',
   },
   {
     step: 6,
     label: 'Takeoff clearance',
     title: 'Approve takeoff',
-    why: 'A team that is Ready, on a craft and past pre-flight enters the queue by itself. You grant or hold, and the Students still fly by hand.',
+    why: 'A team that is Ready, on a craft, and past pre-flight enters this queue by itself. You grant or hold. The Students fly the aircraft by hand, so this is a record, not a Command.',
     phase: 'in-the-air',
-    href: '/control?step=6',
-    nextAction: 'Grant or hold each team waiting to launch.',
+    href: '/mission?step=6',
+    next: 'Watch the airspace',
   },
   {
     step: 7,
     label: 'Where everything is',
-    title: 'Watch the airspace',
+    title: 'Where everything is',
     why: 'Plan view in the Fleet’s own frame, with the zones you drew and the trail each craft has flown.',
     phase: 'in-the-air',
-    href: '/control?step=7',
-    nextAction: 'Watch the Scope for craft leaving the Mission Zone.',
+    href: '/mission?step=7',
+    next: 'Read one craft closely',
   },
   {
     step: 8,
     label: 'Telemetry and camera',
-    title: 'Read one craft closely',
-    why: 'The numbers and the picture together, because a battery reading means something different when you can see what the craft is over.',
+    title: 'Telemetry and the camera',
+    why: 'The numbers and the picture side by side, because a battery reading means something different when you can see what the craft is over.',
     phase: 'in-the-air',
-    href: '/control?step=8',
-    nextAction: 'Read a craft closely when its numbers look wrong.',
+    href: '/mission?step=8',
+    next: 'The things you can send',
   },
   {
     step: 9,
     label: 'Commands',
-    title: 'Send what only you can send',
-    why: 'Five things reach the aircraft. The rest are instructions you record, so they work on real hardware too.',
+    title: 'What you can send, and what you can only record',
+    why: 'The Students fly by hand. Only five things actually reach the aircraft; the rest are instructions you note against the Mission so they still work on real hardware.',
     phase: 'in-the-air',
-    href: '/control?step=9',
-    nextAction: 'Land, Hover, Recall or Stop when a team needs help.',
+    href: '/mission?step=9',
+    next: 'When something goes wrong',
   },
   {
     step: 10,
     label: 'Alerts',
-    title: 'Work the Alert at the top',
-    why: 'One focused Alert with the responses already worked out, and the rest of the queue folded away.',
+    title: 'Alerts, worst one first',
+    why: 'One focused Alert with the responses already worked out, and the rest of the queue folded away. The bar keeps its height at zero so nothing on the board jumps when an Alert arrives.',
     phase: 'in-the-air',
-    href: '/control?step=10',
-    nextAction: 'Work the Alert at the top of the Attention bar.',
+    href: '/mission?step=10',
+    next: 'Bring the class down',
   },
   {
     step: 11,
     label: 'Mission complete',
-    title: 'Confirm the Mission complete',
-    why: 'Seals the Mission and its score. It refuses while anything is still in the air, and that refusal is the point of the step.',
+    title: 'Confirm the Mission is complete',
+    why: 'Seals the Mission and its score. It refuses while anything is still in the air. That refusal is the point of the step.',
     phase: 'close-down',
-    href: '/control?step=11',
-    nextAction: 'Confirm the Mission once every craft is down.',
+    href: '/mission?step=11',
+    next: 'The debrief',
   },
   {
     step: 12,
     label: 'Logs and debrief',
-    title: 'Read the debrief',
+    title: 'Logs, scores and the debrief',
     why: 'What happened, measured against the criteria the Scenario stated at step 1, and honest about what the board could not measure.',
     phase: 'close-down',
-    href: '/reports',
-    nextAction: 'Read the score against the criteria the Scenario stated.',
+    href: '/mission?step=12',
+    next: null,
   },
 ] as const
 
@@ -296,7 +299,13 @@ function isMissionStepDone(step: number, facts: MissionFlowFacts): boolean {
 /**
  * What is standing in the way, in words, or null when the step is open.
  *
- * Said as the thing to go and do, not as the rule that was broken.
+ * Said as the thing to go and do, not as the rule that was broken. The wording is the
+ * prototype's, which is also why there is no full stop: these sit on one line under the
+ * step name in the rail, beside a done string that is not a sentence either.
+ *
+ * Step 11 has two, and both are true things to go and do. Nothing has flown is the earlier
+ * one; a craft still up is the later one, and a Teacher meeting it needs the aircraft named
+ * as the obstacle rather than the paperwork.
  */
 export function missionStepBlockedBy(
   step: number,
@@ -306,28 +315,26 @@ export function missionStepBlockedBy(
 
   switch (step) {
     case 2:
-      return 'Pick a Mission Scenario first.'
+      return 'Choose a Scenario first'
     case 3:
-      return 'Draw the Mission Zone first.'
+      return 'Draw the Mission Zone first'
     case 4:
-      return 'Put a team on a craft first.'
+      return 'Put a team on a craft first'
     case 5:
-      return 'Pre-flight one craft first.'
+      return 'Pre-flight one craft first'
     case 6:
-      return 'Walk the class through the brief first.'
+      return 'Brief the class first'
     case 7:
     case 8:
     case 9:
     case 10:
-      return 'Grant a takeoff clearance first.'
+      return 'Grant a takeoff first'
     case 11:
-      return facts.airborne
-        ? 'Land or Recall every craft first.'
-        : 'Nothing has flown yet.'
+      return facts.airborne ? 'Land or Recall every craft first' : 'Nothing has flown yet'
     case 12:
-      return 'Confirm the Mission complete first.'
+      return 'Seal the Mission first'
     default:
-      return 'Not yet.'
+      return 'Not yet'
   }
 }
 

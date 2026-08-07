@@ -75,6 +75,7 @@ import { INSTRUMENT_FRAME } from '@/lib/frame'
 import { readClearances, writeClearances } from '@/lib/clearance-store'
 import {
   grantSeatsForDrone,
+  holdSeatsForDrone,
   pushClassroomInstruction,
   readClassroomSession,
 } from '@/lib/classroom-session'
@@ -429,9 +430,25 @@ export function ControlScreen({
                       before.droneId === record.droneId && before.grantedAt !== null,
                   ),
               )
+              /*
+               * A hold has to reach the tablet the same way a grant does. Without this the
+               * Teacher's answer never leaves this board, and a Student who asked sits on
+               * "Waiting for your Teacher" while the Teacher believes they have been told.
+               */
+              const heldNow = next.records.filter(
+                (record) =>
+                  record.grantedAt === null &&
+                  record.heldAt !== null &&
+                  !clearances.records.some(
+                    (before) => before.droneId === record.droneId && before.heldAt !== null,
+                  ),
+              )
               let carried = session
               for (const record of grantedNow) {
                 carried = grantSeatsForDrone(carried, record.droneId)
+              }
+              for (const record of heldNow) {
+                carried = holdSeatsForDrone(carried, record.droneId)
               }
             }}
           />

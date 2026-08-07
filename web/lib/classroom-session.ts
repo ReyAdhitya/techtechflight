@@ -393,16 +393,50 @@ export function grantSeatsForDrone(
   droneId: DroneId,
   now = Date.now(),
 ): ClassroomSession {
-  const matched = session.seats.filter((seat) => seat.droneId === droneId)
-  const targets =
-    matched.length > 0
-      ? matched
-      : session.seats.filter((seat) => seat.phase === 'awaiting-clearance')
   let next = session
-  for (const seat of targets) {
+  for (const seat of seatsForDrone(session, droneId)) {
     next = grantSeatClearance(next, seat.studentId, now)
   }
   return next
+}
+
+/**
+ * When Teacher holds a craft's request, the Student's tablet says so.
+ *
+ * The other half of `holdClearance`. Without it the Teacher's answer never leaves the
+ * Teacher's board, and a Student who asked sits on "Waiting for your Teacher" while the
+ * Teacher believes they have told them to wait.
+ *
+ * Only a seat that has actually asked is held. Holding a Student who never asked would put
+ * a screen in front of them answering a question they did not ask.
+ */
+export function holdSeatsForDrone(
+  session: ClassroomSession,
+  droneId: DroneId,
+  now = Date.now(),
+): ClassroomSession {
+  let next = session
+  for (const seat of seatsForDrone(session, droneId)) {
+    if (seat.phase !== 'awaiting-clearance') continue
+    next = holdSeatClearance(next, seat.studentId, now)
+  }
+  return next
+}
+
+/**
+ * The seats on this craft, or everyone still waiting when nobody is paired to it.
+ *
+ * The fallback is what makes a classroom where the Teacher never recorded who is on which
+ * craft still work: an answer addressed to a craft nobody is sitting on reaches whoever is
+ * waiting for one.
+ */
+function seatsForDrone(
+  session: ClassroomSession,
+  droneId: DroneId,
+): readonly ClassroomSeat[] {
+  const matched = session.seats.filter((seat) => seat.droneId === droneId)
+  if (matched.length > 0) return matched
+  return session.seats.filter((seat) => seat.phase === 'awaiting-clearance')
 }
 
 export function pushClassroomInstruction(

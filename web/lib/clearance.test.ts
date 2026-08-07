@@ -6,7 +6,9 @@ import {
   emptyClearanceState,
   endClearancesForMission,
   grantClearance,
+  holdClearance,
   isCleared,
+  isHeld,
   shouldAwaitClearance,
   syncClearanceQueue,
   type ClearanceCraftInput,
@@ -48,6 +50,8 @@ describe('who enters the queue', () => {
         requestedAt: 2_000,
         grantedAt: null,
         grantedBy: null,
+        heldAt: null,
+        heldBy: null,
         endedAt: null,
       },
     ])
@@ -152,6 +156,8 @@ describe('when the Mission ends', () => {
           requestedAt: 1_000,
           grantedAt: 2_000,
           grantedBy: 'Ms Chen',
+          heldAt: null,
+          heldBy: null,
           endedAt: null,
         },
         {
@@ -160,6 +166,8 @@ describe('when the Mission ends', () => {
           requestedAt: 1_000,
           grantedAt: 2_000,
           grantedBy: 'Ms Chen',
+          heldAt: null,
+          heldBy: null,
           endedAt: null,
         },
       ],
@@ -170,5 +178,56 @@ describe('when the Mission ends', () => {
     expect(state.records.find((row) => row.missionId === 'm1')!.endedAt).toBe(9_000)
     expect(state.records.find((row) => row.missionId === 'm2')!.endedAt).toBeNull()
     expect(isCleared(state, 'ttf-0002', 'm2')).toBe(true)
+  })
+})
+
+/**
+ * Hold: the answer a Teacher had no way to give.
+ *
+ * Before this a team the Teacher had looked at and deliberately kept on the ground was
+ * indistinguishable from one nobody had reached yet, on both boards. It is a record like a
+ * grant, addressed to a person, and it reaches no aircraft (ADR-0021).
+ */
+describe('holding a request', () => {
+  const queued = () => syncClearanceQueue(emptyClearanceState(), [craft()], 2_000)
+
+  it('records who held it and when, and leaves it in the queue', () => {
+    const state = holdClearance(queued(), 'ttf-0001', 'm1', 'Ms Chen', 3_000)
+
+    expect(isHeld(state, 'ttf-0001', 'm1')).toBe(true)
+    expect(state.records[0]!.heldAt).toBe(3_000)
+    expect(state.records[0]!.heldBy).toBe('Ms Chen')
+    // Still waiting on the Teacher, so still on the Teacher's list.
+    expect(awaitingClearance([craft()], state)).toHaveLength(1)
+  })
+
+  it('is not a clearance', () => {
+    const state = holdClearance(queued(), 'ttf-0001', 'm1', 'Ms Chen', 3_000)
+
+    expect(isCleared(state, 'ttf-0001', 'm1')).toBe(false)
+    expect(clearedForDrone(state, 'ttf-0001', mission())).toBe(false)
+  })
+
+  /* Granting is what supersedes a hold. There is no third answer to press. */
+  it('gives way to a grant', () => {
+    let state = holdClearance(queued(), 'ttf-0001', 'm1', 'Ms Chen', 3_000)
+    state = grantClearance(state, 'ttf-0001', 'm1', 'Ms Chen', 4_000)
+
+    expect(isCleared(state, 'ttf-0001', 'm1')).toBe(true)
+    expect(isHeld(state, 'ttf-0001', 'm1')).toBe(false)
+    expect(state.records[0]!.heldAt).toBe(3_000)
+  })
+
+  it('does nothing to a craft that is already cleared, or to one with no request', () => {
+    const cleared = grantClearance(queued(), 'ttf-0001', 'm1', 'Ms Chen', 3_000)
+    expect(holdClearance(cleared, 'ttf-0001', 'm1', 'Ms Chen', 4_000)).toBe(cleared)
+
+    const nothing = emptyClearanceState()
+    expect(holdClearance(nothing, 'ttf-0001', 'm1', 'Ms Chen', 4_000)).toBe(nothing)
+  })
+
+  it('refuses an unsigned hold, the same way an unsigned grant is refused', () => {
+    const state = queued()
+    expect(holdClearance(state, 'ttf-0001', 'm1', '   ', 3_000)).toBe(state)
   })
 })

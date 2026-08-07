@@ -5,6 +5,7 @@ import type { DroneId } from '@techtechflight/contract'
 import {
   awaitingClearance,
   grantClearance,
+  holdClearance,
   syncClearanceQueue,
   type ClearanceCraftInput,
   type ClearanceRequest,
@@ -15,9 +16,14 @@ import { cn } from '@/lib/utils'
 /**
  * The clearance queue — craft that entered *Awaiting clearance* on their own (ADR-0021).
  *
- * The Teacher grants or holds; nothing reaches the ground station. Mounting stays with the
- * Integrator; this panel takes state and craft rows so it can render under Control without
- * owning subscriptions. The count stays visible at zero (DELIBERATE-POSITIONS 3).
+ * The Teacher grants or holds; nothing reaches the ground station. Both are records
+ * addressed to a person. Mounting stays with the Integrator; this panel takes state and
+ * craft rows so it can render under the Mission run without owning subscriptions. The count
+ * stays visible at zero (DELIBERATE-POSITIONS 3).
+ *
+ * A held team stays in the queue and reads as held. Sending it away would make the Teacher's
+ * own answer invisible to them, and leaving it reading "waiting" would make a team they
+ * deliberately kept on the ground look like one nobody had reached yet.
  */
 
 export interface ClearanceQueueCraft {
@@ -78,6 +84,12 @@ export function ClearanceQueue({
     onStateChange?.(next)
   }
 
+  const hold = (request: ClearanceRequest) => {
+    if (!canGrant) return
+    const next = holdClearance(synced, request.droneId, request.missionId, grantedBy, now)
+    onStateChange?.(next)
+  }
+
   return (
     <section className="flex flex-col gap-3" aria-labelledby="clearance-queue-heading">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
@@ -108,18 +120,43 @@ export function ClearanceQueue({
                   {row?.studentName ? (
                     <span className="text-value text-ink-subtle">Flown by {row.studentName}</span>
                   ) : null}
+                  {/*
+                   * Word, not colour alone (ADR-0004), and the Teacher's own answer read
+                   * back to them. A held team is not a team nobody has looked at.
+                   */}
+                  <span
+                    className={cn(
+                      'text-label',
+                      request.heldAt === null ? 'text-ink-muted' : 'text-status-not-ready',
+                    )}
+                  >
+                    {request.heldAt === null ? 'Waiting' : 'Held'}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  disabled={!canGrant}
-                  onClick={() => grant(request)}
-                  className={cn(
-                    'min-h-11 shrink-0 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink',
-                    'hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline',
-                  )}
-                >
-                  Grant clearance
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={!canGrant}
+                    onClick={() => grant(request)}
+                    className={cn(
+                      'min-h-11 shrink-0 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink',
+                      'hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline',
+                    )}
+                  >
+                    Grant clearance
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!canGrant || request.heldAt !== null}
+                    onClick={() => hold(request)}
+                    className={cn(
+                      'min-h-11 shrink-0 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-subtle',
+                      'hover:border-ink hover:text-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline',
+                    )}
+                  >
+                    Hold
+                  </button>
+                </div>
               </li>
             )
           })}

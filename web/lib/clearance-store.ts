@@ -28,7 +28,18 @@ export function readClearances(lessonId: string | null): ClearanceState {
     if (parsed.lessonId !== lessonId) return emptyClearanceState()
     const records = parsed.state?.records
     if (!Array.isArray(records)) return emptyClearanceState()
-    return { records }
+    /*
+     * Hold arrived after clearances were already being written, so a Lesson stored before
+     * it has records with no `heldAt` at all. Absent is not held, and `undefined !== null`
+     * would have read every one of them as held.
+     */
+    return {
+      records: records.map((record) => ({
+        ...record,
+        heldAt: record.heldAt ?? null,
+        heldBy: record.heldBy ?? null,
+      })),
+    }
   } catch {
     return emptyClearanceState()
   }

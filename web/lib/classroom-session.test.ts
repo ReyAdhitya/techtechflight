@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+  assignSeatCraft,
   grantSeatClearance,
   holdSeatClearance,
+  holdSeatsForDrone,
   joinClassroomAsStudent,
   loadClassroomByCode,
   markSeatFlown,
@@ -120,6 +122,31 @@ describe('the phase a Student is in', () => {
     const askedAgain = requestTakeoff(held, seat.studentId, 5_000)
     expect(askedAgain.seats[0]?.phase).toBe('awaiting-clearance')
     expect(askedAgain.seats[0]?.heldAt).toBeNull()
+  })
+
+  /*
+   * The other half of the Teacher's Hold. Without this the answer never leaves the Teacher's
+   * board and the Student sits on "Waiting for your Teacher" while the Teacher believes they
+   * have been told to wait.
+   */
+  it('carries a hold addressed to a craft to the seat sitting in it', () => {
+    const { session, seat } = seatedAda()
+    const paired = assignSeatCraft(session, seat.studentId, 'ttf-0001', 'Drone 1')
+    const asked = requestTakeoff(paired, seat.studentId, 3_000)
+
+    const held = holdSeatsForDrone(asked, 'ttf-0001', 4_000)
+    expect(held.seats[0]?.phase).toBe('held')
+    expect(held.seats[0]?.heldAt).toBe(4_000)
+  })
+
+  /* A Student who never asked is not answered. */
+  it('holds nobody who has not asked to take off', () => {
+    const { session, seat } = seatedAda()
+    const paired = assignSeatCraft(session, seat.studentId, 'ttf-0001', 'Drone 1')
+
+    const held = holdSeatsForDrone(paired, 'ttf-0001', 4_000)
+    expect(held.seats[0]?.phase).not.toBe('held')
+    expect(held.seats[0]?.heldAt).toBeNull()
   })
 
   /*

@@ -1,10 +1,16 @@
 # The Mission run rail returns, carrying state and able to be put away
 
-> **Superseded 2026-08-06.** The rail is withdrawn again. Lesson is one scrolling page for
+> **Reinstated 2026-08-07 by [ADR-0026](./0026-one-page-holds-the-twelve-steps.md).** The
+> supersession below stood for one day. The rail is the product: one page holds all twelve
+> steps and the rail is the only navigation on it, because ADR-0026 collapses the seven-item
+> top bar rather than the rail. Read this ADR for what the four marks mean and ADR-0026 for
+> where the steps live.
+>
+> ~~**Superseded 2026-08-06.** The rail is withdrawn again. Lesson is one scrolling page for
 > Mission set-up; Control is one live board (Attention, clearances, Scope, strips, seal,
 > pack-down) with no `?step=` gating. The twelve poster steps remain a checklist of work, not
 > a second navigation. See `docs/POSTER-WORKFLOW-PLAN.md` Wave A and `docs/DECISIONS.md`
-> (2026-08-06 · Mission-run rail withdrawn for a one-page Lesson).
+> (2026-08-06, Mission-run rail withdrawn for a one-page Lesson).~~
 
 The twelve steps of the operational workflow are back as a left rail on Lesson and Control. This
 reverses the decision of 2026-08-04, which withdrew a twelve-step left rail the same day it

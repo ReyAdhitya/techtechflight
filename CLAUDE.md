@@ -148,19 +148,31 @@ a disclosure queue. Compacting grounded strips broke CI and hid Commands from th
 Integrator merges those fragments in issue order and deletes them — leftovers mean the wave
 never integrated.
 
-**The Mission-run step rail is gone again (ADR-0024 superseded 2026-08-06).** Lesson is one
-scrolling page for Mission set-up. Control is one live board (Attention, clearances, Scope,
-ATC toolbar, strips, seal, pack-down) with no `?step=` gating. Poster twelve steps are a
-checklist of work, not a left nav. `web/lib/mission-flow.ts` may still exist for facts; do not
-re-mount `StepRail` without a new ADR.
+**The Mission run is one page with the twelve-step rail on it (ADR-0026, 2026-08-07).** The
+2026-08-06 supersession of ADR-0024 was reversed by the product owner: the rail is the
+product, and `/mission` is where it lives. `MissionRunScreen` mounts `StepRail` and one step
+surface. **The rail is the only navigation on that page** — `SiteNav` collapses behind one
+button holding Fleet, Walls, Students and Vision, because two navigations on one screen is
+the confusion this change exists to remove. Set-up steps 1 to 5 show one at a time; steps 6
+to 10 are one live board and are *not* gated, which is also what keeps the strip anatomy rule
+below intact; steps 11 and 12 are sequential again. `/lesson`, `/control` and `/reports`
+still resolve and send a Teacher to the step that answers them. Argue with the rail in an ADR
+or leave it alone.
 
-**Lesson is the Mission and the period, and nothing else.** Set the Mission up, start or end
-the period. Everything that used to sit under the steps now lives on the screen whose
-question it answers: Fleet health craft by craft is the **Fleet** board's (one line stays on
-Lesson saying whether the period can run, linking to `/`), finished Lessons and the remedial
-queue are **Reports**', pack-down is **Control** step 11, the Mission briefing is step 5, and
-where records are stored is said on **Settings** alone. Before adding a block to Lesson, ask
-which screen already answers it — two screens holding one list means one of them is stale.
+**A rail step says what it decided, not that it is finished.** Every step carries a *done
+string* (`missionStepDone` in `web/lib/mission-flow-summary.ts`) and a *lock reason*
+(`missionStepBlockedBy`), and both are the prototype's own wording: "Search and Rescue",
+"1 zone, 2 no-fly", "Grant a takeoff first". A tick alone tells a Teacher they did something
+and not what they chose. Steps 7 to 10 read `live` while the class is up and settle to `done`
+when the Mission is sealed; they never read as ticked off mid-lesson.
+
+**Lesson set-up is steps 1 to 5, and nothing else.** Choose the Scenario, draw the airspace,
+put teams on craft, tick pre-flight, brief the class. Everything that is not one of those
+lives on the screen whose question it answers: Fleet health craft by craft is the **Fleet**
+board's, finished Lessons and the remedial queue are **Reports**', pack-down is step 11, and
+where records are stored is said on **Settings** alone. Before adding a block to a set-up
+step, ask which step or screen already answers it. Two surfaces holding one list means one of
+them is stale.
 
 **A Mission is a side key, not a Logbook row.** `techtechflight:mission-draft` holds the
 Scenario, the zones and the craft; `techtechflight:clearances` holds takeoff clearances. Both

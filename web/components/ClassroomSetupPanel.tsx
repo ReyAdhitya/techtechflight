@@ -64,7 +64,7 @@ export function ClassroomSetupPanel() {
       <h2 className="label m-0">Classroom setup</h2>
       <p className="m-0 text-value text-ink-subtle">
         Pick how this laptop talks to the Fleet. The Simulator is the normal classroom path.
-        Commands work. Radio reads real craft over MAVLink (the language drones use on the
+        Commands work. Radio reads real Drones over MAVLink (the language drones use on the
         wire) and is watch-only for now. Stop and Hover do not reach hardware.
       </p>
 

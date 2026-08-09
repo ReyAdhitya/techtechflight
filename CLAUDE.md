@@ -220,11 +220,18 @@ Mission the Teacher already planned, including the sealed `outcome`. Landscape a
 one dominant thing at a time and it changes with the phase, and **exactly two pressable things
 in the whole app**: Ask to take off, and Understood. Join on an iPad with the Teacher's
 classroom code (`/api/classroom` + Blob when configured; localStorage + BroadcastChannel on one
-machine). No permanent classroom code on the Student chrome after join, no phase counter, and no
-figure the Fleet is not sending. Which screen a Student is on comes from Telemetry and the
-Teacher's answer, never from a press: `flownAt` is the first sighting off the ground, and `held`
-is its own phase. Limits: nothing here reaches an aircraft (ADR-0021), and an absent reading is
-printed as absent.
+machine). No permanent classroom code on the Student chrome after join, and no figure the Fleet
+is not sending. Which screen a Student is on comes from Telemetry and the Teacher's answer,
+never from a press: `flownAt` is the first sighting off the ground, and `held` is its own phase.
+Limits: nothing here reaches an aircraft (ADR-0021), and an absent reading is printed as absent.
+
+**The Student rail is a paragraph, not a navigation (ADR-0028).** The tablet shows all twelve
+steps down the left, marking the one they are on, and **not one row is pressable**: no link, no
+button, nothing focusable. That is what keeps the two-press rule true, and it is why ADR-0025's
+"no phase counter" was amended rather than broken. A Student never chooses what happens next, so
+a rail that answered a press would be offering a choice that does not exist. The twelve are the
+lesson, not the software: Briefing, Rules and time, Prepare, Connect, Ask to take off, Take off,
+Fly the points, Stay out of red, Teacher says, Task done, Land, Score.
 
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare

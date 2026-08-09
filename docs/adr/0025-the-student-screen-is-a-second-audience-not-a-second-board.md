@@ -31,6 +31,10 @@ So the rules the screen is built to are audience rules, not layout preferences:
    learns to skip.
 5. Exactly two pressable things in the whole app: **Ask to take off** and **Understood**.
 6. Nothing on screen talks about the software. No phase counter, no permanent classroom code.
+   **Amended 2026-08-09 by [ADR-0028](./0028-the-student-rail-is-look-only.md):** the tablet
+   carries a look-only rail of the twelve steps, which is a lesson plan rather than a phase
+   counter. No permanent classroom code still stands, and the rail is not pressable, which is
+   what keeps rule 5 true.
 7. No invented readings.
 
 Rule 6 is the one that keeps being tempting. A four-character classroom code is a real thing in

@@ -52,7 +52,7 @@ import type { FleetSnapshot } from '@/lib/fleet-link'
  * Scenario, zones, teams, pre-flight, brief, and the period itself. On `/mission` this is
  * mounted one step at a time by `MissionRunScreen`, which supplies the heading and the
  * reason for the step from the rail's own model; on its own it shows all five at once and
- * carries its own heading. Fleet health craft by craft, finished Lessons, pack-down and
+ * carries its own heading. Fleet health Drone by Drone, finished Lessons, pack-down and
  * where records live stay on Fleet, Reports, step 11 and Settings.
  */
 export function LessonScreen({
@@ -129,7 +129,7 @@ export function LessonScreen({
           Set this Mission up
         </h1>
         <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
-          Choose the Scenario, draw the airspace, put teams on craft, tick pre-flight, brief
+          Choose the Scenario, draw the airspace, put teams on Drones, tick pre-flight, brief
           the class, then start the period. Live flying is step 6 onwards.
         </p>
       </header>
@@ -383,7 +383,7 @@ function MissionPrep({
         {heading && (
         <div className="flex flex-col gap-1">
           <h2 id="mission-area-heading" className="m-0 font-display text-heading font-medium">
-            Draw the Mission area
+            Draw the No-fly Zones
           </h2>
           <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
             No-fly Zones in the Fleet&apos;s own frame. Not GPS. None is a normal answer.

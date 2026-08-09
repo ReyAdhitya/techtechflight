@@ -432,9 +432,9 @@ export function ControlScreen({
                   ),
               )
               /*
-               * A hold has to reach the tablet the same way a grant does. Without this the
-               * Teacher's answer never leaves this board, and a Student who asked sits on
-               * "Waiting for your Teacher" while the Teacher believes they have been told.
+               * A hold has to reach the tablet the same way a grant does, or a Student who
+               * asked sits on "Waiting for your Teacher" while the Teacher believes they have
+               * been told.
                */
               const heldNow = next.records.filter(
                 (record) =>
@@ -444,12 +444,24 @@ export function ControlScreen({
                     (before) => before.droneId === record.droneId && before.heldAt !== null,
                   ),
               )
-              let carried = session
+              /*
+               * Threaded, and it has to be. Each call writes the session itself:
+               * `grantSeatsForDrone` reaches `writeClassroomSession`, which persists,
+               * broadcasts to the other tabs and pushes to the cloud, so the answer does
+               * reach the tablet. But each call also *starts* from the session it is handed,
+               * so passing the same stale one twice would write a session missing the first
+               * change: grant one Drone and hold another in the same press, and the grant
+               * would vanish.
+               *
+               * The last value is not read, and that is the whole of what looked dead here.
+               * It was read as a missing write and called a stop-the-line; it is neither.
+               */
+              let answered = session
               for (const record of grantedNow) {
-                carried = grantSeatsForDrone(carried, record.droneId)
+                answered = grantSeatsForDrone(answered, record.droneId)
               }
               for (const record of heldNow) {
-                carried = holdSeatsForDrone(carried, record.droneId)
+                answered = holdSeatsForDrone(answered, record.droneId)
               }
             }}
           />

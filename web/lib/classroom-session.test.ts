@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   assignSeatCraft,
   grantSeatClearance,
+  grantSeatsForDrone,
   holdSeatClearance,
   holdSeatsForDrone,
   joinClassroomAsStudent,
@@ -10,10 +11,13 @@ import {
   mintClassroomCode,
   normalizeClassroomCode,
   openClassroom,
+  readClassroomSession,
   requestTakeoff,
   resetClassroomForTests,
   seatHasFlown,
+  STUDENT_SEAT_KEY,
   type ClassroomSeat,
+  type ClassroomSession,
 } from './classroom-session'
 
 beforeEach(() => {
@@ -181,5 +185,70 @@ describe('the phase a Student is in', () => {
     const { flownAt: _absent, ...older } = seat
 
     expect(seatHasFlown(older as ClassroomSeat)).toBe(false)
+  })
+})
+
+/**
+ * Why the Teacher's board threads the session through its answers.
+ *
+ * Every one of these writers persists what it returns, so a single answer reaches the tablet
+ * on its own. Each also *starts* from the session it is handed, which is the part that is easy
+ * to miss: answering two Drones from the same stale session writes a session missing the first
+ * answer. `ControlScreen` threads the return value between its grant and hold loops for that
+ * reason, and the thread has been read as dead code once already.
+ */
+describe('answering two Drones in one press', () => {
+  const twoSeated = () => {
+    const session = openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 8',
+      scenarioId: 'search-rescue',
+      scenarioName: 'Search and Rescue',
+      objective: 'Find the target.',
+      rules: [],
+      limitMinutes: 15,
+      zones: [],
+      live: true,
+      now: 1_000,
+    })
+    const ada = joinClassroomAsStudent(session, 'Ada', 2_000, 'stu-ada')
+    /*
+     * Two tablets, not two names on one. A join reuses the seat this device already holds,
+     * which is right on a tablet and wrong in a test that needs two children.
+     */
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+    const bea = joinClassroomAsStudent(ada.session, 'Bea', 2_100, 'stu-bea')
+    let next = assignSeatCraft(bea.session, 'stu-ada', 'ttf-0001', 'Drone 1')
+    next = assignSeatCraft(next, 'stu-bea', 'ttf-0002', 'Drone 2')
+    next = requestTakeoff(next, 'stu-ada', 3_000)
+    next = requestTakeoff(next, 'stu-bea', 3_100)
+    return next
+  }
+
+  const phaseOf = (session: ClassroomSession, studentId: string) =>
+    session.seats.find((seat) => seat.studentId === studentId)?.phase
+
+  it('keeps both answers when the session is threaded', () => {
+    const asked = twoSeated()
+
+    let answered = grantSeatsForDrone(asked, 'ttf-0001', 4_000)
+    answered = holdSeatsForDrone(answered, 'ttf-0002', 4_100)
+
+    expect(phaseOf(answered, 'stu-ada')).toBe('cleared')
+    expect(phaseOf(answered, 'stu-bea')).toBe('held')
+    // And the same on the record the tablets actually read.
+    expect(phaseOf(readClassroomSession()!, 'stu-ada')).toBe('cleared')
+    expect(phaseOf(readClassroomSession()!, 'stu-bea')).toBe('held')
+  })
+
+  /* The failure the thread exists to prevent, pinned so nobody unpicks it again. */
+  it('loses the first answer when the same stale session is passed twice', () => {
+    const asked = twoSeated()
+
+    grantSeatsForDrone(asked, 'ttf-0001', 4_000)
+    holdSeatsForDrone(asked, 'ttf-0002', 4_100)
+
+    expect(phaseOf(readClassroomSession()!, 'stu-bea')).toBe('held')
+    expect(phaseOf(readClassroomSession()!, 'stu-ada')).not.toBe('cleared')
   })
 })

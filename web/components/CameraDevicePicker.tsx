@@ -76,7 +76,7 @@ export function CameraDevicePicker({
       aria-labelledby={`${selectId}-heading`}
     >
       <div className="flex flex-col gap-1">
-        <h2 id={`${selectId}-heading`} className="m-0 font-display text-section font-medium">
+        <h2 id={`${selectId}-heading`} className="m-0 font-display text-heading font-medium">
           Camera
         </h2>
         <p className="m-0 max-w-[60ch] text-body text-ink-subtle">

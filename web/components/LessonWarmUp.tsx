@@ -38,7 +38,7 @@ export function LessonWarmUp({
       aria-label="Lesson warm-up"
     >
       <p className="m-0 font-display text-summary font-medium text-ink">Warm-up</p>
-      <p className="tnum m-0 font-display text-display font-medium text-ink">{left}</p>
+      <p className="tnum m-0 font-display text-summary font-medium text-ink">{left}</p>
       <p className="m-0 text-body text-ink-subtle">Seconds before the lesson is running.</p>
       <button
         type="button"

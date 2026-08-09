@@ -67,6 +67,27 @@ describe('starting a lesson with nothing filled in', () => {
     expect(lesson?.label).toBe('Untitled lesson')
   })
 
+  /*
+   * The way back. Starting a Lesson used to take the plan panel off the screen with it, so a
+   * Teacher who put the wrong Student on a Drone at 08:55 had nowhere to go and nothing on
+   * screen saying anything had gone.
+   */
+  it('keeps the set-up reachable once the Lesson is under way', () => {
+    screenUnderTest()
+    settle()
+
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
+    settle()
+
+    const back = screen.getByText('Change the set-up')
+    expect(back).toBeInTheDocument()
+    // Shut by default: a class in the air is not the moment for a Fleet list.
+    expect(back.closest('details')).not.toHaveAttribute('open')
+
+    fireEvent.click(back)
+    expect(screen.getByRole('button', { name: /^Save plan$/ })).toBeInTheDocument()
+  })
+
   it('hands over to the clearance queue once it is running', () => {
     screenUnderTest()
     settle()

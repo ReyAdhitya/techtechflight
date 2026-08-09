@@ -5,6 +5,57 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **A Student's tablet changes after takeoff.** Points tick off by themselves from the
+  Drone's own position, in any order, and nobody presses anything. When every point is
+  reached the Teacher's board offers **Approve**, and it cannot appear before that. The way
+  down follows the approval and the score follows the Drone being down. Twelve screens
+  existed and five could be reached; all twelve are reachable now.
+- **The Student tablet carries a look-only rail** of all twelve steps, marking where they
+  are. Not one row is pressable (ADR-0028), which is what keeps the two-press rule true.
+- **The four situations the poster names are answered**: low battery, obstacle ahead, new
+  target, missed checkpoint. Each takes the whole screen and says what to do.
+- **A Teacher can hold a takeoff, and every Drone has a starting point.** Home is wherever a
+  Drone was standing when it left the ground: automatic, one per Drone, taken from
+  Telemetry. Recall has promised the launch point since it shipped and nothing recorded one.
+- **`--text-caption` exists.** Twenty component files used the class and no rule stood behind
+  it. Was issue #649.
+
+### Changed
+
+- **The Mission Zone is gone (ADR-0027).** Teachers draw No-fly Zones only, any number, and
+  none is a normal answer. The class flies inside a net cage, so a second boundary drawn in
+  software told a Teacher something they could already see, and a slightly small one reported
+  a breach for a Drone that was safely inside the netting.
+- **The Lesson name is asked once.** It was asked twice on one screen, with nothing saying
+  which of the two would name the Lesson.
+- **The set-up stays reachable while a Lesson runs.** Pressing Start used to take the plan
+  panel off the screen with it.
+- **Step 11 refuses instead of disappearing.** It closed while anything was airborne, so a
+  Teacher got a line of text and nothing to press, with the Recall that answered it four
+  steps back. It now lists every Mission Drone and offers Recall and Land against the ones
+  still up.
+- **The board says Drone, never craft.** CONTEXT.md is the authority, and thirty-five places
+  a Teacher or a Student reads had drifted.
+- **Grant takeoff**, not Grant clearance, as the prototype has it.
+- **Reports is back in the Go to button**, and no longer behind a step that can be locked.
+
+### Fixed
+
+- **`/reports` lands on the report screen.** It forwarded to the twelfth step, which is
+  locked until a Mission is sealed, so on a day with nothing sealed there was no route at all
+  to the weekly digest, the export, the remedial queue or a past Lesson.
+- **The Warm-up never covers a Mission already flying.** It was gated on a browser tab rather
+  than on the Lesson, so a second tab replayed a sixty second overlay over a class in the air.
+- **The rail no longer puts a tick beside "No teams yet".**
+- **Step 8 names the Drone a Teacher actually picked.** It was hardcoded absent.
+- **The keyboard reaches the rail on the live steps.** The board's own scroll moved the
+  sequential focus start into the middle of the strips.
+- **The Fleet headcount check is gone** (#624), and the flaky Camera Escape test no longer
+  races a clock.
+
+
 ### Changed
 
 - **The Mission run is one page with the twelve-step rail on it.** `/mission` carries all

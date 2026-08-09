@@ -9,6 +9,49 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-09 · The calls made inside the twenty-five fixes.
+
+- **Reports goes back in the Go to button.** It left when the rail shipped, on the grounds
+  that the debrief is step 12. Half right: the debrief of the Mission just sealed is a step,
+  and step 12 is locked until a Mission is sealed, so on a Monday morning the digest, the
+  export, the remedial queue and every past Lesson sat behind a step that refused. What
+  happened across a term is not part of one Mission run.
+- **Steps 2 and 3 give the same lock reason.** With the go-area gone (ADR-0027) step 3 has
+  nothing to wait for but the Scenario, and it cannot wait for a No-fly Zone: a room with
+  nothing to stay out of is a real room, so gating teams behind an optional drawing is a
+  lock a Teacher could never open. Saying "Choose a Scenario first" twice is more honest
+  than inventing a second gate to justify an ordering.
+- **`--text-caption` is body-sized.** The doc has no caption row, so the size came from the
+  principle rather than from taste: this surface refuses small print, which is why
+  `--text-value` is body-sized too. It is also what the twenty callers were already
+  rendering at, because the class had no rule behind it at all.
+- **The four what-if answers keep the poster's action and the prototype's voice.** The
+  poster says "Follow ATC; return / land", which is a phrase for an adult in a tower. The
+  instruction is the poster's; the sentence a child reads is the prototype's register.
+- **"Missed Target / Route Error" got a title, not an entry.** The playbook already covers a
+  missed checkpoint and a test refuses any Alert kind without advice. A route error has no
+  detector, and an incident nothing raises is a page nobody reaches, so one row carries both
+  names.
+- **`craft` became `Drone` everywhere on screen, including where the prototypes say craft.**
+  CONTEXT.md is the authority on what a screen calls an aircraft, and this is the one place
+  the prototypes are not followed word for word. The test that pins the lock reasons says so.
+- **Could have gone differently:** leave `--text-caption` at 0.875rem, which is what most
+  design systems would pick. Rejected: it is a step the scale does not have, and it would
+  have shrunk twenty files' worth of controls that read fine today. Add a `route-error`
+  Alert kind so the poster row has its own entry. Rejected: nothing would ever raise it.
+
+## 2026-08-09 · The `carried` variable was not dead, and the comment above it was wrong.
+
+- **Decision / notes:** The brief said to delete it. It cannot be deleted. Each writer
+  persists the session it returns *and* starts from the session it is handed, so threading
+  the return value between the grant and hold loops is what stops a grant and a hold
+  answered in one press from overwriting each other. What was actually wrong was the comment
+  above it, which described a missing write to the classroom session; there is no missing
+  write, and a reviewer read that comment and called a stop-the-line on it. Renamed to
+  `answered`, comment rewritten, and two tests pin both halves.
+- **Could have gone differently:** follow the instruction and delete it. Rejected: it would
+  have introduced the bug the comment was falsely describing.
+
 ## 2026-08-07 · The rail is the navigation, and the top bar is what collapses.
 
 - **Decision / notes:** ADR-0026. The twelve steps live on `/mission` and the seven-item

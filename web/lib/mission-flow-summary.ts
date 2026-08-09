@@ -78,10 +78,10 @@ export function missionStepDone(step: number, summary: MissionFlowSummary): stri
     case 3:
       return summary.teams === 0
         ? 'No teams yet'
-        : `${plural(summary.teams, 'team', 'teams')}, ${summary.craft} craft`
+        : `${plural(summary.teams, 'team', 'teams')}, ${plural(summary.craft, 'Drone', 'Drones')}`
     case 4:
       return summary.craft === 0
-        ? 'No craft on a team yet'
+        ? 'No Drone on a team yet'
         : `${summary.craftPastPreFlight} of ${summary.craft} past it`
     case 5:
       return `${summary.briefSectionsTicked} of ${summary.briefSections} ticked`
@@ -93,7 +93,7 @@ export function missionStepDone(step: number, summary: MissionFlowSummary): stri
       return summary.airborne === 0 ? 'Nothing airborne' : `${summary.airborne} airborne`
     case 8:
       return summary.selectedCraftName === null
-        ? 'No craft selected'
+        ? 'No Drone selected'
         : `${summary.selectedCraftName} selected`
     case 9:
       return summary.commandsSent === 0 ? 'Nothing sent yet' : `${summary.commandsSent} sent`
@@ -108,7 +108,7 @@ export function missionStepDone(step: number, summary: MissionFlowSummary): stri
        * only restate the question.
        */
       return summary.airborne === 0
-        ? 'Every craft down'
+        ? 'Every Drone down'
         : `${summary.airborne} still airborne`
     case 12:
       return summary.sealedAt === null ? 'Not sealed yet' : `Sealed ${formatClock(summary.sealedAt)}`

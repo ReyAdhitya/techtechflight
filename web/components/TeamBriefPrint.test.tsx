@@ -86,7 +86,7 @@ describe('TeamBriefPrint', () => {
 
     expect(screen.getByRole('article', { name: 'Team brief: Red Team' })).toBeTruthy()
     expect(screen.getByText('Red Team')).toBeTruthy()
-    expect(screen.getByText(/Craft:/)).toHaveTextContent('drone-1')
+    expect(screen.getByText(/Drone:/)).toHaveTextContent('drone-1')
     expect(screen.getByText(/Locate a target/)).toBeTruthy()
     expect(screen.getByText('8 minutes')).toBeTruthy()
     expect(screen.getByRole('img', { name: 'Mission area map' })).toBeTruthy()

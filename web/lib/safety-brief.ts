@@ -30,7 +30,7 @@ export const SAFETY_BRIEF_RULES = [
   },
   {
     id: 'charge',
-    label: 'Hand craft back for charge. Never leave a pack in a bag.',
+    label: 'Hand Drones back for charge. Never leave a pack in a bag.',
   },
 ] as const
 

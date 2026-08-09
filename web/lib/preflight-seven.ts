@@ -125,7 +125,7 @@ function batteryReading(
       meta.label,
       meta.manual,
       'unreportable',
-      'No Telemetry yet. Confirm the craft is powered and in range.',
+      'No Telemetry yet. Confirm the Drone is powered and in range.',
     )
   }
   const fraction = telemetry.batteryFraction

@@ -176,10 +176,10 @@ describe('the brief', () => {
     expect(screen.queryByText(/Signal (weak|strong)/)).not.toBeInTheDocument()
   })
 
-  it('says the Teacher has not given them a craft yet, rather than inventing one', () => {
+  it('says the Teacher has not given them a Drone yet, rather than inventing one', () => {
     seatPriya()
 
-    expect(screen.getByText(/has not given you a craft yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/has not given you a Drone yet/i)).toBeInTheDocument()
     // No craft means no pre-flight to show, and nothing to ask for.
     expect(screen.queryByRole('heading', { name: 'Before you fly' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ask to take off' })).not.toBeInTheDocument()

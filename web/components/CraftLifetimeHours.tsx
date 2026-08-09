@@ -19,7 +19,7 @@ export function CraftLifetimeHours({
   const rows = craftLifetimeHours(lessons)
 
   return (
-    <section className="flex flex-col gap-3" aria-label="Lifetime hours per craft">
+    <section className="flex flex-col gap-3" aria-label="Lifetime hours per Drone">
       <h2 className="label m-0">Lifetime hours</h2>
       <p className="m-0 max-w-prose text-value text-ink-subtle">
         Accumulated Lesson time for each craft that took off, across every closed Lesson.

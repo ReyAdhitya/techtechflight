@@ -61,7 +61,7 @@ export function CraftReturnedTick({
       </p>
 
       {crafts.length === 0 ? (
-        <p className="m-0 text-value text-ink-subtle">No craft went out.</p>
+        <p className="m-0 text-value text-ink-subtle">No Drones went out.</p>
       ) : (
         <ul className="m-0 flex list-none flex-col gap-0 p-0">
           {crafts.map((craft) => {

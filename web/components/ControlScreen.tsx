@@ -107,11 +107,20 @@ import type { LocalPosition } from '@techtechflight/contract'
 export function ControlScreen({
   bare = false,
   step,
+  onSelectedCraftChange,
 }: {
   /** Mounted inside another screen's `main`, so it renders neither one nor a frame. */
   readonly bare?: boolean
   /** Which of steps 6 to 11 to settle the board on. Nothing scrolls when it is not said. */
   readonly step?: number
+  /**
+   * Which Drone the Teacher is reading, by name, so the rail's step 8 can say it.
+   *
+   * The selection genuinely lives here, because the Scope and the strips are here. The rail
+   * used to be handed a hardcoded null and could only ever read "No Drone selected", which
+   * is a state the board could reach and a sentence the rail could not leave.
+   */
+  readonly onSelectedCraftChange?: (name: string | null) => void
 } = {}) {
   const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
     useFleet()
@@ -230,6 +239,13 @@ export function ControlScreen({
   }, [lesson, vitals])
 
   const selectedVitals = selected ? (vitals.find((entry) => entry.droneId === selected) ?? null) : null
+  const selectedName = selectedVitals?.callsign ?? null
+
+  const reportSelected = useRef(onSelectedCraftChange)
+  reportSelected.current = onSelectedCraftChange
+  useEffect(() => {
+    reportSelected.current?.(selectedName)
+  }, [selectedName])
 
   // New-target picker: use the selected craft's present position when the Teacher has
   // not tapped a different point yet (Scope tap wiring can replace this later).

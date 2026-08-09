@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { alertQueue } from '@/lib/vitals'
@@ -100,6 +100,14 @@ export function MissionRunScreen() {
   const [onDevice, setOnDevice] = useState(false)
   useEffect(() => setOnDevice(true), [])
 
+  /*
+   * Which Drone the Teacher is reading. The selection lives on the live board, because the
+   * Scope and the strips are there; it is lifted here because the rail's step 8 is the only
+   * other thing that wants it. It was hardcoded null, so that step could only ever read
+   * "No Drone selected", a sentence the rail could not leave and the board could.
+   */
+  const [selectedCraftName, setSelectedCraftName] = useState<string | null>(null)
+
   const drones = snapshot.state?.drones ?? []
   const anyAirborne = vitals.some((entry) => entry.airborne)
 
@@ -114,10 +122,20 @@ export function MissionRunScreen() {
       vitals,
       isAcknowledged,
       anyAirborne,
-      selectedCraftName: null,
+      selectedCraftName,
       now,
     })
-  }, [onDevice, lessonId, book, drones, vitals, isAcknowledged, anyAirborne, now])
+  }, [
+    onDevice,
+    lessonId,
+    book,
+    drones,
+    vitals,
+    isAcknowledged,
+    anyAirborne,
+    selectedCraftName,
+    now,
+  ])
 
   /*
    * A step in the query wins, because the rail put it there, and it wins even when the step
@@ -140,6 +158,27 @@ export function MissionRunScreen() {
   useEffect(() => {
     if (narrow) setRailOpen(false)
   }, [narrow, step])
+
+  /*
+   * Where the keyboard is after a step change, and this is a fix rather than a nicety.
+   *
+   * The live board scrolls its own section into view when the step changes, and
+   * `scrollIntoView` moves the sequential focus navigation starting point to whatever it
+   * scrolled to. That point is deep inside the board, so Tab carried on from the middle of
+   * the strips and the rail was not reachable in forty presses.
+   *
+   * Focusing the surface puts the starting point at the top of it instead: the rail is one
+   * Shift+Tab away, and every control on the step is ahead. It is also the right thing on
+   * its own terms, because pressing a step is a navigation and focus should follow it. Only
+   * after a change, never on arrival, so opening the page does not steal the focus.
+   */
+  const surfaceRef = useRef<HTMLElement>(null)
+  const shownStep = useRef(step)
+  useEffect(() => {
+    if (shownStep.current === step) return
+    shownStep.current = step
+    surfaceRef.current?.focus({ preventScroll: true })
+  }, [step])
 
   return (
     <div className="mission-run flex items-start gap-0 p-4 min-[26rem]:p-5">
@@ -168,6 +207,7 @@ export function MissionRunScreen() {
 
       <main
         id="content"
+        ref={surfaceRef}
         tabIndex={-1}
         className={cn(INSTRUMENT_FRAME, 'mission-run__surface flex flex-col gap-6')}
       >
@@ -207,7 +247,7 @@ export function MissionRunScreen() {
         </header>
 
         {open ? (
-          <StepSurface step={step} />
+          <StepSurface step={step} onSelectedCraftChange={setSelectedCraftName} />
         ) : (
           <p
             className="m-0 rounded-surface border border-dashed border-hairline bg-surface-1 px-3.5 py-3 text-value text-ink-muted"
@@ -241,9 +281,17 @@ export function MissionRunScreen() {
  * prototype says so against step 7, and hiding four of the five would put Land and Stop
  * behind a navigation press.
  */
-function StepSurface({ step }: { readonly step: number }) {
+function StepSurface({
+  step,
+  onSelectedCraftChange,
+}: {
+  readonly step: number
+  readonly onSelectedCraftChange: (name: string | null) => void
+}) {
   if (step <= 5) return <LessonScreen bare step={step} />
-  if (step <= 11) return <ControlScreen bare step={step} />
+  if (step <= 11) {
+    return <ControlScreen bare step={step} onSelectedCraftChange={onSelectedCraftChange} />
+  }
   return <ReportsScreen bare />
 }
 

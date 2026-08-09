@@ -54,7 +54,7 @@ export function LessonPrepPanel({
       <div className="flex flex-col gap-1">
         <h2 className="label m-0">Lesson plan</h2>
         <p className="m-0 text-value text-ink-subtle">
-          Prepare which craft are in a Lesson and who flies them. Name the plan. The board
+          Prepare which Drones are in a Lesson and who flies them. Name the plan. The board
           assigns its ID. The same Fleet can serve many periods. Membership is per Lesson,
           not permanent.
         </p>

@@ -153,7 +153,7 @@ describe('the Mission run page', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'Draw the Mission area and the No-fly Zones',
+        name: 'Draw the No-fly Zones',
       }),
     ).toBeInTheDocument()
     expect(screen.getByText(/stays true even when the origin is wrong/)).toBeInTheDocument()
@@ -329,7 +329,7 @@ describe('the Mission run page', () => {
     missionRun()
     settle()
 
-    expect(screen.getByRole('link', { name: 'Draw the Mission area' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Draw the No-fly Zones' })).toHaveAttribute(
       'href',
       '/mission?step=2',
     )

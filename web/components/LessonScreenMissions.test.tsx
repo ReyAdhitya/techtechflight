@@ -52,7 +52,7 @@ describe('mission set-up on one page', () => {
     expect(
       screen.getByRole('heading', { name: 'Choose the Mission Scenario' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Draw the Mission area' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Draw the No-fly Zones' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Teams and Drones' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Pre-flight check' })).toBeInTheDocument()
     expect(

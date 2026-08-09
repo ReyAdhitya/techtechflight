@@ -67,6 +67,7 @@ import { ControlDisclosure } from './ControlDisclosure'
 import { ClearanceQueue, type ClearanceQueueCraft } from './ClearanceQueue'
 import { ConfirmMissionComplete } from './ConfirmMissionComplete'
 import { MissionCraftDownList } from './MissionCraftDownList'
+import { TaskApproval } from './TaskApproval'
 import { CraftReturnedTick } from './CraftReturnedTick'
 import { PackdownChecklist } from './PackdownChecklist'
 import { TeacherAtcToolbar } from './TeacherAtcToolbar'
@@ -76,10 +77,15 @@ import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 import { readClearances, writeClearances } from '@/lib/clearance-store'
 import {
+  approveSeatTask,
   grantSeatsForDrone,
   holdSeatsForDrone,
+  markPointsReached,
+  pointsReachedAt,
   pushClassroomInstruction,
   readClassroomSession,
+  subscribeClassroom,
+  type ClassroomSession,
 } from '@/lib/classroom-session'
 import type { ClearanceState } from '@/lib/clearance'
 import { emptyClearanceState } from '@/lib/clearance'
@@ -136,6 +142,17 @@ export function ControlScreen({
   // render has no localStorage and must not disagree with the first client paint.
   const [mission, setMission] = useState<Mission | null>(null)
   const [clearances, setClearances] = useState<ClearanceState>(() => emptyClearanceState())
+  /*
+   * The classroom the tablets are reading. Held in state and subscribed rather than read in
+   * the render body: this is a static export, so a device read during render is the
+   * hydration mismatch CLAUDE.md warns about, and a fresh object every render would make
+   * the approval list re-render on every Fleet tick.
+   */
+  const [classroom, setClassroom] = useState<ClassroomSession | null>(null)
+  useEffect(() => {
+    setClassroom(readClassroomSession())
+    return subscribeClassroom(setClassroom)
+  }, [])
   const [pickedTarget, setPickedTarget] = useState<LocalPosition | null>(null)
   const clearanceRef = useRef<HTMLElement | null>(null)
   const scopeRef = useRef<HTMLElement | null>(null)
@@ -202,6 +219,32 @@ export function ControlScreen({
       target.scrollIntoView({ block: 'start', behavior: 'smooth' })
     }
   }, [step])
+
+  /*
+   * Points tick off by themselves, from this board, because this is where the Telemetry is.
+   * A point is reached when the Drone's own position proves it, in any order, and nobody
+   * presses anything, so nobody can claim a point they did not fly to.
+   *
+   * `markPointsReached` returns the session unchanged when nothing is new, so this runs on
+   * every tick and writes on almost none of them.
+   */
+  const missionCheckpoints = mission?.checkpoints ?? []
+  useEffect(() => {
+    if (missionCheckpoints.length === 0) return
+    const session = readClassroomSession()
+    if (session === null) return
+
+    let carried = session
+    for (const drone of state?.drones ?? []) {
+      const position = drone.telemetry?.position ?? null
+      if (position === null || drone.telemetry?.airborne !== true) continue
+      carried = markPointsReached(
+        carried,
+        drone.id,
+        pointsReachedAt(missionCheckpoints, position),
+      )
+    }
+  }, [missionCheckpoints, state])
 
   const lessonId = lesson?.id ?? null
   useEffect(() => {
@@ -493,6 +536,20 @@ export function ControlScreen({
           />
         </section>
       ) : null}
+
+      {/*
+       * The other answer a Teacher gives a team, and it sits beside the first. Approve
+       * cannot appear until a Drone has reached every point, so a Teacher is never offered
+       * the chance to approve a team that did not fly it.
+       */}
+      <TaskApproval
+        session={classroom}
+        checkpoints={missionCheckpoints}
+        onApprove={(seat) => {
+          if (classroom === null) return
+          setClassroom(approveSeatTask(classroom, seat.studentId, missionCheckpoints))
+        }}
+      />
 
       <section ref={commandsRef} className="scroll-mt-4">
         <TeacherAtcToolbar

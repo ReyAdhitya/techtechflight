@@ -258,6 +258,26 @@ describe('the Mission run page', () => {
     ).not.toBeInTheDocument()
   })
 
+  /*
+   * The dead end. Step 11 used to close while anything was airborne, so `StepSurface` never
+   * mounted and a Teacher got a lock note with nothing to press. ADR-0026 says the refusal is
+   * the step, so the step opens and the button is what refuses.
+   */
+  it('opens step 11 with a craft still up, and refuses on the button rather than the step', () => {
+    const lessonId = classReadyToFly()
+    startMission(lessonId, Date.now())
+    at(11)
+    missionRun()
+    settle()
+
+    expect(surface().getByRole('heading', { name: 'Mission complete' })).toBeInTheDocument()
+    expect(
+      surface().getByRole('button', { name: /Confirm mission complete/i }),
+    ).toBeInTheDocument()
+    // Not the lock note: the step is open, and the way out of the refusal is on it.
+    expect(surface().queryByText(/Not open yet/)).not.toBeInTheDocument()
+  })
+
   it('has exactly one main for the skip link to land on', () => {
     classReadyToFly()
     at(7)

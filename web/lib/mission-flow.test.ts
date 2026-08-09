@@ -137,17 +137,24 @@ describe('what is open', () => {
   })
 
   /*
-   * The one that matters most. Confirm mission complete already refuses while a craft is
-   * up, but a Teacher should not have to press it to find that out.
+   * The refusal is the step (ADR-0026), so step 11 stays open while a craft is up. Closing
+   * it meant the surface never mounted: a Teacher with one Drone still flying got a line of
+   * text and nothing to press, and the Recall that answered it was four steps back.
    */
-  it('closes Confirm mission complete again while anything is airborne', () => {
+  it('keeps Confirm mission complete open while a craft is still up, so it can refuse', () => {
     const flying = facts({ cleared: true, airborne: true })
-    expect(isMissionStepOpen(11, flying)).toBe(false)
-    expect(missionStepBlockedBy(11, flying)).toBe('Land or Recall every craft first')
+    expect(isMissionStepOpen(11, flying)).toBe(true)
+    expect(missionStepBlockedBy(11, flying)).toBeNull()
 
     const down = facts({ cleared: true, airborne: false })
     expect(isMissionStepOpen(11, down)).toBe(true)
     expect(missionStepBlockedBy(11, down)).toBeNull()
+  })
+
+  it('still refuses to open step 11 on a Mission that has never flown', () => {
+    const nothing = facts({ ...pastTheBrief })
+    expect(isMissionStepOpen(11, nothing)).toBe(false)
+    expect(missionStepBlockedBy(11, nothing)).toBe('Nothing has flown yet')
   })
 })
 

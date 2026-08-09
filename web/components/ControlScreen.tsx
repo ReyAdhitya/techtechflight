@@ -65,6 +65,7 @@ import { MaintenanceFlag } from './MaintenanceFlag'
 import { ControlDisclosure } from './ControlDisclosure'
 import { ClearanceQueue, type ClearanceQueueCraft } from './ClearanceQueue'
 import { ConfirmMissionComplete } from './ConfirmMissionComplete'
+import { MissionCraftDownList } from './MissionCraftDownList'
 import { CraftReturnedTick } from './CraftReturnedTick'
 import { PackdownChecklist } from './PackdownChecklist'
 import { TeacherAtcToolbar } from './TeacherAtcToolbar'
@@ -678,6 +679,17 @@ export function ControlScreen({
       {mission !== null && mission.startedAt !== null ? (
         <section ref={sealRef} className="flex scroll-mt-4 flex-col gap-3 border-t border-hairline pt-5">
           <h2 className="label m-0">Mission complete</h2>
+          {/*
+           * The list first, then the button that refuses. A Teacher meeting the refusal needs
+           * the Drone that caused it named, and Recall beside its name.
+           */}
+          <MissionCraftDownList
+            craft={missionCraftStatus}
+            onCommand={(droneId, kind) => {
+              const entry = vitals.find((row) => row.droneId === droneId)
+              issueCommand(droneId, kind, entry?.callsign ?? droneId)
+            }}
+          />
           <ConfirmMissionComplete
             mission={mission}
             craft={missionCraftStatus}
@@ -706,9 +718,9 @@ export function ControlScreen({
   )
 
   /*
-   * Step 11 is the close-down and only that. It is the one step where hiding the strips is
-   * safe rather than reckless, because it does not open until every craft is down: there is
-   * no Command left to send. Steps 6 to 10 keep the whole board and this under it.
+   * Step 11 is the close-down and only that. Hiding the strips is safe here because the step
+   * carries its own Recall and Land against the Drones that are still up, so the one Command
+   * a Teacher can need at close-down is on the step rather than four steps back.
    */
   if (bare && step === 11) {
     return <div className="flex flex-col gap-6">{closeDown}</div>

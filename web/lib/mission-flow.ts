@@ -238,8 +238,12 @@ function isUnderWay(facts: MissionFlowFacts): boolean {
 /**
  * Whether the Teacher can work on this step at all.
  *
- * Step 11 closes again while anything is airborne. A Confirm button that is reachable and
- * refuses is worse than a step that says why it is not open yet.
+ * Step 11 stays open while craft are airborne, and that is the opposite of what it used to
+ * do. Closing it meant the surface never mounted, so a Teacher who pressed *Mission complete*
+ * with one Drone still up got a single line of text and nothing to press: the way to bring
+ * that Drone down was four steps away on a screen they had just left. ADR-0026 says the
+ * refusal is the step. So the step opens, lists the Drones, offers Recall and Land against the
+ * ones still up, and the Confirm button is the thing that refuses.
  */
 export function isMissionStepOpen(step: number, facts: MissionFlowFacts): boolean {
   switch (step) {
@@ -261,7 +265,7 @@ export function isMissionStepOpen(step: number, facts: MissionFlowFacts): boolea
     case 10:
       return isUnderWay(facts)
     case 11:
-      return isUnderWay(facts) && !facts.airborne
+      return isUnderWay(facts)
     case 12:
       return facts.sealed
     default:
@@ -303,9 +307,9 @@ function isMissionStepDone(step: number, facts: MissionFlowFacts): boolean {
  * prototype's, which is also why there is no full stop: these sit on one line under the
  * step name in the rail, beside a done string that is not a sentence either.
  *
- * Step 11 has two, and both are true things to go and do. Nothing has flown is the earlier
- * one; a craft still up is the later one, and a Teacher meeting it needs the aircraft named
- * as the obstacle rather than the paperwork.
+ * Step 11 has one reason now rather than two. A craft still up no longer locks it: the step
+ * opens and the Confirm button refuses, so the words for that live on the button's own line
+ * where the Recall and Land that answer them are.
  */
 export function missionStepBlockedBy(
   step: number,
@@ -330,7 +334,7 @@ export function missionStepBlockedBy(
     case 10:
       return 'Grant a takeoff first'
     case 11:
-      return facts.airborne ? 'Land or Recall every craft first' : 'Nothing has flown yet'
+      return 'Nothing has flown yet'
     case 12:
       return 'Seal the Mission first'
     default:

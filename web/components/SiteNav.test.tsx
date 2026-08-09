@@ -6,7 +6,7 @@ const pathname = vi.hoisted(() => ({ current: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 /**
- * Four places, behind one button.
+ * Five places, behind one button.
  *
  * The count matters, and so does the fact that they are shut. Seven links across the top of
  * a screen that also carries a twelve-step rail is two navigations competing, which is the
@@ -22,7 +22,7 @@ describe('where a Teacher can go', () => {
     expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 
-  it('offers the four places that are not part of a Mission run', () => {
+  it('offers the five places that are not part of one Mission run', () => {
     pathname.current = '/'
     render(<SiteNav />)
 
@@ -32,22 +32,26 @@ describe('where a Teacher can go', () => {
       'Fleet',
       'Walls',
       'Students',
+      'Reports',
       'Vision',
     ])
   })
 
   /*
-   * The three that left. They are steps on the Mission run page now, and the rail is how a
+   * The two that left. They are steps on the Mission run page now, and the rail is how a
    * Teacher reaches them. Offering them here as well would put a Teacher on `/lesson` and
    * `/mission?step=1` by two different routes to the same work.
+   *
+   * Reports is not one of them. Step 12 is the debrief of the Mission just sealed; `/reports`
+   * is the term, and it must not be behind a step that can be locked.
    */
-  it('does not offer Lesson, Control or Reports, which are steps now', () => {
+  it('does not offer Lesson or Control, which are steps now', () => {
     pathname.current = '/'
     render(<SiteNav />)
 
     fireEvent.click(screen.getByRole('button', { name: /go to/i }))
 
-    for (const gone of ['Lesson', 'Control', 'Reports']) {
+    for (const gone of ['Lesson', 'Control']) {
       expect(screen.queryByRole('link', { name: gone })).not.toBeInTheDocument()
     }
   })
@@ -136,6 +140,7 @@ describe('where a Teacher can go', () => {
       '/',
       '/walls',
       '/students',
+      '/reports',
       '/vision',
     ])
     expect(MISSION_RUN_DESTINATION.href).toBe('/mission')

@@ -13,12 +13,17 @@ import { cn } from '@/lib/utils'
  * work out which of them they are being asked to read. ADR-0026 collapses this one, because
  * the rail is the one that knows where they are.
  *
- * Lesson, Control and Reports have left on purpose: they are steps now, and the rail is how
- * a Teacher reaches them. What is left is the four places that answer a question the Mission
- * run does not. Fleet is "can I hand this out", Walls is the whole class at once on a
- * projector, Students is the class and who flies what, Vision is whether this machine can
- * see. None of them is somewhere a Teacher goes mid-Mission, which is exactly why one press
- * to open is a fair price for the width.
+ * Lesson and Control have left on purpose: they are steps now, and the rail is how a Teacher
+ * reaches them. What is left is the five places that answer a question one Mission run does
+ * not. Fleet is "can I hand this out", Walls is the whole class at once on a projector,
+ * Students is the class and who flies what, Reports is what happened across a term, Vision is
+ * whether this machine can see. None of them is somewhere a Teacher goes mid-Mission, which
+ * is exactly why one press to open is a fair price for the width.
+ *
+ * **Reports came back.** It left with Lesson and Control because step 12 is the debrief, and
+ * that was half right: the debrief of *this* Mission is a step, and it is locked until a
+ * Mission is sealed. On a Monday morning with nothing sealed that left the weekly digest, the
+ * export, the remedial queue and every past Lesson behind a step that refused.
  *
  * Settings is still not here, and still sits in the header on its own control: it is the
  * room and the records rather than a place in the workflow.
@@ -27,6 +32,7 @@ export const DESTINATIONS = [
   { href: '/', label: 'Fleet', hint: 'Every Drone, and what needs doing to it' },
   { href: '/walls', label: 'Walls', hint: 'See the whole class at once' },
   { href: '/students', label: 'Students', hint: 'The class, and Drone assignment' },
+  { href: '/reports', label: 'Reports', hint: 'What happened, and which Drone keeps doing it' },
   { href: '/vision', label: 'Vision', hint: 'Whether the camera and the model actually work' },
 ] as const
 

@@ -190,9 +190,12 @@ function PreFlight({
         </p>
       )}
 
-      <LessonPrepPanel drones={drones} book={book} />
-
-      <div className="flex flex-col gap-2 border-t border-hairline pt-5">
+      {/*
+       * Asked once. This screen used to carry *Lesson name* on the plan panel and *What is
+       * this lesson?* over the Start button: one question, two boxes, and no way for a
+       * Teacher to tell which of them the Lesson would end up called. Both read this.
+       */}
+      <div className="flex flex-col gap-2">
         {ready === 0 && vitals.length > 0 && (
           <p className="m-0 text-value text-ink-muted">
             None ready to fly yet. You can still start the lesson when you need to.
@@ -201,7 +204,7 @@ function PreFlight({
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex flex-1 flex-col gap-1">
             <label className="label" htmlFor="lesson-label">
-              What is this lesson?
+              Lesson name
             </label>
             <input
               id="lesson-label"
@@ -222,6 +225,8 @@ function PreFlight({
           </button>
         </div>
       </div>
+
+      <LessonPrepPanel drones={drones} book={book} lessonName={label} />
     </section>
   )
 }

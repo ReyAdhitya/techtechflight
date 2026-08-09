@@ -13,21 +13,31 @@ import {
 } from '@/lib/logbook'
 
 /**
- * Minimal prepared-Lesson editor: name a plan, attach Fleet Drones, assign Student→Drone.
+ * Minimal prepared-Lesson editor: attach Fleet Drones and assign Student→Drone.
  *
- * Teachers type a **Lesson name** only — the board assigns `L-…` (#58). Drones are picked
- * from the Fleet by existing id, never typed as a second key. Does not redesign Control.
- * Empty application is a no-op so ad-hoc starts stay free (E7).
+ * Teachers name a Lesson only — the board assigns `L-…` (#58). Drones are picked from the
+ * Fleet by existing id, never typed as a second key. Does not redesign Control. Empty
+ * application is a no-op so ad-hoc starts stay free (E7).
+ *
+ * **The name comes from above.** This panel used to carry its own *Lesson name* box, sitting
+ * on the same screen as *What is this lesson?* over the Start button: one question, two boxes,
+ * and no way for a Teacher to tell which one the Lesson would end up called. The set-up area
+ * asks once and both this and Start read the answer.
  */
 export function LessonPrepPanel({
   drones,
   book,
+  lessonName = '',
+  onPlanSaved,
 }: {
   readonly drones: readonly DroneState[]
   readonly book: Logbook
+  /** What the Teacher typed in the one Lesson name field. */
+  readonly lessonName?: string
+  readonly onPlanSaved?: (lessonId: string) => void
 }) {
-  const [lessonName, setLessonName] = useState('')
   const [selectedId, setSelectedId] = useState(book.trainerLessons[0]?.lessonId ?? '')
+  const named = lessonName.trim() !== ''
 
   const activeId = selectedId || book.trainerLessons[0]?.lessonId || ''
   const attached = new Set(
@@ -50,28 +60,23 @@ export function LessonPrepPanel({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="flex flex-col gap-1">
-          <span className="label">Lesson name</span>
-          <input
-            value={lessonName}
-            onChange={(event) => setLessonName(event.target.value)}
-            className="min-h-11 w-48 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
-          />
-        </label>
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
+          disabled={!named}
           onClick={() => {
             const id = createTrainerLesson(lessonName)
-            if (id) {
-              setSelectedId(id)
-              setLessonName('')
-            }
+            if (!id) return
+            setSelectedId(id)
+            onPlanSaved?.(id)
           }}
-          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink"
+          className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline"
         >
           Save plan
         </button>
+        <p className="m-0 text-value text-ink-muted">
+          {named ? `Saves as ${lessonName.trim()}.` : 'Name the Lesson above to save a plan.'}
+        </p>
       </div>
 
       {book.trainerLessons.length > 0 && (

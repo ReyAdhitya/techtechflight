@@ -14,6 +14,7 @@ import {
   type LessonRecord,
 } from '@/lib/logbook'
 import { cn } from '@/lib/utils'
+import { ControlDisclosure } from './ControlDisclosure'
 import { LessonPrepPanel } from './LessonPrepPanel'
 import { SafetyBriefPanel } from './SafetyBriefPanel'
 import { WaitingList } from './WaitingList'
@@ -98,7 +99,7 @@ export function LessonScreen({
     <>
       {showsPeriod &&
         (lesson ? (
-          <LessonUnderWay lesson={lesson} now={now} book={book} />
+          <LessonUnderWay lesson={lesson} now={now} book={book} drones={drones} />
         ) : (
           <PreFlight drones={drones} vitals={vitals} book={book} now={now} />
         ))}
@@ -238,10 +239,12 @@ function LessonUnderWay({
   lesson,
   now,
   book,
+  drones,
 }: {
   lesson: LessonRecord
   now: number
   book: ReturnType<typeof readLogbook>
+  drones: readonly DroneState[]
 }) {
   /*
    * The warm-up is the first minute of a Lesson, and the Lesson's own start time is what
@@ -295,6 +298,16 @@ function LessonUnderWay({
         now={now}
         incidents={lesson.incidents}
       />
+
+      {/*
+       * The way back. Starting a Lesson used to take the plan panel off the screen with it,
+       * so a Teacher who put the wrong Student on a Drone at 08:55 had nowhere to go and no
+       * indication that anything had gone. Shut by default, because a class in the air is not
+       * the moment for a Fleet list, and it is one line when it is shut.
+       */}
+      <ControlDisclosure summary="Change the set-up">
+        <LessonPrepPanel drones={drones} book={book} />
+      </ControlDisclosure>
 
       <Link
         href="/mission?step=6"

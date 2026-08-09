@@ -68,25 +68,31 @@ describe('opening a camera popup from Control', () => {
     expect(screen.queryByRole('dialog', { name: 'Drone 1 camera' })).not.toBeInTheDocument()
   })
 
-  it('dismisses the popup on Escape', async () => {
-    vi.useRealTimers()
-    const { default: userEvent } = await import('@testing-library/user-event')
-    const user = userEvent.setup()
+  /*
+   * Fake timers and `fireEvent`, like every other case in this file.
+   *
+   * This one used to switch to real timers, sleep a real 1.5 seconds for the Fleet to tick,
+   * and drive the keyboard with `userEvent`. It passed alone and failed inside the suite,
+   * which is the signature of a test racing a clock rather than checking a behaviour:
+   * `userEvent` schedules its own delays, and under a suite that is already saturating the
+   * machine the wait it needs is not the wait it gets. `fireEvent` dispatches synchronously
+   * and needs no clock at all, so the only thing left to be slow is the render.
+   */
+  it('dismisses the popup on Escape', () => {
     render(
       <FleetProvider demonstration={PINNED_DEMONSTRATION}>
         <ControlScreen />
       </FleetProvider>,
     )
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1_500))
-    })
+    settle()
 
     const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
     fireEvent.click(strip)
     fireEvent.click(within(strip).getByRole('button', { name: 'Camera' }))
     expect(screen.getByRole('dialog', { name: 'Drone 1 camera' })).toBeInTheDocument()
 
-    await user.keyboard('{Escape}')
+    // Radix listens on the document, which is where a real Escape arrives too.
+    fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('dialog', { name: 'Drone 1 camera' })).not.toBeInTheDocument()
   })
 

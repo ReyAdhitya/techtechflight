@@ -1,5 +1,6 @@
-import type { DroneId } from '@techtechflight/contract'
+import type { DroneId, LocalPosition } from '@techtechflight/contract'
 import type { MissionCheckpoint, MissionOutcome, ScenarioId } from './mission.ts'
+import { hasReached } from './mission.ts'
 import type { Zone } from './airspace.ts'
 
 /**
@@ -51,7 +52,22 @@ export interface ClassroomSeat {
    * clearance alone cannot tell you.
    */
   readonly flownAt: number | null
-  readonly checkpointIndex: number
+  /**
+   * Which points this Drone has reached, by id, **in any order**.
+   *
+   * A list rather than a count, because the order is not the lesson: a Student flying by
+   * hand goes to whichever point is nearest, and an index would call that a failure. It is
+   * written from Telemetry on the Teacher's board when the Drone proves it was there, so
+   * nobody can claim a point they did not fly to.
+   */
+  readonly reachedCheckpointIds: readonly string[]
+  /**
+   * When the Teacher approved the finished task, or null.
+   *
+   * The Teacher's answer, not the Student's: the Approve button cannot appear until every
+   * point is reached, and pressing it is what starts the way down.
+   */
+  readonly approvedAt: number | null
   readonly score: number | null
   readonly joinedAt: number
 }
@@ -155,9 +171,27 @@ export function readClassroomSession(): ClassroomSession | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as ClassroomSession
     if (!parsed || typeof parsed.code !== 'string') return null
-    return parsed
+    return withSeatDefaults(parsed)
   } catch {
     return null
+  }
+}
+
+/**
+ * Fields a session written before them does not carry.
+ *
+ * A lesson left open across a deploy is the ordinary case, not an edge one, and an absent
+ * list read as `undefined` would throw on the first `.includes`. Absent means none reached
+ * and nobody approved, which is what a Mission that has not started looks like anyway.
+ */
+function withSeatDefaults(session: ClassroomSession): ClassroomSession {
+  return {
+    ...session,
+    seats: session.seats.map((seat) => ({
+      ...seat,
+      reachedCheckpointIds: seat.reachedCheckpointIds ?? [],
+      approvedAt: seat.approvedAt ?? null,
+    })),
   }
 }
 
@@ -280,7 +314,8 @@ export function joinClassroomAsStudent(
     clearedAt: null,
     heldAt: null,
     flownAt: null,
-    checkpointIndex: 0,
+    reachedCheckpointIds: [],
+    approvedAt: null,
     score: null,
     joinedAt: now,
   }
@@ -331,6 +366,97 @@ export function markSeatFlown(
   const seat = session.seats.find((row) => row.studentId === studentId)
   if (seat === undefined || seatHasFlown(seat)) return session
   return updateSeatPhase(session, studentId, 'flying', { flownAt: now })
+}
+
+/**
+ * Points a Drone at this position has reached, by id, in any order.
+ *
+ * Pure geometry over `hasReached`, which is generous on purpose: a Student flying by hand
+ * cannot hit a point, and a checkpoint that demanded precision would be measuring the
+ * controller rather than the lesson.
+ */
+export function pointsReachedAt(
+  checkpoints: readonly MissionCheckpoint[],
+  position: LocalPosition | null,
+): readonly string[] {
+  if (position === null) return []
+  return checkpoints.filter((point) => hasReached(point, position)).map((point) => point.id)
+}
+
+/**
+ * Tick off whatever this Drone has just proved it reached.
+ *
+ * Written from the Teacher's board, because that is where the Telemetry is, and never from
+ * a press: nobody can claim a point they did not fly to. Returns the session unchanged when
+ * nothing is new, so the caller can run it on every tick without writing on every tick.
+ */
+export function markPointsReached(
+  session: ClassroomSession,
+  droneId: DroneId,
+  reachedIds: readonly string[],
+  now = Date.now(),
+): ClassroomSession {
+  if (reachedIds.length === 0) return session
+
+  let changed = false
+  const seats = session.seats.map((seat) => {
+    if (seat.droneId !== droneId) return seat
+    const fresh = reachedIds.filter((id) => !seat.reachedCheckpointIds.includes(id))
+    if (fresh.length === 0) return seat
+    changed = true
+    return { ...seat, reachedCheckpointIds: [...seat.reachedCheckpointIds, ...fresh] }
+  })
+
+  if (!changed) return session
+  void now
+  return writeClassroomSession({ ...session, seats })
+}
+
+/** Whether this seat's Drone has reached every point the Mission requires. */
+export function allPointsReached(
+  seat: ClassroomSeat,
+  checkpoints: readonly MissionCheckpoint[],
+): boolean {
+  const required = checkpoints.filter((point) => point.required)
+  if (required.length === 0) return false
+  return required.every((point) => seat.reachedCheckpointIds.includes(point.id))
+}
+
+/**
+ * The Teacher approves a finished task, and the way down begins.
+ *
+ * One tap, and it is the Teacher's alone: the Student's app still has exactly two pressable
+ * things (ADR-0025). Refuses a seat that has not reached every point, so the button cannot
+ * approve a team that did not fly it even if a caller offers it early.
+ */
+export function approveSeatTask(
+  session: ClassroomSession,
+  studentId: string,
+  checkpoints: readonly MissionCheckpoint[],
+  now = Date.now(),
+): ClassroomSession {
+  const seat = session.seats.find((row) => row.studentId === studentId)
+  if (seat === undefined) return session
+  if (!allPointsReached(seat, checkpoints)) return session
+  if (seat.approvedAt !== null) return session
+  return updateSeatPhase(session, studentId, 'returning', { approvedAt: now })
+}
+
+/**
+ * The Drone is down after an approved task, so the Mission is over for that seat.
+ *
+ * From Telemetry, never from a press, and only from `returning`: a Drone that touches down
+ * mid-Mission has landed, not finished.
+ */
+export function markSeatComplete(
+  session: ClassroomSession,
+  studentId: string,
+  now = Date.now(),
+): ClassroomSession {
+  const seat = session.seats.find((row) => row.studentId === studentId)
+  if (seat === undefined || seat.phase !== 'returning') return session
+  void now
+  return updateSeatPhase(session, studentId, 'complete')
 }
 
 export function updateSeatPhase(

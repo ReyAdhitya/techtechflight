@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 import { useFleet } from './FleetProvider'
 import { FleetAllWellLine } from './FleetAllWellLine'
 import { FleetBoard } from './FleetBoard'
-import { FleetHeadcountCheck } from './FleetHeadcountCheck'
 import { MissingCraftNotice } from './MissingCraftNotice'
 import { SpareNomination } from './SpareNomination'
 import { WhatNeedsDoing } from './MaintenanceScreen'
@@ -26,8 +25,6 @@ export function FleetScreen() {
   const { snapshot, now, demo, scenarios } = useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
   const drones = snapshot.state?.drones ?? []
-  const [presentIds, setPresentIds] = useState<ReadonlySet<string>>(() => new Set())
-
   return (
     <>
       <FleetBoard
@@ -40,11 +37,6 @@ export function FleetScreen() {
         {drones.length > 0 && (
           <section className="flex flex-col gap-4">
             <FleetAllWellLine drones={drones} />
-            <FleetHeadcountCheck
-              drones={drones}
-              presentIds={presentIds}
-              onPresentIdsChange={setPresentIds}
-            />
             <MissingCraftNotice
               lastClosedLesson={lastClosedLesson(book.lessons)}
               drones={drones}

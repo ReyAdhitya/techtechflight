@@ -54,10 +54,10 @@ Audited against the code on 2026-08-06, not against the older plan.
 | Ground station prints its LAN address | not done | `ground-station/src/main.ts:122` prints `http://localhost:${port}` only |
 | "Classroom ready" screen for the Teacher | not done | no component answers "what do I read out to the class" |
 | Windows Firewall rule in the launcher | not done | `Start TechTech Flight.bat` does not add one |
-| Hold a takeoff, not only grant it (#636) | not done | `ClearanceQueue.tsx` offers Grant only; there is no `holdClearance` anywhere in `web/lib` |
-| Fleet headcount check removed (#624) | not done | `web/components/FleetHeadcountCheck.tsx` still exists |
-| `?step=` still read on Lesson (#648) | not done | `web/app/(app)/lesson/page.tsx:12` still reads `?step=` on the client |
-| `text-caption` has no token (#649) | not done | no `text-caption` in `globals.css`; 20 files use the class |
+| Hold a takeoff, not only grant it (#636) | done | `holdClearance` in `web/lib/clearance.ts`, Hold beside Grant on `ClearanceQueue` |
+| Fleet headcount check removed (#624) | done | component, lib and tests deleted 2026-08-09 |
+| `?step=` still read on Lesson (#648) | done | `/lesson` forwards; `?step=` is read on `/mission` alone |
+| `text-caption` has no token (#649) | done | `--text-caption: 1rem` in `globals.css`, pinned by `web/type-scale.test.ts` |
 | `StepRail` is orphaned | judgement, no issue yet | `web/components/StepRail.tsx` exists and nothing imports it but its own test |
 | Vision moved out of the main nav | not done | `web/app/(app)/vision` is still a route |
 | One Room menu for Lit room, Large format, Walls | not done | still separate header controls |

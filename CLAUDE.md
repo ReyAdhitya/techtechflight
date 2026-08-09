@@ -66,6 +66,13 @@ a *relative* claim and survives an origin that is wrong — the same way separat
 already do. This supersedes ADR-0012's deferral. Never anchor a zone to a latitude; there is
 no GPS, no map tile and no network anywhere in this feature, deliberately.
 
+**Only no-go areas are drawn (ADR-0027).** `ZoneKind` is `'no-fly'` and nothing else. The
+Mission Zone is gone: the class flies inside a physical net cage, so a second boundary drawn in
+software told a Teacher something they could already see, and a slightly small one reported a
+breach for a Drone that was safely inside the netting. The success criterion is **no no-fly
+breach**, and step 3's lock reason is *Choose a Scenario first* rather than *Draw the Mission
+Zone first*. Do not add a go-area back without a new ADR.
+
 **Three state vocabularies, and they stay apart (ADR-0020).** `Status` (ground station, "can
 I hand this out"), `FlightPhase` (board, "what is the aircraft doing"), `MissionPhase`
 (board, "how is the Mission going"). Do not collapse any pair.

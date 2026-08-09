@@ -224,7 +224,13 @@ const ENTRIES: readonly PlaybookEntry[] = [
   },
   {
     kind: 'missed-checkpoint',
-    title: 'A checkpoint was passed without being reached',
+    /*
+     * The Emergency poster calls this row "Missed target / route error", and a boss walking
+     * that poster looks for those words. A route error proper has no entry of its own and
+     * cannot: nothing detects one, and an incident nothing raises is a page nobody reaches.
+     * The answer is the same either way, which is why one row carries both.
+     */
+    title: 'A target was missed, or the route went wrong',
     priority: 'mission',
     craftDoes: 'Nothing. It has flown on.',
     systemDoes: 'Records the miss and leaves the checkpoint outstanding.',

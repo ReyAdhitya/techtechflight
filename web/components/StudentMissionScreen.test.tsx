@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import {
   assignSeatCraft,
@@ -71,6 +71,14 @@ afterEach(() => {
   clearLogbook()
   resetClassroomForTests()
 })
+
+/**
+ * The stage alone, without the look-only rail beside it.
+ *
+ * The rail names all twelve steps and numbers them, so a bare "12" or a Drone name is on
+ * screen twice on purpose (ADR-0028). Scope to the stage when the count is the point.
+ */
+const stage = () => document.querySelector('main')!
 
 describe('before a Teacher has opened the classroom', () => {
   it('says so, rather than showing an empty screen', () => {
@@ -144,7 +152,8 @@ describe('the brief', () => {
   it('says the time limit, the checkpoints and the rules, quietly', () => {
     seatPriya()
 
-    expect(screen.getByText('12')).toBeInTheDocument()
+    // Scoped to the stage: the rail numbers its twelve steps, so a bare 12 is ambiguous.
+    expect(within(stage()).getByText('12')).toBeInTheDocument()
     expect(screen.getByText(/checkpoints/)).toBeInTheDocument()
     expect(screen.getByText('Stay inside the Mission Zone.')).toBeInTheDocument()
   })
@@ -201,8 +210,9 @@ describe('the brief', () => {
     settle()
 
     expect(screen.getByRole('heading', { name: 'Before you fly' })).toBeInTheDocument()
-    // Named twice on purpose: once on the identity line, once as the craft that is reporting.
-    expect(screen.getAllByText('Drone 1')).toHaveLength(2)
+    // Named twice on the stage: on the identity line, and as the Drone that is reporting.
+    // The rail names it a third time, which is why this is scoped.
+    expect(within(stage()).getAllByText('Drone 1')).toHaveLength(2)
     expect(screen.getByRole('button', { name: 'Ask to take off' })).toBeInTheDocument()
   })
 })

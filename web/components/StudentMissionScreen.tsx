@@ -8,6 +8,7 @@ import {
   normalizeClassroomCode,
   readClassroomSession,
   readStudentSeatLocal,
+  markSeatComplete,
   markSeatFlown,
   requestTakeoff,
   seatHasFlown,
@@ -37,6 +38,9 @@ import { useFleet } from './FleetProvider'
 import { CRITERION_WORDS, emptyMission, type MissionOutcome } from '@/lib/mission'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 import { missionClock } from '@/lib/mission-clock'
+import { StudentStepRail } from './StudentStepRail'
+import { pointsLeft, studentStep, type StudentNow } from '@/lib/student-steps'
+import { worstWhatIf, type WhatIfAnswer } from '@/lib/student-what-if'
 import { cn } from '@/lib/utils'
 
 /**
@@ -137,9 +141,196 @@ function SeatedStudent({
     onSession(markSeatFlown(session, seat.studentId))
   }, [airborne, hasFlown, onSession, seat.studentId, session])
 
-  if (airborne) return <FlyingScreen session={session} seat={seat} />
-  if (hasFlown) return <BackOnTheGround session={session} seat={seat} />
-  return <MissionBrief session={session} seat={seat} onSession={onSession} />
+  return (
+    <StudentPhase
+      session={session}
+      seat={seat}
+      airborne={airborne}
+      hasFlown={hasFlown}
+      onSession={onSession}
+    />
+  )
+}
+
+/**
+ * Which of the twelve screens is up, and the two phases nothing used to set.
+ *
+ * `'returning'` follows the Teacher's approval and `'complete'` follows the Drone being
+ * down. Both are records: approval is the Teacher's one tap, and down is Telemetry. Before
+ * this, twelve screens existed and five could be reached, because a Student who took off
+ * never saw their tablet change again.
+ */
+function StudentPhase({
+  session,
+  seat,
+  airborne,
+  hasFlown,
+  onSession,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+  readonly airborne: boolean
+  readonly hasFlown: boolean
+  readonly onSession: (session: ClassroomSession) => void
+}) {
+  const { vitals } = useFleet()
+  const mine = seat.droneId === null
+    ? null
+    : (vitals.find((entry) => entry.droneId === seat.droneId) ?? null)
+
+  const breaches = mine?.position ? breachesAt(session.zones, mine.position) : []
+  const instruction = session.instructions.at(-1) ?? null
+  const whatIf = worstWhatIf(mine?.alerts ?? [])
+
+  /*
+   * Down after the Teacher approved is the end of the Mission for this seat. Telemetry
+   * says so, never a press, and only from `returning`: a Drone that touches down mid-
+   * Mission has landed, not finished.
+   */
+  useEffect(() => {
+    if (airborne || seat.phase !== 'returning') return
+    onSession(markSeatComplete(session, seat.studentId))
+  }, [airborne, onSession, seat.phase, seat.studentId, session])
+
+  const now: StudentNow = {
+    airborne,
+    inNoFlyZone: breaches.length > 0,
+    instructionWaiting: instruction !== null && airborne,
+  }
+  const step = studentStep(seat, session, now)
+
+  const rail = (
+    <StudentStepRail current={step} name={seat.name} droneName={seat.droneName} />
+  )
+
+  if (seat.phase === 'complete' || session.outcome != null) {
+    if (!airborne && hasFlown) {
+      return <BackOnTheGround session={session} seat={seat} rail={rail} />
+    }
+  }
+
+  if (seat.phase === 'returning') {
+    return <LandOnYourPad seat={seat} rail={rail} airborne={airborne} />
+  }
+
+  if (airborne) {
+    if (breaches.length > 0) {
+      return <RedZoneTakeover breaches={breaches} rail={rail} />
+    }
+    if (whatIf !== null) return <WhatIfTakeover answer={whatIf} rail={rail} />
+    return <FlyingScreen session={session} seat={seat} rail={rail} />
+  }
+
+  if (hasFlown) return <BackOnTheGround session={session} seat={seat} rail={rail} />
+  return <MissionBrief session={session} seat={seat} onSession={onSession} rail={rail} />
+}
+
+/**
+ * Every point reached, and the Teacher has not answered yet.
+ *
+ * The Student does nothing here, and that is the screen: there is no third button, and no
+ * amount of pressing brings the approval forward.
+ */
+function TaskDone({
+  seat,
+  reached,
+  rail,
+}: {
+  readonly seat: ClassroomSeat
+  readonly reached: number
+  readonly rail: React.ReactNode
+}) {
+  return (
+    <StudentFrame rail={rail}>
+      <IdentityLine seat={seat} />
+      <p className="m-0 label">Every point reached</p>
+      <h1 className="m-0 font-display text-summary font-medium text-balance text-ink">
+        Wait for your teacher
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
+        Your Drone reached all {reached}. Your teacher is checking.
+      </p>
+    </StudentFrame>
+  )
+}
+
+/** The Teacher approved it, so the way down has started. Still nothing to press. */
+function LandOnYourPad({
+  seat,
+  rail,
+  airborne,
+}: {
+  readonly seat: ClassroomSeat
+  readonly rail: React.ReactNode
+  readonly airborne: boolean
+}) {
+  return (
+    <StudentFrame rail={rail}>
+      <IdentityLine seat={seat} />
+      <p className="m-0 label">Your teacher approved it</p>
+      <h1 className="m-0 font-display text-summary font-medium text-balance text-ink">
+        Land on your pad
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
+        {airborne
+          ? 'Come down slowly onto the spot you started from.'
+          : 'You are down. Stand clear of the propellers and wait.'}
+      </p>
+    </StudentFrame>
+  )
+}
+
+/**
+ * A warning takes the whole screen (ADR-0025).
+ *
+ * Nothing else is on it, because the one thing a child has to do about a red zone is get
+ * out of it and a battery percentage underneath would be competing for the same two
+ * seconds of attention.
+ */
+function RedZoneTakeover({
+  breaches,
+  rail,
+}: {
+  readonly breaches: readonly AirspaceBreach[]
+  readonly rail: React.ReactNode
+}) {
+  const worst = breaches[0]!
+  return (
+    <StudentFrame rail={rail} tone="warning">
+      <p className="m-0 label">Red area</p>
+      <h1
+        role="status"
+        className="m-0 font-display text-summary font-medium text-balance text-status-fault"
+      >
+        Move away
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink">
+        You are inside {worst.zoneName}. Come out the way you went in.
+      </p>
+    </StudentFrame>
+  )
+}
+
+/** One of the four the poster names, at the size the whole screen gives it. */
+function WhatIfTakeover({
+  answer,
+  rail,
+}: {
+  readonly answer: WhatIfAnswer
+  readonly rail: React.ReactNode
+}) {
+  return (
+    <StudentFrame rail={rail} tone="warning">
+      <p className="m-0 label">What to do</p>
+      <h1
+        role="status"
+        className="m-0 font-display text-summary font-medium text-balance text-status-fault"
+      >
+        {answer.heading}
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink">{answer.says}</p>
+    </StudentFrame>
+  )
 }
 
 /**
@@ -148,18 +339,34 @@ function SeatedStudent({
  * `min-h-[100dvh]` because this is the whole device, and no max width because the device
  * is a tablet in landscape. The old screen put a phone-width column in the middle of it.
  */
-function StudentFrame({ children }: { readonly children: React.ReactNode }) {
+function StudentFrame({
+  children,
+  rail,
+  tone = 'calm',
+}: {
+  readonly children: React.ReactNode
+  /** The look-only twelve. Absent before a Student has a seat to be anywhere in. */
+  readonly rail?: React.ReactNode
+  /** A warning takes the whole screen, and the surface changes with it (ADR-0025). */
+  readonly tone?: 'calm' | 'warning'
+}) {
   return (
-    <main
-      id="content"
-      tabIndex={-1}
-      className="flex min-h-[100dvh] w-full flex-col gap-6 bg-canvas p-6 min-[48rem]:p-8"
-    >
-      <div className="flex justify-end">
-        <SwitchRoleButton label="Switch role" />
-      </div>
-      {children}
-    </main>
+    <div className="flex min-h-[100dvh] w-full flex-col bg-canvas min-[46rem]:flex-row">
+      {rail}
+      <main
+        id="content"
+        tabIndex={-1}
+        className={cn(
+          'flex min-w-0 flex-1 flex-col justify-center gap-6 p-6 min-[48rem]:p-10',
+          tone === 'warning' && 'bg-status-fault/10',
+        )}
+      >
+        <div className="flex justify-end">
+          <SwitchRoleButton label="Switch role" />
+        </div>
+        {children}
+      </main>
+    </div>
   )
 }
 
@@ -332,15 +539,17 @@ function TakeYourSeat({
 function BackOnTheGround({
   session,
   seat,
+  rail,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
+  readonly rail?: React.ReactNode
 }) {
   const outcome = session.outcome ?? null
 
   if (outcome === null) {
     return (
-      <StudentFrame>
+      <StudentFrame rail={rail}>
         <IdentityLine seat={seat} />
 
         <h1 className="m-0 max-w-[24ch] font-display text-summary font-medium text-balance text-ink">
@@ -349,14 +558,14 @@ function BackOnTheGround({
 
         <p className="m-0 max-w-[60ch] text-body text-ink-subtle">
           Land gently on the pad your Teacher pointed out, then stand clear of the propellers
-          and wait. Your Teacher closes the Mission when every craft is down.
+          and wait. Your Teacher closes the Mission when every Drone is down.
         </p>
       </StudentFrame>
     )
   }
 
   return (
-    <StudentFrame>
+    <StudentFrame rail={rail}>
       <IdentityLine seat={seat} />
 
       <h1 className="m-0 font-display text-heading font-medium text-ink">Mission complete</h1>
@@ -464,79 +673,60 @@ function CriterionRow({
 function FlyingScreen({
   session,
   seat,
+  rail,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
+  readonly rail: React.ReactNode
 }) {
-  const { snapshot, vitals, now } = useFleet()
+  const { vitals, now } = useFleet()
   const mine = vitals.find((entry) => entry.droneId === seat.droneId) ?? null
-  const telemetry =
-    snapshot.state?.drones.find((drone) => drone.id === seat.droneId)?.telemetry ?? null
 
-  const breaches = mine?.position ? breachesAt(session.zones, mine.position) : []
-  const checkpointsLeft = Math.max(0, session.checkpointCount - seat.checkpointIndex)
-  const nearACheckpoint = session.checkpointCount > 0 && checkpointsLeft <= 1
-
+  const left = pointsLeft(seat, session)
   const battery = mine?.batteryFraction ?? null
   const instruction = session.instructions.at(-1) ?? null
 
-  return (
-    <StudentFrame>
-      <FlyingWarning breaches={breaches} />
+  /*
+   * Every point reached and nobody has approved it yet. Its own screen rather than a line
+   * on this one, because "wait" is the whole instruction at that moment.
+   */
+  if (left === 0) {
+    return <TaskDone seat={seat} reached={(session.checkpoints ?? []).length} rail={rail} />
+  }
 
+  return (
+    <StudentFrame rail={rail}>
       <IdentityLine seat={seat} />
 
       {/*
-       * The one big number. Which one is chosen by what is about to matter, not by a
-       * preference: a last checkpoint outranks a battery that is still fine.
+       * "3 left" leads, the map sits beside it, and the two readings are small at the
+       * bottom. The screen used to lead with a battery percentage, which is a number rather
+       * than an answer: what a Student wants from two metres away is how much is left to do.
        */}
-      {nearACheckpoint && session.checkpointCount > 0 ? (
-        <BigReading
-          value={`${Math.min(seat.checkpointIndex + 1, session.checkpointCount)} of ${session.checkpointCount}`}
-          name="Checkpoints"
-        />
-      ) : battery === null ? (
-        <BigReading value="Not reporting" name="Battery" quiet />
-      ) : (
-        <BigReading value={`${Math.round(battery * 100)}%`} name="Battery" />
-      )}
+      <div className="grid gap-8 min-[52rem]:grid-cols-[1fr_15rem] min-[52rem]:items-center">
+        <div className="flex flex-col gap-3">
+          <p className="m-0 label">Points still to reach</p>
+          <p className="m-0 font-display text-summary font-medium text-ink">
+            {left === null ? 'No points set' : `${left} left`}
+          </p>
 
-      <dl className="m-0 grid grid-cols-2 gap-x-8 gap-y-3 min-[48rem]:grid-cols-4">
-        <QuietReading
-          name="Height"
-          value={mine?.altitudeM === null || mine === null ? null : `${mine.altitudeM.toFixed(1)} m`}
-        />
-        <QuietReading
-          name="Checkpoints"
-          value={
-            session.checkpointCount === 0
-              ? null
-              : `${Math.min(seat.checkpointIndex, session.checkpointCount)} of ${session.checkpointCount}`
-          }
-        />
-        {/*
-         * The remaining time, not the limit. This read `12 min` for the whole period,
-         * which is a fixed number wearing a countdown's name and the one thing this
-         * screen must never do.
-         */}
-        <QuietReading name="Time left" value={studentClock(session, now).words} />
-        <QuietReading
-          name="Link"
-          value={
-            telemetry?.linkQuality === undefined || telemetry.linkQuality === null
-              ? null
-              : telemetry.linkQuality < LINK_QUALITY_WEAK
-                ? 'Weak'
-                : 'Strong'
-          }
-        />
-      </dl>
+          <dl className="m-0 mt-2 flex flex-wrap gap-x-10 gap-y-3">
+            <QuietReading
+              name="Battery"
+              value={battery === null ? null : `${Math.round(battery * 100)}%`}
+            />
+            {/*
+             * The remaining time, not the limit. This read `12 min` for the whole period,
+             * which is a fixed number wearing a countdown's name.
+             */}
+            <QuietReading name="Time left" value={studentClock(session, now).words} />
+          </dl>
+        </div>
 
-      <MyMap session={session} seat={seat} />
+        <MyMap session={session} seat={seat} />
+      </div>
 
       {instruction ? <TeacherInstruction instruction={instruction} now={now} /> : null}
-
-      <WhatToDoNow alerts={mine?.alerts ?? []} />
     </StudentFrame>
   )
 }
@@ -565,9 +755,8 @@ function MyMap({
   if (mine === null) return null
 
   const checkpoints = session.checkpoints ?? []
-  const reached = new Set(
-    checkpoints.slice(0, Math.max(0, seat.checkpointIndex)).map((point) => point.id),
-  )
+  // Whichever ones the Drone proved it reached, in whatever order it reached them.
+  const reached = new Set(seat.reachedCheckpointIds)
 
   return (
     <section className="flex flex-col gap-2" aria-labelledby="student-map">
@@ -734,13 +923,15 @@ function MissionBrief({
   session,
   seat,
   onSession,
+  rail,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
   readonly onSession: (session: ClassroomSession) => void
+  readonly rail?: React.ReactNode
 }) {
   return (
-    <StudentFrame>
+    <StudentFrame rail={rail}>
       <IdentityLine seat={seat} />
 
       <AmIConnected seat={seat} />

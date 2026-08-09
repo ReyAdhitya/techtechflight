@@ -75,10 +75,19 @@ export function missionStepDone(step: number, summary: MissionFlowSummary): stri
       return summary.noFlyZones === 0
         ? 'Nothing drawn yet'
         : plural(summary.noFlyZones, 'no-fly zone', 'no-fly zones')
+    /*
+     * Keyed off Drones, not teams, and that is the fix for a rail that argued with itself.
+     * `teamOnCraft` is true as soon as a Drone is on the Mission, and `missionCraftIds`
+     * falls back to the Mission's own `droneIds` when no team holds one, so a Teacher who
+     * put Drones on a Mission without naming teams got a tick beside "No teams yet".
+     *
+     * The tick means Drones, so the words mean Drones. Teams are named when there are any,
+     * because a Teacher who made four of them wants to see four.
+     */
     case 3:
-      return summary.teams === 0
-        ? 'No teams yet'
-        : `${plural(summary.teams, 'team', 'teams')}, ${plural(summary.craft, 'Drone', 'Drones')}`
+      if (summary.craft === 0) return 'No Drones yet'
+      if (summary.teams === 0) return plural(summary.craft, 'Drone', 'Drones')
+      return `${plural(summary.teams, 'team', 'teams')}, ${plural(summary.craft, 'Drone', 'Drones')}`
     case 4:
       return summary.craft === 0
         ? 'No Drone on a team yet'

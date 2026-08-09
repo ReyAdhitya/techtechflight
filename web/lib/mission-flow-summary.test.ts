@@ -39,6 +39,17 @@ describe('what a step says it decided', () => {
     expect(missionStepDone(3, summary({ teams: 1, craft: 1 }))).toBe('1 team, 1 Drone')
   })
 
+  /*
+   * The rail arguing with itself. `teamOnCraft` is true as soon as a Drone is on the
+   * Mission, because `missionCraftIds` falls back to the Mission's own list when no team
+   * holds one, so a Teacher who put Drones on without naming teams got a tick beside
+   * "No teams yet".
+   */
+  it('says the Drones when there are Drones and no teams, not that there is nothing', () => {
+    expect(missionStepDone(3, summary({ teams: 0, craft: 3 }))).toBe('3 Drones')
+    expect(missionStepDone(3, summary({ teams: 0, craft: 1 }))).toBe('1 Drone')
+  })
+
   it('says how many craft are past pre-flight, out of how many are flying', () => {
     expect(missionStepDone(4, summary({ craft: 3, craftPastPreFlight: 2 })))
       .toBe('2 of 3 past it')
@@ -52,7 +63,7 @@ describe('what a step says it decided', () => {
     const nothing = summary()
     expect(missionStepDone(1, nothing)).toBe('Not chosen yet')
     expect(missionStepDone(2, nothing)).toBe('Nothing drawn yet')
-    expect(missionStepDone(3, nothing)).toBe('No teams yet')
+    expect(missionStepDone(3, nothing)).toBe('No Drones yet')
     expect(missionStepDone(4, nothing)).toBe('No Drone on a team yet')
   })
 

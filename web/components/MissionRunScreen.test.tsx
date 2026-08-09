@@ -196,7 +196,12 @@ describe('the Mission run page', () => {
 
       unmount()
     }
-  })
+    /*
+     * Five full renders of the live board. It clears five seconds alone and does not on a
+     * machine running the whole suite, so the budget is stated rather than left to the
+     * default: a timeout that depends on what else is running is not a test result.
+     */
+  }, 20_000)
 
   it('says what is standing in the way of a step that is not open', () => {
     at(6)

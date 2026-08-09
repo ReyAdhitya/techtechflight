@@ -206,6 +206,16 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     drone.charging = false
     // A fresh take-off is not the tail end of a Recall.
     drone.returningHome = false
+    /*
+     * Home is wherever it was standing when it left the ground, and it is set here because
+     * this is the moment that is true. It used to be fixed at construction, a metre apart in
+     * a row on the bench, so a Drone a class carried to the other end of the hall was
+     * Recalled to a spot it had not been near since the box was opened. Recall promises the
+     * launch point; this is what makes that promise true, and it is per Drone because six
+     * craft Recalled to one square metre collide.
+     */
+    drone.homeEastM = drone.eastM
+    drone.homeNorthM = drone.northM
     drone.airborne = true
     drone.targetAltitudeM = round(1.5 + this.#random() * 2, 2)
   }
@@ -663,8 +673,15 @@ interface SimulatedDrone {
   readonly hasCamera: boolean
   readonly canAutoLand: boolean
 
-  readonly homeEastM: number
-  readonly homeNorthM: number
+  /**
+   * Where Recall sends it: wherever it was standing when it last left the ground.
+   *
+   * Writable, and it was not. Fixed at construction it was the bench position a metre apart
+   * in a row, so a Drone a class carried to the other end of the hall was Recalled to a spot
+   * it had not been near since the box was opened.
+   */
+  homeEastM: number
+  homeNorthM: number
   eastM: number
   northM: number
   altitudeM: number

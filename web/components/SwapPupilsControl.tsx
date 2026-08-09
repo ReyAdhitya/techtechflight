@@ -39,7 +39,7 @@ export function SwapPupilsControl({
           onChange={(event) => setFirstId(event.target.value as DroneId | '')}
           className="min-h-11 min-w-40 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
         >
-          <option value="">Choose a craft</option>
+          <option value="">Choose a Drone</option>
           {options.map((option) => (
             <option key={option.droneId} value={option.droneId}>
               {labelFor(option)}
@@ -55,7 +55,7 @@ export function SwapPupilsControl({
           onChange={(event) => setSecondId(event.target.value as DroneId | '')}
           className="min-h-11 min-w-40 rounded-pill border border-hairline bg-canvas px-3 py-1 text-value text-ink"
         >
-          <option value="">Choose a craft</option>
+          <option value="">Choose a Drone</option>
           {options.map((option) => (
             <option key={option.droneId} value={option.droneId}>
               {labelFor(option)}

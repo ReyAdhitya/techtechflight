@@ -67,21 +67,21 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     why: 'Metres from the Fleet’s own origin, not a map, so "inside this polygon" stays true even when the origin is wrong. Tap the grid to add a corner; three corners make a zone.',
     phase: 'set-up',
     href: '/mission?step=2',
-    next: 'Put teams on craft',
+    next: 'Put teams on Drones',
   },
   {
     step: 3,
     label: 'Teams and Drones',
     title: 'Put each team on a Drone',
-    why: 'Teams group the class for the Mission. Who is flying which craft still comes from the Logbook. This sits beside that, not instead of it.',
+    why: 'Teams group the class for the Mission. Who is flying which Drone still comes from the Logbook. This sits beside that, not instead of it.',
     phase: 'set-up',
     href: '/mission?step=3',
-    next: 'Pre-flight each craft',
+    next: 'Pre-flight each Drone',
   },
   {
     step: 4,
     label: 'Pre-flight check',
-    title: 'Pre-flight check, craft by craft',
+    title: 'Pre-flight check, Drone by Drone',
     why: 'Six items read themselves from Telemetry. Propellers is the one a Teacher looks at and ticks, because the board cannot see a chipped blade.',
     phase: 'set-up',
     href: '/mission?step=4',
@@ -100,7 +100,7 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     step: 6,
     label: 'Takeoff clearance',
     title: 'Approve takeoff',
-    why: 'A team that is Ready, on a craft, and past pre-flight enters this queue by itself. You grant or hold. The Students fly the aircraft by hand, so this is a record, not a Command.',
+    why: 'A team that is Ready, on a Drone, and past pre-flight enters this queue by itself. You grant or hold. The Students fly the aircraft by hand, so this is a record, not a Command.',
     phase: 'in-the-air',
     href: '/mission?step=6',
     next: 'Watch the airspace',
@@ -109,16 +109,16 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
     step: 7,
     label: 'Where everything is',
     title: 'Where everything is',
-    why: 'Plan view in the Fleet’s own frame, with the zones you drew and the trail each craft has flown.',
+    why: 'Plan view in the Fleet’s own frame, with the zones you drew and the trail each Drone has flown.',
     phase: 'in-the-air',
     href: '/mission?step=7',
-    next: 'Read one craft closely',
+    next: 'Read one Drone closely',
   },
   {
     step: 8,
     label: 'Telemetry and camera',
     title: 'Telemetry and the camera',
-    why: 'The numbers and the picture side by side, because a battery reading means something different when you can see what the craft is over.',
+    why: 'The numbers and the picture side by side, because a battery reading means something different when you can see what the Drone is over.',
     phase: 'in-the-air',
     href: '/mission?step=8',
     next: 'The things you can send',
@@ -331,9 +331,9 @@ export function missionStepBlockedBy(
     case 3:
       return 'Choose a Scenario first'
     case 4:
-      return 'Put a team on a craft first'
+      return 'Put a team on a Drone first'
     case 5:
-      return 'Pre-flight one craft first'
+      return 'Pre-flight one Drone first'
     case 6:
       return 'Brief the class first'
     case 7:

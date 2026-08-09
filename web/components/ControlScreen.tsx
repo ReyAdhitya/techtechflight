@@ -569,7 +569,7 @@ export function ControlScreen({
 
       {mission !== null && selectedCraftOption !== null ? (
         <section ref={targetRef} className="flex flex-col gap-3 scroll-mt-4">
-          <h2 className="label m-0">Instructions for the selected craft</h2>
+          <h2 className="label m-0">Instructions for the selected Drone</h2>
           <InstructionControls
             mission={mission}
             craft={selectedCraftOption}

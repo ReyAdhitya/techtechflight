@@ -98,14 +98,17 @@ describe('what is open', () => {
   /*
    * The wording is the prototype's, not a paraphrase of it, and it is checked exactly. A
    * generic "not available yet" is the version this whole rail exists to replace.
+   *
+   * One word is deliberately not the prototype's. It writes "craft"; CONTEXT.md says Drone
+   * and is the authority on what a screen calls an aircraft.
    */
   it('says what is standing in the way, in the words the prototype uses', () => {
     const nothing = facts()
     expect(missionStepBlockedBy(1, nothing)).toBeNull()
     expect(missionStepBlockedBy(2, nothing)).toBe('Choose a Scenario first')
     expect(missionStepBlockedBy(3, nothing)).toBe('Choose a Scenario first')
-    expect(missionStepBlockedBy(4, nothing)).toBe('Put a team on a craft first')
-    expect(missionStepBlockedBy(5, nothing)).toBe('Pre-flight one craft first')
+    expect(missionStepBlockedBy(4, nothing)).toBe('Put a team on a Drone first')
+    expect(missionStepBlockedBy(5, nothing)).toBe('Pre-flight one Drone first')
     expect(missionStepBlockedBy(6, nothing)).toBe('Brief the class first')
     for (const step of [7, 8, 9, 10]) {
       expect(missionStepBlockedBy(step, nothing), `step ${step}`).toBe('Grant a takeoff first')

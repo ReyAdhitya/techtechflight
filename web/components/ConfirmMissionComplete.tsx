@@ -124,7 +124,7 @@ export function ConfirmMissionComplete({
       ) : stillAirborne.length > 0 ? (
         <p className="m-0 text-value text-status-not-ready" role="status">
           Still airborne: {stillAirborne.map((entry) => entry.droneName).join(', ')}. Confirm
-          only when every craft is down.
+          only when every Drone is down.
         </p>
       ) : mission.startedAt === null ? (
         <p className="m-0 text-value text-ink-muted" role="status">

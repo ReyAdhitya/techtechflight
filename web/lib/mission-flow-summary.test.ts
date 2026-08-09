@@ -34,9 +34,9 @@ describe('what a step says it decided', () => {
     expect(missionStepDone(2, summary({ noFlyZones: 2 }))).toBe('2 no-fly zones')
   })
 
-  it('counts teams and the craft they took', () => {
-    expect(missionStepDone(3, summary({ teams: 4, craft: 3 }))).toBe('4 teams, 3 craft')
-    expect(missionStepDone(3, summary({ teams: 1, craft: 1 }))).toBe('1 team, 1 craft')
+  it('counts teams and the Drones they took', () => {
+    expect(missionStepDone(3, summary({ teams: 4, craft: 3 }))).toBe('4 teams, 3 Drones')
+    expect(missionStepDone(3, summary({ teams: 1, craft: 1 }))).toBe('1 team, 1 Drone')
   })
 
   it('says how many craft are past pre-flight, out of how many are flying', () => {
@@ -53,7 +53,7 @@ describe('what a step says it decided', () => {
     expect(missionStepDone(1, nothing)).toBe('Not chosen yet')
     expect(missionStepDone(2, nothing)).toBe('Nothing drawn yet')
     expect(missionStepDone(3, nothing)).toBe('No teams yet')
-    expect(missionStepDone(4, nothing)).toBe('No craft on a team yet')
+    expect(missionStepDone(4, nothing)).toBe('No Drone on a team yet')
   })
 
   it('says how much of the brief has been said out loud', () => {
@@ -70,7 +70,7 @@ describe('what a step says it decided', () => {
     const nothing = summary()
     expect(missionStepDone(6, nothing)).toBe('Nobody waiting')
     expect(missionStepDone(7, nothing)).toBe('Nothing airborne')
-    expect(missionStepDone(8, nothing)).toBe('No craft selected')
+    expect(missionStepDone(8, nothing)).toBe('No Drone selected')
     expect(missionStepDone(9, nothing)).toBe('Nothing sent yet')
     expect(missionStepDone(10, nothing)).toBe('Nothing critical')
   })
@@ -90,7 +90,7 @@ describe('what a step says it decided', () => {
    */
   it('says what is still up against the step that seals the Mission', () => {
     expect(missionStepDone(11, summary({ airborne: 1 }))).toBe('1 still airborne')
-    expect(missionStepDone(11, summary({ airborne: 0 }))).toBe('Every craft down')
+    expect(missionStepDone(11, summary({ airborne: 0 }))).toBe('Every Drone down')
   })
 
   it('stamps the seal with the time it happened', () => {

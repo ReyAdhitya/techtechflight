@@ -99,7 +99,7 @@ function rowMark(
  *
  * Only a locked row consults the blocker. A step can be behind a Teacher *and* have its
  * condition stop holding, which is what happens when they untick the brief after granting
- * a clearance, and a row that showed a tick beside "Pre-flight one craft first" was the
+ * a clearance, and a row that showed a tick beside "Pre-flight one Drone first" was the
  * rail arguing with itself.
  */
 function stateWords(

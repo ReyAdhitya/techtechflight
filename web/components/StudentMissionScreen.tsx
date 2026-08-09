@@ -795,10 +795,10 @@ function AmIConnected({ seat }: { readonly seat: ClassroomSeat }) {
       />
       <StatusLine
         ok={reporting}
-        label={seat.droneName ?? 'Your craft'}
+        label={seat.droneName ?? 'Your Drone'}
         says={
           seat.droneId === null
-            ? 'You do not have a craft yet.'
+            ? 'You do not have a Drone yet.'
             : !reporting
               ? 'Not reporting. Tell your Teacher.'
               : null
@@ -862,7 +862,7 @@ function IdentityLine({ seat }: { readonly seat: ClassroomSeat }) {
     <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-value text-ink-subtle">
       <span className="font-medium text-ink">{seat.name}</span>
       {seat.droneName === null ? (
-        <span>Your Teacher has not given you a craft yet.</span>
+        <span>Your Teacher has not given you a Drone yet.</span>
       ) : (
         <span>{seat.droneName}</span>
       )}
@@ -1001,7 +1001,7 @@ function TakeoffAnswer({
     return (
       <AnswerPanel
         heading="Waiting for your Teacher"
-        says="Stand by your craft. Do not take off until this says cleared."
+        says="Stand by your Drone. Do not take off until this says cleared."
         tone="waiting"
       />
     )

@@ -50,10 +50,10 @@ export function SpareNomination({
         'flex flex-col gap-3 rounded-surface border border-hairline bg-surface-1 p-4',
         className,
       )}
-      aria-label="Spare craft"
+      aria-label="Spare Drone"
     >
       <div className="flex flex-col gap-1">
-        <h2 className="label m-0">Spare craft</h2>
+        <h2 className="label m-0">Spare Drone</h2>
         <p className="m-0 text-value text-ink-subtle" role="status">
           {spare === null ? (
             'No spare nominated.'

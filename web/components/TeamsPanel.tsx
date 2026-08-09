@@ -211,7 +211,7 @@ export function TeamsPanel({
                       Assigned to {droneLabel(team.droneId)}
                     </span>
                   ) : (
-                    <span className="text-caption text-ink-muted">No craft assigned yet</span>
+                    <span className="text-caption text-ink-muted">No Drone assigned yet</span>
                   )}
                 </label>
               </li>

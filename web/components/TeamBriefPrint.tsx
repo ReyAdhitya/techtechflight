@@ -44,7 +44,7 @@ export const TEAM_BRIEF_WHAT_IF = [
   {
     id: 'low-charge',
     question: 'What if charge runs low?',
-    answer: 'Land immediately and hand the craft to the Teacher for a swap.',
+    answer: 'Land immediately and hand the Drone to the Teacher for a swap.',
   },
   {
     id: 'lost-link',
@@ -193,7 +193,7 @@ export function TeamBriefPrint({
 }) {
   const scenario = scenarioOrUnknown(mission.scenarioId)
   const limitLabel = formatLimitMinutes(mission.limitMinutes, scenario.defaultLimitMinutes)
-  const droneLabel = team.droneId ?? 'No craft assigned yet'
+  const droneLabel = team.droneId ?? 'No Drone assigned yet'
 
   return (
     <article
@@ -206,7 +206,7 @@ export function TeamBriefPrint({
         <p className="m-0 label">Team brief</p>
         <p className="m-0 font-display text-heading font-medium">{team.name}</p>
         <p className="m-0 text-value text-ink-subtle">
-          Craft: <span className="tnum">{droneLabel}</span>
+          Drone: <span className="tnum">{droneLabel}</span>
         </p>
         <p className="m-0 text-value text-ink-subtle">
           Mission: {mission.name || scenario.name}

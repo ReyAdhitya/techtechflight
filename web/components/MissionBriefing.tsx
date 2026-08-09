@@ -31,7 +31,7 @@ export const MISSION_BRIEFING_SECTIONS = [
       },
       {
         id: 'team-drone',
-        label: 'Fly only the craft your team was assigned.',
+        label: 'Fly only the Drone your team was assigned.',
       },
     ],
   },
@@ -45,7 +45,7 @@ export const MISSION_BRIEFING_SECTIONS = [
       },
       {
         id: 'separation',
-        label: 'Keep separation. Call out if another craft is too close.',
+        label: 'Keep separation. Call out if another Drone is too close.',
       },
       {
         id: 'time-limit',
@@ -111,7 +111,7 @@ export const MISSION_BRIEFING_SECTIONS = [
       },
       {
         id: 'teacher-stop',
-        label: 'If the craft is out of control, the Teacher will press Stop from the board.',
+        label: 'If the Drone is out of control, the Teacher will press Stop from the board.',
       },
       {
         id: 'wait-release',

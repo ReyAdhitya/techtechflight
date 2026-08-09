@@ -12,7 +12,7 @@ import type { Zone } from './airspace.ts'
 
 const missionZone: Zone = {
   id: 'z',
-  kind: 'mission',
+  kind: 'no-fly',
   name: 'the hall',
   points: [
     { eastM: 0, northM: 0 },
@@ -46,15 +46,18 @@ describe('a Mission that has just been picked', () => {
     expect(mission.outcome).toBeNull()
   })
 
-  it('says all three things it still needs, not just the first', () => {
+  it('says both things it still needs, not just the first', () => {
     /*
-     * All of them at once, deliberately. A Teacher with a class waiting should read the
-     * whole list and clear it in one pass, rather than discovering a second requirement
-     * after satisfying the first.
+     * Both at once, deliberately. A Teacher with a class waiting should read the whole list
+     * and clear it in one pass, rather than discovering a second requirement after
+     * satisfying the first.
+     *
+     * It used to be three. *Draw the Mission Zone* went with the go-area (ADR-0027), and no
+     * No-fly Zone was asked for in its place: a room with nothing to stay out of is a real
+     * room, and a requirement a Teacher cannot satisfy is worse than no requirement.
      */
     const missing = whatIsMissing(emptyMission('m1', 'delivery', 'Delivery'))
-    expect(missing).toHaveLength(3)
-    expect(missing.join(' ')).toMatch(/Mission Zone/)
+    expect(missing).toHaveLength(2)
     expect(missing.join(' ')).toMatch(/checkpoint or a target/)
     expect(missing.join(' ')).toMatch(/Drone/)
   })
@@ -83,16 +86,9 @@ describe('whether a Mission can fly', () => {
     expect(isReadyToFly(searching)).toBe(true)
   })
 
-  it('does not count a Mission Zone the Teacher has not closed', () => {
-    const halfDrawn: Zone = { ...missionZone, points: missionZone.points.slice(0, 2) }
-    expect(whatIsMissing(ready({ zones: [halfDrawn] }))).toContain('Draw the Mission Zone.')
-  })
-
-  it('does not accept a No-fly Zone as the Mission Zone', () => {
-    // Drawing only the dangerous part is a plausible first attempt, and it leaves the
-    // Mission with no boundary at all.
-    const onlyDanger: Zone = { ...missionZone, kind: 'no-fly' }
-    expect(isReadyToFly(ready({ zones: [onlyDanger] }))).toBe(false)
+  /* A room with nothing to stay out of is a real room, and it can fly (ADR-0027). */
+  it('flies with no zones drawn at all', () => {
+    expect(isReadyToFly(ready({ zones: [] }))).toBe(true)
   })
 })
 

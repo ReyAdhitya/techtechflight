@@ -386,7 +386,7 @@ function MissionPrep({
             Draw the Mission area
           </h2>
           <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
-            Mission Zone and No-fly Zones in the Fleet&apos;s own frame. Not GPS.
+            No-fly Zones in the Fleet&apos;s own frame. Not GPS. None is a normal answer.
           </p>
         </div>
         )}

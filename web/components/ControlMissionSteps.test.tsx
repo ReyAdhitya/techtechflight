@@ -33,8 +33,8 @@ const settle = () =>
 
 const triangle: Zone = {
   id: 'zone-1',
-  kind: 'mission',
-  name: 'Mission Zone',
+  kind: 'no-fly',
+  name: 'Over the desks',
   points: [
     { eastM: 0, northM: 0 },
     { eastM: 20, northM: 0 },

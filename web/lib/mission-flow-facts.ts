@@ -2,7 +2,7 @@ import type { DroneId, FleetThresholds, Telemetry } from '@techtechflight/contra
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import { anyClearanceGranted } from './clearance-store.ts'
 import type { ClearanceState } from './clearance.ts'
-import { hasMissionZone } from './mission-draft.ts'
+import { hasNoFlyZone } from './mission-draft.ts'
 import type { MissionFlowFacts } from './mission-flow.ts'
 import { noMissionYet } from './mission-flow.ts'
 import type { Mission } from './mission.ts'
@@ -76,7 +76,7 @@ export function missionFlowFactsFrom(input: MissionFlowInput): MissionFlowFacts 
 
   return {
     scenarioChosen: true,
-    missionZoneDrawn: hasMissionZone(mission),
+    noFlyZoneDrawn: hasNoFlyZone(mission),
     teamOnCraft: craftIds.length > 0,
     preFlightPassed,
     briefed: input.briefed,

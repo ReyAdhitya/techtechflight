@@ -9,9 +9,9 @@ import { BreachTracker, breachKey } from './airspace-breach.ts'
  * the Drone to come back in bounds before it speaks again.
  */
 
-const missionZone: Zone = {
-  id: 'mission',
-  kind: 'mission',
+const hallZone: Zone = {
+  id: 'hall',
+  kind: 'no-fly',
   name: 'the hall',
   points: [
     { eastM: 0, northM: 0 },
@@ -33,27 +33,27 @@ const noFlyZone: Zone = {
   ],
 }
 
-const outsideMission = { eastM: -1, northM: 5 }
+const insideHall = { eastM: 5, northM: 5 }
 const insideNoFly = { eastM: 14, northM: 2 }
-const safeInside = { eastM: 5, northM: 5 }
+const safeOutside = { eastM: -1, northM: -1 }
 
 describe('breachKey', () => {
   it('separates Drone, kind, and zone', () => {
     expect(
       breachKey('d1', {
-        kind: 'left-mission-zone',
-        zoneId: 'mission',
+        kind: 'entered-no-fly',
+        zoneId: 'hall',
         zoneName: 'the hall',
       }),
-    ).toBe('d1:left-mission-zone:mission')
+    ).toBe('d1:entered-no-fly:hall')
   })
 })
 
 describe('BreachTracker', () => {
   it('raises one breach while a craft hovers out of place, not forty', () => {
     const tracker = new BreachTracker()
-    const zones = [missionZone]
-    const breach = breachesAt(zones, outsideMission)[0]!
+    const zones = [hallZone]
+    const breach = breachesAt(zones, insideHall)[0]!
 
     const events = []
     for (let tick = 0; tick < 40; tick += 1) {
@@ -70,8 +70,8 @@ describe('BreachTracker', () => {
 
   it('raises a second breach after leaving and re-entering', () => {
     const tracker = new BreachTracker()
-    const zones = [missionZone]
-    const breach = breachesAt(zones, outsideMission)[0]!
+    const zones = [hallZone]
+    const breach = breachesAt(zones, insideHall)[0]!
 
     const first = tracker.observe('d1', [breach], 1_000)
     expect(first).toHaveLength(1)
@@ -84,28 +84,28 @@ describe('BreachTracker', () => {
     expect(second[0]!.at).toBe(9_000)
   })
 
-  it('tracks each breach kind and zone separately on one Drone', () => {
+  it('tracks each zone separately on one Drone', () => {
     const tracker = new BreachTracker()
-    const zones = [missionZone, noFlyZone]
-    const inNoFly = breachesAt(zones, insideNoFly)
-    const outsideOnly = breachesAt(zones, outsideMission)
+    const zones = [hallZone, noFlyZone]
+    const inNetting = breachesAt(zones, insideNoFly)
+    const inHall = breachesAt(zones, insideHall)
 
-    const first = tracker.observe('d1', inNoFly, 2_000)
-    expect(first).toHaveLength(2)
+    expect(tracker.observe('d1', inHall, 2_000)).toHaveLength(1)
+    expect(tracker.observe('d1', inHall, 2_500)).toEqual([])
 
-    expect(tracker.observe('d1', inNoFly, 2_500)).toEqual([])
+    // A different zone is a different breach, not the same one repeating.
+    const crossed = tracker.observe('d1', inNetting, 3_000)
+    expect(crossed).toHaveLength(1)
+    expect(crossed[0]!.zoneName).toBe('the netting')
 
-    // Still outside the Mission Zone but no longer in the no-fly box.
-    tracker.observe('d1', outsideOnly, 3_000)
-    const reNoFly = tracker.observe('d1', inNoFly, 4_000)
-    expect(reNoFly).toHaveLength(1)
-    expect(reNoFly[0]!.kind).toBe('entered-no-fly')
+    // And going back into the first one speaks again, because it stopped in between.
+    expect(tracker.observe('d1', inHall, 4_000)).toHaveLength(1)
   })
 
   it('keeps Drones independent in a fleet-wide observe', () => {
     const tracker = new BreachTracker()
-    const zones = [missionZone]
-    const breach = breachesAt(zones, outsideMission)[0]!
+    const zones = [hallZone]
+    const breach = breachesAt(zones, insideHall)[0]!
 
     const first = tracker.observeFleet(
       [
@@ -130,8 +130,8 @@ describe('BreachTracker', () => {
 
   it('forgets everything on reset', () => {
     const tracker = new BreachTracker()
-    const zones = [missionZone]
-    const breach = breachesAt(zones, outsideMission)[0]!
+    const zones = [hallZone]
+    const breach = breachesAt(zones, insideHall)[0]!
 
     tracker.observe('d1', [breach], 1_000)
     tracker.reset()
@@ -143,8 +143,8 @@ describe('BreachTracker', () => {
 
   it('walks a position series through breachesAt like a live Integrator would', () => {
     const tracker = new BreachTracker()
-    const zones = [missionZone, noFlyZone]
-    const positions = [safeInside, outsideMission, outsideMission, insideNoFly]
+    const zones = [hallZone, noFlyZone]
+    const positions = [safeOutside, insideHall, insideHall, insideNoFly]
     const allEvents = []
 
     for (let i = 0; i < positions.length; i += 1) {
@@ -153,7 +153,7 @@ describe('BreachTracker', () => {
     }
 
     expect(allEvents).toHaveLength(2)
-    expect(allEvents[0]!.kind).toBe('left-mission-zone')
+    expect(allEvents[0]!.kind).toBe('entered-no-fly')
     expect(allEvents[1]!.kind).toBe('entered-no-fly')
   })
 })

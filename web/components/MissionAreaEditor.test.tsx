@@ -23,14 +23,14 @@ describe('Mission area editor', () => {
     render(<Harness />)
 
     expect(screen.getByTestId('mission-area-empty')).toBeInTheDocument()
-    expect(screen.getByText(/outline where this Mission happens/i)).toBeInTheDocument()
+    expect(screen.getByText(/areas Drones must stay out of/i)).toBeInTheDocument()
     expect(screen.getByText(/at least three points/i)).toBeInTheDocument()
     // "Tap the grid" needs a grid. It used to be swapped out for the sentence, so the only
     // way into an empty editor was to type two numbers.
     expect(screen.getByRole('img', { name: /drawing surface/i })).toBeInTheDocument()
   })
 
-  it('keeps typing points open while the Mission Zone is still being drawn', async () => {
+  it('keeps typing points open while a zone is still being drawn', async () => {
     const user = userEvent.setup()
     render(<Harness />)
 
@@ -45,7 +45,12 @@ describe('Mission area editor', () => {
     expect(screen.getByRole('listitem')).toHaveTextContent('4 points')
   })
 
-  it('closes the Mission Zone to further points once it is finished', async () => {
+  /*
+   * Finish only stops the *current* shape. It used to disable Add point outright, because
+   * one Mission Zone was the most a Teacher could have; with no go-area left (ADR-0027) the
+   * next point starts the next No-fly Zone, and there is no limit on those.
+   */
+  it('starts a new zone after the last one is finished', async () => {
     const user = userEvent.setup()
     render(<Harness />)
 
@@ -54,10 +59,10 @@ describe('Mission area editor', () => {
     await addPoint(user, '8', '6')
     await user.click(screen.getByRole('button', { name: 'Finish zone' }))
 
-    expect(screen.getByRole('button', { name: 'Add point' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Add point' })).toBeEnabled()
   })
 
-  it('draws one Mission Zone through onChange', async () => {
+  it('draws a No-fly Zone through onChange', async () => {
     const user = userEvent.setup()
     render(<Harness />)
 
@@ -65,23 +70,21 @@ describe('Mission area editor', () => {
     await addPoint(user, '8', '0')
     await addPoint(user, '8', '6')
 
-    expect(screen.getByRole('listitem')).toHaveTextContent('Mission Zone')
+    expect(screen.getByRole('listitem')).toHaveTextContent('No-fly Zone 1')
     expect(screen.getByRole('listitem')).toHaveTextContent('3 points')
     expect(screen.queryByTestId('mission-area-empty')).not.toBeInTheDocument()
-    expect(document.querySelector('[data-zone-kind="mission"]')).toBeInTheDocument()
+    expect(document.querySelector('[data-zone-kind="no-fly"]')).toBeInTheDocument()
   })
 
   it('allows any number of No-fly Zones', async () => {
     const user = userEvent.setup()
     render(<Harness />)
 
-    await user.click(screen.getByRole('button', { name: 'Draw No-fly Zone' }))
     await addPoint(user, '2', '2')
     await addPoint(user, '4', '2')
     await addPoint(user, '4', '4')
     await user.click(screen.getByRole('button', { name: 'Finish zone' }))
 
-    await user.click(screen.getByRole('button', { name: 'Draw No-fly Zone' }))
     await addPoint(user, '10', '10')
     await addPoint(user, '12', '10')
     await addPoint(user, '12', '12')
@@ -91,17 +94,12 @@ describe('Mission area editor', () => {
     expect(document.querySelectorAll('[data-zone-kind="no-fly"]')).toHaveLength(2)
   })
 
-  it('allows only one Mission Zone', async () => {
-    const user = userEvent.setup()
+  /* One kind of zone left, so a mode to pick between kinds is chrome saying nothing. */
+  it('offers no drawing mode to choose', async () => {
     render(<Harness />)
 
-    await addPoint(user, '0', '0')
-    await addPoint(user, '6', '0')
-    await addPoint(user, '6', '6')
-
-    const missionButton = screen.getByRole('button', { name: 'Draw Mission Zone' })
-    expect(missionButton).toBeDisabled()
-    expect(screen.getAllByText(/Mission Zone/).length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByRole('button', { name: /Draw Mission Zone/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Draw No-fly Zone/ })).not.toBeInTheDocument()
   })
 
   it('undoes the last point while a zone is open', async () => {

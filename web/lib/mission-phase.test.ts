@@ -195,7 +195,7 @@ describe('exceptions ride on the phase rather than replacing it', () => {
     // The customer's safety priorities: airspace rules outrank aircraft recovery.
     const reading = missionPhaseFor(
       input({
-        breaches: [{ kind: 'left-mission-zone', zoneId: 'z', zoneName: 'the hall' }],
+        breaches: [{ kind: 'entered-no-fly', zoneId: 'z', zoneName: 'the hall' }],
         vitals: vitals({
           alerts: [
             { kind: 'low-endurance', severity: 'warning', text: 'Land now.', since: 0 },

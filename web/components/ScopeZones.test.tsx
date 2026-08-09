@@ -12,9 +12,9 @@ const at = (name: string, eastM: number, northM: number) =>
     telemetry: aTelemetry({ airborne: true, position: { eastM, northM } }),
   })
 
-const missionZone: Zone = {
-  id: 'mission',
-  kind: 'mission',
+const hallZone: Zone = {
+  id: 'hall',
+  kind: 'no-fly',
   name: 'the hall',
   points: [
     { eastM: 1, northM: 1 },
@@ -39,15 +39,14 @@ const drawingSvg = (container: HTMLElement) =>
   container.querySelector('svg[role="img"]') as SVGElement
 
 describe('Scope zones overlay', () => {
-  it('outlines the Mission Zone and hatches No-fly Zones on the top-down', () => {
+  it('hatches every No-fly Zone on the top-down', () => {
     const { container } = render(
-      <Scope drones={[at('Drone 1', 3, 3)]} zones={[missionZone, noFlyZone]} />,
+      <Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone, noFlyZone]} />,
     )
 
-    const mission = container.querySelector('[data-zone-kind="mission"]')
-    expect(mission).toBeInTheDocument()
-    expect(mission?.getAttribute('fill')).toBe('none')
-    expect(mission?.classList.contains('stroke-ink')).toBe(true)
+    // Two of them, and both hatched. There is no second kind to draw differently
+    // (ADR-0027), so an outline that meant "you may fly here" would mean nothing.
+    expect(container.querySelectorAll('[data-zone-kind="no-fly"]')).toHaveLength(2)
 
     const noFly = container.querySelector('[data-zone-kind="no-fly"]')
     expect(noFly).toBeInTheDocument()
@@ -56,33 +55,31 @@ describe('Scope zones overlay', () => {
     expect(noFly?.classList.contains('stroke-status-fault')).toBe(true)
 
     expect(container.querySelector('pattern[id^="scope-no-fly-hatch-"]')).toBeInTheDocument()
-    expect(screen.getByText('Outline = Mission Zone')).toBeInTheDocument()
+    expect(screen.queryByText('Outline = Mission Zone')).not.toBeInTheDocument()
     expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
   })
 
   it('draws nothing on elevation views', () => {
     const { container } = render(
-      <Scope drones={[at('Drone 1', 3, 3)]} zones={[missionZone, noFlyZone]} />,
+      <Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone, noFlyZone]} />,
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Side' }))
     expect(container.querySelector('[data-scope-zones]')).toBeNull()
-    expect(container.querySelector('[data-zone-kind="mission"]')).toBeNull()
-    expect(screen.queryByText('Outline = Mission Zone')).not.toBeInTheDocument()
+    expect(container.querySelector('[data-zone-kind="no-fly"]')).toBeNull()
     expect(screen.queryByText('Hatched = No-fly Zone')).not.toBeInTheDocument()
   })
 
   it('skips zones that do not enclose anything yet', () => {
-    const halfDrawn: Zone = { ...missionZone, points: missionZone.points.slice(0, 2) }
+    const halfDrawn: Zone = { ...hallZone, points: hallZone.points.slice(0, 2) }
     expect(enclosesAnything(halfDrawn)).toBe(false)
 
     const { container } = render(
       <Scope drones={[at('Drone 1', 3, 3)]} zones={[halfDrawn, noFlyZone]} />,
     )
 
-    expect(container.querySelector('[data-zone-kind="mission"]')).toBeNull()
-    expect(container.querySelector('[data-zone-kind="no-fly"]')).toBeInTheDocument()
-    expect(screen.queryByText('Outline = Mission Zone')).not.toBeInTheDocument()
+    // The half-drawn one is skipped; the finished one is still there.
+    expect(container.querySelectorAll('[data-zone-kind="no-fly"]')).toHaveLength(1)
     expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
   })
 
@@ -90,7 +87,7 @@ describe('Scope zones overlay', () => {
     render(
       <Scope
         drones={[at('Drone 1', 3, 3)]}
-        zones={[missionZone]}
+        zones={[hallZone]}
         zonesUnsurveyed
       />,
     )
@@ -99,7 +96,7 @@ describe('Scope zones overlay', () => {
   })
 
   it('does not claim zones are unsurveyed on the simulator', () => {
-    render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[missionZone]} />)
+    render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone]} />)
 
     expect(screen.queryByText('Not surveyed against this aircraft')).not.toBeInTheDocument()
   })
@@ -111,7 +108,7 @@ describe('ScopeZones', () => {
     const { container } = render(
       <svg viewBox={`0 0 ${scope.widthM} ${scope.heightM}`}>
         <ScopeZones
-          zones={[missionZone]}
+          zones={[hallZone]}
           project={scope.project}
           view="top-down"
           noFlyHatchId="test-hatch"
@@ -119,7 +116,7 @@ describe('ScopeZones', () => {
       </svg>,
     )
 
-    const polygon = container.querySelector('[data-zone-kind="mission"]')
+    const polygon = container.querySelector('[data-zone-kind="no-fly"]')
     expect(polygon?.getAttribute('points')).toMatch(/\d/)
   })
 })

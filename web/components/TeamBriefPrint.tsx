@@ -36,10 +36,6 @@ export const TEAM_BRIEF_PRINT_CSS = `
     stroke-dasharray: 4 3;
   }
 
-  .team-brief-print .team-brief-map polygon[data-zone-kind='mission'] {
-    fill: none;
-    stroke: #1b1815;
-  }
 }
 `.trim()
 
@@ -152,13 +148,9 @@ function BriefMap({
               key={zone.id}
               points={pointsToPolygon(zone.points)}
               data-zone-kind={zone.kind}
-              className={
-                zone.kind === 'mission'
-                  ? 'fill-transparent stroke-ink'
-                  : 'fill-ink/10 stroke-ink'
-              }
+              className="fill-ink/10 stroke-ink"
               strokeWidth={0.15}
-              strokeDasharray={zone.kind === 'no-fly' ? '0.4 0.3' : undefined}
+              strokeDasharray="0.4 0.3"
             />
           )
         })}
@@ -185,8 +177,7 @@ function BriefMap({
         ))}
       </svg>
       <figcaption className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-ink-muted">
-        <span>Mission Zone, solid outline</span>
-        <span>No-fly Zone, hatched / dashed</span>
+        <span>No-fly Zone, hatched and dashed</span>
         <span>Checkpoints, numbered circles</span>
       </figcaption>
     </figure>

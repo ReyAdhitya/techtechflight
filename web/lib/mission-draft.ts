@@ -181,8 +181,14 @@ export function adoptMissionDraft(lessonId: string): MissionDraft {
   }
 }
 
-/** Whether the Mission Zone is drawn well enough to enclose anything. */
-export function hasMissionZone(mission: Mission | null): boolean {
+/**
+ * Whether at least one No-fly Zone is drawn well enough to enclose anything.
+ *
+ * This asked about the Mission Zone until ADR-0027 removed it. The difference that matters is
+ * that a Mission Zone was required and a No-fly Zone is not: a room with nothing to stay out
+ * of is a real room, so nothing is gated on this. It says what step 2 decided, and no more.
+ */
+export function hasNoFlyZone(mission: Mission | null): boolean {
   if (mission === null) return false
-  return mission.zones.some((zone) => zone.kind === 'mission' && enclosesAnything(zone))
+  return mission.zones.some(enclosesAnything)
 }

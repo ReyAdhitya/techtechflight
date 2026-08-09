@@ -39,7 +39,7 @@ const mission: Mission = {
   zones: [
     {
       id: 'zone-m',
-      kind: 'mission',
+      kind: 'no-fly',
       name: 'Mission Zone',
       points: [
         { eastM: 2, northM: 2 },
@@ -102,7 +102,6 @@ describe('TeamBriefPrint', () => {
   it('labels map zones in words, not colour alone', () => {
     render(<TeamBriefPrint team={team} mission={mission} />)
 
-    expect(screen.getByText(/Mission Zone, solid outline/)).toBeTruthy()
     expect(screen.getByText(/No-fly Zone, hatched/)).toBeTruthy()
     expect(screen.getByText(/Checkpoints, numbered circles/)).toBeTruthy()
   })

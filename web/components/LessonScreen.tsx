@@ -226,6 +226,9 @@ function PreFlight({
   )
 }
 
+/** How long after a Lesson starts the warm-up overlay is still the right thing to show. */
+const WARM_UP_SECONDS = 60
+
 function LessonUnderWay({
   lesson,
   now,
@@ -235,20 +238,25 @@ function LessonUnderWay({
   now: number
   book: ReturnType<typeof readLogbook>
 }) {
-  const storageKey = `lesson-warmup-done:${lesson.id}`
-  const [warming, setWarming] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return sessionStorage.getItem(storageKey) !== '1'
-  })
-
-  const finishWarmUp = () => {
-    sessionStorage.setItem(storageKey, '1')
-    setWarming(false)
-  }
+  /*
+   * The warm-up is the first minute of a Lesson, and the Lesson's own start time is what
+   * says whether that minute has passed. It used to be a `sessionStorage` flag, which is a
+   * fact about a browser tab rather than about a Lesson: opening a second tab, or restarting
+   * the browser, replayed a sixty second full-screen overlay over a class already flying.
+   *
+   * The clock cannot do that. A tab opened twenty minutes in computes a remainder of nothing
+   * and never renders it, and a tab opened ten seconds in picks the countdown up where the
+   * first one left it rather than starting the minute again.
+   */
+  const remaining = WARM_UP_SECONDS - Math.floor(Math.max(0, now - lesson.startedAt) / 1000)
+  const [skipped, setSkipped] = useState(false)
+  const warming = !skipped && remaining > 0
 
   return (
     <section className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5">
-      {warming ? <LessonWarmUp onDone={finishWarmUp} /> : null}
+      {warming ? (
+        <LessonWarmUp seconds={remaining} onDone={() => setSkipped(true)} />
+      ) : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>
         <h2 className="m-0 font-display text-heading font-medium">

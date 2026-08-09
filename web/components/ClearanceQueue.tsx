@@ -143,7 +143,7 @@ export function ClearanceQueue({
                       'hover:border-ink disabled:cursor-not-allowed disabled:text-ink-muted disabled:hover:border-hairline',
                     )}
                   >
-                    Grant clearance
+                    Grant takeoff
                   </button>
                   <button
                     type="button"

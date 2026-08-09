@@ -119,7 +119,7 @@ describe('approving takeoff on the live board', () => {
     control()
     settle()
 
-    const grant = screen.queryByRole('button', { name: /Grant clearance/i })
+    const grant = screen.queryByRole('button', { name: /Grant takeoff/i })
     expect(grant, 'nobody reached the queue').not.toBeNull()
 
     fireEvent.click(grant!)

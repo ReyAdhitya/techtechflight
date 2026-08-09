@@ -99,7 +99,7 @@ describe('ClearanceQueue', () => {
 
     render(<Harness />)
 
-    await user.click(screen.getByRole('button', { name: 'Grant clearance' }))
+    await user.click(screen.getByRole('button', { name: 'Grant takeoff' }))
 
     expect(screen.getByText(CLEARANCE_QUEUE_EMPTY)).toBeInTheDocument()
     expect(
@@ -123,7 +123,7 @@ describe('ClearanceQueue', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Grant clearance' }))
+    await user.click(screen.getByRole('button', { name: 'Grant takeoff' }))
 
     expect(isCleared(latest, 'ttf-0001', 'm1')).toBe(true)
     expect(latest.records[0]?.grantedBy).toBe('Ms Chen')
@@ -145,7 +145,7 @@ describe('ClearanceQueue', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Grant clearance' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Grant takeoff' })).toBeDisabled()
 
     rerender(
       <ClearanceQueue
@@ -157,7 +157,7 @@ describe('ClearanceQueue', () => {
       />,
     )
 
-    expect(screen.getByRole('button', { name: 'Grant clearance' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Grant takeoff' })).toBeDisabled()
   })
 })
 
@@ -189,7 +189,7 @@ describe('holding a team on the ground', () => {
     )
 
     const row = screen.getAllByRole('listitem')[0]!
-    expect(within(row).getByRole('button', { name: 'Grant clearance' })).toBeEnabled()
+    expect(within(row).getByRole('button', { name: 'Grant takeoff' })).toBeEnabled()
     expect(within(row).getByRole('button', { name: 'Hold' })).toBeEnabled()
   })
 
@@ -220,7 +220,7 @@ describe('holding a team on the ground', () => {
     expect(within(row).queryByText('Waiting')).not.toBeInTheDocument()
     // The answer is already given, so pressing it again is not offered.
     expect(within(row).getByRole('button', { name: 'Hold' })).toBeDisabled()
-    expect(within(row).getByRole('button', { name: 'Grant clearance' })).toBeEnabled()
+    expect(within(row).getByRole('button', { name: 'Grant takeoff' })).toBeEnabled()
     // Still the Teacher's to answer, so still on the Teacher's list.
     expect(
       screen.getByText((_, element) => element?.textContent === '1 awaiting'),

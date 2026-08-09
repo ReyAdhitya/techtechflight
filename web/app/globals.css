@@ -99,6 +99,18 @@
   --text-body: 1rem;
   /* Data. Larger than the label naming it — the value is what a Teacher came to read. */
   --text-value: 1rem;
+  /*
+   * Supporting prose and compact controls: a figure's caption, the detail under a
+   * pre-flight item, the label on a secondary button.
+   *
+   * The same size as body, on purpose and for the same reason `--text-value` is: this
+   * surface refuses small print, and a caption a Teacher squints at during a lesson is
+   * worse than one that takes an extra line. It is a token rather than nothing at all
+   * because twenty component files already say `text-caption`, and until now that class
+   * had no rule behind it: every one of them silently inherited whatever the parent was,
+   * which happened to be body. This makes that the decision it was pretending to be.
+   */
+  --text-caption: 1rem;
   /* Labels only, always uppercase with tracking. Small because it names, never informs. */
   --text-label: 0.75rem;
 

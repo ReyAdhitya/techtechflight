@@ -102,7 +102,13 @@ in a school with no usable internet (ADR-0002).
 | `--text-tile-name` | 1.5rem | a Drone Name, read from a few steps away |
 | `--text-body` | 1rem | |
 | `--text-value` | 1rem | **data — deliberately no smaller than body** |
+| `--text-caption` | 1rem | supporting prose and compact controls; **also no smaller than body** |
 | `--text-label` | 0.75rem | names a thing, never informs; always uppercase + tracking |
+
+`--text-caption` had twenty callers and no rule behind it until 2026-08-09, so every one of
+them silently inherited body. It is body, for the same reason `--text-value` is: this surface
+refuses small print, and a caption a Teacher squints at mid-lesson is worse than one that
+takes an extra line.
 
 `rem` throughout so the scale follows the Teacher's own browser font size rather than
 overriding it (WCAG 1.4.4, ADR-0008). **A `px` font-size on this surface is a defect.**

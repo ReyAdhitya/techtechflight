@@ -214,7 +214,7 @@ export function VisionCheckScreen() {
       <VerdictPanel verdict={verdict} />
 
       <section className="flex flex-col gap-3">
-        <h2 className="m-0 font-display text-section font-medium">
+        <h2 className="m-0 font-display text-heading font-medium">
           Does the model run at all?
         </h2>
         <p className="m-0 max-w-[60ch] text-body text-ink-subtle">
@@ -250,7 +250,7 @@ export function VisionCheckScreen() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="m-0 font-display text-section font-medium">Does it see people?</h2>
+        <h2 className="m-0 font-display text-heading font-medium">Does it see people?</h2>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -275,7 +275,7 @@ export function VisionCheckScreen() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="m-0 font-display text-section font-medium">What is running</h2>
+        <h2 className="m-0 font-display text-heading font-medium">What is running</h2>
         <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
           <Row label="Model" value={detectorLabel(detector)} />
           <Row label="Runs on" value={runsOn} />

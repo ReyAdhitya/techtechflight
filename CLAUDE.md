@@ -200,6 +200,32 @@ where records are stored is said on **Settings** alone. Before adding a block to
 step, ask which step or screen already answers it. Two surfaces holding one list means one of
 them is stale.
 
+**A Student's progress is written by the Teacher's board, not by the tablet.** Points tick
+off in `ControlScreen`, because that is where the Telemetry is, and land in the seat's
+`reachedCheckpointIds` — **a list, in any order**, never an index, because a Student flying
+by hand goes to whichever point is nearest and an index calls that a failure. `Approve` is
+the Teacher's one tap and `approveSeatTask` refuses a seat with a point outstanding, so the
+button cannot mark work nobody flew. `'returning'` follows approval; `'complete'` follows
+Telemetry seeing it down, and only from `'returning'`, because a Drone that touches down
+mid-Mission has landed rather than finished.
+
+**`studentStep` must not disagree with the screen beside it.** Step 12 is Score, and a seat
+that is down and complete with no sealed score is still at 11: the stage says "you are down,
+wait", and a rail reading Score next to that is the rail contradicting the stage. A
+screenshot caught that; the tests did not.
+
+**Every classroom-session writer starts from the session it is handed.** They each persist
+what they return, so one answer reaches the tablet on its own, but answering two Drones from
+the same stale session writes a session missing the first answer. `ControlScreen` threads the
+return value between its grant and hold loops for that reason, and the thread has been read
+as dead code and called a stop-the-line once already. `classroom-session.test.ts` pins both
+halves.
+
+**An unknown Tailwind class emits nothing and fails nowhere.** `text-caption` had twenty
+callers and no rule behind it for months: every one silently inherited its parent, and a
+missing size is invisible in a way a missing colour is not. `web/type-scale.test.ts` now
+refuses any `text-*` with no token, and it found two more the day it was written.
+
 **Grant and Hold are both records, and there is no Release.** `holdClearance` sits beside
 `grantClearance` in `web/lib/clearance.ts` and `holdSeatsForDrone` beside
 `grantSeatsForDrone` so the answer reaches the tablet in words. A held request **stays in the

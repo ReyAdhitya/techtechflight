@@ -32,6 +32,7 @@ import { formatAge } from '@/lib/age'
 import { cn } from '@/lib/utils'
 import { recordGhostPaths, type GhostPathStore } from '@/lib/scope-ghost-paths'
 import { AirborneTracker } from '@/lib/longest-airborne'
+import { HomePointTracker } from '@/lib/home-point'
 import { recordStopOnLesson } from '@/lib/stop-audit'
 import {
   emptyCeilingBreachState,
@@ -135,6 +136,7 @@ export function ControlScreen({
   const stripsRef = useRef<HTMLElement | null>(null)
   const sealRef = useRef<HTMLElement | null>(null)
   const airborneTracker = useRef(new AirborneTracker())
+  const homeTracker = useRef(new HomePointTracker())
   const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
   const ceilingLessonId = useRef<string | null>(null)
 
@@ -143,11 +145,19 @@ export function ControlScreen({
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
 
   // Observe takeoff clocks without setState — vitals is a fresh array each Fleet tick,
-  // and a tick+setState loop hung Control under jsdom.
+  // and a tick+setState loop hung Control under jsdom. The launch point rides along for the
+  // same reason: nothing on the wire carries it, so this board watches the rising edge.
   const longestAirborneCraft = useMemo(() => {
     airborneTracker.current.observe(
       vitals.map((entry) => ({ droneId: entry.droneId, airborne: entry.airborne })),
       now,
+    )
+    homeTracker.current.observe(
+      (state?.drones ?? []).map((drone) => ({
+        droneId: drone.id,
+        airborne: drone.telemetry?.airborne === true,
+        position: drone.telemetry?.position ?? null,
+      })),
     )
     return vitals.map((entry) => ({
       droneId: entry.droneId,
@@ -155,7 +165,7 @@ export function ControlScreen({
       airborne: entry.airborne,
       airborneSince: airborneTracker.current.sinceOf(entry.droneId),
     }))
-  }, [vitals, now])
+  }, [vitals, now, state])
 
   useEffect(() => {
     if (!state) return
@@ -697,6 +707,7 @@ export function ControlScreen({
            */}
           <MissionCraftDownList
             craft={missionCraftStatus}
+            homeOf={(droneId) => homeTracker.current.homeOf(droneId)}
             onCommand={(droneId, kind) => {
               const entry = vitals.find((row) => row.droneId === droneId)
               issueCommand(droneId, kind, entry?.callsign ?? droneId)

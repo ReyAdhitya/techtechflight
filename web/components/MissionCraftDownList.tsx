@@ -1,6 +1,7 @@
 'use client'
 
-import type { CommandKind } from '@techtechflight/contract'
+import type { CommandKind, LocalPosition } from '@techtechflight/contract'
+import { homePointWords } from '@/lib/home-point'
 import type { MissionCraftStatus } from './ConfirmMissionComplete'
 import { cn } from '@/lib/utils'
 
@@ -19,9 +20,12 @@ import { cn } from '@/lib/utils'
  */
 export function MissionCraftDownList({
   craft,
+  homeOf,
   onCommand,
 }: {
   readonly craft: readonly MissionCraftStatus[]
+  /** Where Recall would send this Drone, or null when the board never saw it leave. */
+  readonly homeOf?: (droneId: string) => LocalPosition | null
   readonly onCommand: (droneId: string, kind: CommandKind) => void
 }) {
   if (craft.length === 0) return null
@@ -45,6 +49,16 @@ export function MissionCraftDownList({
           >
             {entry.airborne ? 'Still airborne' : 'Down'}
           </span>
+          {/*
+           * Where Recall goes, said on the row Recall is on. It promises the launch point,
+           * and until a Drone has been seen leaving the ground there is no launch point to
+           * promise, so that reads as absent rather than as a pair of noughts.
+           */}
+          {entry.airborne && homeOf ? (
+            <span className="tnum text-label text-ink-muted">
+              Recall to {homePointWords(homeOf(entry.droneId))}
+            </span>
+          ) : null}
           {entry.airborne ? (
             <span className="ml-auto flex flex-wrap gap-2">
               <button

@@ -1,5 +1,7 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { assignStudent, clearLogbook, readLogbook, runningLesson, startLesson } from '@/lib/logbook'
 import { CLEARANCES_KEY } from '@/lib/clearance-store'
 import {
@@ -203,6 +205,36 @@ describe('the Mission run page', () => {
      */
   }, 20_000)
 
+  /*
+   * Step 8's own words, and the reason they were unreachable.
+   *
+   * `MissionRunScreen` handed the rail a hardcoded `selectedCraftName: null`, so step 8 could
+   * only ever read "No Drone selected" however many Drones a Teacher picked, and the unit
+   * test asserting a name was asserting a state the app could not produce. The selection
+   * lives on the live board; this checks it arrives at the rail.
+   */
+  it('names the Drone the Teacher picked against step 8', () => {
+    const lessonId = classReadyToFly()
+    // Under way, or steps 7 to 10 are locked and there is no board to pick a Drone on.
+    startMission(lessonId, Date.now())
+    // Step 7, not 8: the active row reads "You are here", so the words under test would
+    // be hidden by the very step that shows them.
+    at(7)
+    missionRun()
+    settle()
+
+    const step8 = () => screen.getByRole('link', { name: /Telemetry and camera/ })
+    expect(step8()).toHaveAttribute('title', '8. Telemetry and camera, No Drone selected')
+
+    const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
+    act(() => {
+      fireEvent.click(strip)
+    })
+    settle()
+
+    expect(step8()).toHaveAttribute('title', '8. Telemetry and camera, Drone 1 selected')
+  }, 20_000)
+
   it('says what is standing in the way of a step that is not open', () => {
     at(6)
     missionRun()
@@ -301,5 +333,56 @@ describe('the Mission run page', () => {
       'href',
       '/mission?step=2',
     )
+  })
+})
+
+
+const CSS = readFileSync(resolve(process.cwd(), 'web/app/globals.css'), 'utf8')
+
+/** The declarations of one rule, by selector, from the single stylesheet. */
+function rule(selector: string): string {
+  const at = CSS.indexOf(`${selector} {`)
+  expect(at, `${selector} is not in globals.css`).toBeGreaterThan(-1)
+  return CSS.slice(at, CSS.indexOf('}', at))
+}
+
+/**
+ * How the page is laid out, read from the stylesheet.
+ *
+ * jsdom has no layout engine, so a rail that has left the flow and covers the whole board,
+ * a surface with no gutter, and a Steps button visible on a desk are all invisible here and
+ * obvious on a screen. These are the invariants a deleted rule would break silently.
+ */
+describe('the shape of the Mission run page', () => {
+  it('keeps the rail beside the surface and sticky, rather than scrolling it away', () => {
+    const rail = rule('.step-rail')
+    expect(rail).toMatch(/position:\s*sticky/)
+    expect(rail).toMatch(/flex:\s*0 0 auto/)
+    expect(rule('.mission-run__surface')).toMatch(/padding-inline-start:\s*1\.25rem/)
+  })
+
+  /*
+   * Under 60rem the rail becomes a drawer, so the gutter it was holding open has to go and
+   * the two ways in and out of it have to appear. All three live in one media block.
+   */
+  it('turns the rail into a drawer on a narrow screen, with a way in and a way out', () => {
+    const at = CSS.indexOf('@media (max-width: 60rem)', CSS.indexOf('.step-rail {'))
+    expect(at, 'the rail has no narrow-screen behaviour').toBeGreaterThan(-1)
+    const narrow = CSS.slice(at, at + 1200)
+
+    expect(narrow).toMatch(/\.mission-run__surface\s*\{[^}]*padding-inline-start:\s*0/s)
+    expect(narrow).toMatch(/\.mission-run__steps,\s*\.mission-run__scrim\s*\{[^}]*display:\s*flex/s)
+  })
+
+  /* On a board the rail is always there, so a button that opens it would say nothing. */
+  it('hides the Steps button and the scrim on a board', () => {
+    expect(rule('.mission-run__steps')).toMatch(/display:\s*none/)
+    expect(rule('.mission-run__scrim')).toMatch(/display:\s*none/)
+  })
+
+  /* One raw colour in a component rule is how a second dark gets into a design system. */
+  it('dims the board behind the drawer with a token, not a literal', () => {
+    expect(rule('.mission-run__scrim')).toMatch(/background:\s*var\(--scrim\)/)
+    expect(CSS).toMatch(/--scrim:\s*rgb\(27 22 16 \/ 0\.45\)/)
   })
 })

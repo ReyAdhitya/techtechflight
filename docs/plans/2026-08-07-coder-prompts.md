@@ -182,6 +182,63 @@ Gate is npm test and npm run typecheck. Screenshot the Student screens in
 landscape at tablet widths, both themes, before claiming they work.
 ```
 
+## Wave 4, coder. The backlog that predates all of this.
+
+Verified still open on 2026-08-09.
+
+```
+Five leftovers. Small branch, low risk, do them when the waves above are clear.
+
+1. `text-caption` is a class with no rule. globals.css defines nothing for it
+   and 20 component files set it, so those captions inherit whatever they
+   inherit. Either add the token, with the size taken from
+   docs/DESIGN-TOKENS.md and not from taste, or delete the class from all 20.
+   Was issue #649.
+
+2. FleetHeadcountCheck.tsx is still on the Fleet screen and two non-test files
+   import it. The owner asked for it gone in issue #624 and nothing happened.
+   Confirm the ask still stands, then delete the component, its tests, and
+   fleet-headcount.ts if nothing else reads it.
+
+3. ControlCameraSlide.test.tsx "dismisses the popup on Escape" is flaky. It
+   passes alone and fails inside the suite, and it did not reproduce on
+   2026-08-06. Give it its own fix rather than letting it ride along inside
+   another change; a flaky test that is somebody's side quest never gets fixed.
+
+4. A saved theme does not survive hydration. The boot script in layout.tsx
+   stamps data-theme before paint and the attribute is gone after React
+   hydrates, so a Teacher who picks dark gets light on their next visit. The
+   toggle itself works. This predates ADR-0026 and CLAUDE.md already records it.
+
+5. React error #418 fires on every role-gated route, because RoleGate.tsx
+   reads localStorage during render.
+
+Gate is npm test and npm run typecheck.
+```
+
+## Parked, and deliberately so
+
+These are real and none of them block the demo, because the demo runs on the
+Vercel deploy with the browser simulator.
+
+- `/api/classroom` served by the ground station, so iPads can join the laptop in
+  the room rather than the internet. Real classroom only.
+- The ground station printing its LAN address instead of `localhost`.
+- A "Classroom ready" screen holding the address and the code in large type.
+- A Windows Firewall rule in `Start TechTech Flight.bat`.
+- Em dashes in JSDoc, 134 files. No Teacher reads them, and the last sweep of
+  this kind broke a build.
+- A prose budget test. Worth doing, needs the owner to say what the budget is.
+
+## Blocked on an owner ruling
+
+- **Issue #623**, icons only and Large format removed. Half already shipped:
+  `DisplayScaleToggle` is icon only today. Deleting Large format contradicts the
+  guidance given after the issue was filed. Settle it before touching it.
+- **"craft" or "Drone"** in Teacher-facing copy. `CONTEXT.md` says Drone; the
+  build uses "craft" 22 times.
+- **Where the starting point comes from**, automatic or drawn by the Teacher.
+
 ## The front end reviewer
 
 ```

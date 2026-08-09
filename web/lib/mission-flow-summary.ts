@@ -19,7 +19,7 @@ import { formatClock } from './telemetry-presentation.ts'
 export interface MissionFlowSummary {
   /** What the Teacher picked at step 1, or null before they picked. */
   readonly scenarioName: string | null
-  readonly missionZones: number
+  /** No-fly Zones drawn. The go-area is not drawn at all any more (ADR-0027). */
   readonly noFlyZones: number
   readonly teams: number
   /** Craft a team has taken. */
@@ -41,7 +41,6 @@ export interface MissionFlowSummary {
 export function noMissionSummaryYet(): MissionFlowSummary {
   return {
     scenarioName: null,
-    missionZones: 0,
     noFlyZones: 0,
     teams: 0,
     craft: 0,
@@ -73,9 +72,9 @@ export function missionStepDone(step: number, summary: MissionFlowSummary): stri
     case 1:
       return summary.scenarioName ?? 'Not chosen yet'
     case 2:
-      return summary.missionZones === 0 && summary.noFlyZones === 0
+      return summary.noFlyZones === 0
         ? 'Nothing drawn yet'
-        : `${plural(summary.missionZones, 'zone', 'zones')}, ${summary.noFlyZones} no-fly`
+        : plural(summary.noFlyZones, 'no-fly zone', 'no-fly zones')
     case 3:
       return summary.teams === 0
         ? 'No teams yet'

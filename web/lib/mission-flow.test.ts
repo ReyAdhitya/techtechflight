@@ -30,7 +30,7 @@ const facts = (over: Partial<MissionFlowFacts> = {}): MissionFlowFacts => ({
 /** Everything the set-up asks for, so a clearance in a case below is a reachable one. */
 const pastTheBrief: Partial<MissionFlowFacts> = {
   scenarioChosen: true,
-  missionZoneDrawn: true,
+  noFlyZoneDrawn: true,
   teamOnCraft: true,
   preFlightPassed: true,
   briefed: true,
@@ -84,6 +84,18 @@ describe('what is open', () => {
   })
 
   /*
+   * Step 3 waited on a drawn Mission Zone, and after ADR-0027 there is none to draw. It
+   * cannot wait on a No-fly Zone instead: a room with nothing to stay out of is a real room,
+   * and a lock a Teacher could never open is the dead end this rail exists to remove.
+   */
+  it('opens teams on the Scenario, not on a drawing that may never happen', () => {
+    const chosen = facts({ scenarioChosen: true })
+    expect(isMissionStepOpen(2, chosen)).toBe(true)
+    expect(isMissionStepOpen(3, chosen)).toBe(true)
+    expect(missionStepBlockedBy(3, chosen)).toBeNull()
+  })
+
+  /*
    * The wording is the prototype's, not a paraphrase of it, and it is checked exactly. A
    * generic "not available yet" is the version this whole rail exists to replace.
    */
@@ -91,7 +103,7 @@ describe('what is open', () => {
     const nothing = facts()
     expect(missionStepBlockedBy(1, nothing)).toBeNull()
     expect(missionStepBlockedBy(2, nothing)).toBe('Choose a Scenario first')
-    expect(missionStepBlockedBy(3, nothing)).toBe('Draw the Mission Zone first')
+    expect(missionStepBlockedBy(3, nothing)).toBe('Choose a Scenario first')
     expect(missionStepBlockedBy(4, nothing)).toBe('Put a team on a craft first')
     expect(missionStepBlockedBy(5, nothing)).toBe('Pre-flight one craft first')
     expect(missionStepBlockedBy(6, nothing)).toBe('Brief the class first')
@@ -163,11 +175,11 @@ describe('how each step reads', () => {
     expect(currentMissionStep(facts())).toBe(1)
     expect(currentMissionStep(facts({ scenarioChosen: true }))).toBe(2)
     expect(
-      currentMissionStep(facts({ scenarioChosen: true, missionZoneDrawn: true })),
+      currentMissionStep(facts({ scenarioChosen: true, noFlyZoneDrawn: true })),
     ).toBe(3)
     expect(
       currentMissionStep(
-        facts({ scenarioChosen: true, missionZoneDrawn: true, teamOnCraft: true }),
+        facts({ scenarioChosen: true, noFlyZoneDrawn: true, teamOnCraft: true }),
       ),
     ).toBe(4)
   })
@@ -201,7 +213,7 @@ describe('how each step reads', () => {
     const cases: MissionFlowFacts[] = [
       facts(),
       facts({ scenarioChosen: true }),
-      facts({ scenarioChosen: true, missionZoneDrawn: true, teamOnCraft: true }),
+      facts({ scenarioChosen: true, noFlyZoneDrawn: true, teamOnCraft: true }),
       facts({ ...pastTheBrief, cleared: true, airborne: true }),
       facts({ ...pastTheBrief, cleared: true, airborne: false }),
       facts({ ...pastTheBrief, cleared: true, sealed: true }),
@@ -222,7 +234,7 @@ describe('how each step reads', () => {
     // Cleared means steps 1 to 6 are behind them; 7 to 10 are live, not done.
     const flying = facts({
       scenarioChosen: true,
-      missionZoneDrawn: true,
+      noFlyZoneDrawn: true,
       teamOnCraft: true,
       preFlightPassed: true,
       briefed: true,

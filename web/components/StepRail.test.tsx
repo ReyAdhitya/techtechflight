@@ -30,7 +30,7 @@ const facts = (over: Partial<MissionFlowFacts> = {}): MissionFlowFacts => ({
 /** Everything the set-up asks for, so a clearance below is a reachable one. */
 const allSetUp: Partial<MissionFlowFacts> = {
   scenarioChosen: true,
-  missionZoneDrawn: true,
+  noFlyZoneDrawn: true,
   teamOnCraft: true,
   preFlightPassed: true,
   briefed: true,
@@ -78,14 +78,14 @@ describe('the Mission step rail', () => {
    */
   it('says what a finished step decided rather than only that it is finished', () => {
     railFor(
-      { scenarioChosen: true, missionZoneDrawn: true },
+      { scenarioChosen: true, noFlyZoneDrawn: true },
       true,
-      { scenarioName: 'Search and Rescue', missionZones: 1, noFlyZones: 2, teams: 4, craft: 3 },
+      { scenarioName: 'Search and Rescue', noFlyZones: 2, teams: 4, craft: 3 },
     )
 
     expect(screen.getByTitle('1. Mission Scenario, Search and Rescue')).toBeInTheDocument()
     expect(screen.getByText('Search and Rescue')).toBeInTheDocument()
-    expect(screen.getByText('1 zone, 2 no-fly')).toBeInTheDocument()
+    expect(screen.getByText('2 no-fly zones')).toBeInTheDocument()
   })
 
   /*
@@ -173,7 +173,7 @@ describe('the Mission step rail', () => {
   it('counts finished steps without counting the ones still happening', () => {
     railFor({
       scenarioChosen: true,
-      missionZoneDrawn: true,
+      noFlyZoneDrawn: true,
       teamOnCraft: true,
       preFlightPassed: true,
       briefed: true,
@@ -188,7 +188,7 @@ describe('the Mission step rail', () => {
   it('shows how far through the run it is, as a bar as well as a count', () => {
     railFor({
       scenarioChosen: true,
-      missionZoneDrawn: true,
+      noFlyZoneDrawn: true,
       teamOnCraft: true,
     })
 

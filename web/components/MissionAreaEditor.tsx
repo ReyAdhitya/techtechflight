@@ -2,13 +2,11 @@
 
 import { useCallback, useId, useRef, useState, type MouseEvent } from 'react'
 import type { LocalPosition } from '@techtechflight/contract'
-import { enclosesAnything, type Zone, type ZoneKind } from '@/lib/airspace'
+import { enclosesAnything, type Zone } from '@/lib/airspace'
 import { cn } from '@/lib/utils'
 
 /** Metres east and north shown on the drawing surface. */
 const GRID_SIZE_M = 20
-
-type DrawMode = ZoneKind
 
 export type MissionAreaEditorProps = {
   readonly zones: readonly Zone[]
@@ -17,22 +15,8 @@ export type MissionAreaEditorProps = {
   readonly bare?: boolean
 }
 
-function missionZoneOf(zones: readonly Zone[]): Zone | undefined {
-  return zones.find((zone) => zone.kind === 'mission')
-}
-
-function hasCompleteMissionZone(zones: readonly Zone[]): boolean {
-  const mission = missionZoneOf(zones)
-  return mission !== undefined && enclosesAnything(mission)
-}
-
-function noFlyCount(zones: readonly Zone[]): number {
-  return zones.filter((zone) => zone.kind === 'no-fly').length
-}
-
-function defaultZoneName(kind: ZoneKind, zones: readonly Zone[]): string {
-  if (kind === 'mission') return 'Mission Zone'
-  return `No-fly Zone ${noFlyCount(zones) + 1}`
+function defaultZoneName(zones: readonly Zone[]): string {
+  return `No-fly Zone ${zones.length + 1}`
 }
 
 function roundMetre(value: number): number {
@@ -53,22 +37,24 @@ function polylinePoints(points: readonly LocalPosition[]): string {
 }
 
 /**
- * Draw the Mission Zone and any No-fly Zones in metres from the Fleet origin.
+ * Draw the No-fly Zones, in metres from the Fleet origin.
  *
- * Controlled: the parent owns `zones` and receives every edit through `onChange`. One
- * Mission Zone at most; No-fly Zones as many as the Teacher needs. Undo drops the last
- * point while a shape is open, or the last zone when nothing is being drawn.
+ * Controlled: the parent owns `zones` and receives every edit through `onChange`. As many
+ * as the Teacher needs, and none is a normal answer. Undo drops the last point while a shape
+ * is open, or the last zone when nothing is being drawn.
+ *
+ * There used to be a second mode for the Mission Zone, a boundary around where the class was
+ * meant to stay. It went with ADR-0027: the net cage already says that, and a drawn boundary
+ * that disagreed with the netting reported a breach for a Drone that was safely inside it.
  */
 export function MissionAreaEditor({ zones, onChange, bare = false }: MissionAreaEditorProps) {
   const baseId = useId()
   const nextZoneCounter = useRef(1)
-  const [mode, setMode] = useState<DrawMode>('mission')
   const [activeZoneId, setActiveZoneId] = useState<string | null>(null)
   const [eastDraft, setEastDraft] = useState('4')
   const [northDraft, setNorthDraft] = useState('4')
 
   const activeZone = activeZoneId ? zones.find((zone) => zone.id === activeZoneId) : undefined
-  const missionComplete = hasCompleteMissionZone(zones)
   const hasAnyGeometry = zones.some((zone) => zone.points.length > 0)
 
   const makeZoneId = useCallback(() => {
@@ -94,9 +80,7 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
 
   const addPoint = useCallback(
     (point: LocalPosition) => {
-      if (mode === 'mission' && missionComplete && activeZone?.kind !== 'mission') return
-
-      if (activeZone && activeZone.kind === mode) {
+      if (activeZone) {
         onChange(
           zones.map((zone) =>
             zone.id === activeZone.id ? { ...zone, points: [...zone.points, point] } : zone,
@@ -105,30 +89,16 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
         return
       }
 
-      if (mode === 'mission') {
-        const draft = missionZoneOf(zones)
-        if (draft && !enclosesAnything(draft)) {
-          onChange(
-            zones.map((zone) =>
-              zone.id === draft.id ? { ...zone, points: [...zone.points, point] } : zone,
-            ),
-          )
-          setActiveZoneId(draft.id)
-          return
-        }
-        if (missionComplete) return
-      }
-
       const created: Zone = {
         id: makeZoneId(),
-        kind: mode,
-        name: defaultZoneName(mode, zones),
+        kind: 'no-fly',
+        name: defaultZoneName(zones),
         points: [point],
       }
       onChange([...zones, created])
       setActiveZoneId(created.id)
     },
-    [activeZone, makeZoneId, missionComplete, mode, onChange, zones],
+    [activeZone, makeZoneId, onChange, zones],
   )
 
   const addPointFromDraft = useCallback(() => {
@@ -141,14 +111,6 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
   const finishActiveZone = useCallback(() => {
     setActiveZoneId(null)
   }, [])
-
-  const selectMode = useCallback(
-    (next: DrawMode) => {
-      setMode(next)
-      setActiveZoneId(null)
-    },
-    [],
-  )
 
   const undo = useCallback(() => {
     if (activeZone && activeZone.points.length > 0) {
@@ -168,7 +130,6 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
     if (last.points.length > 1) {
       replaceZone(last.id, { ...last, points: last.points.slice(0, -1) })
       setActiveZoneId(last.id)
-      setMode(last.kind)
       return
     }
 
@@ -186,18 +147,6 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
     addPoint({ eastM, northM })
   }
 
-  /*
-   * The typed path and the tapped path have to agree. `addPoint` lets a Teacher keep
-   * extending the Mission Zone they are still drawing even once it encloses something —
-   * three points is the fewest that encloses an area, not the most a classroom needs — so
-   * the fieldset must stay live for exactly that case, or a fourth corner is reachable by
-   * tapping and impossible by typing.
-   */
-  const canAddMissionPoint =
-    mode === 'mission' && (!missionComplete || activeZone?.kind === 'mission')
-  const canAddNoFlyPoint = mode === 'no-fly'
-  const canAddPoint = canAddMissionPoint || canAddNoFlyPoint
-
   return (
     <section
       className={cn(
@@ -213,41 +162,17 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
             Mission area
           </h2>
           <p className="m-0 text-value text-ink-subtle">
-            Draw where the Mission happens and anywhere Drones must stay out of, in metres
-            from where the Fleet was set up.
+            Draw anywhere Drones must stay out of, in metres from where the Fleet was set up.
+            None is a normal answer.
           </p>
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Drawing mode">
-        <button
-          type="button"
-          aria-pressed={mode === 'mission'}
-          disabled={missionComplete}
-          onClick={() => selectMode('mission')}
-          className={cn(
-            'min-h-11 cursor-pointer rounded-pill border px-4 py-1.5 text-value',
-            mode === 'mission'
-              ? 'border-ink bg-ink text-canvas'
-              : 'border-hairline bg-transparent text-ink hover:border-ink',
-            missionComplete && 'cursor-not-allowed opacity-50 hover:border-hairline',
-          )}
-        >
-          Draw Mission Zone
-        </button>
-        <button
-          type="button"
-          aria-pressed={mode === 'no-fly'}
-          onClick={() => selectMode('no-fly')}
-          className={cn(
-            'min-h-11 cursor-pointer rounded-pill border px-4 py-1.5 text-value',
-            mode === 'no-fly'
-              ? 'border-ink bg-ink text-canvas'
-              : 'border-hairline bg-transparent text-ink hover:border-ink',
-          )}
-        >
-          Draw No-fly Zone
-        </button>
+      {/*
+       * No mode buttons. There were two, and with one kind of zone left a pressed pill that
+       * can never be unpressed is chrome that says nothing.
+       */}
+      <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={undo}
@@ -312,27 +237,6 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
             if (zone.points.length === 0) return null
             const closed = enclosesAnything(zone)
             const pointList = closed ? pointsToPolygon(zone.points) : polylinePoints(zone.points)
-            if (zone.kind === 'mission') {
-              return closed ? (
-                <polygon
-                  key={zone.id}
-                  points={pointList}
-                  className="fill-ink/10 stroke-ink"
-                  strokeWidth={0.15}
-                  data-zone-kind="mission"
-                />
-              ) : (
-                <polyline
-                  key={zone.id}
-                  points={pointList}
-                  fill="none"
-                  className="stroke-ink"
-                  strokeWidth={0.15}
-                  strokeDasharray="0.4 0.3"
-                  data-zone-kind="mission"
-                />
-              )
-            }
             return closed ? (
               <polygon
                 key={zone.id}
@@ -362,7 +266,7 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
                 cx={point.eastM}
                 cy={svgY(point.northM)}
                 r={0.2}
-                className={zone.kind === 'mission' ? 'fill-ink' : 'fill-status-fault'}
+                className="fill-status-fault"
               />
             )),
           )}
@@ -372,9 +276,7 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
       {!hasAnyGeometry ? (
         <div className="text-center" data-testid="mission-area-empty">
           <p className="m-0 text-body text-ink">
-            {mode === 'mission'
-              ? 'Tap the grid or add points to outline where this Mission happens.'
-              : 'Tap the grid or add points around areas Drones must stay out of.'}
+            Tap the grid or add points around areas Drones must stay out of.
           </p>
           <p className="m-0 mt-2 text-value text-ink-muted">
             Each shape needs at least three points. Use Undo to remove the last point or the
@@ -383,10 +285,8 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
         </div>
       ) : null}
 
-      <fieldset
-        disabled={!canAddPoint}
-        className="m-0 flex flex-wrap items-end gap-3 rounded-surface border border-hairline bg-canvas p-3 disabled:opacity-50"
-      >
+      {/* Always live. The typed path and the tapped path have to agree. */}
+      <fieldset className="m-0 flex flex-wrap items-end gap-3 rounded-surface border border-hairline bg-canvas p-3">
           <legend className="label px-1">Add point (metres)</legend>
           <label className="flex flex-col gap-1">
             <span className="text-value text-ink-subtle">East</span>

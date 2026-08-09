@@ -29,11 +29,9 @@ describe('what a step says it decided', () => {
     expect(missionStepDone(5, summary({ briefSections: 5 }))).toBe('0 of 5 ticked')
   })
 
-  it('counts the airspace as zones and no-fly zones', () => {
-    expect(missionStepDone(2, summary({ missionZones: 1, noFlyZones: 2 })))
-      .toBe('1 zone, 2 no-fly')
-    expect(missionStepDone(2, summary({ missionZones: 2, noFlyZones: 0 })))
-      .toBe('2 zones, 0 no-fly')
+  it('counts the airspace as the no-fly zones drawn, because that is all there is', () => {
+    expect(missionStepDone(2, summary({ noFlyZones: 1 }))).toBe('1 no-fly zone')
+    expect(missionStepDone(2, summary({ noFlyZones: 2 }))).toBe('2 no-fly zones')
   })
 
   it('counts teams and the craft they took', () => {
@@ -104,7 +102,6 @@ describe('what a step says it decided', () => {
   it('has words for every one of the twelve, and no dash-like separators in any of them', () => {
     const full = summary({
       scenarioName: 'Delivery',
-      missionZones: 1,
       noFlyZones: 1,
       teams: 2,
       craft: 2,

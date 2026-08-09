@@ -11,9 +11,9 @@ import { playbookFor } from './incident-playbook.ts'
  * Entering a No-fly Zone raises one critical Alert with playbook words, not forty.
  */
 
-const missionZone: Zone = {
-  id: 'mission',
-  kind: 'mission',
+const hallZone: Zone = {
+  id: 'hall',
+  kind: 'no-fly',
   name: 'the hall',
   points: [
     { eastM: 0, northM: 0 },
@@ -36,8 +36,8 @@ const noFlyZone: Zone = {
 }
 
 const insideNoFly = { eastM: 14, northM: 2 }
-const outsideMission = { eastM: -1, northM: 5 }
-const safeInside = { eastM: 5, northM: 5 }
+const wellClear = { eastM: -1, northM: 5 }
+const insideHall = { eastM: 5, northM: 5 }
 
 describe('noFlyAlertText', () => {
   it('names what to do from the playbook rather than where the Drone is', () => {
@@ -50,7 +50,7 @@ describe('noFlyAlertText', () => {
 
 describe('noFlyAlertFromBreach', () => {
   it('turns a No-fly entry into a critical Alert once', () => {
-    const breach = breachesAt([missionZone, noFlyZone], insideNoFly)[0]!
+    const breach = breachesAt([hallZone, noFlyZone], insideNoFly)[0]!
     const alert = noFlyAlertFromBreach({
       ...breach,
       droneId: 'd1',
@@ -65,7 +65,7 @@ describe('noFlyAlertFromBreach', () => {
   })
 
   it('ignores leaving the Mission Zone without entering a No-fly Zone', () => {
-    const breach = breachesAt([missionZone], outsideMission)[0]!
+    const breach = breachesAt([hallZone], wellClear)[0]!
     expect(
       noFlyAlertFromBreach({
         ...breach,
@@ -79,7 +79,7 @@ describe('noFlyAlertFromBreach', () => {
 describe('NoFlyAlertTracker', () => {
   it('raises one Alert while a craft hovers in a No-fly Zone, not forty', () => {
     const tracker = new NoFlyAlertTracker()
-    const zones = [missionZone, noFlyZone]
+    const zones = [hallZone, noFlyZone]
     const breach = breachesAt(zones, insideNoFly)[0]!
     const alerts = []
 
@@ -95,7 +95,7 @@ describe('NoFlyAlertTracker', () => {
 
   it('raises again after the Drone leaves and re-enters', () => {
     const tracker = new NoFlyAlertTracker()
-    const zones = [missionZone, noFlyZone]
+    const zones = [hallZone, noFlyZone]
     const breach = breachesAt(zones, insideNoFly)[0]!
 
     expect(tracker.observe('d1', [breach], 1_000)).toHaveLength(1)
@@ -106,8 +106,8 @@ describe('NoFlyAlertTracker', () => {
 
   it('does not raise for left-mission-zone while still tracking No-fly edges', () => {
     const tracker = new NoFlyAlertTracker()
-    const zones = [missionZone, noFlyZone]
-    const outsideOnly = breachesAt(zones, outsideMission)
+    const zones = [hallZone, noFlyZone]
+    const outsideOnly = breachesAt(zones, wellClear)
 
     expect(tracker.observe('d1', outsideOnly, 1_000)).toEqual([])
 
@@ -117,7 +117,7 @@ describe('NoFlyAlertTracker', () => {
 
   it('keeps Drones independent in a fleet-wide observe', () => {
     const tracker = new NoFlyAlertTracker()
-    const zones = [missionZone, noFlyZone]
+    const zones = [hallZone, noFlyZone]
     const breach = breachesAt(zones, insideNoFly)[0]!
 
     const first = tracker.observeFleet(
@@ -143,8 +143,8 @@ describe('NoFlyAlertTracker', () => {
 
   it('walks a position series the way a live Integrator would', () => {
     const tracker = new NoFlyAlertTracker()
-    const zones = [missionZone, noFlyZone]
-    const positions = [safeInside, outsideMission, outsideMission, insideNoFly]
+    const zones = [hallZone, noFlyZone]
+    const positions = [wellClear, wellClear, wellClear, insideNoFly]
     const allAlerts = []
 
     for (let i = 0; i < positions.length; i += 1) {
@@ -158,7 +158,7 @@ describe('NoFlyAlertTracker', () => {
 
   it('forgets everything on reset', () => {
     const tracker = new NoFlyAlertTracker()
-    const zones = [missionZone, noFlyZone]
+    const zones = [hallZone, noFlyZone]
     const breach = breachesAt(zones, insideNoFly)[0]!
 
     tracker.observe('d1', [breach], 1_000)

@@ -14,7 +14,7 @@ import type { GhostPathPoint } from './scope-ghost-paths.ts'
 
 const square = (size = 4): Zone => ({
   id: 'mission',
-  kind: 'mission',
+  kind: 'no-fly',
   name: 'the hall',
   points: [
     { eastM: 0, northM: 0 },
@@ -34,7 +34,7 @@ const point = (eastM: number, northM: number, at = 0): GhostPathPoint => ({
 /** An L-shaped Mission Zone — concave, not its bounding box. */
 const ellZone: Zone = {
   id: 'ell',
-  kind: 'mission',
+  kind: 'no-fly',
   name: 'around the desks',
   points: [
     { eastM: 0, northM: 0 },
@@ -50,7 +50,7 @@ describe('when coverage cannot be said yet', () => {
   it('refuses a zone the Teacher has not closed', () => {
     const halfDrawn: Zone = {
       id: 'z',
-      kind: 'mission',
+      kind: 'no-fly',
       name: 'half',
       points: [
         { eastM: 0, northM: 0 },

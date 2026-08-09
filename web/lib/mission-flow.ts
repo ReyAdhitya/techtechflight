@@ -169,7 +169,11 @@ export const MISSION_FLOW_STEPS: readonly MissionFlowStep[] = [
  */
 export interface MissionFlowFacts {
   readonly scenarioChosen: boolean
-  readonly missionZoneDrawn: boolean
+  /**
+   * At least one No-fly Zone is drawn. Nothing is gated on it (ADR-0027): a room with
+   * nothing to stay out of is a real room, so step 3 no longer waits for step 2.
+   */
+  readonly noFlyZoneDrawn: boolean
   /** At least one team has taken a craft. */
   readonly teamOnCraft: boolean
   /** At least one craft is past all seven pre-flight items. */
@@ -196,7 +200,7 @@ export interface MissionFlowFacts {
 export function noMissionYet(): MissionFlowFacts {
   return {
     scenarioChosen: false,
-    missionZoneDrawn: false,
+    noFlyZoneDrawn: false,
     teamOnCraft: false,
     preFlightPassed: false,
     briefed: false,
@@ -250,9 +254,14 @@ export function isMissionStepOpen(step: number, facts: MissionFlowFacts): boolea
     case 1:
       return true
     case 2:
-      return facts.scenarioChosen
+    /*
+     * Step 3 waited on a drawn Mission Zone, and there is no longer one to draw (ADR-0027).
+     * It cannot wait on a No-fly Zone instead: a room with nothing to stay out of is a real
+     * room, and gating teams behind an optional drawing is a lock a Teacher could never open.
+     * So 2 and 3 open together, on the Scenario.
+     */
     case 3:
-      return facts.missionZoneDrawn
+      return facts.scenarioChosen
     case 4:
       return facts.teamOnCraft
     case 5:
@@ -278,7 +287,7 @@ function isMissionStepDone(step: number, facts: MissionFlowFacts): boolean {
     case 1:
       return facts.scenarioChosen
     case 2:
-      return facts.missionZoneDrawn
+      return facts.noFlyZoneDrawn
     case 3:
       return facts.teamOnCraft
     case 4:
@@ -319,9 +328,8 @@ export function missionStepBlockedBy(
 
   switch (step) {
     case 2:
-      return 'Choose a Scenario first'
     case 3:
-      return 'Draw the Mission Zone first'
+      return 'Choose a Scenario first'
     case 4:
       return 'Put a team on a craft first'
     case 5:
@@ -355,7 +363,7 @@ export function currentMissionStep(facts: MissionFlowFacts): number {
   if (facts.briefed) return 6
   if (facts.preFlightPassed) return 5
   if (facts.teamOnCraft) return 4
-  if (facts.missionZoneDrawn) return 3
+  if (facts.noFlyZoneDrawn) return 3
   if (facts.scenarioChosen) return 2
   return 1
 }

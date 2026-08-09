@@ -231,8 +231,7 @@ export function Scope({
   const showSelectedPanel = expanded && selected != null && selectedPanel != null
   const pathsReady = ghostPaths !== undefined && ghostPathsAvailable(ghostPaths)
   const drawableZones = zones?.filter(enclosesAnything) ?? []
-  const hasMissionZone = drawableZones.some((zone) => zone.kind === 'mission')
-  const hasNoFlyZone = drawableZones.some((zone) => zone.kind === 'no-fly')
+  const hasNoFlyZone = drawableZones.length > 0
   const labelById = scopeLabelPlacements(
     drawn.map((drone) => {
       const point = at(drone)
@@ -670,7 +669,6 @@ export function Scope({
             {CLASSROOM_GEOFENCE.northM} m north)
           </span>
         )}
-        {view === 'top-down' && hasMissionZone && <span>Outline = Mission Zone</span>}
         {view === 'top-down' && hasNoFlyZone && <span>Hatched = No-fly Zone</span>}
         {view === 'top-down' && zonesUnsurveyed && drawableZones.length > 0 && (
           <span>Not surveyed against this aircraft</span>
@@ -950,21 +948,6 @@ export function ScopeZones({ zones, project, view, noFlyHatchId }: ScopeZonesPro
             return `${x},${y}`
           })
           .join(' ')
-
-        if (zone.kind === 'mission') {
-          return (
-            <polygon
-              key={zone.id}
-              points={points}
-              fill="none"
-              className="stroke-ink"
-              strokeWidth="2"
-              vectorEffect="non-scaling-stroke"
-              data-zone-kind="mission"
-              data-zone-id={zone.id}
-            />
-          )
-        }
 
         return (
           <polygon

@@ -145,20 +145,19 @@ export function emptyMission(id: string, scenarioId: ScenarioId, name: string): 
 /**
  * Whether a Mission has enough on it to fly.
  *
- * Deliberately short. A Mission Zone and something to do is the whole requirement — asking
- * for more before the first take-off would make the setup a form rather than a plan, and
- * a Teacher with a class waiting will skip a form.
+ * Deliberately short. Something to do and a Drone to do it with is the whole requirement:
+ * asking for more before the first take-off would make the setup a form rather than a plan,
+ * and a Teacher with a class waiting will skip a form.
+ *
+ * *Draw the Mission Zone* used to be the first line here, and it went with the go-area
+ * (ADR-0027). No-fly Zones are not asked for in its place: a room with nothing to stay out of
+ * is a real room, and a requirement a Teacher cannot satisfy is worse than no requirement.
  *
  * Returns the reasons rather than a boolean, because a screen that says "not ready" and
  * nothing else is the thing this product exists not to be.
  */
 export function whatIsMissing(mission: Mission): readonly string[] {
   const missing: string[] = []
-
-  const hasMissionZone = mission.zones.some(
-    (zone) => zone.kind === 'mission' && zone.points.length >= 3,
-  )
-  if (!hasMissionZone) missing.push('Draw the Mission Zone.')
 
   if (mission.checkpoints.length === 0 && mission.targets.length === 0) {
     missing.push('Add a checkpoint or a target, so there is something to do.')

@@ -165,7 +165,7 @@ const ENTRIES: readonly PlaybookEntry[] = [
       RECALL,
     ],
     teamDoes: 'Stop, turn, and leave by the way you entered.',
-    resolvedWhen: 'The Drone is back inside the Mission Zone and outside every No-fly Zone.',
+    resolvedWhen: 'The Drone is outside every No-fly Zone.',
   },
   {
     kind: 'fault',

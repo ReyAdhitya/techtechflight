@@ -304,8 +304,7 @@ function readMissionRun({
 
   const summary: MissionFlowSummary = {
     scenarioName: mission === null ? null : (scenarioById(mission.scenarioId)?.name ?? null),
-    missionZones: (mission?.zones ?? []).filter((zone) => zone.kind === 'mission').length,
-    noFlyZones: (mission?.zones ?? []).filter((zone) => zone.kind === 'no-fly').length,
+    noFlyZones: (mission?.zones ?? []).length,
     teams: teams.length,
     craft: craftIds.length,
     craftPastPreFlight: craftIds.filter((droneId) =>

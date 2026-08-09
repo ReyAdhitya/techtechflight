@@ -4,7 +4,7 @@ import {
   adoptMissionDraft,
   chooseScenario,
   clearMissionDraft,
-  hasMissionZone,
+  hasNoFlyZone,
   readMission,
   setMissionDrones,
   setMissionZones,
@@ -22,7 +22,7 @@ import type { Zone } from './airspace'
 
 const triangle: Zone = {
   id: 'zone-1',
-  kind: 'mission',
+  kind: 'no-fly',
   name: 'Mission Zone',
   points: [
     { eastM: 0, northM: 0 },
@@ -63,12 +63,12 @@ describe('the Mission a Teacher is drawing', () => {
   })
 
   it('knows whether the Mission Zone encloses anything', () => {
-    expect(hasMissionZone(null)).toBe(false)
+    expect(hasNoFlyZone(null)).toBe(false)
     chooseScenario(null, 'search-rescue')
-    expect(hasMissionZone(readMission(null))).toBe(false)
+    expect(hasNoFlyZone(readMission(null))).toBe(false)
 
     setMissionZones(null, [triangle])
-    expect(hasMissionZone(readMission(null))).toBe(true)
+    expect(hasNoFlyZone(readMission(null))).toBe(true)
   })
 
   it('starts once and keeps the first start time', () => {

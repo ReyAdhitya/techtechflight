@@ -16,11 +16,17 @@ import type { LocalPosition } from '@techtechflight/contract'
  * verify completely, so it is tested completely.
  */
 
+/**
+ * Only no-go areas are drawn (ADR-0027).
+ *
+ * There was a `'mission'` kind, a polygon around the area the class was meant to stay
+ * inside. The class flies in a physical net cage, so it drew a boundary a Teacher could
+ * already see, and a slightly small one reported a breach for a Drone that was safely inside
+ * the netting. A no-fly area is the one that is genuinely invisible.
+ */
 export type ZoneKind =
-  /** Where the Mission is meant to happen. One per Mission. */
-  | 'mission'
-  /** Where a Drone must not go. Any number, and they may overlap the Mission Zone. */
-  | 'no-fly'
+  /** Where a Drone must not go. Any number of them, and they may overlap each other. */
+  'no-fly'
 
 export interface Zone {
   readonly id: string
@@ -147,24 +153,21 @@ export function areaM2(zone: Zone): number {
 /**
  * Whether a Drone is somewhere it should not be.
  *
- * Two different failures, deliberately named separately rather than collapsed into one
- * "violation". Leaving the Mission Zone and entering a No-fly Zone need different words
- * from a Teacher — "come back" against "get out" — and the scoring counts them apart.
+ * One failure now rather than two. There used to be a `'left-mission-zone'` alongside this,
+ * and it went with the go-area (ADR-0027): the netting is what says a Drone has gone too far,
+ * and a drawn boundary that disagreed with the netting taught a class to ignore the board.
  */
 export interface AirspaceBreach {
-  readonly kind: 'left-mission-zone' | 'entered-no-fly'
+  readonly kind: 'entered-no-fly'
   readonly zoneId: string
   readonly zoneName: string
 }
 
 /**
- * Every way this position is out of place, worst first.
+ * Every way this position is out of place.
  *
- * A No-fly Zone outranks the Mission Zone: a Drone that has left the Mission Zone *and*
- * entered a No-fly Zone is in the No-fly Zone, and that is the sentence a Teacher needs.
- *
- * A Mission with no Mission Zone drawn raises nothing rather than treating the whole world
- * as outside — absence has to degrade to no opinion, not to an alarm.
+ * A Mission with no zones drawn raises nothing, which is a Teacher's first lesson and has to
+ * read as no opinion rather than as an alarm.
  */
 export function breachesAt(
   zones: readonly Zone[],
@@ -173,19 +176,10 @@ export function breachesAt(
   const breaches: AirspaceBreach[] = []
 
   for (const zone of zones) {
-    if (zone.kind !== 'no-fly' || !enclosesAnything(zone)) continue
+    if (!enclosesAnything(zone)) continue
     if (containsPoint(zone, position)) {
       breaches.push({ kind: 'entered-no-fly', zoneId: zone.id, zoneName: zone.name })
     }
-  }
-
-  const missionZone = zones.find((zone) => zone.kind === 'mission' && enclosesAnything(zone))
-  if (missionZone && !containsPoint(missionZone, position)) {
-    breaches.push({
-      kind: 'left-mission-zone',
-      zoneId: missionZone.id,
-      zoneName: missionZone.name,
-    })
   }
 
   return breaches

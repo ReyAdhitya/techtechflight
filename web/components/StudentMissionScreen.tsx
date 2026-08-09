@@ -602,12 +602,10 @@ function FlyingWarning({ breaches }: { readonly breaches: readonly AirspaceBreac
       className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-surface border-l-4 border-status-fault bg-surface-1 px-4 py-3"
     >
       <span className="font-display text-heading font-medium text-status-fault">
-        {worst.kind === 'entered-no-fly' ? 'No-fly Zone' : 'Outside the Mission Zone'}
+        No-fly Zone
       </span>
       <span className="text-body text-ink">
-        {worst.kind === 'entered-no-fly'
-          ? `You are inside ${worst.zoneName}. Come out the way you went in.`
-          : 'Fly back inside the area your Teacher drew.'}
+        You are inside {worst.zoneName}. Come out the way you went in.
       </span>
     </p>
   )

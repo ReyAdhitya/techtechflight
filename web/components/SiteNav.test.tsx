@@ -1,6 +1,17 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { DESTINATIONS, MISSION_RUN_DESTINATION, SiteNav } from './SiteNav'
+
+const CSS = readFileSync(resolve(process.cwd(), 'web/app/globals.css'), 'utf8')
+
+/** The declarations of one rule, by selector, from the single stylesheet. */
+function rule(selector: string): string {
+  const at = CSS.indexOf(`${selector} {`)
+  expect(at, `${selector} is not in globals.css`).toBeGreaterThan(-1)
+  return CSS.slice(at, CSS.indexOf('}', at))
+}
 
 const pathname = vi.hoisted(() => ({ current: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
@@ -144,5 +155,31 @@ describe('where a Teacher can go', () => {
       '/vision',
     ])
     expect(MISSION_RUN_DESTINATION.href).toBe('/mission')
+  })
+})
+
+/**
+ * How the panel hides, read from the stylesheet.
+ *
+ * jsdom has no cascade, so `hidden` on a `display: flex` element reads as hidden to a test
+ * and renders as a permanently open menu over the board. The attribute's own default is
+ * `display: none` and a `display` declaration beats it, which is exactly the trap: delete
+ * one rule and the panel is open on every screen with every test still green.
+ */
+describe('how the sections panel opens and shuts', () => {
+  it('says display none for a hidden panel, because flex would beat the attribute', () => {
+    expect(rule('.site-nav__list')).toMatch(/display:\s*flex/)
+    expect(rule('.site-nav__list[hidden]')).toMatch(/display:\s*none/)
+  })
+
+  it('hangs the panel off the button rather than pushing the bar around', () => {
+    expect(rule('.site-nav')).toMatch(/position:\s*relative/)
+    expect(rule('.site-nav__list')).toMatch(/position:\s*absolute/)
+  })
+
+  /* The current section is marked without colour, so it survives a projector (ADR-0004). */
+  it('marks the current section with a rule as well as a weight', () => {
+    expect(rule('.site-nav__link--active')).toMatch(/font-weight:\s*600/)
+    expect(rule('.site-nav__link--active::before')).toMatch(/background:\s*var\(--foreground\)/)
   })
 })

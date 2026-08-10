@@ -24,6 +24,7 @@ import {
   seatHasFlown,
   seatStudentByHand,
   STUDENT_SEAT_KEY,
+  studentOnDrone,
   takeDroneSeat,
   touchBoard,
   touchSeat,
@@ -497,5 +498,54 @@ describe('when a screen goes quiet', () => {
     const after = readClassroomSession()!
     expect(after.boardSeenAt).toBe(110_000)
     expect(after.seats.map((seat) => seat.name)).toEqual(['Amira'])
+  })
+})
+
+/**
+ * No Student, no takeoff.
+ *
+ * In a real classroom a Drone with no child holding a controller does not fly, and the queue
+ * already works that way: `shouldAwaitClearance` refuses a craft with nobody on it. What was
+ * wrong is where the board looked for that child.
+ */
+describe('who is flying this Drone', () => {
+  const withOne = () =>
+    openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [{ droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 }],
+    })
+
+  it('is nobody when nobody joined and nobody was assigned', () => {
+    expect(studentOnDrone(withOne(), 'ttf-0001', null)).toBeNull()
+    expect(studentOnDrone(null, 'ttf-0001', null)).toBeNull()
+  })
+
+  it('is the child who took it on their own tablet', () => {
+    const joined = joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-amira').session
+    const taken = takeDroneSeat(joined, 'stu-amira', 'ttf-0001')
+
+    expect(studentOnDrone(taken, 'ttf-0001', null)).toBe('stu-amira')
+  })
+
+  /* A child the Teacher put on by hand is a Student here exactly as they are in the room. */
+  it('is the child the Teacher seated by hand', () => {
+    const seated = seatStudentByHand(withOne(), 'ttf-0001', 'Ben', 1_000)
+
+    expect(studentOnDrone(seated, 'ttf-0001', null)).not.toBeNull()
+  })
+
+  it('falls back to the Logbook assignment, and the seat beats it', () => {
+    expect(studentOnDrone(withOne(), 'ttf-0001', 'stu-from-logbook')).toBe('stu-from-logbook')
+
+    const joined = joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-amira').session
+    const taken = takeDroneSeat(joined, 'stu-amira', 'ttf-0001')
+    expect(studentOnDrone(taken, 'ttf-0001', 'stu-from-logbook')).toBe('stu-amira')
   })
 })

@@ -7,6 +7,29 @@ would notice.
 
 ### Added
 
+- **Roles are secrets.** A Student types the classroom code, which is public and read out
+  loud; a Teacher types a four digit PIN, private and set once. The door asks for the
+  matching one. **Switch role has left the Student chrome entirely** — it was two taps from a
+  child to Land and Stop — and asks for the PIN on the Teacher side. Settings says that iPad
+  Guided Access is the stronger lock and how to turn it on.
+- **A Student joins by tapping the Drone number in their hands.** Their name typed once and
+  remembered on that device, then the number painted on the aircraft. A Drone somebody has is
+  greyed out and untappable, and taking it is refused underneath. A Student can reclaim their
+  own Drone from a device that died. The name stays large for the whole lesson, which is the
+  fix for a mistap rather than a PIN.
+- **A Teacher can seat a Student by hand, and free a Drone in one tap.** A broken iPad must
+  not stop a child flying. Step 3 fills itself in as tablets join, and the Teacher's change
+  always wins.
+- **A heartbeat both ways.** The board says "Drone 3, not heard from for 40 seconds"; the
+  tablet says it has lost the board rather than holding the last numbers on screen as though
+  they were live. A child the Teacher seated by hand is never reported: they have no tablet
+  on purpose.
+- **After a grant, the simulated Drone flies itself** — climbs, flies the Mission's points in
+  order, holds station at the last one, and flies home when the Teacher approves the task. In
+  a demo there is no child, so the aircraft plays the child's part.
+- **A two minute demonstration Mission with one scripted incident.** One press in Settings
+  sets up the airspace and the task; thirty-five seconds in, one airborne Drone drifts toward
+  the No-fly Zone and the Teacher recalls it. Real minutes, not a fast clock.
 - **A Student's tablet changes after takeoff.** Points tick off by themselves from the
   Drone's own position, in any order, and nobody presses anything. When every point is
   reached the Teacher's board offers **Approve**, and it cannot appear before that. The way
@@ -24,6 +47,38 @@ would notice.
 
 ### Changed
 
+- **Nothing is airborne that a Teacher did not clear.** The board opened with Drones already
+  in the air: the simulator's `#wander` lifted them on a dice roll every tick, so the opening
+  shot contradicted the product's own safety story before a Teacher had touched it. Lost
+  links and faults stay; an aircraft deciding to fly is not the world, it is a child.
+- **No Student, no takeoff.** The clearance queue read the Logbook assignment, so a child who
+  joined and picked up Drone 3 was invisible to it and a Drone nobody had touched was
+  eligible. The number in the air now equals the devices that joined and took one, plus
+  whoever the Teacher seated by hand.
+- **No-fly Zones draw on Side and Front, floor to ceiling (ADR-0029).** A zone has no ceiling
+  to invent, and `breachesAt` has always ignored altitude. A Teacher watching Side saw a Drone
+  cross a zone with nothing on the picture to say so. The Control board's Scope was never
+  passed the zones at all, while its caption said "Scope shows them live".
+- **The Scope draws the starting point**, and a dotted line from an airborne Drone to it, so a
+  Teacher can see where Recall goes before pressing it. `home-point.ts` had tracked it since
+  it was written and only ever printed it as words.
+- **The Lesson screen says when a zone is drawn outside the picture the Scope draws.** Real,
+  raising Alerts, and on no view.
+- **Three rules on the Student screen, never twenty.** It printed the Teacher's eighteen-line
+  briefing checklist, written for an adult reading a safety brief out loud. Each of the three
+  is declared beside the warning that follows it, so they cannot drift apart.
+- **The header.** Go to moves left beside the logo, Mission run leads its list, the panel is
+  a row of the bar rather than a dropdown over the status bar, and on a tablet or phone it is
+  a full sheet the room controls fold into. Nothing wraps: Settings is a control with a width
+  of its own rather than loose grey text that fell onto a second row.
+- **No cap on the Drone count.** `MAX_CLASSROOM_FLEET_SIZE` was twenty with nothing behind
+  it. Settings takes any number for the simulated set and says what the board can show at
+  that size; past two dozen the strip list says so and tightens.
+- **The door.** One centred question, two identical boxes, one word in each, no grey
+  subtitle, equal space above and below. The type shrinks on a phone rather than the wording
+  changing.
+- **Approve says what it does**, and step 11 says Recall is for a Drone still up at the end
+  of the period. Ending a normal flight with Recall is ending a lesson with the fire alarm.
 - **The Mission Zone is gone (ADR-0027).** Teachers draw No-fly Zones only, any number, and
   none is a normal answer. The class flies inside a net cage, so a second boundary drawn in
   software told a Teacher something they could already see, and a slightly small one reported

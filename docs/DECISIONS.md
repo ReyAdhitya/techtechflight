@@ -9,6 +9,51 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-10 · The calls made inside the twenty-one changes from a tablet.
+
+- **The Teacher PIN is a digest, and a weak one.** FNV-1a over four digits in `localStorage`.
+  Ten thousand candidates is a second's work for anyone who can open a console, and there is
+  nowhere to put a salt that the same attacker could not read. It is sized for the actual
+  threat, which is a curious ten year old holding an iPad rather than a determined one
+  holding a laptop, and the measure for that child is iPad Guided Access, which Settings
+  recommends in those words. Upgrading it to SubtleCrypto would buy nothing and would invite
+  someone to believe it protects something.
+- **The first Teacher through a board with no PIN chooses one.** Refusing every answer locks
+  a Teacher out of their own laptop on the first morning; waving them through leaves the hole
+  the pair exists to close. Choosing at the door is the only option that is neither.
+- **A Student reclaims their own Drone by name.** A second iPad mints a second `studentId`, so
+  their own craft would be greyed out against them forever. Two children called Amira is what
+  this gets wrong, and it gets it wrong in the direction the Teacher can see: one row where
+  they expected two.
+- **Freeing a seat removes it rather than only releasing the craft.** The reason a Teacher
+  presses it is that the child is not there. If the tablet is alive it rejoins by the name it
+  remembers and is asked which Drone it is holding, which is the honest question.
+- **`flyRoute` and `flyHome` are scenario controls, not Commands.** They are the world
+  behaving rather than the world misbehaving, but they are the same kind of thing and so they
+  come through the same door. `scenarios` is null on hardware, where a ten year old with a
+  controller does this, which is what keeps ADR-0021 intact.
+- **The clearance queue prefers the classroom seat and keeps the Logbook assignment as a
+  fallback.** Dropping the fallback would break every prepared-Lesson flow for a gain nobody
+  asked for; preferring the seat is what makes "no Student, no takeoff" true for a class that
+  joined on tablets.
+- **Above two dozen Drones the strips tighten rather than compact.** The instruction was a
+  compact list; `CLAUDE.md` records that compacting strips hid Commands from the scan path and
+  broke CI. What goes is the air between the rows, because every strip keeps its coordinate
+  line and every Command in the flow and there is nothing else that can go without hiding a
+  Command. The count and the consequence are said in words above the list.
+- **`COMFORTABLE_BOARD_SIZE` lives in `web/lib`, not beside `classroomFleet`.** How many
+  strips fit on a screen is a display fact. It is also the only way a component can read it:
+  screens may not import the simulator, and `import-boundaries.test.ts` enforces that.
+- **The room controls render once, in the row or in the sheet.** Rendering both and hiding one
+  with CSS would put two Switch role buttons in every screen's accessibility tree, with
+  `display: none` the only thing keeping the second out of a Teacher's Tab order. The media
+  query defaults to wide, so a laptop never flashes a bar with no controls on it.
+- **Home markers stay off the elevation views**, unlike zones. A zone genuinely occupies the
+  whole column of air; home is a place on the floor, and on Side it would be a tick on the
+  ground line saying nothing about height.
+
+---
+
 ## 2026-08-09 · The calls made inside the twenty-five fixes.
 
 - **Reports goes back in the Go to button.** It left when the rail shipped, on the grounds

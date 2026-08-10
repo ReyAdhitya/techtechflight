@@ -188,6 +188,13 @@ so a Teacher looking ahead does not see two rows saying "You are here".
 `ControlScreen`'s effect calls `startMission`, and `isMissionStepOpen(11)` needs
 `mission.startedAt`. A test that jumps straight to step 11 has to call `startMission` itself.
 
+**A worktree's `node_modules` junction points the workspace packages at the *main* checkout.**
+`node_modules/@techtechflight/fleet-core` is a symlink npm made in the main repo, and a
+worktree that junctions `node_modules` inherits it: an edit to `fleet-core/src` in the
+worktree is invisible to `web/` there, and `tsc` reports the *main* checkout's types. Fix it
+per package rather than inside the junction (which is the main repo's directory):
+`New-Item -ItemType Junction web/node_modules/@techtechflight/<pkg> -Target <worktree>/<pkg>`.
+
 **`scripts/shot.mjs` seeds the board role.** `RequireRole` sends a fresh browser profile to
 `/enter`, so every Teacher screenshot taken between the role gate shipping and 2026-08-07 was
 a photograph of that door. `TTF_SHOT_ROLE=student` seeds the other one. A shot needs
@@ -265,6 +272,42 @@ button, nothing focusable. That is what keeps the two-press rule true, and it is
 a rail that answered a press would be offering a choice that does not exist. The twelve are the
 lesson, not the software: Briefing, Rules and time, Prepare, Connect, Ask to take off, Take off,
 Fly the points, Stay out of red, Teacher says, Task done, Land, Score.
+
+**A role is a secret, not a preference.** The door asks for the classroom code (Student,
+public, read out loud) or a four-digit Teacher PIN (`web/lib/teacher-pin.ts`, private, set
+once). **Switch role is gone from the Student chrome** and PIN-gated on the Teacher side: it
+used to sit in the header of every screen, which was two taps from a child to Land and Stop.
+The stored digest is FNV-1a and defeats a glance at the Application tab and nothing else;
+the real lock is iPad Guided Access, which Settings recommends. Do not "harden" the digest
+and imagine it now protects something.
+
+**Nothing leaves the ground that a Teacher did not clear.** The simulator's `#wander` used to
+`takeOff` on a dice roll every tick, so the board opened with Drones already flying. It no
+longer flies or lands anything; lost links, faults and charging stay. A grant calls
+`scenarios.flyRoute(droneId, points)` and an approval calls `scenarios.flyHome(droneId)` —
+the simulated aircraft playing the child's part, not Commands, and null on hardware.
+`fleet-core/src/simulator/flies-the-route.test.ts` pins both halves.
+
+**`mission.checkpoints` is empty unless something writes it, and two things depend on it.**
+`flyRoute` gets an empty route and `allPointsReached` returns false forever, so Approve never
+appears. `web/lib/demo-mission.ts` is currently the only writer. A Mission with no points is a
+Mission nobody can finish.
+
+**No Student, no takeoff, and the Student is the classroom seat first.** `studentOnDrone`
+takes the seat a child took on their tablet, then the Logbook assignment. Both the clearance
+queue and the rail's count of it read that one function; two rules for who counts as a
+Student is two numbers disagreeing in front of a class.
+
+**Both sides of the classroom session beat every ten seconds** (`touchBoard`, `touchSeat`,
+`QUIET_AFTER_MS`). Both re-read the session at the moment they beat rather than using the one
+React handed them: they fire on a timer and the other side writes the same document. A seat
+with `seenAt === null` has no tablet — a child the Teacher seated by hand — and is never
+reported as quiet.
+
+**Screens may not import `fleet-core/simulator`.** `web/import-boundaries.test.ts` enforces
+it for `components` and `app`. Anything a screen needs from there is re-exported through
+`web/lib` (see `classroom-fleet-size.ts`), and display facts like `COMFORTABLE_BOARD_SIZE`
+belong in `web/lib` outright.
 
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare

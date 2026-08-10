@@ -10,4 +10,9 @@ export {
   SimulatedTelemetrySource,
   type SimulatorOptions,
 } from './simulated-telemetry-source.ts'
-export { CLASSROOM_FLEET } from './classroom-fleet.ts'
+export {
+  CLASSROOM_FLEET,
+  DEFAULT_CLASSROOM_FLEET_SIZE,
+  MIN_CLASSROOM_FLEET_SIZE,
+  classroomFleet,
+} from './classroom-fleet.ts'

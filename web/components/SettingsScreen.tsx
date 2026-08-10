@@ -1,6 +1,7 @@
 'use client'
 
 import { useFleet } from './FleetProvider'
+import { ClassroomFleetSizePanel } from './ClassroomFleetSizePanel'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
 import { DemoMissionPanel } from './DemoMissionPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
@@ -69,6 +70,8 @@ export function SettingsScreen() {
           here, so both halves can never disagree about them.
         </p>
       </Panel>
+
+      <ClassroomFleetSizePanel />
 
       <TrainerDronesPanel />
 

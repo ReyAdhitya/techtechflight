@@ -7,7 +7,7 @@ import { ScenarioPanel } from './ScenarioPanel'
 import { SeparationThresholdPanel } from './SeparationThresholdPanel'
 import { TrainerDronesPanel } from './TrainerDronesPanel'
 import { TrainingScenariosPanel } from './TrainingScenariosPanel'
-import { SwitchRoleButton } from './SwitchRoleButton'
+import { TeacherPinPanel } from './TeacherPinPanel'
 import { cn } from '@/lib/utils'
 import { READING_FRAME } from '@/lib/frame'
 
@@ -35,13 +35,7 @@ export function SettingsScreen() {
     >
       <h1 className="m-0 font-display text-summary font-medium">Settings</h1>
 
-      <section className="flex flex-col gap-2">
-        <h2 className="label m-0">Who is using this device</h2>
-        <p className="m-0 text-value text-ink-subtle">
-          Go back to the door to pick Teacher or Student again.
-        </p>
-        <SwitchRoleButton label="Switch Teacher or Student" />
-      </section>
+      <TeacherPinPanel />
 
       <LogbookLocationNote />
 

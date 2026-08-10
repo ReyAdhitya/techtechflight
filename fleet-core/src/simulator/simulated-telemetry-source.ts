@@ -200,6 +200,14 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     this.#drone(droneId).fault = null
   }
 
+  /**
+   * Leave the ground, or carry on flying if already up.
+   *
+   * **Only a Drone on the ground takes off**, and everything that is true *of a take-off* is
+   * gated on that: home, and the hover height. Called on an aircraft already in the air this
+   * now does nothing but clear the route, which is what "take off" means for something that
+   * has already taken off.
+   */
   takeOff(droneId: DroneId): void {
     const drone = this.#drone(droneId)
     // A cut Drone stays on the ground until someone has been to it.
@@ -208,6 +216,10 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     drone.charging = false
     // A fresh take-off is not the tail end of a Recall.
     drone.returningHome = false
+    // A plain take-off is not a route. `flyRoute` sets one after calling this.
+    drone.route = []
+    drone.routeIndex = 0
+
     /*
      * Home is wherever it was standing when it left the ground, and it is set here because
      * this is the moment that is true. It used to be fixed at construction, a metre apart in
@@ -215,12 +227,22 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
      * Recalled to a spot it had not been near since the box was opened. Recall promises the
      * launch point; this is what makes that promise true, and it is per Drone because six
      * craft Recalled to one square metre collide.
+     *
+     * **And it only happens leaving the ground.** Unguarded, this stamped home wherever the
+     * aircraft happened to be every time anything called `takeOff`, and `flyRoute` calls it
+     * on a Drone the demonstration has already picked *because* it is airborne. Measured:
+     * after the scripted incident a Recall landed 8.5 m from the launch point while the
+     * Scope's dotted line still pointed at the bench, because `HomePointTracker` reads the
+     * last grounded frame and was right. The line and the aircraft disagreed, at the one
+     * moment the demonstration exists to prove Recall trustworthy.
+     *
+     * The hover height is gated for the same reason: re-rolling it mid-flight makes an
+     * aircraft climb or drop for no reason a Teacher can see.
      */
+    if (drone.airborne) return
+
     drone.homeEastM = drone.eastM
     drone.homeNorthM = drone.northM
-    // A plain take-off is not a route. `flyRoute` sets one after calling this.
-    drone.route = []
-    drone.routeIndex = 0
     drone.airborne = true
     drone.targetAltitudeM = round(1.5 + this.#random() * 2, 2)
   }

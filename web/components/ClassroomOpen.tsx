@@ -10,7 +10,7 @@ import {
 } from '@/lib/classroom-session'
 import { readLogbook, readServerLogbook, runningLesson, subscribeLogbook } from '@/lib/logbook'
 import { readMission, subscribeMissionDraft } from '@/lib/mission-draft'
-import { MISSION_BRIEFING_RULES } from './MissionBriefing'
+import { STUDENT_RULE_WORDS } from '@/lib/student-rules'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 import { useDrones } from './FleetProvider'
 
@@ -68,11 +68,15 @@ export function ClassroomOpen() {
       scenarioName: scenario.name,
       objective: scenario.objective,
       /*
-       * The rules the class was actually briefed on, in the Teacher's own words, read from
-       * the briefing rather than retyped. A second wording of the same rule is a second
-       * rule as far as a ten year old is concerned.
+       * Three rules, never twenty.
+       *
+       * This copied `MISSION_BRIEFING_RULES` — eighteen lines across five sections, written
+       * for an adult walking a class through a safety brief out loud — straight onto a
+       * child's tablet. The Teacher's checklist stays on the Teacher's board where it is read
+       * from; what a Student gets is the three the board can enforce, in the same words as
+       * the warnings that follow them.
        */
-      rules: MISSION_BRIEFING_RULES.map((rule) => rule.label),
+      rules: STUDENT_RULE_WORDS,
       limitMinutes: mission.limitMinutes ?? scenario.defaultLimitMinutes,
       checkpointCount: mission.checkpoints.length,
       missionStartedAt: mission.startedAt,

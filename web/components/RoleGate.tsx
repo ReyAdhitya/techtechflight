@@ -149,7 +149,7 @@ function StudentSecret({
     void loadClassroomByCode(code).then((session) => {
       setBusy(false)
       if (session === null) {
-        setWrong('No classroom with that code yet. Ask your teacher.')
+        setWrong('No classroom with that code yet. Ask your Teacher.')
         return
       }
       onIn()

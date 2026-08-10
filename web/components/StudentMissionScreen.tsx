@@ -47,6 +47,7 @@ import { missionClock } from '@/lib/mission-clock'
 import { StudentStepRail } from './StudentStepRail'
 import { pointsLeft, studentStep, type StudentNow } from '@/lib/student-steps'
 import { worstWhatIf, type WhatIfAnswer } from '@/lib/student-what-if'
+import { studentWarning } from '@/lib/student-rules'
 import { cn } from '@/lib/utils'
 
 /**
@@ -300,10 +301,10 @@ function TaskDone({
       <IdentityLine seat={seat} />
       <p className="m-0 label">Every point reached</p>
       <h1 className="m-0 font-display text-summary font-medium text-balance text-ink">
-        Wait for your teacher
+        Wait for your Teacher
       </h1>
       <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
-        Your Drone reached all {reached}. Your teacher is checking.
+        Your Drone reached all {reached}. Your Teacher is checking.
       </p>
     </StudentFrame>
   )
@@ -322,14 +323,14 @@ function LandOnYourPad({
   return (
     <StudentFrame rail={rail}>
       <IdentityLine seat={seat} />
-      <p className="m-0 label">Your teacher approved it</p>
+      <p className="m-0 label">Your Teacher approved it</p>
       {/*
        * How a normal flight ends, in the Teacher's own words: they say "bring it home" out
        * loud and this says the same thing. The child flies it back by hand, and the board
        * finds out it is down from Telemetry rather than from anybody pressing anything.
        */}
       <h1 className="m-0 font-display text-summary font-medium text-balance text-ink">
-        Return home and land
+        {studentWarning(2)}
       </h1>
       <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
         {airborne
@@ -358,11 +359,16 @@ function RedZoneTakeover({
   return (
     <StudentFrame rail={rail} tone="warning">
       <p className="m-0 label">Red area</p>
+      {/*
+       * The rule's own words, read from where the rule is declared. A child told to "stay out
+       * of the red areas" and then shown "no-fly zone violation detected" has two rules to
+       * reconcile at speed, which is the one thing a warning cannot afford.
+       */}
       <h1
         role="status"
         className="m-0 font-display text-summary font-medium text-balance text-status-fault"
       >
-        Move away
+        {studentWarning(0)}
       </h1>
       <p className="m-0 max-w-[50ch] text-body text-ink">
         You are inside {worst.zoneName}. Come out the way you went in.
@@ -391,7 +397,7 @@ function LostTheBoard({
 }) {
   return (
     <StudentFrame rail={rail} tone="warning">
-      <p className="m-0 label">Not hearing your teacher&apos;s board</p>
+      <p className="m-0 label">Not hearing your Teacher&apos;s board</p>
       <h1
         role="status"
         className="m-0 font-display text-summary font-medium text-balance text-status-fault"
@@ -400,7 +406,7 @@ function LostTheBoard({
       </h1>
       <p className="m-0 max-w-[50ch] text-body text-ink">
         This tablet stopped hearing the board {formatAge(quietForMs)}. Anything it showed you
-        before that is old. Put your Drone down and tell your teacher.
+        before that is old. Put your Drone down and tell your Teacher.
       </p>
     </StudentFrame>
   )
@@ -653,7 +659,7 @@ function WhichDroneAreYouHolding({
 
       {grid.length === 0 ? (
         <p className="m-0 max-w-[50ch] text-body text-ink-muted">
-          Your teacher has not put any Drones in this lesson yet. Wait, and they will appear.
+          Your Teacher has not put any Drones in this lesson yet. Wait, and they will appear.
         </p>
       ) : (
         <ul className="m-0 grid list-none grid-cols-3 gap-4 p-0 min-[48rem]:grid-cols-6">
@@ -1068,7 +1074,8 @@ function TeacherInstruction({
 
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-surface border border-brand bg-brand-wash px-4 py-3">
-      <span className="label">Your Teacher</span>
+      {/* Rule two's own words. See `student-rules.ts`. */}
+      <span className="label">{studentWarning(1)}</span>
       <span className="min-w-0 flex-1 text-body text-ink">{instruction.text}</span>
       <span className="tnum text-label text-ink-muted">{formatAge(Math.max(0, now - instruction.at))}</span>
       <button
@@ -1242,7 +1249,13 @@ function StudentName({ name }: { readonly name: string }) {
   return <p className="m-0 font-display text-heading font-medium text-ink">{name}</p>
 }
 
-/** The rules, the clock and how many checkpoints. Quiet: read once, then remembered. */
+/**
+ * The clock, the points, and the rules.
+ *
+ * The rules are three and they are readable, because this is poster step 2 and a child is
+ * meant to come away knowing them. It used to be the Teacher's eighteen-line checklist at the
+ * size of a footnote, which is a wall of text and is not read by anyone.
+ */
 function MissionTerms({ session }: { readonly session: ClassroomSession }) {
   return (
     <div className="flex flex-col gap-3">
@@ -1257,13 +1270,18 @@ function MissionTerms({ session }: { readonly session: ClassroomSession }) {
       </p>
 
       {session.rules.length > 0 && (
-        <ul className="m-0 flex list-none flex-col gap-1 p-0">
-          {session.rules.map((rule) => (
-            <li key={rule} className="text-value text-ink-subtle">
-              {rule}
-            </li>
-          ))}
-        </ul>
+        <section className="flex flex-col gap-2" aria-labelledby="student-rules">
+          <h2 id="student-rules" className="label m-0">
+            {session.rules.length === 3 ? 'Three rules' : 'The rules'}
+          </h2>
+          <ol className="m-0 flex list-none flex-col gap-1 p-0">
+            {session.rules.map((rule) => (
+              <li key={rule} className="text-body text-ink">
+                {rule}
+              </li>
+            ))}
+          </ol>
+        </section>
       )}
     </div>
   )

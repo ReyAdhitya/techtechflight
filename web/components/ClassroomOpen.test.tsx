@@ -90,11 +90,17 @@ describe('opening the classroom from the Mission', () => {
   })
 
   /*
-   * The rules a Student reads are the rules the class was briefed on, read from the
-   * briefing. A second wording of the same rule is a second rule to a ten year old.
+   * Three rules, never twenty.
+   *
+   * This copied the Teacher's whole briefing checklist onto a child's tablet: eighteen lines
+   * across five sections, written for an adult reading a safety brief out loud. A wall of
+   * text is not read by anybody. What travels is the three the board can enforce, in the same
+   * words as the warnings that follow them, and the Teacher's checklist stays on the
+   * Teacher's board where it is read from.
    */
-  it('carries the briefing rules rather than a retyped copy of them', async () => {
+  it('carries three rules for a child, and not the Teacher checklist', async () => {
     const { MISSION_BRIEFING_RULES } = await import('./MissionBriefing')
+    const { STUDENT_RULE_WORDS } = await import('@/lib/student-rules')
     startLesson('Year 8', 6, 6, 1_000, [])
     const lessonId = runningLesson(readLogbook())!.id
     chooseScenario(lessonId, 'delivery')
@@ -102,7 +108,9 @@ describe('opening the classroom from the Mission', () => {
     mount()
 
     const session = readClassroomSession()!
-    expect(session.rules).toEqual(MISSION_BRIEFING_RULES.map((rule) => rule.label))
+    expect(session.rules).toEqual(STUDENT_RULE_WORDS)
+    expect(session.rules).toHaveLength(3)
+    expect(MISSION_BRIEFING_RULES.length).toBeGreaterThan(10)
   })
 
   /*

@@ -78,6 +78,87 @@ export interface ClassroomRosterEntry {
   readonly name: string
 }
 
+/**
+ * A Drone in this Lesson, as a child sees it: **the number painted on the aircraft**.
+ *
+ * The tablet offers these rather than a class list of thirty names, because the thing a
+ * ten year old is checking against is a physical object in their hands. Six large buttons
+ * beat thirty small ones, and two children reaching for Drone 3 are standing next to each
+ * other and find out in a second.
+ */
+export interface ClassroomDrone {
+  readonly droneId: DroneId
+  readonly droneName: string
+  /** What is on the airframe. Sorted by this, so the grid reads 1, 2, 3 and not by id. */
+  readonly number: number
+}
+
+/**
+ * The number a Teacher would read off the aircraft.
+ *
+ * From the name first, because that is what the board and the child both say out loud, and
+ * from the id when a Fleet names its craft something else. Zero when neither carries a
+ * number, which sorts such a Drone to the front rather than dropping it off the grid.
+ */
+export function droneNumber(droneName: string, droneId: string): number {
+  const fromName = /(\d+)\s*$/.exec(droneName.trim())
+  if (fromName) return Number(fromName[1])
+  const fromId = /(\d+)\s*$/.exec(droneId.trim())
+  return fromId ? Number(fromId[1]) : 0
+}
+
+/** Which seat, if any, is on this Drone. */
+export function seatOnDrone(
+  session: ClassroomSession,
+  droneId: DroneId,
+): ClassroomSeat | null {
+  return session.seats.find((seat) => seat.droneId === droneId) ?? null
+}
+
+/**
+ * The Drone grid a joining Student sees: every craft in the Lesson, and who has it.
+ *
+ * A Drone already taken is greyed out and untappable on the tablet, which is what stops two
+ * children landing on one. The known hole is accepted: a child can take the Drone of a
+ * classmate who is absent, because nobody is competing for it. The Teacher's board showing an
+ * absent child suddenly flying is the check.
+ */
+export function droneGrid(
+  session: ClassroomSession,
+): readonly (ClassroomDrone & { readonly takenBy: string | null })[] {
+  return [...(session.drones ?? [])]
+    .sort((a, b) => a.number - b.number)
+    .map((drone) => ({ ...drone, takenBy: seatOnDrone(session, drone.droneId)?.name ?? null }))
+}
+
+/**
+ * A Student takes the Drone they are holding.
+ *
+ * Refuses a Drone somebody else already has, so the tablet's greying out is a courtesy rather
+ * than the whole defence: two children tapping the same number in the same second must not
+ * both end up on it. Taking a second Drone gives up the first, because a child has one pair of
+ * hands.
+ */
+export function takeDroneSeat(
+  session: ClassroomSession,
+  studentId: string,
+  droneId: DroneId,
+): ClassroomSession {
+  const drone = (session.drones ?? []).find((row) => row.droneId === droneId)
+  if (drone === undefined) return session
+  const held = seatOnDrone(session, droneId)
+  if (held !== null && held.studentId !== studentId) return session
+
+  return writeClassroomSession({
+    ...session,
+    seats: session.seats.map((seat) =>
+      seat.studentId === studentId
+        ? { ...seat, droneId: drone.droneId, droneName: drone.droneName }
+        : seat,
+    ),
+  })
+}
+
 export interface ClassroomSession {
   readonly code: string
   readonly openedAt: number
@@ -110,6 +191,14 @@ export interface ClassroomSession {
    * Absent on older sessions — the tablet then falls back to typing a name.
    */
   readonly roster?: readonly ClassroomRosterEntry[]
+  /**
+   * The craft in this Lesson, by the number painted on them.
+   *
+   * How a Student gets on a Drone: they tap the number in their hands. Absent on a session
+   * written before this existed, and on one whose Teacher has not put teams on craft yet, in
+   * which case the tablet says so rather than showing an empty grid.
+   */
+  readonly drones?: readonly ClassroomDrone[]
   readonly zones: readonly Zone[]
   readonly seats: readonly ClassroomSeat[]
   readonly instructions: readonly ClassroomInstruction[]
@@ -140,6 +229,7 @@ function emptySession(code: string, now: number): ClassroomSession {
     checkpoints: [],
     outcome: null,
     roster: [],
+    drones: [],
     zones: [],
     seats: [],
     instructions: [],
@@ -228,6 +318,8 @@ export function openClassroom(input: {
   readonly outcome?: MissionOutcome | null
   /** Class roll for Student tablets. Absent keeps whatever the session already had. */
   readonly roster?: readonly ClassroomRosterEntry[]
+  /** The craft in the Lesson, for the join grid. Absent keeps whatever was already there. */
+  readonly drones?: readonly ClassroomDrone[]
   readonly zones: readonly Zone[]
   readonly live?: boolean
   readonly now?: number
@@ -251,6 +343,7 @@ export function openClassroom(input: {
     checkpoints: input.checkpoints ?? base.checkpoints ?? [],
     outcome: input.outcome ?? base.outcome ?? null,
     roster: input.roster ?? base.roster ?? [],
+    drones: input.drones ?? base.drones ?? [],
     zones: input.zones,
     live: input.live ?? true,
     updatedAt: now,
@@ -320,13 +413,12 @@ export function joinClassroomAsStudent(
     joinedAt: now,
   }
 
-  // Auto-seat onto the next free Mission craft name if the Teacher already listed craft.
-  const taken = new Set(session.seats.map((row) => row.droneId).filter(Boolean))
-  const freeSlot = session.seats.length // display order only; Teacher assigns names later
-
-  void freeSlot
-  void taken
-
+  /*
+   * No Drone yet, deliberately. Joining answers "who is at this tablet"; the Drone is the
+   * next question and the child answers it by tapping the number in their hands. Auto-seating
+   * onto the next free craft was tried here and is exactly the mistap the join flow exists to
+   * prevent: a child who is handed Drone 4 by the software goes and picks up Drone 4.
+   */
   const next = writeClassroomSession({ ...session, seats: [...session.seats, seat] })
   writeStudentSeatLocal({ code: session.code, studentId: seat.studentId, name: trimmed })
   return { session: next, seat }

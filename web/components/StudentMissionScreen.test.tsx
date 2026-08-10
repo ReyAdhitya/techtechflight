@@ -5,12 +5,16 @@ import {
   assignSeatCraft,
   grantSeatClearance,
   holdSeatClearance,
+  joinClassroomAsStudent,
   openClassroom,
   readClassroomSession,
   requestTakeoff,
   resetClassroomForTests,
+  takeDroneSeat,
   updateSeatPhase,
   writeClassroomSession,
+  writeStudentSeatLocal,
+  type ClassroomDrone,
 } from '@/lib/classroom-session'
 import type { MissionOutcome } from '@/lib/mission'
 import { clearLogbook, legacyStudentIdFor } from '@/lib/logbook'
@@ -45,7 +49,17 @@ const studentScreen = () =>
     </FleetProvider>,
   )
 
-function classroomWithBrief(names: readonly string[] = []) {
+/** The craft a Teacher put in the Lesson, as the join grid sees them. */
+const THREE_DRONES = [
+  { droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 },
+  { droneId: 'ttf-0002', droneName: 'Drone 2', number: 2 },
+  { droneId: 'ttf-0003', droneName: 'Drone 3', number: 3 },
+] as const
+
+function classroomWithBrief(
+  names: readonly string[] = [],
+  drones: readonly ClassroomDrone[] = THREE_DRONES,
+) {
   const session = openClassroom({
     lessonId: 'L-0001',
     lessonLabel: 'Year 8',
@@ -56,6 +70,7 @@ function classroomWithBrief(names: readonly string[] = []) {
     limitMinutes: 12,
     zones: [],
     roster: names.map((name) => ({ studentId: legacyStudentIdFor(name), name })),
+    drones,
   })
   return session
 }
@@ -89,12 +104,18 @@ describe('before a Teacher has opened the classroom', () => {
   })
 })
 
-describe('taking a seat', () => {
-  /*
-   * No typing and no classroom code. A child at a shared tablet knows their own name and
-   * nothing else, and a four-character code is a step that exists for the software.
-   */
-  it('offers the class roll from the session, and nothing to type', () => {
+describe('joining', () => {
+  it('asks for a name, typed once', () => {
+    classroomWithBrief()
+
+    studentScreen()
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'What is your name?' })).toBeInTheDocument()
+    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument()
+  })
+
+  it('offers the class roll as well, when the Teacher has typed one in', () => {
     classroomWithBrief(['Priya', 'Sam'])
 
     studentScreen()
@@ -102,17 +123,6 @@ describe('taking a seat', () => {
 
     expect(screen.getByRole('button', { name: 'Priya' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sam' })).toBeInTheDocument()
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
-  })
-
-  it('says so plainly when there is no class list yet, and lets them type a name', () => {
-    classroomWithBrief()
-
-    studentScreen()
-    settle()
-
-    expect(screen.getByText(/class list is empty/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument()
   })
 
   it('seats the Student who picked their name', () => {
@@ -125,6 +135,77 @@ describe('taking a seat', () => {
 
     expect(readClassroomSession()?.seats.map((seat) => seat.name)).toEqual(['Priya'])
   })
+
+  it('remembers the name on this tablet, so the next morning is one tap', () => {
+    classroomWithBrief()
+    studentScreen()
+    settle()
+    fireEvent.change(screen.getByLabelText(/your name/i), { target: { value: 'Amira' } })
+    fireEvent.click(screen.getByRole('button', { name: 'That is me' }))
+    settle()
+
+    cleanup()
+    studentScreen()
+    settle()
+
+    expect(screen.queryByRole('heading', { name: 'What is your name?' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Which Drone are you holding?' }))
+      .toBeInTheDocument()
+  })
+
+  /*
+   * The number painted on the aircraft, not a name from a list of thirty. The child is
+   * checking against a physical object in their hands.
+   */
+  it('asks which Drone they are holding, by number', () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'Which Drone are you holding?' }))
+      .toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 2' }))
+    settle()
+
+    expect(readClassroomSession()?.seats[0]?.droneName).toBe('Drone 2')
+  })
+
+  it('greys out a Drone somebody already has, and will not seat a second child on it', () => {
+    const opened = classroomWithBrief(['Priya'])
+    // Sam got to Drone 2 first, on their own tablet.
+    const withSam = joinClassroomAsStudent(opened, 'Sam', 1_000, 'stu-sam')
+    takeDroneSeat(withSam.session, 'stu-sam', 'ttf-0002')
+    // Sam is on their own iPad. Joining writes the seat to *this* device, so clear it or the
+    // screen under test comes up as Sam.
+    writeStudentSeatLocal(null)
+
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+
+    const taken = screen.getByRole('button', { name: 'Drone 2, taken by Sam' })
+    expect(taken).toBeDisabled()
+
+    fireEvent.click(taken)
+    settle()
+    expect(readClassroomSession()?.seats.find((seat) => seat.name === 'Sam')?.droneId)
+      .toBe('ttf-0002')
+    expect(readClassroomSession()?.seats.find((seat) => seat.name === 'Priya')?.droneId)
+      .toBeNull()
+  })
+
+  it('says so rather than showing an empty grid when no Drone is in the Lesson yet', () => {
+    classroomWithBrief(['Priya'], [])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+
+    expect(screen.getByText(/has not put any Drones in this lesson yet/i)).toBeInTheDocument()
+  })
 })
 
 describe('the brief', () => {
@@ -133,6 +214,8 @@ describe('the brief', () => {
     studentScreen()
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
   }
 
@@ -185,29 +268,28 @@ describe('the brief', () => {
     expect(screen.queryByText(/Signal (weak|strong)/)).not.toBeInTheDocument()
   })
 
-  it('says the Teacher has not given them a Drone yet, rather than inventing one', () => {
-    seatPriya()
+  /*
+   * "You do not have a Drone yet" was correct and useless: nobody was ever assigned, and it
+   * was the only thing the screen had to say. A child with no Drone is asked which one they
+   * are holding instead, which is a question they can answer.
+   */
+  it('asks which Drone rather than announcing that they have none', () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
 
-    expect(screen.getByText(/has not given you a Drone yet/i)).toBeInTheDocument()
+    expect(screen.queryByText(/do not have a Drone yet/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Which Drone are you holding?' }))
+      .toBeInTheDocument()
     // No craft means no pre-flight to show, and nothing to ask for.
     expect(screen.queryByRole('heading', { name: 'Before you fly' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ask to take off' })).not.toBeInTheDocument()
   })
 
-  /*
-   * The Teacher assigns the craft on their own board, in their own tab. Same-tab writes do
-   * not come back through BroadcastChannel by spec, so this opens the tablet again rather
-   * than pretending the write arrived live; the live path across two tabs is its own test.
-   */
   it('shows the seven items for their own craft once they have one', () => {
     seatPriya()
-    const session = readClassroomSession()!
-    const seat = session.seats[0]!
-    assignSeatCraft(session, seat.studentId, 'ttf-0001', 'Drone 1')
-
-    cleanup()
-    studentScreen()
-    settle()
 
     expect(screen.getByRole('heading', { name: 'Before you fly' })).toBeInTheDocument()
     // Named twice on the stage: on the identity line, and as the Drone that is reporting.
@@ -229,13 +311,9 @@ describe('asking for takeoff, and the answer', () => {
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
     settle()
-    const session = readClassroomSession()!
-    const seat = session.seats[0]!
-    assignSeatCraft(session, seat.studentId, 'ttf-0001', 'Drone 1')
-    cleanup()
-    studentScreen()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
-    return seat.studentId
+    return readClassroomSession()!.seats[0]!.studentId
   }
 
   const reopen = () => {

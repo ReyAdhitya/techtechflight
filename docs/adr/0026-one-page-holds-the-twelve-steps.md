@@ -69,6 +69,13 @@ Hover, Recall and Stop stay in the flow on every strip. Gating them behind step 
 a Command behind a navigation press, and the last time strips were compacted it broke CI and
 hid Commands from the scan path.
 
+> **Reversed by [ADR-0030](./0030-the-air-is-one-step-at-a-time-over-a-fixed-emergency-bar.md),
+> 2026-08-10.** Steps 6 to 10 now show one panel at a time, in the rail's order. The safety
+> argument in this paragraph is answered rather than dropped: the Attention bar and the
+> fleet-wide Land all, Hover all and Stop all are on screen at every step, so a Teacher can
+> stop every aircraft from anywhere in one tap. The cost is real and is written into ADR-0030
+> — per-Drone commands are one rail tap away rather than zero. The rest of this ADR stands.
+
 **Close down, steps 11 and 12.** Sequential again, and step 11 refuses while anything is
 still airborne. That refusal is the step.
 

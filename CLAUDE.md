@@ -152,10 +152,18 @@ pad (demo)**. Do not write QR into Telemetry. On the sim feed the scanner reads
 fresh array each render; an effect that observes then bumps a tick state will hang Control
 under jsdom. Observe inside `useMemo` (or only setState when the since-map actually changes).
 
-**Control strip anatomy stays open.** Every strip keeps its coordinate line and Land /
-Hover / Recall / Stop in the flow (DESIGN §4.4) — do not gate those on selection. Fleet-wide
-Land all · Hover all · Stop all may sit under the Scope; Attention is one focused card plus
-a disclosure queue. Compacting grounded strips broke CI and hid Commands from the scan path.
+**Control strip anatomy stays open, and the strips are now on step 9 (ADR-0030).** Every
+strip keeps its coordinate line and Land / Hover / Recall / Stop in the flow (DESIGN §4.4) —
+do not gate those on selection, and do not compact them, which broke CI and hid Commands from
+the scan path. **What changed is the step, not the strip:** steps 6 to 10 each show one panel
+now, so per-Drone commands are one rail tap away rather than zero. That cost is a ruling, not
+an oversight, and it is paid for by the fixed emergency bar below.
+
+**The Attention bar and Land all · Hover all · Stop all are on every step, 6 to 10
+(ADR-0030).** They never scroll away, are never gated on selection, and are the answer to
+ADR-0026's objection that a Command behind a navigation press is a Command a Teacher cannot
+reach in ten seconds. An emergency in a room full of children is "everything, now", and that
+is one tap from anywhere in the run. Do not move them into a step.
 
 **Parallel-wave changelog fragments.** During a multi-agent wave, agents write
 `docs/changelog.d/<issue>.md` instead of editing `CHANGELOG.md` / `DECISIONS.md`. The
@@ -167,11 +175,15 @@ never integrated.
 product, and `/mission` is where it lives. `MissionRunScreen` mounts `StepRail` and one step
 surface. **The rail is the only navigation on that page** — `SiteNav` collapses behind one
 button holding Fleet, Walls, Students and Vision, because two navigations on one screen is
-the confusion this change exists to remove. Set-up steps 1 to 5 show one at a time; steps 6
-to 10 are one live board and are *not* gated, which is also what keeps the strip anatomy rule
-below intact; steps 11 and 12 are sequential again. `/lesson`, `/control` and `/reports`
-still resolve and send a Teacher to the step that answers them. Argue with the rail in an ADR
-or leave it alone.
+the confusion this change exists to remove. **Every step shows one panel** — set-up 1 to 5, in
+the air 6 to 10 (ADR-0030 reversed ADR-0026 on that; see the fixed emergency bar above), and
+11 and 12 to close down. `/lesson`, `/control` and `/reports` still resolve and send a Teacher
+to the step that answers them. Argue with the rail in an ADR or leave it alone.
+
+**A step nobody is looking at goes on computing.** Points tick off from Telemetry, the
+classroom session is written, the heartbeat beats and Alerts are raised whether or not the
+panel that shows them is mounted, because none of that lives in a panel. If you move one of
+those into a step's own component, it stops happening for the other nine.
 
 **A rail step says what it decided, not that it is finished.** Every step carries a *done
 string* (`missionStepDone` in `web/lib/mission-flow-summary.ts`) and a *lock reason*

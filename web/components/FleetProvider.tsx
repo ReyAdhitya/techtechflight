@@ -16,6 +16,11 @@ import { SystemClock } from '@techtechflight/contract/testing'
 import { FleetConnection, browserSocket } from '@/lib/fleet-connection'
 import type { FleetLink, FleetSnapshot, ScenarioControls } from '@/lib/fleet-link'
 import { LocalFleetLink, type LocalFleetOptions } from '@/lib/local-fleet-link'
+import {
+  DEFAULT_CLASSROOM_FLEET_SIZE,
+  readClassroomFleetSize,
+  subscribeClassroomFleetSize,
+} from '@/lib/classroom-fleet-size'
 import { AcknowledgementTracker } from '@/lib/acknowledgement'
 import { CommandTracker, type TrackedCommand } from '@/lib/command-tracker'
 import {
@@ -135,6 +140,16 @@ export function FleetProvider({
   const pathname = usePathname()
   const demo = builtForDemoOnly() || pathname.startsWith('/demo')
   const clock = useMemo(() => new SystemClock(), [])
+  /*
+   * How many Drones the browser Fleet runs. Subscribed rather than read once, so changing it
+   * in Settings rebuilds the link: a Teacher who typed 12 and saw six would reasonably
+   * conclude the number does nothing.
+   */
+  const fleetSize = useSyncExternalStore(
+    subscribeClassroomFleetSize,
+    readClassroomFleetSize,
+    () => DEFAULT_CLASSROOM_FLEET_SIZE,
+  )
   // Pulled apart rather than held whole, so the link below is rebuilt when the Fleet is
   // actually meant to behave differently and not every time a caller writes a fresh object.
   const { random, spontaneous } = demonstration ?? {}
@@ -156,7 +171,7 @@ export function FleetProvider({
             ...(spontaneous === undefined ? {} : { spontaneous }),
           })
         : new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket }),
-    [clock, demo, random, spontaneous],
+    [clock, demo, random, spontaneous, fleetSize],
   )
 
   const snapshot = useSyncExternalStore(

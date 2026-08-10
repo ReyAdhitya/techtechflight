@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useSyncExternalStore, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { COMFORTABLE_BOARD_SIZE } from '@/lib/classroom-fleet-size'
 import {
   assignStudent,
   assignNextRosterName,
@@ -777,10 +778,26 @@ export function ControlScreen({
             )}
           </div>
         </ControlDisclosure>
+        {/*
+         * There is no cap on the Fleet, so there is a size past which no screen shows every
+         * strip at once and stays glanceable. Said in words rather than by the list quietly
+         * running off the bottom, which reads as a board that has stopped drawing.
+         */}
+        {strips.length > COMFORTABLE_BOARD_SIZE && (
+          <p className="m-0 text-value text-ink-subtle">
+            <span className="tnum">{strips.length}</span> Drones. More than a screen shows at
+            once, so the strips are a dense list from here and you will scroll. Attention above
+            is what to read first.
+          </p>
+        )}
         <ul
           className={cn(
             'm-0 flex list-none flex-col gap-2 p-0',
             'min-[60rem]:grid min-[60rem]:grid-cols-[auto_auto_auto_auto_1fr]',
+            // Tighter rows past two dozen. Every strip keeps its coordinate line and every
+            // Command; what goes is the air between them, which is the only thing that can go
+            // without hiding a Command from the scan path.
+            strips.length > COMFORTABLE_BOARD_SIZE && 'gap-1',
           )}
         >
           {strips.map((entry) => (

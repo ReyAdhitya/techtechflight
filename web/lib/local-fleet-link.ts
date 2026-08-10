@@ -6,7 +6,8 @@ import type {
   Unsubscribe,
 } from '@techtechflight/contract'
 import { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
-import { CLASSROOM_FLEET, SimulatedTelemetrySource } from '@techtechflight/fleet-core/simulator'
+import { classroomFleet, SimulatedTelemetrySource } from '@techtechflight/fleet-core/simulator'
+import { readClassroomFleetSize } from './classroom-fleet-size.ts'
 import type { FleetLink, FleetSnapshot, ScenarioControls } from './fleet-link'
 
 /**
@@ -51,7 +52,12 @@ export class LocalFleetLink implements FleetLink {
   #started = false
 
   constructor(options: LocalFleetOptions) {
-    const registrations = options.registrations ?? CLASSROOM_FLEET
+    /*
+     * As many Drones as the Teacher said, and six when they have not said. Read here rather
+     * than baked into a constant because there is no cap any more: a school buys as many as it
+     * buys, and the browser Fleet has to be able to be that many.
+     */
+    const registrations = options.registrations ?? classroomFleet(readClassroomFleetSize())
     this.#clock = options.clock
     this.#simulator = new SimulatedTelemetrySource({
       registrations,

@@ -35,19 +35,35 @@ describe('classroomFleet', () => {
 
   it('throws below the minimum size', () => {
     expect(() => classroomFleet(0)).toThrow(
-      'Classroom Fleet size must be an integer from 1 to 20, got 0',
+      'Classroom Fleet size must be a whole number of at least 1, got 0',
     )
   })
 
-  it('throws above the maximum size', () => {
-    expect(() => classroomFleet(21)).toThrow(
-      'Classroom Fleet size must be an integer from 1 to 20, got 21',
-    )
+  /*
+   * There is no maximum. A school buys as many as it buys, and software that refused the
+   * twenty-first would be telling a Teacher their classroom is wrong. Nothing breaks at
+   * twenty-one; what changes above two dozen is how the board draws them.
+   */
+  it('takes as many Drones as a school owns', () => {
+    expect(classroomFleet(50)).toHaveLength(50)
+    expect(classroomFleet(200)).toHaveLength(200)
+    expect(classroomFleet(200).at(-1)).toEqual({
+      id: 'ttf-0200',
+      name: 'Drone 200',
+      boardOrder: 200,
+    })
+  })
+
+  /* Padding stops rather than truncating: two aircraft with one identity is worse. */
+  it('keeps every id distinct past four digits', () => {
+    const huge = classroomFleet(10_000)
+    expect(new Set(huge.map((drone) => drone.id)).size).toBe(10_000)
+    expect(huge.at(-1)?.id).toBe('ttf-10000')
   })
 
   it('throws for non-integer sizes', () => {
     expect(() => classroomFleet(3.5)).toThrow(
-      'Classroom Fleet size must be an integer from 1 to 20, got 3.5',
+      'Classroom Fleet size must be a whole number of at least 1, got 3.5',
     )
   })
 })

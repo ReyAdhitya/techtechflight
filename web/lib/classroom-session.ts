@@ -131,6 +131,15 @@ export function droneGrid(
     .map((drone) => ({ ...drone, takenBy: seatOnDrone(session, drone.droneId)?.name ?? null }))
 }
 
+/** The same grid with the seat itself, for the Teacher's board. */
+export function classroomRows(
+  session: ClassroomSession,
+): readonly (ClassroomDrone & { readonly seat: ClassroomSeat | null })[] {
+  return [...(session.drones ?? [])]
+    .sort((a, b) => a.number - b.number)
+    .map((drone) => ({ ...drone, seat: seatOnDrone(session, drone.droneId) }))
+}
+
 /**
  * A Student takes the Drone they are holding.
  *
@@ -146,16 +155,123 @@ export function takeDroneSeat(
 ): ClassroomSession {
   const drone = (session.drones ?? []).find((row) => row.droneId === droneId)
   if (drone === undefined) return session
+  const taker = session.seats.find((row) => row.studentId === studentId)
+  if (taker === undefined) return session
+
   const held = seatOnDrone(session, droneId)
-  if (held !== null && held.studentId !== studentId) return session
+  const mine = held !== null && held.studentId === studentId
+  const reclaiming = held !== null && !mine && sameChild(held.name, taker.name)
+  if (held !== null && !mine && !reclaiming) return session
 
   return writeClassroomSession({
     ...session,
-    seats: session.seats.map((seat) =>
-      seat.studentId === studentId
-        ? { ...seat, droneId: drone.droneId, droneName: drone.droneName }
-        : seat,
-    ),
+    seats: session.seats
+      // Reclaiming: the old seat was this child on a device that died. Dropping it rather
+      // than leaving a nameless twin is what makes the row on the Teacher's board read as
+      // one child, which is what it is.
+      .filter((seat) => !(reclaiming && seat.studentId === held.studentId))
+      .map((seat) =>
+        seat.studentId === studentId
+          ? { ...seat, droneId: drone.droneId, droneName: drone.droneName }
+          : seat,
+      ),
+  })
+}
+
+/**
+ * Whether two seats are the same child.
+ *
+ * By name, because a Student who picks up a second iPad gets a second `studentId` and their
+ * own Drone would otherwise be greyed out against them forever. Two children with the same
+ * first name in one class is the case this gets wrong, and it gets it wrong in the direction
+ * the Teacher can see: the board shows one row where they expected two.
+ */
+function sameChild(a: string, b: string): boolean {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase()
+}
+
+/**
+ * Whether this seat can reclaim a Drone somebody appears to be holding.
+ *
+ * The tablet greys out a taken Drone. It must not grey out the child's own, on the morning
+ * their iPad is swapped for a working one.
+ */
+export function canTakeDrone(
+  session: ClassroomSession,
+  studentId: string,
+  droneId: DroneId,
+): boolean {
+  const held = seatOnDrone(session, droneId)
+  if (held === null) return true
+  if (held.studentId === studentId) return true
+  const taker = session.seats.find((row) => row.studentId === studentId)
+  return taker !== undefined && sameChild(held.name, taker.name)
+}
+
+/**
+ * The Teacher puts a child on a Drone by hand: tap the Drone, type the name.
+ *
+ * A broken iPad must not stop a child flying, and a Teacher taking responsibility out loud is
+ * what actually happens in a room when technology fails. The child simply cannot see their own
+ * screen, which is a smaller loss than not flying.
+ *
+ * **The Teacher's change wins.** A Drone somebody else has taken is reassigned rather than
+ * refused: the Teacher is three metres away looking at both children, and the software is not.
+ */
+export function seatStudentByHand(
+  session: ClassroomSession,
+  droneId: DroneId,
+  name: string,
+  now = Date.now(),
+): ClassroomSession {
+  const drone = (session.drones ?? []).find((row) => row.droneId === droneId)
+  if (drone === undefined) return session
+  const trimmed = name.trim()
+  if (trimmed === '') return session
+
+  const held = seatOnDrone(session, droneId)
+  if (held !== null) {
+    return writeClassroomSession({
+      ...session,
+      seats: session.seats.map((seat) =>
+        seat.studentId === held.studentId ? { ...seat, name: trimmed } : seat,
+      ),
+    })
+  }
+
+  const seat: ClassroomSeat = {
+    studentId: `hand-${droneId}-${now.toString(36)}`,
+    name: trimmed,
+    droneId: drone.droneId,
+    droneName: drone.droneName,
+    phase: 'briefing',
+    takeoffRequestedAt: null,
+    clearedAt: null,
+    heldAt: null,
+    flownAt: null,
+    reachedCheckpointIds: [],
+    approvedAt: null,
+    score: null,
+    joinedAt: now,
+  }
+  return writeClassroomSession({ ...session, seats: [...session.seats, seat] })
+}
+
+/**
+ * Free a Drone in one tap.
+ *
+ * The seat goes rather than merely giving up the craft, because the reason a Teacher presses
+ * this is that the child is not there: an iPad that died, a child sent to the office, a
+ * mistap. A seat holding a Drone nobody is flying is the thing that stops the next child
+ * taking it. If the tablet is alive it rejoins by the name it remembers, and is asked which
+ * Drone it is holding, which is the honest question.
+ */
+export function freeDroneSeat(session: ClassroomSession, droneId: DroneId): ClassroomSession {
+  const held = seatOnDrone(session, droneId)
+  if (held === null) return session
+  return writeClassroomSession({
+    ...session,
+    seats: session.seats.filter((seat) => seat.studentId !== held.studentId),
   })
 }
 

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
+  canTakeDrone,
   droneGrid,
   joinClassroomAsStudent,
   loadClassroomByCode,
@@ -591,7 +592,13 @@ function WhichDroneAreYouHolding({
       ) : (
         <ul className="m-0 grid list-none grid-cols-3 gap-4 p-0 min-[48rem]:grid-cols-6">
           {grid.map((drone) => {
-            const held = drone.takenBy !== null
+            /*
+             * Taken by somebody else. A Drone held under this child's own name is theirs to
+             * take back: swapping to a working iPad mints a new seat, and greying their own
+             * craft out against them is how a broken tablet becomes a child who cannot fly.
+             */
+            const mine = canTakeDrone(session, seat.studentId, drone.droneId)
+            const held = drone.takenBy !== null && !mine
             return (
               <li key={drone.droneId}>
                 <button
@@ -610,7 +617,9 @@ function WhichDroneAreYouHolding({
                 >
                   <span className="tnum text-summary font-medium">{drone.number}</span>
                   {/* Shape and word, never colour alone (ADR-0004). */}
-                  <span className="text-value font-normal">{held ? 'Taken' : 'Free'}</span>
+                  <span className="text-value font-normal">
+                    {held ? 'Taken' : drone.takenBy !== null ? 'Yours' : 'Free'}
+                  </span>
                 </button>
               </li>
             )

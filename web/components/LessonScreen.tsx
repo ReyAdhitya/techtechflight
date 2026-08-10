@@ -34,6 +34,7 @@ import { PreFlightSeven } from './PreFlightSeven'
 import { MissionBriefing } from './MissionBriefing'
 import { TeamBriefPrint } from './TeamBriefPrint'
 import { ClassroomCodePanel } from './ClassroomCodePanel'
+import { ClassroomSeatsPanel } from './ClassroomSeatsPanel'
 import type { Mission } from '@/lib/mission'
 import { readTeams } from '@/lib/teams'
 import {
@@ -417,6 +418,13 @@ function MissionPrep({
           mission={mission}
           onMissionChange={onMissionChange}
         />
+        {/*
+         * The other half of step 3, and the half the children write. Teams put craft in the
+         * Mission; this says who is actually holding each one, and fills itself as tablets
+         * join. It is here rather than on a screen of its own because it answers the same
+         * question the step asks, and two surfaces holding one list means one is stale.
+         */}
+        <ClassroomSeatsPanel />
       </section>
       )}
 

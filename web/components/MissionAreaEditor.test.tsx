@@ -149,3 +149,55 @@ describe('Mission area editor', () => {
     expect(screen.getByTestId('mission-area-empty')).toBeInTheDocument()
   })
 })
+
+/**
+ * A zone the Teacher drew and the Scope will never show.
+ *
+ * The failure is not an ugly picture. A Teacher who cannot see a boundary stops believing
+ * there is one, and watching it is the whole of what this feature is for.
+ */
+describe('a zone outside the picture the Scope draws', () => {
+  const far: Zone = {
+    id: 'far',
+    kind: 'no-fly',
+    name: 'The far corner',
+    points: [
+      { eastM: 15, northM: 15 },
+      { eastM: 19, northM: 15 },
+      { eastM: 19, northM: 19 },
+    ],
+  }
+  const near: Zone = {
+    id: 'near',
+    kind: 'no-fly',
+    name: 'Over the desks',
+    points: [
+      { eastM: 1, northM: 1 },
+      { eastM: 4, northM: 1 },
+      { eastM: 4, northM: 4 },
+    ],
+  }
+  const window = { westM: 0, eastM: 8, southM: 0, northM: 8 }
+
+  it('names it, and says where the picture actually reaches', () => {
+    render(<MissionAreaEditor zones={[near, far]} onChange={() => {}} scopeSpace={window} />)
+
+    const said = screen.getByRole('status').textContent ?? ''
+    expect(said).toContain('The far corner')
+    expect(said).not.toContain('Over the desks')
+    expect(said).toContain('The Alert still fires')
+  })
+
+  it('says nothing when every zone is drawn where it can be seen', () => {
+    render(<MissionAreaEditor zones={[near]} onChange={() => {}} scopeSpace={window} />)
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  /* No Drone reporting a position means no window, and "outside" would be a guess. */
+  it('says nothing before there is a window to be outside of', () => {
+    render(<MissionAreaEditor zones={[far]} onChange={() => {}} />)
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+})

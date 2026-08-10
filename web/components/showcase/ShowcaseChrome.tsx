@@ -35,7 +35,7 @@ export function ShowcaseChrome({ scenario, onScenario, liveUnavailable }: Showca
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <span className="text-[0.9375rem] font-semibold tracking-[-0.02em]">
+          <span className="text-[length:var(--sc-text-sm)] font-semibold tracking-[-0.02em]">
             TechTech Flight
           </span>
           <span className="sc-label">Fleet, maximalist variant</span>
@@ -84,7 +84,7 @@ export function ShowcaseChrome({ scenario, onScenario, liveUnavailable }: Showca
             )
           })}
         </div>
-        <p className="m-0 text-[0.8125rem] text-[var(--sc-ink-muted)]">
+        <p className="m-0 text-[length:var(--sc-text-xs)] text-[var(--sc-ink-muted)]">
           {note}
           {scenario === 'live' && liveUnavailable && (
             <>

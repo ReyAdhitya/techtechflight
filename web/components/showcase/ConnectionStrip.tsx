@@ -35,7 +35,7 @@ export function ConnectionStrip({ connection }: { connection: ConnectionStatus }
         >
           <span className="sc-connection__dot" aria-hidden="true" />
           <div className="flex flex-col gap-0.5">
-            <strong className="text-[0.9375rem] font-semibold">
+            <strong className="text-[length:var(--sc-text-sm)] font-semibold">
               {connection === 'connecting'
                 ? 'Connecting to the ground station'
                 : 'This board cannot reach the ground station'}

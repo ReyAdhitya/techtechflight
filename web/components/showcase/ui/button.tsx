@@ -12,7 +12,7 @@ const button = cva('sc-button', {
     },
     size: {
       default: '',
-      sm: 'min-h-8 px-3 text-[0.8125rem]',
+      sm: 'min-h-8 px-3 text-[length:var(--sc-text-xs)]',
       icon: 'min-h-9 w-9 px-0',
     },
   },

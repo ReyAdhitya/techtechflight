@@ -113,6 +113,16 @@
   --text-caption: 1rem;
   /* Labels only, always uppercase with tracking. Small because it names, never informs. */
   --text-label: 0.75rem;
+  /*
+   * A numeral inside a drawing, and the one size on this board smaller than a label.
+   *
+   * It is the checkpoint number on the printed team brief's map, which is an SVG measured in
+   * metres: the figure is a few centimetres across on paper and the numeral has to fit inside
+   * a circle drawn at that scale. It is not print a Teacher reads at a distance, which is what
+   * the no-small-print rule is about, and it is a token rather than a number typed into the
+   * markup so that it is findable and this paragraph exists.
+   */
+  --text-diagram: 0.35rem;
 
   /* --- Shape ------------------------------------------------------------- */
   --radius-sm: calc(var(--radius) - 4px);

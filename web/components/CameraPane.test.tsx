@@ -20,6 +20,8 @@ const scenarios = (): ScenarioControls =>
     loseLink: vi.fn(),
     restoreLink: vi.fn(),
     takeOff: vi.fn(),
+    flyRoute: vi.fn(),
+    flyHome: vi.fn(),
     setBattery: vi.fn(),
     plugIn: vi.fn(),
     placeNear: vi.fn(),

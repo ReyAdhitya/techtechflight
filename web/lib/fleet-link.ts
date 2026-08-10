@@ -64,6 +64,29 @@ export interface ScenarioControls {
   loseLink(droneId: string): void
   restoreLink(droneId: string): void
   takeOff(droneId: string): void
+  /**
+   * The simulated aircraft plays the child's part: take off, fly these points, hold station.
+   *
+   * In a room there is a ten year old with a controller. In a demo there is nobody, so a
+   * Drone that rose on a grant and hovered over the bench would make the Teacher's board
+   * look like it had done nothing. Called when the Teacher grants that Drone's takeoff, and
+   * never at any other moment: nothing leaves the ground that a Teacher did not clear.
+   *
+   * The world behaving, rather than the world misbehaving, but the same kind of thing and so
+   * the same door. It is not a Command and must never be offered as one.
+   */
+  flyRoute(
+    droneId: string,
+    waypoints: readonly { readonly eastM: number; readonly northM: number }[],
+  ): void
+  /**
+   * The simulated child flies home and lands, because the Teacher approved the task.
+   *
+   * The same flight as Recall and a different act. Recall is a Command sent when something is
+   * wrong; this is how a normal flight ends, and a Teacher who ended one with Recall would be
+   * ending a lesson with the fire alarm.
+   */
+  flyHome(droneId: string): void
   setBattery(droneId: string, fraction: number): void
   plugIn(droneId: string): void
   placeNear(droneId: string, nearDroneId: string, separationM: number): void

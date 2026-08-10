@@ -22,7 +22,6 @@ import { breachesAt, type AirspaceBreach } from '@/lib/airspace'
 import { byUrgency, playbookFor, type PlaybookEntry } from '@/lib/incident-playbook'
 import type { VitalsAlert } from '@/lib/vitals'
 import { readLogbook, readServerLogbook, subscribeLogbook } from '@/lib/logbook'
-import { SwitchRoleButton } from './SwitchRoleButton'
 import {
   evaluatePreFlightSeven,
   LINK_QUALITY_WEAK,
@@ -361,9 +360,11 @@ function StudentFrame({
           tone === 'warning' && 'bg-status-fault/10',
         )}
       >
-        <div className="flex justify-end">
-          <SwitchRoleButton label="Switch role" />
-        </div>
+        {/*
+         * No Switch role here, and nothing else that leaves. It was two taps from a child to
+         * the Teacher's Land and Stop, which is the safety story this product tells a school.
+         * A child leaves this app by closing the lid.
+         */}
         {children}
       </main>
     </div>

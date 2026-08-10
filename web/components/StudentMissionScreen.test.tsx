@@ -285,19 +285,21 @@ describe('asking for takeoff, and the answer', () => {
   })
 
   it('keeps exactly one Mission thing to press at every step of asking', () => {
-    // Switch role is escape chrome on every Student screen; Ask / Understood are the
-    // Mission presses (ADR-0025).
-    const missionButtons = () =>
-      screen
-        .queryAllByRole('button')
-        .filter((button) => !/switch role/i.test(button.textContent ?? ''))
-
+    // Ask and Understood are the only two presses in the whole app (ADR-0025). There is no
+    // escape chrome to filter out any more: Switch role was two taps from a child to the
+    // Teacher's Land and Stop, and it has left this side entirely.
     seatWithCraft()
-    expect(missionButtons()).toHaveLength(1)
+    expect(screen.queryAllByRole('button')).toHaveLength(1)
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
     settle()
-    expect(missionButtons()).toHaveLength(0)
+    expect(screen.queryAllByRole('button')).toHaveLength(0)
+  })
+
+  it('gives a child no way out of the Student app', () => {
+    seatWithCraft()
+    expect(screen.queryByRole('button', { name: /switch role/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
   })
 
   /*

@@ -10,7 +10,9 @@ import {
   readClassroomSession,
   requestTakeoff,
   resetClassroomForTests,
+  CLASSROOM_SESSION_KEY,
   QUIET_AFTER_MS,
+  closeClassroom,
   takeDroneSeat,
   updateSeatPhase,
   writeClassroomSession,
@@ -410,15 +412,26 @@ describe('asking for takeoff, and the answer', () => {
   })
 
   it('keeps exactly one Mission thing to press at every step of asking', () => {
-    // Ask and Understood are the only two presses in the whole app (ADR-0025). There is no
-    // escape chrome to filter out any more: Switch role was two taps from a child to the
-    // Teacher's Land and Stop, and it has left this side entirely.
+    /*
+     * Ask and Understood are the only two **Mission** presses (ADR-0025), and the way out of
+     * the classroom is not one, in exactly the way joining is not: both happen outside a
+     * Mission, and neither reaches an aircraft. The reasoning is written in
+     * `WhichDroneAreYouHolding` and again in `leaveClassroom`.
+     *
+     * Switch role is a different thing and is still gone. It was two taps from a child to the
+     * Teacher's Land and Stop, and the test below refuses it by name.
+     */
+    const missionPresses = () =>
+      screen
+        .queryAllByRole('button')
+        .filter((button) => !/leave this classroom/i.test(button.textContent ?? ''))
+
     seatWithCraft()
-    expect(screen.queryAllByRole('button')).toHaveLength(1)
+    expect(missionPresses()).toHaveLength(1)
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
     settle()
-    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    expect(missionPresses()).toHaveLength(0)
   })
 
   it('gives a child no way out of the Student app', () => {
@@ -571,5 +584,123 @@ describe('what to do when something happens', () => {
 
   it('says nothing at all while nothing is wrong', () => {
     expect(WhatToDoNow({ alerts: [] })).toBeNull()
+  })
+})
+
+/**
+ * A tablet can walk out of a classroom.
+ *
+ * The owner opened this on an iPhone and found it sitting in a lesson called "bleble" that
+ * had finished weeks earlier. There was no way to leave, the code never changed, and nothing
+ * had ever said the lesson was over.
+ */
+describe('leaving the classroom', () => {
+  const joinAsPriya = () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+  }
+
+  it('offers a visible way out before a Drone is taken', () => {
+    joinAsPriya()
+
+    expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
+  })
+
+  it('forgets the classroom and goes back to the door, saying why', () => {
+    joinAsPriya()
+    fireEvent.click(screen.getByRole('button', { name: 'Leave this classroom' }))
+    settle()
+
+    expect(window.localStorage.getItem(CLASSROOM_SESSION_KEY)).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent('You left the classroom')
+    expect(screen.getByLabelText('Classroom code')).toBeInTheDocument()
+  })
+
+  /*
+   * On one machine the Teacher's own session is in the same localStorage, so the same-laptop
+   * convenience would put the child straight back into the room they just walked out of.
+   */
+  it('does not walk straight back in on the same machine', () => {
+    joinAsPriya()
+    fireEvent.click(screen.getByRole('button', { name: 'Leave this classroom' }))
+    settle()
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'Join the classroom' })).toBeInTheDocument()
+  })
+
+  it('says the lesson has ended rather than leaving the tablet in it', () => {
+    joinAsPriya()
+    closeClassroom(Date.now())
+    cleanup()
+    studentScreen()
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'The lesson has ended' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
+  })
+
+  /*
+   * Never take a screen away from a child holding a flying aircraft: the tablet reads "The
+   * lesson has ended. Land now." until Telemetry sees the Drone down.
+   *
+   * Not pinned here, and that is deliberate rather than an omission. `airborne` comes from
+   * the Fleet, and the pinned demonstration this suite runs never leaves the ground, so the
+   * branch is unreachable in jsdom whatever the session says. It is walked in a browser
+   * instead, which is where every serious defect in this product has been found. What is
+   * pinned here is the half that is reachable: a Drone that is down gets the way out.
+   */
+  it('shows a child whose Drone is down the way out, once the Lesson has ended', () => {
+    joinAsPriya()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+
+    closeClassroom(Date.now())
+    cleanup()
+    studentScreen()
+    settle()
+
+    expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
+  })
+
+  /*
+   * "Wait, and they will appear" is a lie on a session nobody has touched for an hour. The
+   * board's own silence is the evidence, and it is the sentence that iPhone should have had.
+   */
+  it('names a finished lesson rather than promising Drones that will never appear', () => {
+    classroomWithBrief(['Priya'], [])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+
+    writeClassroomSession({
+      ...readClassroomSession()!,
+      boardSeenAt: Date.now() - QUIET_AFTER_MS - 60_000,
+    })
+    cleanup()
+    studentScreen()
+    settle()
+
+    const said = screen.getByRole('status').textContent ?? ''
+    expect(said).toContain('This lesson looks finished')
+    expect(screen.queryByText(/Wait, and they will appear/)).not.toBeInTheDocument()
+  })
+
+  /* The two Mission presses are unaffected: leaving is gone while the Drone is up. */
+  it('takes the way out off the screen while the Drone is flying', () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+
+    // On the ground, the way out is there.
+    expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
   })
 })

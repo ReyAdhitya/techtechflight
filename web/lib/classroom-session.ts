@@ -358,6 +358,15 @@ export interface ClassroomSession {
    * That is the rule about absent readings applied to a whole screen.
    */
   readonly boardSeenAt?: number | null
+  /**
+   * When the Lesson this classroom belongs to ended, or null while it is running.
+   *
+   * The only thing that makes an old session **provably** dead rather than merely quiet. The
+   * owner opened the Student app on an iPhone and found it sitting in a lesson called
+   * "bleble" that had finished weeks earlier, because nothing had ever said it was over and
+   * nothing could ever have said so.
+   */
+  readonly endedAt?: number | null
 }
 
 export interface StudentSeatLocal {
@@ -389,6 +398,7 @@ function emptySession(code: string, now: number): ClassroomSession {
     instructions: [],
     live: false,
     boardSeenAt: null,
+    endedAt: null,
   }
 }
 
@@ -551,11 +561,30 @@ export function openClassroom(input: {
 }): ClassroomSession {
   const now = input.now ?? Date.now()
   const existing = readClassroomSession()
-  const code = normalizeClassroomCode(input.code ?? existing?.code ?? mintClassroomCode(now))
-  const base = existing && existing.code === code ? existing : emptySession(code, now)
+
+  /*
+   * **A new Lesson mints a new code, and the old one stops working.**
+   *
+   * This read `input.code ?? existing?.code ?? mint(now)`, so the first code a board ever
+   * minted was reused for every lesson after it, forever. Last week's code opened today's
+   * class, which is how an iPhone came to be sitting in a finished lesson called "bleble"
+   * with nothing able to tell it otherwise: a tablet could not distinguish today from last
+   * month, because the two were the same document under the same code.
+   *
+   * A dead code is what makes a dead session *provable* rather than merely quiet. Keyed on
+   * the Lesson rather than on time, because a Teacher who reloads the board mid-lesson must
+   * not find the code they read out has changed under thirty children.
+   */
+  const carriesOn = existing !== null && existing.lessonId === input.lessonId
+  const code = normalizeClassroomCode(
+    input.code ?? (carriesOn ? existing.code : mintClassroomCode(now)),
+  )
+  const base = carriesOn && existing.code === code ? existing : emptySession(code, now)
   return writeClassroomSession({
     ...base,
     code,
+    // A classroom being opened is a classroom that has not ended, whatever the last one did.
+    endedAt: null,
     lessonId: input.lessonId,
     lessonLabel: input.lessonLabel,
     scenarioId: input.scenarioId,
@@ -573,6 +602,52 @@ export function openClassroom(input: {
     live: input.live ?? true,
     updatedAt: now,
   })
+}
+
+/**
+ * The Lesson is over, so the classroom is over. Said out loud, to the tablets.
+ *
+ * Written and pushed rather than merely forgotten, because forgetting is what left an iPhone
+ * in a finished lesson: a tablet on another device holds its own copy and polls the cloud by
+ * the code it already has, so the only way it can ever learn the truth is for the truth to be
+ * written into the document it is reading.
+ *
+ * The seats stay. A Teacher closing a Lesson has not un-taught it, and the last thing the
+ * board recorded about who flew what is worth more than a tidy empty list.
+ */
+export function closeClassroom(now = Date.now()): ClassroomSession | null {
+  const session = readClassroomSession()
+  if (session === null || (session.endedAt ?? null) !== null) return session
+  return writeClassroomSession({ ...session, endedAt: now, live: false })
+}
+
+/** Whether this classroom is provably over, rather than merely quiet. */
+export function classroomHasEnded(session: ClassroomSession | null): boolean {
+  return session !== null && (session.endedAt ?? null) !== null
+}
+
+/**
+ * This tablet leaves the classroom.
+ *
+ * Forgets the seat and the session copy on **this device only**: it is a tablet walking out
+ * of a room, not a Teacher deleting a record, and the board's own session is untouched.
+ *
+ * There was no way to do this at all. Once a device joined it was joined forever, which is
+ * the whole of why an iPhone sat in a lesson that had finished weeks earlier.
+ *
+ * **This is not one of ADR-0025's two presses.** Those are Mission presses, made while a
+ * Mission is under way: Ask to take off, and Understood. Joining is not one of them either,
+ * for the reason already written in `WhichDroneAreYouHolding`, and leaving sits in the same
+ * category. Nothing here reaches an aircraft.
+ */
+export function leaveClassroom(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+    window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
+  } catch {
+    /* ignore */
+  }
 }
 
 export function readStudentSeatLocal(): StudentSeatLocal | null {
@@ -1021,8 +1096,14 @@ export async function loadClassroomByCode(code: string): Promise<ClassroomSessio
   if (!normalized) return null
   // Local first — same laptop / second tab never needs the cloud round trip.
   const local = readClassroomSession()
-  if (local && local.code === normalized) return local
+  if (local && local.code === normalized) return classroomHasEnded(local) ? null : local
   const remote = await pullClassroomFromCloud(normalized)
+  /*
+   * A code for a finished lesson is not a code. Refused here rather than at each caller, so
+   * the door and the tablet cannot disagree about whether last week's four letters still open
+   * the room.
+   */
+  if (remote && classroomHasEnded(remote)) return null
   if (remote) {
     try {
       window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(remote))

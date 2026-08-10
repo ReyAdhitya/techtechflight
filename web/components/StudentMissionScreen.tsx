@@ -323,12 +323,17 @@ function LandOnYourPad({
     <StudentFrame rail={rail}>
       <IdentityLine seat={seat} />
       <p className="m-0 label">Your teacher approved it</p>
+      {/*
+       * How a normal flight ends, in the Teacher's own words: they say "bring it home" out
+       * loud and this says the same thing. The child flies it back by hand, and the board
+       * finds out it is down from Telemetry rather than from anybody pressing anything.
+       */}
       <h1 className="m-0 font-display text-summary font-medium text-balance text-ink">
-        Land on your pad
+        Return home and land
       </h1>
       <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
         {airborne
-          ? 'Come down slowly onto the spot you started from.'
+          ? 'Fly back to the spot you started from and come down slowly onto your pad.'
           : 'You are down. Stand clear of the propellers and wait.'}
       </p>
     </StudentFrame>

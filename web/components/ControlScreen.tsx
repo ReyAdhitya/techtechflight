@@ -821,6 +821,10 @@ export function ControlScreen({
            * The list first, then the button that refuses. A Teacher meeting the refusal needs
            * the Drone that caused it named, and Recall beside its name.
            */}
+          <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+            Teams that finished were approved and brought their Drone home. Recall is for one
+            that is still up at the end of the period and cannot be brought in.
+          </p>
           <MissionCraftDownList
             craft={missionCraftStatus}
             homeOf={(droneId) => homeTracker.current.homeOf(droneId)}

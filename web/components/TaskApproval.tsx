@@ -42,6 +42,16 @@ export function TaskApproval({
       <h2 id="task-approval-heading" className="label m-0">
         Task done
       </h2>
+      {/*
+       * What Approve means, said once above the rows. This is how a flight ends, and the
+       * sentence is here because the alternative a Teacher reaches for is Recall: it is on
+       * every strip, it works, and it is the fire alarm. A team that has finished is told to
+       * bring it home; a team in trouble is recalled.
+       */}
+      <p className="m-0 max-w-[62ch] text-value text-ink-subtle">
+        Approve tells the team to return home and land. Their tablet says so, and the board
+        sees them down from Telemetry. Recall is for trouble, not for finishing.
+      </p>
       <ul className="m-0 flex list-none flex-col gap-2 p-0">
         {finished.map((seat) => (
           <li

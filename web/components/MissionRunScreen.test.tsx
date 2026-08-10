@@ -171,11 +171,14 @@ describe('the Mission run page', () => {
   })
 
   /*
-   * The one that is a safety property rather than a preference. Steps 6 to 10 are one board:
-   * a Teacher reading an Alert at step 10 still has every strip, and every Land and Stop on
-   * it, without pressing anything in the rail first.
+   * The safety property, restated for ADR-0030.
+   *
+   * Steps 6 to 10 used to be one board, so that no Command could be behind a navigation
+   * press. They are one panel each now, and the argument is answered rather than dropped:
+   * the Attention bar and the fleet-wide Land all / Hover all / Stop all are above every one
+   * of them, so a Teacher can bring every aircraft down from anywhere in one tap.
    */
-  it('keeps the whole live board on every in-the-air step', () => {
+  it('keeps Attention and the fleet-wide stop above every in-the-air step', () => {
     classReadyToFly()
 
     for (const step of [6, 7, 8, 9, 10]) {
@@ -184,25 +187,55 @@ describe('the Mission run page', () => {
       settle()
 
       expect(
-        surface().getByRole('heading', { name: /Awaiting clearance/i }),
-        `step ${step} lost the clearance queue`,
+        surface().getByRole('region', { name: 'Attention' }),
+        `step ${step} lost the Attention bar`,
       ).toBeInTheDocument()
       expect(
-        surface().getByRole('heading', { name: 'Every Drone' }),
-        `step ${step} lost the strips`,
-      ).toBeInTheDocument()
-      expect(
-        surface().getByRole('heading', { level: 2, name: 'Where everything is' }),
-        `step ${step} lost the Scope`,
+        surface().getByRole('region', { name: 'Fleet actions' }),
+        `step ${step} lost the fleet-wide buttons`,
       ).toBeInTheDocument()
 
       unmount()
     }
-    /*
-     * Five full renders of the live board. It clears five seconds alone and does not on a
-     * machine running the whole suite, so the budget is stated rather than left to the
-     * default: a timeout that depends on what else is running is not a test result.
-     */
+  }, 20_000)
+
+  /*
+   * And each step shows only its own panel, in the rail's order.
+   *
+   * The page used to run 10, 6, 9, 7 down one scroller, so tapping step 7 scrolled past 9 and
+   * 10 to reach it and tapping 9 went backwards. The numbers counted up and the page did not.
+   */
+  it('shows one panel per step, and only that step', () => {
+    const lessonId = classReadyToFly()
+    startMission(lessonId, Date.now())
+
+    const panels: Readonly<Record<number, string>> = {
+      6: 'Awaiting clearance',
+      7: 'Where everything is',
+      8: 'Every Drone',
+      9: 'Teacher actions',
+    }
+
+    for (const [step, heading] of Object.entries(panels)) {
+      at(Number(step))
+      const { unmount } = missionRun()
+      settle()
+
+      expect(
+        surface().getByRole('heading', { level: 2, name: heading }),
+        `step ${step} did not show its own panel`,
+      ).toBeInTheDocument()
+
+      for (const [other, otherHeading] of Object.entries(panels)) {
+        if (other === step) continue
+        expect(
+          surface().queryByRole('heading', { level: 2, name: otherHeading }),
+          `step ${step} is also showing step ${other}`,
+        ).not.toBeInTheDocument()
+      }
+
+      unmount()
+    }
   }, 20_000)
 
   /*
@@ -217,8 +250,13 @@ describe('the Mission run page', () => {
     const lessonId = classReadyToFly()
     // Under way, or steps 7 to 10 are locked and there is no board to pick a Drone on.
     startMission(lessonId, Date.now())
-    // Step 7, not 8: the active row reads "You are here", so the words under test would
-    // be hidden by the very step that shows them.
+    /*
+     * Picked on the Scope at step 7, which is where a Drone is chosen now that the strips
+     * live on step 8 (ADR-0030). It has to be a step other than 8: the rail row a Teacher is
+     * standing on reads "You are here" rather than its own words, so step 8 can only ever say
+     * which Drone it is about while somebody is looking at it from somewhere else. That is
+     * the whole point of the sentence.
+     */
     at(7)
     missionRun()
     settle()
@@ -226,9 +264,10 @@ describe('the Mission run page', () => {
     const step8 = () => screen.getByRole('link', { name: /Telemetry and camera/ })
     expect(step8()).toHaveAttribute('title', '8. Telemetry and camera, No Drone selected')
 
-    const strip = screen.getByRole('link', { name: 'Drone 1' }).closest('li')!
+    const mark = surface().getAllByRole('button', { pressed: false })
+      .find((button) => (button.textContent ?? '').includes('Drone 1'))!
     act(() => {
-      fireEvent.click(strip)
+      fireEvent.click(mark)
     })
     settle()
 

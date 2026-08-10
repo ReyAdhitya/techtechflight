@@ -119,6 +119,7 @@ export function ControlScreen({
   bare = false,
   step,
   onSelectedCraftChange,
+  onGoToStep,
 }: {
   /** Mounted inside another screen's `main`, so it renders neither one nor a frame. */
   readonly bare?: boolean
@@ -132,6 +133,15 @@ export function ControlScreen({
    * is a state the board could reach and a sentence the rail could not leave.
    */
   readonly onSelectedCraftChange?: (name: string | null) => void
+  /**
+   * Ask to be taken to another step. Absent when nothing owns the step, which is every
+   * caller but the Mission run.
+   *
+   * Three of the Teacher actions are questions rather than commands and used to answer
+   * themselves by scrolling. The rail owns where a Teacher is, so it is the rail's screen
+   * that answers them.
+   */
+  readonly onGoToStep?: (step: number) => void
 } = {}) {
   const { snapshot, vitals: fleetVitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios, demo } =
     useFleet()
@@ -159,13 +169,10 @@ export function ControlScreen({
     return subscribeClassroom(setClassroom)
   }, [])
   const [pickedTarget, setPickedTarget] = useState<LocalPosition | null>(null)
-  const clearanceRef = useRef<HTMLElement | null>(null)
-  const scopeRef = useRef<HTMLElement | null>(null)
-  const targetRef = useRef<HTMLElement | null>(null)
-  const attentionRef = useRef<HTMLElement | null>(null)
-  const commandsRef = useRef<HTMLElement | null>(null)
-  const stripsRef = useRef<HTMLElement | null>(null)
-  const sealRef = useRef<HTMLElement | null>(null)
+  /*
+   * The section refs are gone with the scrolling (ADR-0030). There is nowhere to scroll to
+   * when the step is the screen.
+   */
   const airborneTracker = useRef(new AirborneTracker())
   const homeTracker = useRef(new HomePointTracker())
   const ceilingRef = useRef<CeilingBreachState>(emptyCeilingBreachState())
@@ -219,26 +226,11 @@ export function ControlScreen({
   }, [state, now])
 
   /*
-   * The rail keeps the Teacher's place on a board that stays whole. Changing step brings
-   * the section for that step into view; nothing is unmounted, so a Command is never more
-   * than a scroll away.
+   * Nothing scrolls into view any more, and the refs that did it are gone. There is nowhere
+   * to scroll to when the step *is* the screen (ADR-0030). `MissionRunScreen` moves the
+   * keyboard to the top of the surface on a step change, which is what the scroll used to do
+   * by accident and did badly: it left the sequential focus point deep inside the board.
    */
-  useEffect(() => {
-    if (step === undefined) return
-    const sections: Readonly<Record<number, typeof clearanceRef>> = {
-      6: clearanceRef,
-      7: scopeRef,
-      8: stripsRef,
-      9: commandsRef,
-      10: attentionRef,
-      11: sealRef,
-    }
-    const target = sections[step]?.current
-    // jsdom has no layout, and no `scrollIntoView` on an element to call either.
-    if (typeof target?.scrollIntoView === 'function') {
-      target.scrollIntoView({ block: 'start', behavior: 'smooth' })
-    }
-  }, [step])
 
   /*
    * Points tick off by themselves, from this board, because this is where the Telemetry is.
@@ -470,7 +462,16 @@ export function ControlScreen({
     }
   }
 
-  const board = (
+  /*
+   * What is true of the room, on every step and never scrolling away (ADR-0030).
+   *
+   * The Lesson and its clock, how many are up, the Attention bar, and the fleet-wide Land
+   * all / Hover all / Stop all. Steps 6 to 10 show one panel each underneath; this does not
+   * move between them, which is what makes putting the air behind steps safe rather than
+   * reckless: an emergency in a room full of children is "everything, now", and that is one
+   * tap from anywhere in the run.
+   */
+  const alwaysOn = (
     <>
       {lesson && (
         <LessonStrip lesson={lesson} events={snapshot.history?.events ?? []} now={now} />
@@ -481,11 +482,7 @@ export function ControlScreen({
         <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
       </div>
 
-      {lesson ? <ClassroomCodePanel /> : null}
-
-      {mission !== null ? <ScenarioWatchList scenarioId={mission.scenarioId} /> : null}
-
-      <section ref={attentionRef} className="scroll-mt-4" aria-label="Attention">
+      <section aria-label="Attention">
         <AttentionBar
           queue={queue}
           studentFor={(droneId) => studentOf(book, droneId)}
@@ -500,30 +497,72 @@ export function ControlScreen({
       </section>
 
       {/*
-       * A child whose iPad died looks exactly like one flying happily, and the Drone is in
-       * the air either way. Beside the ceiling and the floor because it is the same kind of
-       * line: something about the room that the strips cannot say.
+       * The emergency bar. It is on every step and it never scrolls away, which is what
+       * answers ADR-0026's objection to putting the air behind steps at all: a Teacher can
+       * bring every aircraft down from anywhere in the run, in one tap (ADR-0030).
+       *
+       * Rendered whether or not anything is up. The three buttons hide themselves at zero,
+       * which is honest for a button, but the bar staying put is the whole promise, so the
+       * absence is said in words rather than by the row vanishing and moving everything
+       * under it.
        */}
-      <QuietTabletsNotice />
-      <HeightCeilingBanner vitals={vitals} />
-      <AltitudeFloorNotice vitals={vitals} />
-      <ControlDisclosure summary="Also noting">
-        <div className="flex flex-col gap-3">
-          <NotYetAirborneNotice
-            lessonStarted={lesson !== null}
-            craft={vitals.map((entry) => ({
+      <section
+        className="flex flex-wrap items-center gap-3 border-y border-hairline py-3"
+        aria-label="Fleet actions"
+      >
+          <LandAllButton
+            fleet={vitals.map((entry) => ({
               droneId: entry.droneId,
-              callsign: entry.callsign,
               airborne: entry.airborne,
-              studentName: studentOf(book, entry.droneId),
             }))}
+            onLand={(droneId) => {
+              const entry = vitals.find((v) => v.droneId === droneId)
+              if (entry) issueCommand(droneId, 'land', entry.callsign)
+            }}
           />
-          <LongestAirborne now={now} craft={longestAirborneCraft} />
-        </div>
-      </ControlDisclosure>
+          <HoverAllButton
+            fleet={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              airborne: entry.airborne,
+            }))}
+            onHover={(droneId) => {
+              const entry = vitals.find((v) => v.droneId === droneId)
+              if (entry) issueCommand(droneId, 'hold', entry.callsign)
+            }}
+          />
+          <StopAllButton
+            fleet={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              airborne: entry.airborne,
+            }))}
+            onStop={(droneId) => {
+              const entry = vitals.find((v) => v.droneId === droneId)
+              if (entry) issueCommand(droneId, 'emergency-stop', entry.callsign)
+            }}
+          />
+          {airborneCount === 0 ? (
+          <p className="m-0 text-value text-ink-muted">Nothing is in the air.</p>
+        ) : null}
+      </section>
+      {cameraDrone && (
+        <CameraSlide
+          droneId={cameraDrone.id}
+          droneName={cameraDrone.name}
+          camera={cameraDrone.telemetry?.camera}
+          scenarios={scenarios}
+          onClose={() => setCameraDroneId(null)}
+        />
+      )}
+    </>
+  )
+
+  /** Step 6, takeoff clearance: the three answers a Teacher gives a team, and the code. */
+  const clearanceStep = (
+    <>
+      {lesson ? <ClassroomCodePanel /> : null}
 
       {mission !== null ? (
-        <section ref={clearanceRef} className="flex flex-col gap-3 scroll-mt-4">
+        <section className="flex flex-col gap-3">
           <ClearanceQueue
             state={clearances}
             craft={clearanceCraft}
@@ -611,25 +650,13 @@ export function ControlScreen({
         }}
       />
 
-      <section ref={commandsRef} className="scroll-mt-4">
-        <TeacherAtcToolbar
-          mission={mission}
-          selectedCraft={selectedCraftOption}
-          airborneCount={airborneCount}
-          givenBy="Teacher"
-          onCommandFleet={(kind) => {
-            for (const entry of vitals) {
-              if (entry.airborne) issueCommand(entry.droneId, kind, entry.callsign)
-            }
-          }}
-          onMissionChange={persistMission}
-          onFocusClearance={() => clearanceRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          onFocusScope={() => scopeRef.current?.scrollIntoView({ behavior: 'smooth' })}
-          onFocusNewTarget={() => targetRef.current?.scrollIntoView({ behavior: 'smooth' })}
-        />
-      </section>
+    </>
+  )
 
-      <section ref={scopeRef} className="flex flex-col gap-3 scroll-mt-4">
+  /** Step 7, where everything is. */
+  const scopeStep = (
+    <>
+      <section className="flex flex-col gap-3">
         <h2 className="label m-0">Where everything is</h2>
         <Scope
           drones={state.drones}
@@ -683,67 +710,13 @@ export function ControlScreen({
           Draw or change No-fly Zones on Lesson under Mission area. Scope shows them live.
         </p>
       </section>
+    </>
+  )
 
-      {airborneCount > 0 && (
-        <section className="flex flex-wrap items-center gap-3" aria-label="Fleet actions">
-          <LandAllButton
-            fleet={vitals.map((entry) => ({
-              droneId: entry.droneId,
-              airborne: entry.airborne,
-            }))}
-            onLand={(droneId) => {
-              const entry = vitals.find((v) => v.droneId === droneId)
-              if (entry) issueCommand(droneId, 'land', entry.callsign)
-            }}
-          />
-          <HoverAllButton
-            fleet={vitals.map((entry) => ({
-              droneId: entry.droneId,
-              airborne: entry.airborne,
-            }))}
-            onHover={(droneId) => {
-              const entry = vitals.find((v) => v.droneId === droneId)
-              if (entry) issueCommand(droneId, 'hold', entry.callsign)
-            }}
-          />
-          <StopAllButton
-            fleet={vitals.map((entry) => ({
-              droneId: entry.droneId,
-              airborne: entry.airborne,
-            }))}
-            onStop={(droneId) => {
-              const entry = vitals.find((v) => v.droneId === droneId)
-              if (entry) issueCommand(droneId, 'emergency-stop', entry.callsign)
-            }}
-          />
-        </section>
-      )}
-
-      {mission !== null && selectedCraftOption !== null ? (
-        <section ref={targetRef} className="flex flex-col gap-3 scroll-mt-4">
-          <h2 className="label m-0">Instructions for the selected Drone</h2>
-          <InstructionControls
-            mission={mission}
-            craft={selectedCraftOption}
-            givenBy="Teacher"
-            onRecorded={persistMission}
-          />
-          {assignTargetTeams.length > 0 ? (
-            <AssignTargetControl
-              mission={mission}
-              teams={assignTargetTeams}
-              pickedPosition={pickedTarget}
-              givenBy="Teacher"
-              onRecorded={(next) => {
-                persistMission(next)
-                setPickedTarget(null)
-              }}
-            />
-          ) : null}
-        </section>
-      ) : null}
-
-      <section ref={stripsRef} className="flex scroll-mt-4 flex-col gap-3">
+  /** Step 8, telemetry and camera: one strip per aircraft, with its readings on it. */
+  const stripsStep = (
+    <>
+      <section className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <h2 className="label m-0">Every Drone</h2>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -851,23 +824,105 @@ export function ControlScreen({
           ))}
         </ul>
       </section>
-
-      {cameraDrone && (
-        <CameraSlide
-          droneId={cameraDrone.id}
-          droneName={cameraDrone.name}
-          camera={cameraDrone.telemetry?.camera}
-          scenarios={scenarios}
-          onClose={() => setCameraDroneId(null)}
-        />
-      )}
     </>
   )
+
+  /** Step 9, commands: the Teacher's actions, and the instructions for one Drone. */
+  const commandsStep = (
+    <>
+      <section>
+        <TeacherAtcToolbar
+          mission={mission}
+          selectedCraft={selectedCraftOption}
+          airborneCount={airborneCount}
+          givenBy="Teacher"
+          onCommandFleet={(kind) => {
+            for (const entry of vitals) {
+              if (entry.airborne) issueCommand(entry.droneId, kind, entry.callsign)
+            }
+          }}
+          onMissionChange={persistMission}
+          onGoToStep={(wanted) => onGoToStep?.(wanted)}
+        />
+      </section>
+
+      {mission !== null && selectedCraftOption !== null ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="label m-0">Instructions for the selected Drone</h2>
+          <InstructionControls
+            mission={mission}
+            craft={selectedCraftOption}
+            givenBy="Teacher"
+            onRecorded={persistMission}
+          />
+          {assignTargetTeams.length > 0 ? (
+            <AssignTargetControl
+              mission={mission}
+              teams={assignTargetTeams}
+              pickedPosition={pickedTarget}
+              givenBy="Teacher"
+              onRecorded={(next) => {
+                persistMission(next)
+                setPickedTarget(null)
+              }}
+            />
+          ) : null}
+        </section>
+      ) : null}
+
+    </>
+  )
+
+  /**
+   * Step 10, alerts: everything the board is watching that is not already in Attention.
+   *
+   * Attention itself is on every step, because a Teacher on step 6 must not miss an Alert
+   * raised about step 10. What is here is the rest of the watch: the ceiling, the floor, the
+   * tablets that have gone quiet, and what this Scenario says to look out for.
+   */
+  const alertsStep = (
+    <>
+      {mission !== null ? <ScenarioWatchList scenarioId={mission.scenarioId} /> : null}
+
+      {/*
+       * A child whose iPad died looks exactly like one flying happily, and the Drone is in
+       * the air either way. Beside the ceiling and the floor because it is the same kind of
+       * line: something about the room that the strips cannot say.
+       */}
+      <QuietTabletsNotice />
+      <HeightCeilingBanner vitals={vitals} />
+      <AltitudeFloorNotice vitals={vitals} />
+      <ControlDisclosure summary="Also noting">
+        <div className="flex flex-col gap-3">
+          <NotYetAirborneNotice
+            lessonStarted={lesson !== null}
+            craft={vitals.map((entry) => ({
+              droneId: entry.droneId,
+              callsign: entry.callsign,
+              airborne: entry.airborne,
+              studentName: studentOf(book, entry.droneId),
+            }))}
+          />
+          <LongestAirborne now={now} craft={longestAirborneCraft} />
+        </div>
+      </ControlDisclosure>
+
+    </>
+  )
+
+  /** Which of the five panels belongs to the step the rail is on. */
+  const inTheAir: Readonly<Record<number, React.ReactNode>> = {
+    6: clearanceStep,
+    7: scopeStep,
+    8: stripsStep,
+    9: commandsStep,
+    10: alertsStep,
+  }
 
   const closeDown = (
     <>
       {mission !== null && mission.startedAt !== null ? (
-        <section ref={sealRef} className="flex scroll-mt-4 flex-col gap-3 border-t border-hairline pt-5">
+        <section className="flex flex-col gap-3 border-t border-hairline pt-5">
           <h2 className="label m-0">Mission complete</h2>
           {/*
            * The list first, then the button that refuses. A Teacher meeting the refusal needs
@@ -913,22 +968,46 @@ export function ControlScreen({
   )
 
   /*
-   * Step 11 is the close-down and only that. Hiding the strips is safe here because the step
-   * carries its own Recall and Land against the Drones that are still up, so the one Command
-   * a Teacher can need at close-down is on the step rather than four steps back.
+   * One step, one panel, under a bar that does not move (ADR-0030).
+   *
+   * This was nine sections on one page that the rail scrolled into by `ref`, and the page ran
+   * 10, 6, 9, 7: tapping step 7 scrolled *past* 9 and 10 to reach it, and tapping 9 went
+   * backwards. The numbers counted up and the page did not, which is the whole of the messy
+   * feeling a Teacher reported.
+   *
+   * Step 11 keeps the close-down to itself and always did, and the emergency bar is above it
+   * too now, so the one Command a Teacher can need at close-down is on the step *and* the
+   * fleet-wide stop is above it.
    */
-  if (bare && step === 11) {
-    return <div className="flex flex-col gap-6">{closeDown}</div>
-  }
-
-  if (bare) {
-    return (
-      <div className="flex flex-col gap-6">
-        {board}
+  const inside =
+    step === 11 ? (
+      <>
+        {alwaysOn}
         {closeDown}
-      </div>
+      </>
+    ) : step !== undefined && inTheAir[step] !== undefined ? (
+      <>
+        {alwaysOn}
+        {inTheAir[step]}
+      </>
+    ) : (
+      /*
+       * No step asked for: `/control` and any other caller that wants the board rather than
+       * one panel of it. Everything, in the rail's order, which is the order it should have
+       * been in all along.
+       */
+      <>
+        {alwaysOn}
+        {clearanceStep}
+        {scopeStep}
+        {stripsStep}
+        {commandsStep}
+        {alertsStep}
+        {closeDown}
+      </>
     )
-  }
+
+  if (bare) return <div className="flex flex-col gap-6">{inside}</div>
 
   return (
     <main
@@ -936,8 +1015,7 @@ export function ControlScreen({
       tabIndex={-1}
       className={cn(INSTRUMENT_FRAME, 'flex flex-col gap-6 p-4 min-[26rem]:p-8')}
     >
-      {board}
-      {closeDown}
+      {inside}
     </main>
   )
 }

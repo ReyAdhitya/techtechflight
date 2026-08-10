@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { alertQueue } from '@/lib/vitals'
 import { readClearances } from '@/lib/clearance-store'
 import { awaitingClearance, type ClearanceCraftInput } from '@/lib/clearance'
@@ -161,6 +161,21 @@ export function MissionRunScreen() {
   }, [narrow, step])
 
   /*
+   * Moving between steps from inside a step.
+   *
+   * The rail is the navigation on this page and stays so; this is the same destination named
+   * where the Teacher is looking, for the three Teacher actions that are questions rather
+   * than commands. `replace` rather than `push`: walking a rail is not browsing, and a
+   * Teacher pressing Back after four steps wants the screen they came from, not the fourth
+   * one back.
+   */
+  const router = useRouter()
+  const goToStep = useCallback(
+    (wanted: number) => router.replace(`/mission?step=${wanted}`),
+    [router],
+  )
+
+  /*
    * Where the keyboard is after a step change, and this is a fix rather than a nicety.
    *
    * The live board scrolls its own section into view when the step changes, and
@@ -248,7 +263,11 @@ export function MissionRunScreen() {
         </header>
 
         {open ? (
-          <StepSurface step={step} onSelectedCraftChange={setSelectedCraftName} />
+          <StepSurface
+            step={step}
+            onSelectedCraftChange={setSelectedCraftName}
+            onGoToStep={goToStep}
+          />
         ) : (
           <p
             className="m-0 rounded-surface border border-dashed border-hairline bg-surface-1 px-3.5 py-3 text-value text-ink-muted"
@@ -285,13 +304,22 @@ export function MissionRunScreen() {
 function StepSurface({
   step,
   onSelectedCraftChange,
+  onGoToStep,
 }: {
   readonly step: number
   readonly onSelectedCraftChange: (name: string | null) => void
+  readonly onGoToStep: (step: number) => void
 }) {
   if (step <= 5) return <LessonScreen bare step={step} />
   if (step <= 11) {
-    return <ControlScreen bare step={step} onSelectedCraftChange={onSelectedCraftChange} />
+    return (
+      <ControlScreen
+        bare
+        step={step}
+        onSelectedCraftChange={onSelectedCraftChange}
+        onGoToStep={onGoToStep}
+      />
+    )
   }
   return <ReportsScreen bare />
 }

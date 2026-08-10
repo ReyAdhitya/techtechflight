@@ -64,7 +64,7 @@ export function DroneCard({
       <span className="sc-card__rail" aria-hidden="true" />
 
       <div className="flex items-start justify-between gap-3">
-        <h3 className="m-0 text-[1.375rem] font-semibold tracking-[-0.02em]">
+        <h3 className="m-0 text-[length:var(--sc-text-lg)] font-semibold tracking-[-0.02em]">
           <button type="button" className="sc-card__select" onClick={onSelect}>
             {drone.name}
             <span className="sc-visually-hidden">
@@ -83,7 +83,7 @@ export function DroneCard({
               <span className="sc-label">
                 {drone.stale ? 'Last known battery' : 'Battery'}
               </span>
-              <span className="sc-tnum text-[0.9375rem] font-semibold">
+              <span className="sc-tnum text-[length:var(--sc-text-sm)] font-semibold">
                 {telemetry.batteryIsEstimate && '~'}
                 {formatBattery(telemetry.batteryFraction)}
               </span>

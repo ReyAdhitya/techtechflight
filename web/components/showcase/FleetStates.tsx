@@ -55,7 +55,7 @@ export function EmptyFleet() {
       <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
         No Drones in this Fleet
       </h2>
-      <p className="m-0 max-w-[46ch] text-[0.9375rem] text-[var(--sc-ink-muted)]">
+      <p className="m-0 max-w-[46ch] text-[length:var(--sc-text-sm)] text-[var(--sc-ink-muted)]">
         The ground station is answering, and it says this School has no Drones registered
         yet. Nothing is wrong with the board. There is simply nothing to show.
       </p>

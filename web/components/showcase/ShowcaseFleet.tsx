@@ -107,7 +107,7 @@ export function ShowcaseFleet({ snapshot, now, dark }: ShowcaseFleetProps) {
           </TooltipPrimitive.Provider>
 
           {visible.length === 0 && (
-            <p className="m-0 py-10 text-center text-[0.9375rem] text-[var(--sc-ink-muted)]">
+            <p className="m-0 py-10 text-center text-[length:var(--sc-text-sm)] text-[var(--sc-ink-muted)]">
               No Drones in this bucket right now.
             </p>
           )}

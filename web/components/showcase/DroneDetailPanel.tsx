@@ -61,7 +61,7 @@ export function DroneDetailPanel({ drone, ageMs, dark, onClose }: DroneDetailPan
           }}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <DialogTitle className="m-0 text-[1.75rem] font-semibold tracking-[-0.03em]">
+            <DialogTitle className="m-0 text-[length:var(--sc-text-xl)] font-semibold tracking-[-0.03em]">
               {drone.name}
             </DialogTitle>
             <Badge status={drone.status} />
@@ -73,7 +73,7 @@ export function DroneDetailPanel({ drone, ageMs, dark, onClose }: DroneDetailPan
             </div>
 
             <div className="flex flex-col gap-4">
-              <p className="m-0 text-[0.9375rem] text-[var(--sc-ink-muted)]">
+              <p className="m-0 text-[length:var(--sc-text-sm)] text-[var(--sc-ink-muted)]">
                 {presentation.meaning}
               </p>
 
@@ -141,7 +141,7 @@ function Row({ label, children }: { readonly label: string; readonly children: R
   return (
     <>
       <dt className="sc-label self-center">{label}</dt>
-      <dd className="sc-tnum m-0 text-[0.9375rem]">{children}</dd>
+      <dd className="sc-tnum m-0 text-[length:var(--sc-text-sm)]">{children}</dd>
     </>
   )
 }

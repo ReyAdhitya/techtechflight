@@ -1330,7 +1330,15 @@ function AmIConnected({ seat }: { readonly seat: ClassroomSeat }) {
   const battery = mine?.batteryFraction ?? null
 
   return (
-    <div className="flex flex-wrap gap-3">
+    /*
+     * Stacked on a phone, side by side once there is room for both.
+     *
+     * `flex-wrap` with `flex-1` on each card let them share a 390px row three words wide, so
+     * "The Teacher's board" came out one word per line. Wrapping is what a row does when it
+     * runs out of space; two cards that each need most of the width should not be in a row
+     * at that size at all.
+     */
+    <div className="grid grid-cols-1 gap-3 min-[34rem]:grid-cols-2">
       <StatusLine
         ok={boardAgeMs !== null}
         label="The Teacher's board"

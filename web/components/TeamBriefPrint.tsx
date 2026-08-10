@@ -169,7 +169,7 @@ function BriefMap({
               y={svgY(checkpoint.at.northM)}
               textAnchor="middle"
               dominantBaseline="central"
-              className="fill-ink text-[0.35rem] font-medium"
+              className="fill-ink text-diagram font-medium"
             >
               {index + 1}
             </text>

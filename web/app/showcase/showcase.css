@@ -49,6 +49,23 @@
   --sc-brand: #e57a10;
   --sc-brand-text: #a55206;
 
+  /*
+   * Type. Its own scale, because this surface is arguing the opposite case to the board's
+   * and shares none of its sizes.
+   *
+   * Named rather than typed into the markup. Thirteen components carried raw
+   * `text-[0.9375rem]` and friends, which is a number nobody can find twice and nobody can
+   * change once; `web/type-scale.test.ts` refuses them now for the board and for here.
+   */
+  --sc-text-xs: 0.8125rem;
+  --sc-text-sm: 0.9375rem;
+  --sc-text-lg: 1.375rem;
+  --sc-text-xl: 1.75rem;
+  /* The Fleet count, which is the one number this surface shouts. */
+  --sc-text-hero: clamp(2.5rem, 6vw, 3.75rem);
+  /* "of 6" beside it, sized against the hero rather than against the page. */
+  --sc-text-hero-unit: 0.42em;
+
   /* Shape, depth, motion ------------------------------------------------- */
   --sc-radius: 20px;
   --sc-radius-sm: 12px;

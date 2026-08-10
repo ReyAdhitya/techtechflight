@@ -52,9 +52,9 @@ export function FleetOverview({ drones, focus, focusAgeMs, dark }: FleetOverview
     >
       <div className="flex flex-col justify-between gap-6">
         <div className="flex flex-col gap-3">
-          <h1 className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[clamp(2.5rem,6vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.035em]">
+          <h1 className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[length:var(--sc-text-hero)] font-semibold leading-[1.02] tracking-[-0.035em]">
             <AnimatedNumber value={usable} className="sc-tnum" />
-            <span className="text-[0.42em] font-medium tracking-[-0.01em] text-[var(--sc-ink-muted)]">
+            <span className="text-[length:var(--sc-text-hero-unit)] font-medium tracking-[-0.01em] text-[var(--sc-ink-muted)]">
               of {drones.length} Ready to hand out
             </span>
           </h1>

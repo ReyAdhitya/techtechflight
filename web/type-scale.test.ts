@@ -18,13 +18,25 @@ import { describe, expect, it } from 'vitest'
 
 const CSS = readFileSync(resolve(process.cwd(), 'web/app/globals.css'), 'utf8')
 
-function tsxFiles(dir: string): string[] {
+/**
+ * Every file that can carry a class name, which is not only the ones with markup in them.
+ *
+ * This read `.tsx` alone, so a class list held in a `.ts` module was unchecked — and several
+ * are: `vitals-presentation.ts` holds the severity classes the whole board reads its Alert
+ * colours from. Reported twice in two waves before anybody widened it. The test was not
+ * wrong; its claim was.
+ */
+function sourceFiles(dir: string): string[] {
   const found: string[] = []
   for (const entry of readdirSync(dir)) {
     if (entry === 'node_modules' || entry === '.next' || entry === 'out') continue
     const full = join(dir, entry)
-    if (statSync(full).isDirectory()) found.push(...tsxFiles(full))
-    else if (full.endsWith('.tsx') && !full.endsWith('.test.tsx')) found.push(full)
+    if (statSync(full).isDirectory()) {
+      found.push(...sourceFiles(full))
+      continue
+    }
+    if (full.endsWith('.test.ts') || full.endsWith('.test.tsx')) continue
+    if (full.endsWith('.ts') || full.endsWith('.tsx')) found.push(full)
   }
   return found
 }
@@ -41,11 +53,19 @@ const BUILT_IN = new Set([
   'inherit', 'current', 'transparent',
 ])
 
+const SHOWCASE_CSS = readFileSync(resolve(process.cwd(), 'web/app/showcase/showcase.css'), 'utf8')
+
 describe('the type scale', () => {
   it('defines a token for every text size a component asks for', () => {
     const asked = new Set<string>()
-    for (const file of tsxFiles(resolve(process.cwd(), 'web'))) {
-      const source = readFileSync(file, 'utf8')
+    for (const file of sourceFiles(resolve(process.cwd(), 'web'))) {
+      /*
+       * The arbitrary values come out first. `text-[length:var(--sc-text-hero)]` names a
+       * showcase token, and a scan for bare utilities reads `text-hero` out of the middle of
+       * it and then looks for a board token of that name. The check below is the one that
+       * has an opinion about arbitrary values.
+       */
+      const source = readFileSync(file, 'utf8').replace(/\btext-\[[^\]]+\]/g, '')
       for (const match of source.matchAll(/\btext-([a-z][a-z0-9-]*)\b/g)) {
         const name = match[1]!
         asked.add(name)
@@ -59,6 +79,43 @@ describe('the type scale', () => {
     })
 
     expect(missing, `no token behind: ${missing.join(', ')}`).toEqual([])
+  })
+
+  /**
+   * A size typed into the markup is a number nobody can find twice.
+   *
+   * `text-[1.375rem]` and `text-[0.9375rem]` passed the check above and always would: an
+   * arbitrary value is not a token name, so there was nothing for it to look up. Thirteen of
+   * them had accumulated, two were reported in each of two waves, and neither wave could see
+   * the other eleven.
+   *
+   * A `var()` is allowed and is the fix: `text-[length:var(--sc-text-sm)]` names something.
+   * A literal length or a `clamp()` of them is refused.
+   */
+  it('refuses a size typed into the markup', () => {
+    const literals: string[] = []
+    for (const file of sourceFiles(resolve(process.cwd(), 'web'))) {
+      const source = readFileSync(file, 'utf8')
+      for (const match of source.matchAll(/\btext-\[([^\]]+)\]/g)) {
+        const value = match[1]!
+        // A colour, or a size that names a token. Both say what they are.
+        if (value.startsWith('color:') || value.includes('var(')) continue
+        literals.push(`${file.replace(process.cwd(), '').replace(/\\/g, '/')}: text-[${value}]`)
+      }
+    }
+
+    expect(
+      literals,
+      `sizes with no token behind them:\n${literals.join('\n')}`,
+    ).toEqual([])
+  })
+
+  /* The showcase argues the opposite case and has its own scale. It is still a scale. */
+  it('states the showcase sizes in rem too', () => {
+    for (const match of SHOWCASE_CSS.matchAll(/--sc-text-[a-z-]+:\s*([^;]+);/g)) {
+      expect(match[1]!.trim(), match[0]).toMatch(/rem|em/)
+      expect(match[1]!.trim(), `${match[0]} uses px`).not.toMatch(/\dpx/)
+    }
   })
 
   /*

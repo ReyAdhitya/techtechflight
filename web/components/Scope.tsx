@@ -538,6 +538,13 @@ export function Scope({
             project={scope.project}
             view={view}
             noFlyHatchId={noFlyHatchId}
+            bounds={{
+              westM: scope.westM,
+              southM: scope.southM,
+              widthM: scope.widthM,
+              heightM: scope.heightM,
+            }}
+            ceilingM={ceilingM}
           />
 
           {checkpoints === undefined ? null : (
@@ -669,8 +676,17 @@ export function Scope({
             {CLASSROOM_GEOFENCE.northM} m north)
           </span>
         )}
-        {view === 'top-down' && hasNoFlyZone && <span>Hatched = No-fly Zone</span>}
-        {view === 'top-down' && zonesUnsurveyed && drawableZones.length > 0 && (
+        {/*
+          * On every view now, because the zone is on every view (ADR-0029). The band on Side
+          * and Front is the same object as the polygon on Top-down, so it wants the same key
+          * and the same word.
+          */}
+        {hasNoFlyZone && (
+          <span>
+            {elevation ? 'Hatched band = No-fly Zone, floor to ceiling' : 'Hatched = No-fly Zone'}
+          </span>
+        )}
+        {zonesUnsurveyed && drawableZones.length > 0 && (
           <span>Not surveyed against this aircraft</span>
         )}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
@@ -903,20 +919,72 @@ export type ScopeZonesProps = {
   readonly project: (eastM: number, northM: number) => { x: number; y: number }
   readonly view: ScopeView
   readonly noFlyHatchId: string
+  /**
+   * The window's own bounds, so an elevation view can work out where a zone falls on its
+   * floor axis. Absent draws nothing on Side and Front, which is what a caller with no
+   * elevation to draw wants.
+   */
+  readonly bounds?: {
+    readonly westM: number
+    readonly southM: number
+    readonly widthM: number
+    readonly heightM: number
+  }
+  /** How high the elevation view draws, in metres. */
+  readonly ceilingM?: number
 }
 
 /**
- * Mission and No-fly Zones on the Scope SVG layer.
+ * No-fly Zones on the Scope SVG layer, on all three views.
  *
- * A zone is a plan-view fact — nothing draws on Side or Front, where a horizontal boundary
- * would look like it had a vertical extent nobody drew (ADR-0019). The Mission Zone is an
- * outline only; No-fly Zones are hatched so they read differently from colour alone
- * (ADR-0004).
+ * A zone has no ceiling to invent (ADR-0029). `Zone` carries a polygon and nothing else, and
+ * `breachesAt` has ignored altitude since it was written, so the vertical extent is the whole
+ * column of air: a Drone at 0.2 m over a polygon and one at 3 m over the same polygon are
+ * both in breach and the board raises the same Alert for both. Drawing nothing on Side was
+ * the board saying *no-fly breach* on a strip and *clear air* on the picture beside it, and a
+ * Teacher does not scan a view to confirm the absence of a boundary nobody showed them.
+ *
+ * On an elevation the zone is its **extent** on that view's floor axis, floor to ceiling,
+ * rather than its outline: the projection of a polygon onto one axis is an interval, and
+ * drawing it as an outline would invent a shape with a top and a bottom. A concave zone
+ * claims a little more forbidden air than there is, which over-warns rather than under-warns.
+ *
+ * Hatched, so they read as forbidden from shape as well as colour (ADR-0004).
  */
-export function ScopeZones({ zones, project, view, noFlyHatchId }: ScopeZonesProps) {
-  if (view !== 'top-down' || zones.length === 0) return null
+export function ScopeZones({
+  zones,
+  project,
+  view,
+  noFlyHatchId,
+  bounds,
+  ceilingM,
+}: ScopeZonesProps) {
+  if (zones.length === 0) return null
+  const elevation = isElevation(view)
+  if (elevation && (bounds === undefined || ceilingM === undefined)) return null
 
   const hasNoFly = zones.some((zone) => zone.kind === 'no-fly')
+
+  /**
+   * A zone's span on the floor axis of the view that is showing, in viewBox units.
+   *
+   * Side reads north across the picture and Front reads east, matching where the Drone marks
+   * go. Held inside the window rather than allowed to run off it, for the same reason a Drone
+   * beyond the window is held on the edge: a zone that vanished off the frame would read as a
+   * zone that is not there.
+   */
+  const band = (zone: Zone): { readonly x: number; readonly width: number } | null => {
+    if (bounds === undefined) return null
+    const values = zone.points.map((point) =>
+      view === 'side' ? point.northM - bounds.southM : point.eastM - bounds.westM,
+    )
+    const span = view === 'side' ? bounds.heightM : bounds.widthM
+    const hold = (value: number) => Math.min(span, Math.max(0, value))
+    const low = hold(Math.min(...values))
+    const high = hold(Math.max(...values))
+    if (high <= low) return null
+    return { x: low, width: high - low }
+  }
 
   return (
     <g data-scope-zones="" aria-hidden="true">
@@ -942,6 +1010,28 @@ export function ScopeZones({ zones, project, view, noFlyHatchId }: ScopeZonesPro
       ) : null}
 
       {zones.map((zone) => {
+        if (elevation) {
+          const span = band(zone)
+          if (span === null) return null
+          return (
+            <rect
+              key={zone.id}
+              x={span.x}
+              y={0}
+              width={span.width}
+              height={ceilingM}
+              fill={`url(#${noFlyHatchId})`}
+              className="stroke-status-fault"
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+              data-zone-kind="no-fly"
+              data-zone-id={zone.id}
+              data-zone-hatched=""
+              data-zone-band=""
+            />
+          )
+        }
+
         const points = zone.points
           .map((point) => {
             const { x, y } = project(point.eastM, point.northM)

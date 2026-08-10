@@ -59,15 +59,55 @@ describe('Scope zones overlay', () => {
     expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
   })
 
-  it('draws nothing on elevation views', () => {
+  /*
+   * ADR-0029. A zone has no ceiling to invent, `breachesAt` has always ignored altitude, and
+   * a Teacher watching Side used to see a Drone cross a zone with nothing on the picture to
+   * say so while the strip beside it raised the breach.
+   */
+  it('draws a full-height band on Side and Front', () => {
     const { container } = render(
       <Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone, noFlyZone]} />,
     )
 
+    for (const elevation of ['Side', 'Front']) {
+      fireEvent.click(screen.getByRole('button', { name: elevation }))
+
+      const bands = container.querySelectorAll('[data-zone-band]')
+      expect(bands.length).toBeGreaterThan(0)
+      for (const band of bands) {
+        expect(band).toHaveAttribute('data-zone-hatched')
+        // Floor to ceiling: the extent is the whole column of air, and always was.
+        expect(band.getAttribute('y')).toBe('0')
+        expect(Number(band.getAttribute('width'))).toBeGreaterThan(0)
+        expect(Number(band.getAttribute('height'))).toBeGreaterThan(0)
+      }
+      expect(screen.getByText('Hatched band = No-fly Zone, floor to ceiling')).toBeInTheDocument()
+    }
+  })
+
+  /*
+   * The window is a square of space the display chose, not the room (ADR-0014). A zone
+   * outside it has nowhere to be drawn on that axis, and a band held to zero width is not
+   * drawn rather than smeared along the frame edge. What answers this is the Lesson screen
+   * saying the zone is outside the window, not the picture pretending otherwise.
+   */
+  it('draws no band for a zone that falls outside the window on that axis', () => {
+    // The netting runs 7 m to 9 m east; a window centred on a Drone at 3 m east ends at 7.
+    const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[noFlyZone]} />)
+
     fireEvent.click(screen.getByRole('button', { name: 'Side' }))
-    expect(container.querySelector('[data-scope-zones]')).toBeNull()
-    expect(container.querySelector('[data-zone-kind="no-fly"]')).toBeNull()
-    expect(screen.queryByText('Hatched = No-fly Zone')).not.toBeInTheDocument()
+    expect(container.querySelectorAll('[data-zone-band]')).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Front' }))
+    expect(container.querySelectorAll('[data-zone-band]')).toHaveLength(0)
+  })
+
+  /* The polygon is the plan view's; an outline on an elevation would invent a top and a bottom. */
+  it('draws a band rather than an outline on an elevation', () => {
+    const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(container.querySelector('polygon[data-zone-kind="no-fly"]')).toBeNull()
   })
 
   it('skips zones that do not enclose anything yet', () => {

@@ -83,6 +83,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
           emergencyStopTriggered: false,
           autoLanding: false,
           returningHome: false,
+          route: [],
+          routeIndex: 0,
           streaming: false,
           linkGroupId: null,
         },
@@ -216,8 +218,53 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
      */
     drone.homeEastM = drone.eastM
     drone.homeNorthM = drone.northM
+    // A plain take-off is not a route. `flyRoute` sets one after calling this.
+    drone.route = []
+    drone.routeIndex = 0
     drone.airborne = true
     drone.targetAltitudeM = round(1.5 + this.#random() * 2, 2)
+  }
+
+  /**
+   * Take off and fly this route, point to point, then hover at the last one.
+   *
+   * **The simulated aircraft playing the child's part.** In a room there is a ten year old
+   * with a controller; in a demo there is nobody, and a Drone that rose on a grant and then
+   * sat over the bench would make the Teacher's board look like it had done nothing. So the
+   * story tells itself: grant, rise, fly, land, score. No hidden control and nothing for a
+   * presenter to press.
+   *
+   * Not a Command, and it must never be offered as one. A Command is a request to an
+   * aircraft (ADR-0011) and only five exist; this is the world, in the same sense that
+   * `injectFault` is the world. The difference is that this is the world behaving.
+   *
+   * The route is horizontal. Height is the ordinary take-off climb, because the Mission's
+   * points are positions on the floor of the room and nothing has ever asked for an altitude.
+   */
+  flyRoute(droneId: DroneId, waypoints: readonly RoutePoint[]): void {
+    const drone = this.#drone(droneId)
+    if (drone.emergencyStopTriggered) return
+    this.takeOff(droneId)
+    drone.route = waypoints.map((point) => ({ eastM: point.eastM, northM: point.northM }))
+    drone.routeIndex = 0
+  }
+
+  /**
+   * Fly back to the take-off point and land, as the child would after the Teacher approved.
+   *
+   * The same flight as Recall and a different act. Recall is one of the five Commands, sent
+   * because something is wrong that a child cannot fix; this is a Student flying home because
+   * they were told the task was done. A Teacher ending a normal flight with Recall would be
+   * ending a lesson with the fire alarm, so the demo must not do it either.
+   */
+  flyHome(droneId: DroneId): void {
+    const drone = this.#drone(droneId)
+    if (!drone.airborne || drone.emergencyStopTriggered) return
+    drone.route = []
+    drone.routeIndex = 0
+    drone.returningHome = true
+    drone.autoLanding = false
+    drone.targetAltitudeM = drone.altitudeM
   }
 
   /**
@@ -233,6 +280,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     drone.airborne = false
     drone.autoLanding = false
     drone.returningHome = false
+    drone.route = []
+    drone.routeIndex = 0
     drone.targetAltitudeM = 0
   }
 
@@ -283,6 +332,9 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     drone.autoLanding = false
     // Land outranks a Recall in progress: down here beats down over there.
     drone.returningHome = false
+    // And it outranks the rest of a route. Down here beats the next checkpoint.
+    drone.route = []
+    drone.routeIndex = 0
     drone.targetAltitudeM = 0
   }
 
@@ -340,6 +392,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       drone.emergencyStopTriggered = false
       drone.autoLanding = false
       drone.returningHome = false
+      drone.route = []
+      drone.routeIndex = 0
       drone.streaming = false
       drone.linkGroupId = null
     }
@@ -386,7 +440,20 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     }
   }
 
-  /** Occasional unprompted behaviour, so a long demo is not a straight line. */
+  /**
+   * Occasional unprompted behaviour, so a long demo is not a straight line.
+   *
+   * **Nothing here leaves the ground, and nothing here lands.** It used to do both, on a dice
+   * roll every tick, and that is what put Drones in the air on the opening shot of the
+   * product: the board contradicted its own safety story before a Teacher had touched it.
+   * The simulator starts every craft on the ground and it stays there until a Teacher grants
+   * that Drone's takeoff, which is the order a real classroom follows and the order the board
+   * claims to enforce.
+   *
+   * Lost links, faults and a flat pack going on charge stay. Those are the world misbehaving,
+   * which is what this method is for; an aircraft deciding to fly is not the world, it is a
+   * child, and there is no child in a demo.
+   */
   #wander(drone: SimulatedDrone): void {
     const roll = this.#random()
     if (!drone.linkUp) {
@@ -395,15 +462,6 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
     }
     if (roll < 0.002) drone.linkUp = false
     else if (roll < 0.004 && drone.fault === null) drone.fault = DEFAULT_FAULT
-    else if (roll < 0.01 && !drone.airborne && drone.batteryFraction > 0.4) {
-      /*
-       * Through `takeOff` rather than by setting `airborne` directly. Setting the flag
-       * alone left `targetAltitudeM` at zero, so a Drone that took off on its own was
-       * reported as Flying while its altitude sat at 0 m forever — the board dutifully
-       * said "Flying" and "On the ground" at the same time.
-       */
-      this.takeOff(drone.registration.id)
-    } else if (roll < 0.02 && drone.airborne) this.land(drone.registration.id)
 
     /*
      * A flat Drone on the bench is the one a Teacher plugs in, so the simulated Fleet
@@ -450,6 +508,8 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       let driftEast: number
       let driftNorth: number
 
+      const waypoint = drone.route[drone.routeIndex] ?? null
+
       if (drone.returningHome) {
         /*
          * Steer for home instead of wandering. The step is capped at the same magnitude
@@ -467,6 +527,29 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
         // Over home, and only then, it comes down. Descending on the way would put it
         // into the room it is crossing.
         if (distance <= RECALL_ARRIVED_M) drone.targetAltitudeM = 0
+      } else if (waypoint !== null) {
+        /*
+         * Flying the route the Teacher's Mission set out, at the same speed everything else
+         * moves. Arriving is generous on purpose and for the same reason a checkpoint is: a
+         * child flying by hand cannot hit a point, and an aircraft that hunted for a perfect
+         * centre would hover beside it for the rest of the lesson.
+         */
+        const toEast = waypoint.eastM - drone.eastM
+        const toNorth = waypoint.northM - drone.northM
+        const distance = Math.hypot(toEast, toNorth)
+        if (distance <= ROUTE_ARRIVED_M) {
+          drone.routeIndex += 1
+          driftEast = 0
+          driftNorth = 0
+        } else {
+          const step = Math.min(distance, ROUTE_SPEED_MPS * seconds)
+          driftEast = (toEast / distance) * step
+          driftNorth = (toNorth / distance) * step
+        }
+      } else if (drone.route.length > 0) {
+        // Every point flown, and nothing to do but hold station until the Teacher answers.
+        driftEast = 0
+        driftNorth = 0
       } else {
         driftEast = (this.#random() - 0.5) * 0.6
         driftNorth = (this.#random() - 0.5) * 0.6
@@ -642,6 +725,17 @@ const ROOM = { westM: -2, eastM: 8, southM: -3, northM: 3 } as const
 const RECALL_SPEED_MPS = 0.6
 const RECALL_ARRIVED_M = 0.15
 
+/**
+ * How the simulated child flies the Mission's route.
+ *
+ * The same speed as a Recall, because an aircraft that crossed the room faster on its way to
+ * a checkpoint than on its way home would make the picture lie about what it can do. The
+ * arrival radius is generous for the reason `hasReached` is: a Student flying by hand cannot
+ * hit a point, and a checkpoint that demanded precision would be measuring the controller.
+ */
+const ROUTE_SPEED_MPS = 0.6
+const ROUTE_ARRIVED_M = 0.4
+
 const clampTo = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value))
 
@@ -693,8 +787,22 @@ interface SimulatedDrone {
   autoLanding: boolean
   /** Recalled: flying back to where it took off, and landing once it arrives. */
   returningHome: boolean
+  /**
+   * The Mission's points, in order, while the simulated aircraft is playing the child's part.
+   *
+   * Empty on a craft nobody has given a route to, which is what an ordinary take-off produces
+   * and what makes the drift below the fallback rather than the rule.
+   */
+  route: readonly RoutePoint[]
+  routeIndex: number
   streaming: boolean
   linkGroupId: string | null
+}
+
+/** A point on the floor of the room, in metres from where the Fleet was set up. */
+export interface RoutePoint {
+  readonly eastM: number
+  readonly northM: number
 }
 
 const DEFAULT_FAULT: FaultReport = {

@@ -535,6 +535,18 @@ export function ControlScreen({
               let answered = session
               for (const record of grantedNow) {
                 answered = grantSeatsForDrone(answered, record.droneId)
+                /*
+                 * And the aircraft leaves the ground, here and nowhere else.
+                 *
+                 * On a simulated Fleet only — `scenarios` is null on hardware, where a child
+                 * with a controller does this. It is the whole of the answer to "what put
+                 * that Drone in the air": a Teacher granted this Drone's takeoff. Not a
+                 * Command (ADR-0021); the world playing the part of a ten year old.
+                 */
+                scenarios?.flyRoute(
+                  record.droneId,
+                  missionCheckpoints.map((point) => point.at),
+                )
               }
               for (const record of heldNow) {
                 answered = holdSeatsForDrone(answered, record.droneId)
@@ -555,6 +567,13 @@ export function ControlScreen({
         onApprove={(seat) => {
           if (classroom === null) return
           setClassroom(approveSeatTask(classroom, seat.studentId, missionCheckpoints))
+          /*
+           * How a normal flight ends. The tablet reads "Land on your pad", and on a simulated
+           * Fleet the aircraft flies home and lands because that is what the child would do.
+           * Deliberately `flyHome` and not the Recall Command: Recall is for trouble a child
+           * cannot fix, and finishing a lesson with it would be finishing with the fire alarm.
+           */
+          if (seat.droneId !== null) scenarios?.flyHome(seat.droneId)
         }}
       />
 

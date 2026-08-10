@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import {
+  QUIET_AFTER_MS,
   classroomRows,
   freeDroneSeat,
   readClassroomSession,
   seatStudentByHand,
   subscribeClassroom,
+  type ClassroomSeat,
   type ClassroomSession,
 } from '@/lib/classroom-session'
+import { formatDuration } from '@/lib/age'
 
 /**
  * Who is on which Drone, as the board fills itself in.
@@ -33,11 +36,24 @@ export function ClassroomSeatsPanel() {
   const [session, setSession] = useState<ClassroomSession | null>(null)
   const [typing, setTyping] = useState<string | null>(null)
   const [name, setName] = useState('')
+  /*
+   * Its own clock rather than the Fleet's. How long a tablet has been quiet is a fact about
+   * the room and not about the aircraft, and this panel is on a set-up step that has no
+   * business needing a Fleet connection to render a list of names. Zero until mounted, so
+   * the server's HTML and the first client paint agree.
+   */
+  const [now, setNow] = useState(0)
 
   // Read after mount: the server render has no localStorage.
   useEffect(() => {
     setSession(readClassroomSession())
     return subscribeClassroom(setSession)
+  }, [])
+
+  useEffect(() => {
+    setNow(Date.now())
+    const tick = window.setInterval(() => setNow(Date.now()), 1_000)
+    return () => window.clearInterval(tick)
   }, [])
 
   if (session === null) {
@@ -120,8 +136,11 @@ export function ClassroomSeatsPanel() {
                 </form>
               ) : (
                 <>
-                  <span className="min-w-0 flex-1 text-value text-ink-subtle">
-                    {row.seat === null ? 'No Student' : row.seat.name}
+                  <span className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3">
+                    <span className="text-value text-ink-subtle">
+                      {row.seat === null ? 'No Student' : row.seat.name}
+                    </span>
+                    {row.seat === null ? null : <Liveness seat={row.seat} now={now} />}
                   </span>
                   <button
                     type="button"
@@ -149,5 +168,32 @@ export function ClassroomSeatsPanel() {
         })}
       </ul>
     </section>
+  )
+}
+
+/**
+ * Whether this child's tablet is still saying it is there.
+ *
+ * Three answers, and the third is the one that matters. **No tablet** is a child the Teacher
+ * seated by hand: they are flying with no screen on purpose, and calling that silence would
+ * be an alarm about the Teacher's own decision. **Answering** is quiet on the row. **Not
+ * heard from** is the sentence, because the Drone is in the air either way and a Student who
+ * cannot see their screen cannot be told to land by it.
+ */
+function Liveness({ seat, now }: { readonly seat: ClassroomSeat; readonly now: number }) {
+  const seen = seat.seenAt ?? null
+  // Before the clock has ticked once there is nothing honest to say about an age.
+  if (now === 0) return null
+  if (seen === null) {
+    return <span className="text-value text-ink-muted">No tablet</span>
+  }
+  const quiet = now - seen
+  if (quiet < QUIET_AFTER_MS) {
+    return <span className="text-value text-ink-muted">Answering</span>
+  }
+  return (
+    <span className="text-value text-status-not-ready">
+      Not heard from for {formatDuration(quiet)}
+    </span>
   )
 }

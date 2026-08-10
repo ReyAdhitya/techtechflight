@@ -72,6 +72,7 @@ import { CraftReturnedTick } from './CraftReturnedTick'
 import { PackdownChecklist } from './PackdownChecklist'
 import { TeacherAtcToolbar } from './TeacherAtcToolbar'
 import { ClassroomCodePanel } from './ClassroomCodePanel'
+import { QuietTabletsNotice } from './QuietTabletsNotice'
 import { ScenarioWatchList } from './ScenarioWatchList'
 import { useFleet } from './FleetProvider'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
@@ -464,6 +465,12 @@ export function ControlScreen({
         />
       </section>
 
+      {/*
+       * A child whose iPad died looks exactly like one flying happily, and the Drone is in
+       * the air either way. Beside the ceiling and the floor because it is the same kind of
+       * line: something about the room that the strips cannot say.
+       */}
+      <QuietTabletsNotice />
       <HeightCeilingBanner vitals={vitals} />
       <AltitudeFloorNotice vitals={vitals} />
       <ControlDisclosure summary="Also noting">

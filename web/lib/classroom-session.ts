@@ -70,6 +70,15 @@ export interface ClassroomSeat {
   readonly approvedAt: number | null
   readonly score: number | null
   readonly joinedAt: number
+  /**
+   * When this seat's tablet last said it was there, or null when there is no tablet.
+   *
+   * Null is the honest reading for a child the Teacher seated by hand: they are flying with
+   * no screen, and a board that reported them as "not heard from" would be raising an alarm
+   * about a decision the Teacher made on purpose. A seat that has checked in once and gone
+   * quiet is the case worth saying out loud.
+   */
+  readonly seenAt?: number | null
 }
 
 /** Names the Student tablet can pick without reading the Teacher's Logbook. */
@@ -320,6 +329,14 @@ export interface ClassroomSession {
   readonly instructions: readonly ClassroomInstruction[]
   /** Mission under way — Students may progress past briefing. */
   readonly live: boolean
+  /**
+   * When the Teacher's board last said it was there.
+   *
+   * The tablet's half of the heartbeat. Without it a child whose iPad has lost the Wi-Fi sees
+   * the last numbers the board sent, held and frozen, and cannot tell them from live ones.
+   * That is the rule about absent readings applied to a whole screen.
+   */
+  readonly boardSeenAt?: number | null
 }
 
 export interface StudentSeatLocal {
@@ -350,7 +367,77 @@ function emptySession(code: string, now: number): ClassroomSession {
     seats: [],
     instructions: [],
     live: false,
+    boardSeenAt: null,
   }
+}
+
+/**
+ * How long silence lasts before it is worth saying out loud.
+ *
+ * Forty seconds, which is the owner's own number and about four missed heartbeats. Shorter
+ * and a lesson is a stream of warnings every time an iPad's radio hiccups; longer and a child
+ * whose tablet died is invisible for the part of the lesson where it matters.
+ */
+export const QUIET_AFTER_MS = 40_000
+
+/** How often each side says it is still there. Comfortably inside {@link QUIET_AFTER_MS}. */
+export const HEARTBEAT_EVERY_MS = 10_000
+
+/**
+ * The Teacher's board says it is still there.
+ *
+ * Reads the session fresh rather than taking one handed in, because this runs on a timer and
+ * whatever the caller was holding a moment ago may be a Student's write that has just landed.
+ * Every classroom-session writer starts from the session it is handed; this one has to fetch
+ * its own.
+ */
+export function touchBoard(now = Date.now()): ClassroomSession | null {
+  const session = readClassroomSession()
+  if (session === null) return null
+  return writeClassroomSession({ ...session, boardSeenAt: now })
+}
+
+/** This seat's tablet says it is still there. Same freshness rule as {@link touchBoard}. */
+export function touchSeat(studentId: string, now = Date.now()): ClassroomSession | null {
+  const session = readClassroomSession()
+  if (session === null) return null
+  if (!session.seats.some((seat) => seat.studentId === studentId)) return null
+  return writeClassroomSession({
+    ...session,
+    seats: session.seats.map((seat) =>
+      seat.studentId === studentId ? { ...seat, seenAt: now } : seat,
+    ),
+  })
+}
+
+/**
+ * Seats whose tablet has gone quiet, worst first.
+ *
+ * A seat that has never checked in is not here: that is a child the Teacher put on a Drone by
+ * hand, and they were never going to check in.
+ */
+export function quietSeats(
+  session: ClassroomSession,
+  now: number,
+): readonly (ClassroomSeat & { readonly quietForMs: number })[] {
+  return session.seats
+    .filter((seat) => (seat.seenAt ?? null) !== null && now - seat.seenAt! >= QUIET_AFTER_MS)
+    .map((seat) => ({ ...seat, quietForMs: now - seat.seenAt! }))
+    .sort((a, b) => b.quietForMs - a.quietForMs)
+}
+
+/**
+ * How long since the Teacher's board said anything, or null when it never has.
+ *
+ * Null on a session written before the heartbeat existed, and on one a Student loaded from
+ * the cloud before the Teacher's board had ticked once. Neither is a lost board, and saying
+ * so would be the tablet inventing bad news.
+ */
+export function boardQuietForMs(session: ClassroomSession, now: number): number | null {
+  const seen = session.boardSeenAt ?? null
+  if (seen === null) return null
+  const quiet = now - seen
+  return quiet >= QUIET_AFTER_MS ? quiet : null
 }
 
 /** Four-character classroom code — short enough to shout across a room. */
@@ -397,6 +484,7 @@ function withSeatDefaults(session: ClassroomSession): ClassroomSession {
       ...seat,
       reachedCheckpointIds: seat.reachedCheckpointIds ?? [],
       approvedAt: seat.approvedAt ?? null,
+      seenAt: seat.seenAt ?? null,
     })),
   }
 }

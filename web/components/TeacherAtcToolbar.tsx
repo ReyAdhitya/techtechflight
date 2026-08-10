@@ -25,9 +25,7 @@ export function TeacherAtcToolbar({
   givenBy,
   onCommandFleet,
   onMissionChange,
-  onFocusClearance,
-  onFocusScope,
-  onFocusNewTarget,
+  onGoToStep,
 }: {
   readonly mission: Mission | null
   readonly selectedCraft: InstructionCraftOption | null
@@ -35,9 +33,18 @@ export function TeacherAtcToolbar({
   readonly givenBy: string
   readonly onCommandFleet: (kind: CommandKind) => void
   readonly onMissionChange: (mission: MissionWithInstructions) => void
-  readonly onFocusClearance: () => void
-  readonly onFocusScope: () => void
-  readonly onFocusNewTarget: () => void
+  /**
+   * Take the Teacher to the step that answers this, because three of these buttons are
+   * questions rather than actions.
+   *
+   * They used to scroll: the whole board was one page, so *Approve takeoff* moved the view to
+   * the clearance queue further down it. With one panel per step (ADR-0030) there is nothing
+   * to scroll to, and a button that silently did nothing would be worse than no button.
+   *
+   * *Add no-fly zone* went to the Scope, which does not draw zones and never has: the caption
+   * under it says to draw them on the Lesson screen. It goes to step 2, where they are drawn.
+   */
+  readonly onGoToStep: (step: number) => void
 }) {
   const live = mission !== null && mission.startedAt !== null && mission.outcome === null
   const craft = selectedCraft
@@ -63,7 +70,7 @@ export function TeacherAtcToolbar({
     >
       <h2 className="label m-0">Teacher actions</h2>
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" className={btn} onClick={onFocusClearance} disabled={!live}>
+        <button type="button" className={btn} onClick={() => onGoToStep(6)} disabled={!live}>
           Approve takeoff
         </button>
         <button
@@ -90,10 +97,20 @@ export function TeacherAtcToolbar({
         >
           Stop
         </button>
-        <button type="button" className={btn} onClick={onFocusScope} disabled={mission === null}>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => onGoToStep(2)}
+          disabled={mission === null}
+        >
           Add no-fly zone
         </button>
-        <button type="button" className={btn} onClick={onFocusNewTarget} disabled={!canInstruct}>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => onGoToStep(9)}
+          disabled={!canInstruct}
+        >
           New target
         </button>
         <button

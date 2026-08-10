@@ -29,7 +29,10 @@ export function ScopeCameraFilmstrip({
 
   return (
     <ul
-      className="m-0 flex list-none gap-2 overflow-x-auto p-0 pb-1"
+      // `relative` so an absolutely-positioned descendant cannot escape the clip. See
+      // `web/scroll-containers.test.ts`; the Student rail shipped without it and scrolled a
+      // phone 856 pixels sideways.
+      className="relative m-0 flex list-none gap-2 overflow-x-auto p-0 pb-1"
       aria-label="Camera filmstrip"
     >
       {vitals.map((entry) => {

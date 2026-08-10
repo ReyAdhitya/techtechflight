@@ -66,6 +66,13 @@ a *relative* claim and survives an origin that is wrong — the same way separat
 already do. This supersedes ADR-0012's deferral. Never anchor a zone to a latitude; there is
 no GPS, no map tile and no network anywhere in this feature, deliberately.
 
+**A No-fly Zone has no ceiling, so it draws on all three views (ADR-0029).** ADR-0019 refused
+Side and Front on the grounds that a band would assert a vertical extent nobody drew. There is
+none to invent: `Zone` carries a polygon and nothing else, and `breachesAt` has always ignored
+altitude, so the extent is the whole column. On Side and Front the zone is the polygon's
+*extent* on that axis, floor to ceiling, hatched and named the same way. Drawing nothing was
+the board saying "no-fly breach" on a strip and "clear air" on the picture beside it.
+
 **Only no-go areas are drawn (ADR-0027).** `ZoneKind` is `'no-fly'` and nothing else. The
 Mission Zone is gone: the class flies inside a physical net cage, so a second boundary drawn in
 software told a Teacher something they could already see, and a slightly small one reported a

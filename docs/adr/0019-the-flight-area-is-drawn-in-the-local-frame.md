@@ -120,6 +120,11 @@ response options rather than the condition, as every Alert already must.
 only — a zone is a plan-view fact and drawing it on the Side or Front view would assert a
 vertical extent nobody has drawn.
 
+> **Amended by [ADR-0029](./0029-a-no-fly-zone-has-no-ceiling.md), 2026-08-09.** That
+> paragraph is wrong: a zone has no ceiling to invent, `breachesAt` has always ignored
+> altitude, and the vertical extent is therefore the whole column of air. Zones now draw on
+> Side and Front as a full-height band. Nothing else in this ADR changes.
+
 The open hardware question that ADR-0012 tracked in `docs/questions-for-drone-team.md` —
 *how accurate is `LocalPosition`'s origin, does it survive a power cycle, and do two Drones
 agree about it* — is recorded **here** now, that file having been retired. Only the third

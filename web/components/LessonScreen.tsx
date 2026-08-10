@@ -29,6 +29,8 @@ import { LessonBookmarkControl } from './LessonBookmarkControl'
 import { LessonIncidentNoteControl } from './LessonIncidentNoteControl'
 import { ScenarioPicker } from './ScenarioPicker'
 import { MissionAreaEditor } from './MissionAreaEditor'
+import { scopeWindow } from './Scope'
+import type { ZoneWindow } from '@/lib/zone-visibility'
 import { TeamsPanel } from './TeamsPanel'
 import { PreFlightSeven } from './PreFlightSeven'
 import { MissionBriefing } from './MissionBriefing'
@@ -395,6 +397,12 @@ function MissionPrep({
           zones={zones}
           onChange={(next) => onMissionChange(setMissionZones(lessonId, next))}
           bare
+          /*
+           * The square the Scope is actually drawing, worked out the same way the Scope
+           * works it out. A zone beyond it is real, raises Alerts, and appears on no view;
+           * saying so here is what stops a Teacher drawing a boundary they will never see.
+           */
+          scopeSpace={scopeSpaceFor(drones)}
         />
       </section>
       )}
@@ -524,4 +532,26 @@ function SetMissionCraftButton({
       Put these {craftIds.length} craft on the Mission
     </button>
   )
+}
+
+/**
+ * The square of space the Scope is drawing right now, or null when nothing is placed.
+ *
+ * Worked out with the Scope's own `scopeWindow`, so the area editor's warning and the picture
+ * it is warning about can never disagree about where the frame is. Null rather than a guess
+ * before any Drone reports a position: there is no window then, and calling a zone "outside"
+ * one would be inventing a boundary to complain about.
+ */
+function scopeSpaceFor(drones: readonly DroneState[]): ZoneWindow | null {
+  const placed = drones.filter(
+    (drone) => drone.telemetry?.position !== undefined && drone.status !== 'Offline',
+  )
+  if (placed.length === 0) return null
+  const scope = scopeWindow(placed)
+  return {
+    westM: scope.westM,
+    eastM: scope.eastM,
+    southM: scope.southM,
+    northM: scope.northM,
+  }
 }

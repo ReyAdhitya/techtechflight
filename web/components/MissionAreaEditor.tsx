@@ -3,6 +3,7 @@
 import { useCallback, useId, useRef, useState, type MouseEvent } from 'react'
 import type { LocalPosition } from '@techtechflight/contract'
 import { enclosesAnything, type Zone } from '@/lib/airspace'
+import { zonesOutsideWindow, type ZoneWindow } from '@/lib/zone-visibility'
 import { cn } from '@/lib/utils'
 
 /** Metres east and north shown on the drawing surface. */
@@ -13,6 +14,12 @@ export type MissionAreaEditorProps = {
   readonly onChange: (zones: readonly Zone[]) => void
   /** Drop the heading and the card, because a Mission step already carries both. */
   readonly bare?: boolean
+  /**
+   * The square of space the Scope is currently drawing, so this can say when a zone falls
+   * outside it. Null before any Drone reports a position: there is no window then, and
+   * *outside* would be a guess.
+   */
+  readonly scopeSpace?: ZoneWindow | null
 }
 
 function defaultZoneName(zones: readonly Zone[]): string {
@@ -47,7 +54,12 @@ function polylinePoints(points: readonly LocalPosition[]): string {
  * meant to stay. It went with ADR-0027: the net cage already says that, and a drawn boundary
  * that disagreed with the netting reported a breach for a Drone that was safely inside it.
  */
-export function MissionAreaEditor({ zones, onChange, bare = false }: MissionAreaEditorProps) {
+export function MissionAreaEditor({
+  zones,
+  onChange,
+  bare = false,
+  scopeSpace = null,
+}: MissionAreaEditorProps) {
   const baseId = useId()
   const nextZoneCounter = useRef(1)
   const [activeZoneId, setActiveZoneId] = useState<string | null>(null)
@@ -336,6 +348,47 @@ export function MissionAreaEditor({ zones, onChange, bare = false }: MissionArea
           ))}
         </ul>
       ) : null}
+
+      <ZonesOutsideNotice zones={zones} window={scopeSpace} />
     </section>
+  )
+}
+
+/**
+ * The zones that are real and invisible.
+ *
+ * This surface draws twenty metres square. The Scope draws a **window** chosen from where the
+ * Drones actually are, and it can be eight metres across. A Teacher who types a corner at
+ * fifteen has drawn something `breachesAt` will fire on and no view will ever show, and the
+ * failure mode is not an ugly picture: a Teacher who cannot see a boundary stops believing
+ * there is one, and watching it is the whole of what this feature is for.
+ *
+ * Silent when there is nothing to say, and silent when no Drone is reporting a position,
+ * because then there is no window yet and *outside* would be a guess.
+ */
+function ZonesOutsideNotice({
+  zones,
+  window,
+}: {
+  readonly zones: readonly Zone[]
+  readonly window: ZoneWindow | null
+}) {
+  if (window === null) return null
+  const missing = zonesOutsideWindow(zones.filter(enclosesAnything), window)
+  if (missing.length === 0) return null
+
+  return (
+    <p
+      role="status"
+      className="m-0 max-w-[62ch] rounded-surface border-l-4 border-status-not-ready bg-canvas px-4 py-3 text-value text-ink"
+    >
+      {missing.map((zone) => zone.name).join(', ')}{' '}
+      {missing.length === 1 ? 'is' : 'are'} outside the picture the Scope draws, which right
+      now covers <span className="tnum">{window.westM}</span> to{' '}
+      <span className="tnum">{window.eastM}</span> m east and{' '}
+      <span className="tnum">{window.southM}</span> to{' '}
+      <span className="tnum">{window.northM}</span> m north. The Alert still fires; nobody
+      will see the line. Move it nearer the Drones.
+    </p>
   )
 }

@@ -22,6 +22,7 @@ import {
 } from '@/lib/logbook'
 import type { CommandKind } from '@techtechflight/contract'
 import { alertQueue, type DroneVitals, type VitalsAlert } from '@/lib/vitals'
+import { withNoFlyAlerts } from '@/lib/no-fly-alert'
 import type { TrackedCommand } from '@/lib/command-tracker'
 import {
   formatCoordinates,
@@ -132,7 +133,7 @@ export function ControlScreen({
    */
   readonly onSelectedCraftChange?: (name: string | null) => void
 } = {}) {
-  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios, demo } =
+  const { snapshot, vitals: fleetVitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios, demo } =
     useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
@@ -172,6 +173,21 @@ export function ControlScreen({
 
   const lesson = runningLesson(book)
   const state = snapshot.state
+
+  /*
+   * The one derivation that needs something the Teacher drew rather than something the Fleet
+   * sent. Zones are not Telemetry and never will be (ADR-0019 says why), so `fleetVitals`
+   * cannot know about them and a No-fly breach has to be added here.
+   *
+   * It was added nowhere at all. `NoFlyAlertTracker` has existed since zones shipped and had
+   * no caller, so a Drone crossing into a zone drew a hatched polygon under itself and raised
+   * nothing on the strip, nothing on the console and nothing in Attention — while ADR-0019
+   * recorded that a breach raises an Alert. It did not.
+   */
+  const vitals = useMemo(
+    () => withNoFlyAlerts(fleetVitals, mission?.zones ?? [], now),
+    [fleetVitals, mission?.zones, now],
+  )
   const queue = useMemo(() => alertQueue(vitals, isAcknowledged), [vitals, isAcknowledged])
 
   // Observe takeoff clocks without setState — vitals is a fresh array each Fleet tick,

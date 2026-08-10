@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   assignSeatCraft,
+  canTakeDrone,
   droneGrid,
   droneNumber,
   grantSeatClearance,
@@ -16,7 +17,9 @@ import {
   readClassroomSession,
   requestTakeoff,
   resetClassroomForTests,
+  freeDroneSeat,
   seatHasFlown,
+  seatStudentByHand,
   STUDENT_SEAT_KEY,
   takeDroneSeat,
   type ClassroomSeat,
@@ -325,5 +328,85 @@ describe('taking the Drone in your hands', () => {
   it('ignores a Drone that is not in this Lesson', () => {
     const session = joinClassroomAsStudent(withThree(), 'Amira', 1_000, 'stu-amira').session
     expect(takeDroneSeat(session, 'stu-amira', 'ttf-9999').seats[0]?.droneId).toBeNull()
+  })
+})
+
+/**
+ * The Teacher's half of the same question.
+ *
+ * A broken iPad must not stop a child flying, and a seat holding a craft nobody is flying is
+ * what stops the next child taking it.
+ */
+describe('the Teacher seating and freeing by hand', () => {
+  const withOne = () =>
+    openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [{ droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 }],
+    })
+
+  it('puts a child with no tablet on a Drone', () => {
+    const next = seatStudentByHand(withOne(), 'ttf-0001', 'Amira', 5_000)
+
+    expect(next.seats).toHaveLength(1)
+    expect(next.seats[0]?.name).toBe('Amira')
+    expect(next.seats[0]?.droneId).toBe('ttf-0001')
+  })
+
+  it('renames whoever took it, because the Teacher can see both children', () => {
+    const joined = joinClassroomAsStudent(withOne(), 'Ben', 1_000, 'stu-ben').session
+    const taken = takeDroneSeat(joined, 'stu-ben', 'ttf-0001')
+
+    const next = seatStudentByHand(taken, 'ttf-0001', 'Amira', 5_000)
+
+    expect(next.seats).toHaveLength(1)
+    expect(next.seats[0]?.name).toBe('Amira')
+  })
+
+  it('ignores an empty name and a Drone that is not in the Lesson', () => {
+    expect(seatStudentByHand(withOne(), 'ttf-0001', '   ', 5_000).seats).toHaveLength(0)
+    expect(seatStudentByHand(withOne(), 'ttf-9999', 'Amira', 5_000).seats).toHaveLength(0)
+  })
+
+  it('frees a Drone in one tap', () => {
+    const seated = seatStudentByHand(withOne(), 'ttf-0001', 'Amira', 5_000)
+    expect(freeDroneSeat(seated, 'ttf-0001').seats).toHaveLength(0)
+    // A Drone nobody has is already free, so this is a no-op rather than an error.
+    expect(freeDroneSeat(withOne(), 'ttf-0001').seats).toHaveLength(0)
+  })
+
+  /*
+   * A Student who picks up a second iPad gets a second `studentId`, so their own craft would
+   * be greyed out against them forever. Two children with one first name is what this gets
+   * wrong, and it gets it wrong where the Teacher can see it.
+   */
+  it('lets a Student reclaim their own Drone from a device that died', () => {
+    const dead = joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-old').session
+    const holding = takeDroneSeat(dead, 'stu-old', 'ttf-0001')
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+    const fresh = joinClassroomAsStudent(holding, 'Amira', 2_000, 'stu-new').session
+
+    expect(canTakeDrone(fresh, 'stu-new', 'ttf-0001')).toBe(true)
+    const reclaimed = takeDroneSeat(fresh, 'stu-new', 'ttf-0001')
+
+    expect(reclaimed.seats).toHaveLength(1)
+    expect(reclaimed.seats[0]?.studentId).toBe('stu-new')
+    expect(reclaimed.seats[0]?.droneId).toBe('ttf-0001')
+  })
+
+  it('still refuses a Drone another child has', () => {
+    const first = joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-amira').session
+    const holding = takeDroneSeat(first, 'stu-amira', 'ttf-0001')
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+    const second = joinClassroomAsStudent(holding, 'Ben', 2_000, 'stu-ben').session
+
+    expect(canTakeDrone(second, 'stu-ben', 'ttf-0001')).toBe(false)
+    expect(takeDroneSeat(second, 'stu-ben', 'ttf-0001').seats).toHaveLength(2)
   })
 })

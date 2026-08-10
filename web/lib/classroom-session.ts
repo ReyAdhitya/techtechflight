@@ -140,6 +140,27 @@ export function droneGrid(
     .map((drone) => ({ ...drone, takenBy: seatOnDrone(session, drone.droneId)?.name ?? null }))
 }
 
+/**
+ * Who is flying this Drone, for the one question that turns on it: may it take off.
+ *
+ * The seat a child took on their own tablet first, and the Teacher's Logbook assignment as
+ * the fallback. Two callers ask this — the clearance queue and the rail's count of it — and
+ * two rules for who counts as a Student would make them disagree in front of a class.
+ *
+ * Null is the answer that matters. **No Student, no takeoff**: a Drone in the Lesson with
+ * nobody on it never enters the queue, because in a real classroom a Drone with no child
+ * holding a controller does not fly. A Teacher's hand-seat is a classroom seat, so a child
+ * flying with no tablet counts here exactly as they do in the room.
+ */
+export function studentOnDrone(
+  session: ClassroomSession | null,
+  droneId: DroneId,
+  assigned: string | null = null,
+): string | null {
+  const seat = session === null ? null : seatOnDrone(session, droneId)
+  return seat?.studentId ?? assigned
+}
+
 /** The same grid with the seat itself, for the Teacher's board. */
 export function classroomRows(
   session: ClassroomSession,

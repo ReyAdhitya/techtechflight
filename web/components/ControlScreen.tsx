@@ -85,6 +85,8 @@ import {
   pointsReachedAt,
   pushClassroomInstruction,
   readClassroomSession,
+  seatOnDrone,
+  studentOnDrone,
   subscribeClassroom,
   type ClassroomSession,
 } from '@/lib/classroom-session'
@@ -334,10 +336,24 @@ export function ControlScreen({
   const preFlight = readPreFlightSeven(lessonId)
   const missionCraft = missionCraftIds(teams, mission)
 
+  /*
+   * No Student, no takeoff.
+   *
+   * The seat a child took on their own tablet comes first, and the Logbook assignment is the
+   * fallback. Before this the queue read the Logbook alone, so a child who joined and picked
+   * up Drone 3 was invisible to it and a Drone nobody had touched all morning was eligible.
+   * The number of aircraft in the air should equal the number of devices that joined and took
+   * one, and this is where that becomes true: `shouldAwaitClearance` already refuses a craft
+   * with no Student on it.
+   *
+   * A Teacher's hand-seat is a classroom seat too, so a child flying with no tablet is a
+   * Student here in exactly the way they are in the room.
+   */
   const clearanceCraft: readonly ClearanceQueueCraft[] = state.drones
     .filter((drone) => missionCraft.includes(drone.id))
     .map((drone) => {
-      const studentId = studentIdOf(book, drone.id)
+      const seat = classroom === null ? null : seatOnDrone(classroom, drone.id)
+      const studentId = studentOnDrone(classroom, drone.id, studentIdOf(book, drone.id))
       return {
         input: {
           droneId: drone.id,
@@ -350,7 +366,8 @@ export function ControlScreen({
         },
         droneName: drone.name,
         teamName: studentId === null ? null : (teamForStudent(teams, studentId)?.name ?? null),
-        studentName: studentOf(book, drone.id),
+        // The name the child typed on their own tablet, so the row reads back what they see.
+        studentName: seat?.name ?? studentOf(book, drone.id),
       }
     })
 

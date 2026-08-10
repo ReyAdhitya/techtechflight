@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { alertQueue } from '@/lib/vitals'
 import { readClearances } from '@/lib/clearance-store'
 import { awaitingClearance, type ClearanceCraftInput } from '@/lib/clearance'
+import { readClassroomSession, studentOnDrone } from '@/lib/classroom-session'
 import { INSTRUMENT_FRAME } from '@/lib/frame'
 import {
   readLogbook,
@@ -340,12 +341,19 @@ function readMissionRun({
   })
 
   const craftIds = missionCraftIds(teams, mission)
+  /*
+   * Same rule as the queue itself: the seat a child took on their own tablet first, and the
+   * Logbook assignment as the fallback. The rail's count and the queue below it are two
+   * readings of one thing, and two rules for who counts as a Student would make them
+   * disagree in front of a class.
+   */
+  const classroom = readClassroomSession()
   const queueInputs: readonly ClearanceCraftInput[] = drones
     .filter((drone) => craftIds.includes(drone.id))
     .map((drone) => ({
       droneId: drone.id,
       status: drone.status,
-      studentId: studentIdOf(book, drone.id),
+      studentId: studentOnDrone(classroom, drone.id, studentIdOf(book, drone.id)),
       preFlightDone: propellersTicked(preFlight, drone.id),
       mission,
     }))

@@ -17,6 +17,11 @@ import { cn } from '@/lib/utils'
  * Recall and Land are Commands and they are the Teacher's alone (ADR-0011, ADR-0021). They
  * appear only against a Drone that is actually up, because a Command offered to a Drone
  * sitting on the ground is a press that does nothing.
+ *
+ * **This is not how a normal flight ends.** A team that finished is approved on step 10 and
+ * flies home by hand; these are for the aircraft still up at the end of the period, whose
+ * team cannot or will not bring it in. Recall is the fire alarm and it is the right tool for
+ * exactly that, which is why the step says so above the list.
  */
 export function MissionCraftDownList({
   craft,

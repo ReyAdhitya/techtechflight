@@ -1,7 +1,13 @@
 'use client'
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { droneNumber, openClassroom, type ClassroomDrone } from '@/lib/classroom-session'
+import {
+  HEARTBEAT_EVERY_MS,
+  droneNumber,
+  openClassroom,
+  touchBoard,
+  type ClassroomDrone,
+} from '@/lib/classroom-session'
 import { readLogbook, readServerLogbook, runningLesson, subscribeLogbook } from '@/lib/logbook'
 import { readMission, subscribeMissionDraft } from '@/lib/mission-draft'
 import { MISSION_BRIEFING_RULES } from './MissionBriefing'
@@ -36,6 +42,19 @@ export function ClassroomOpen() {
   const [missionTick, setMissionTick] = useState(0)
 
   useEffect(() => subscribeMissionDraft(() => setMissionTick((n) => n + 1)), [])
+
+  /*
+   * The board's half of the heartbeat.
+   *
+   * Here rather than on a screen, because a Teacher walks between Fleet, Walls and the rail
+   * all lesson and a tablet must not read that as the board having died. This component is
+   * mounted for as long as the Teacher shell is.
+   */
+  useEffect(() => {
+    touchBoard()
+    const beat = window.setInterval(() => touchBoard(), HEARTBEAT_EVERY_MS)
+    return () => window.clearInterval(beat)
+  }, [])
 
   useEffect(() => {
     const mission = readMission(lessonId)

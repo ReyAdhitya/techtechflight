@@ -10,6 +10,7 @@ import {
   readClassroomSession,
   requestTakeoff,
   resetClassroomForTests,
+  QUIET_AFTER_MS,
   takeDroneSeat,
   updateSeatPhase,
   writeClassroomSession,
@@ -205,6 +206,52 @@ describe('joining', () => {
     settle()
 
     expect(screen.getByText(/has not put any Drones in this lesson yet/i)).toBeInTheDocument()
+  })
+})
+
+/**
+ * A frozen tablet and a working tablet look identical.
+ *
+ * Every figure on this screen came from the Teacher's board, so when the board stops
+ * answering the screen has stopped being true. Holding the last set on display is the failure
+ * this product refuses one reading at a time, applied to a whole screen.
+ */
+describe('when the tablet loses the board', () => {
+  it('says so, and prints none of the numbers it was holding', () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+
+    const heard = Date.now() - QUIET_AFTER_MS - 1_000
+    writeClassroomSession({ ...readClassroomSession()!, boardSeenAt: heard })
+    cleanup()
+    studentScreen()
+    settle()
+
+    expect(screen.getByRole('status')).toHaveTextContent('Land and wait')
+    expect(within(stage()).queryByText(/% charge/)).not.toBeInTheDocument()
+    expect(within(stage()).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('says nothing while the board is answering', () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+
+    writeClassroomSession({ ...readClassroomSession()!, boardSeenAt: Date.now() })
+    cleanup()
+    studentScreen()
+    settle()
+
+    expect(screen.queryByText('Land and wait')).not.toBeInTheDocument()
   })
 })
 

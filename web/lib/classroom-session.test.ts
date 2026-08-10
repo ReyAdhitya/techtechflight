@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   assignSeatCraft,
+  boardQuietForMs,
   canTakeDrone,
   droneGrid,
   droneNumber,
@@ -18,10 +19,14 @@ import {
   requestTakeoff,
   resetClassroomForTests,
   freeDroneSeat,
+  QUIET_AFTER_MS,
+  quietSeats,
   seatHasFlown,
   seatStudentByHand,
   STUDENT_SEAT_KEY,
   takeDroneSeat,
+  touchBoard,
+  touchSeat,
   type ClassroomSeat,
   type ClassroomSession,
 } from './classroom-session'
@@ -408,5 +413,89 @@ describe('the Teacher seating and freeing by hand', () => {
 
     expect(canTakeDrone(second, 'stu-ben', 'ttf-0001')).toBe(false)
     expect(takeDroneSeat(second, 'stu-ben', 'ttf-0001').seats).toHaveLength(2)
+  })
+})
+
+/**
+ * The heartbeat, both ways.
+ *
+ * Nothing tracked liveness, so a child whose iPad died looked exactly like a child flying
+ * happily, and a tablet that had lost the Wi-Fi went on showing the last numbers it was sent
+ * as though they were live.
+ */
+describe('when a screen goes quiet', () => {
+  const withOne = () =>
+    openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [{ droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 }],
+    })
+
+  it('says nothing about a seat that is answering', () => {
+    joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-amira')
+    const beat = touchSeat('stu-amira', 100_000)!
+
+    expect(quietSeats(beat, 100_000 + QUIET_AFTER_MS - 1)).toHaveLength(0)
+  })
+
+  it('names the Drone once its tablet has been quiet for forty seconds', () => {
+    const joined = joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-amira').session
+    takeDroneSeat(joined, 'stu-amira', 'ttf-0001')
+    touchSeat('stu-amira', 100_000)
+
+    const quiet = quietSeats(readClassroomSession()!, 100_000 + QUIET_AFTER_MS)
+    expect(quiet).toHaveLength(1)
+    expect(quiet[0]?.droneName).toBe('Drone 1')
+    expect(quiet[0]?.quietForMs).toBe(QUIET_AFTER_MS)
+  })
+
+  /*
+   * A child the Teacher seated by hand has no tablet on purpose. Reporting them as silent
+   * would be an alarm about the Teacher's own decision.
+   */
+  it('never reports a child who was seated by hand', () => {
+    const seated = seatStudentByHand(withOne(), 'ttf-0001', 'Ben', 1_000)
+
+    expect(quietSeats(seated, 1_000 + 10 * QUIET_AFTER_MS)).toHaveLength(0)
+  })
+
+  it('tells the tablet when the board has stopped answering', () => {
+    withOne()
+    const beat = touchBoard(100_000)!
+
+    expect(boardQuietForMs(beat, 100_000 + QUIET_AFTER_MS - 1)).toBeNull()
+    expect(boardQuietForMs(beat, 100_000 + QUIET_AFTER_MS)).toBe(QUIET_AFTER_MS)
+  })
+
+  /*
+   * A session a Student pulled from the cloud before the Teacher's board had ticked once.
+   * Absent is not "lost", and saying so would be the tablet inventing bad news.
+   */
+  it('says nothing when the board has never checked in', () => {
+    expect(boardQuietForMs(withOne(), 10_000_000)).toBeNull()
+  })
+
+  /*
+   * Both sides write the same document on a timer. Each writer starts from the session it is
+   * handed, so a heartbeat that held a stale copy would drop whatever landed in between.
+   */
+  it('reads the session fresh, so a beat never overwrites what just arrived', () => {
+    const opened = withOne()
+    touchBoard(100_000)
+    // The Teacher grants while this tablet is holding a session from before the beat.
+    seatStudentByHand(readClassroomSession()!, 'ttf-0001', 'Amira', 100_500)
+
+    void opened
+    touchBoard(110_000)
+
+    const after = readClassroomSession()!
+    expect(after.boardSeenAt).toBe(110_000)
+    expect(after.seats.map((seat) => seat.name)).toEqual(['Amira'])
   })
 })

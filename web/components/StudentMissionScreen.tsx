@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
+  HEARTBEAT_EVERY_MS,
+  boardQuietForMs,
   canTakeDrone,
   droneGrid,
   joinClassroomAsStudent,
@@ -16,6 +18,7 @@ import {
   seatHasFlown,
   subscribeClassroom,
   takeDroneSeat,
+  touchSeat,
   type ClassroomInstruction,
   type ClassroomRosterEntry,
   type ClassroomSeat,
@@ -170,6 +173,18 @@ function SeatedStudent({
     onSession(markSeatFlown(session, seat.studentId))
   }, [airborne, hasFlown, onSession, seat.studentId, session])
 
+  /*
+   * This tablet's half of the heartbeat, so the Teacher's board can tell a child who is
+   * flying happily from one whose iPad died. Deliberately not in the render path and
+   * deliberately re-reading the session: it fires on a timer, and whatever this component is
+   * holding may be a write from the Teacher that has just landed.
+   */
+  useEffect(() => {
+    touchSeat(seat.studentId)
+    const beat = window.setInterval(() => touchSeat(seat.studentId), HEARTBEAT_EVERY_MS)
+    return () => window.clearInterval(beat)
+  }, [seat.studentId])
+
   return (
     <StudentPhase
       session={session}
@@ -202,7 +217,7 @@ function StudentPhase({
   readonly hasFlown: boolean
   readonly onSession: (session: ClassroomSession) => void
 }) {
-  const { vitals } = useFleet()
+  const { vitals, now: clock } = useFleet()
   const mine = seat.droneId === null
     ? null
     : (vitals.find((entry) => entry.droneId === seat.droneId) ?? null)
@@ -227,6 +242,7 @@ function StudentPhase({
     instructionWaiting: instruction !== null && airborne,
   }
   const step = studentStep(seat, session, now)
+  const lostBoardMs = boardQuietForMs(session, clock)
 
   const rail = (
     <StudentStepRail current={step} name={seat.name} droneName={seat.droneName} />
@@ -242,10 +258,20 @@ function StudentPhase({
     return <LandOnYourPad seat={seat} rail={rail} airborne={airborne} />
   }
 
+  if (airborne && breaches.length > 0) {
+    return <RedZoneTakeover breaches={breaches} rail={rail} />
+  }
+
+  /*
+   * The board has gone quiet, so every figure on this screen is the last thing it said rather
+   * than what is true now. Under the red zone, because getting out of one is the more urgent
+   * of the two and the zone is drawn from the Drone's own position; over everything else,
+   * because a screen of held numbers wearing a live screen's clothes is the failure this
+   * product refuses everywhere else, one reading at a time.
+   */
+  if (lostBoardMs !== null) return <LostTheBoard quietForMs={lostBoardMs} rail={rail} />
+
   if (airborne) {
-    if (breaches.length > 0) {
-      return <RedZoneTakeover breaches={breaches} rail={rail} />
-    }
     if (whatIf !== null) return <WhatIfTakeover answer={whatIf} rail={rail} />
     return <FlyingScreen session={session} seat={seat} rail={rail} />
   }
@@ -335,6 +361,41 @@ function RedZoneTakeover({
       </h1>
       <p className="m-0 max-w-[50ch] text-body text-ink">
         You are inside {worst.zoneName}. Come out the way you went in.
+      </p>
+    </StudentFrame>
+  )
+}
+
+/**
+ * The board has stopped answering, so this screen has stopped being true.
+ *
+ * A frozen tablet and a working tablet look identical, which is the whole reason this exists.
+ * Every figure the Student was reading came from the Teacher's board; when it goes quiet the
+ * honest thing is to say so and print none of them, rather than hold the last set on screen
+ * where they read as live. The same rule that refuses a zero for an absent battery, applied
+ * to a whole screen.
+ *
+ * What to do about it is a sentence a ten year old can act on. Nothing to press.
+ */
+function LostTheBoard({
+  quietForMs,
+  rail,
+}: {
+  readonly quietForMs: number
+  readonly rail: React.ReactNode
+}) {
+  return (
+    <StudentFrame rail={rail} tone="warning">
+      <p className="m-0 label">Not hearing your teacher&apos;s board</p>
+      <h1
+        role="status"
+        className="m-0 font-display text-summary font-medium text-balance text-status-fault"
+      >
+        Land and wait
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink">
+        This tablet stopped hearing the board {formatAge(quietForMs)}. Anything it showed you
+        before that is old. Put your Drone down and tell your teacher.
       </p>
     </StudentFrame>
   )

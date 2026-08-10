@@ -4,7 +4,9 @@ import {
   NoFlyAlertTracker,
   noFlyAlertFromBreach,
   noFlyAlertText,
+  withNoFlyAlerts,
 } from './no-fly-alert.ts'
+import type { DroneVitals } from './vitals.ts'
 import { playbookFor } from './incident-playbook.ts'
 
 /**
@@ -165,5 +167,73 @@ describe('NoFlyAlertTracker', () => {
     tracker.reset()
 
     expect(tracker.observe('d1', [breach], 2_000)).toHaveLength(1)
+  })
+})
+
+/**
+ * The Alert a Teacher actually sees, which nothing raised.
+ *
+ * `NoFlyAlertTracker` above has existed since zones shipped and had no caller anywhere. A
+ * Drone crossing into a zone drew a hatched polygon under itself on the Scope and raised
+ * nothing on the strip, nothing on the console and nothing in Attention, while ADR-0019
+ * recorded that a breach raises an Alert.
+ */
+describe('the No-fly Alert on the board', () => {
+  const bench: Zone = {
+    id: 'bench',
+    kind: 'no-fly',
+    name: 'Over the bench',
+    points: [
+      { eastM: 6, northM: 1 },
+      { eastM: 8, northM: 1 },
+      { eastM: 8, northM: 3 },
+      { eastM: 6, northM: 3 },
+    ],
+  }
+  const craft = (droneId: string, eastM: number, northM: number, airborne = true) =>
+    ({
+      droneId,
+      callsign: droneId,
+      airborne,
+      position: { eastM, northM },
+      alerts: [],
+    }) as unknown as DroneVitals
+
+  it('raises one for a Drone inside a zone', () => {
+    const [inside] = withNoFlyAlerts([craft('ttf-0001', 7, 2)], [bench], 5_000)
+
+    expect(inside?.alerts.map((alert) => alert.kind)).toEqual(['no-fly'])
+    expect(inside?.alerts[0]?.severity).toBe('critical')
+    // The words say what to do, never where the Drone is.
+    expect(inside?.alerts[0]?.text).toBe(noFlyAlertText())
+  })
+
+  /*
+   * A level, not an edge. Every other Alert is recomputed from the current reading, so one
+   * that fired for a tick and vanished would leave a Drone hovering in a zone with a clean
+   * strip.
+   */
+  it('keeps raising it while the Drone stays there', () => {
+    const one = withNoFlyAlerts([craft('ttf-0001', 7, 2)], [bench], 5_000)
+    const two = withNoFlyAlerts([craft('ttf-0001', 7, 2)], [bench], 9_000)
+
+    expect(one[0]?.alerts).toHaveLength(1)
+    expect(two[0]?.alerts).toHaveLength(1)
+  })
+
+  it('says nothing about a Drone outside, on the ground, or with no zones drawn', () => {
+    expect(withNoFlyAlerts([craft('ttf-0001', 1, 1)], [bench], 5_000)[0]?.alerts).toHaveLength(0)
+    expect(
+      withNoFlyAlerts([craft('ttf-0001', 7, 2, false)], [bench], 5_000)[0]?.alerts,
+    ).toHaveLength(0)
+    expect(withNoFlyAlerts([craft('ttf-0001', 7, 2)], [], 5_000)[0]?.alerts).toHaveLength(0)
+  })
+
+  it('adds nothing twice, and hands the same array back when nothing changed', () => {
+    const clean = [craft('ttf-0001', 1, 1)]
+    expect(withNoFlyAlerts(clean, [bench], 5_000)).toBe(clean)
+
+    const once = withNoFlyAlerts([craft('ttf-0001', 7, 2)], [bench], 5_000)
+    expect(withNoFlyAlerts(once, [bench], 9_000)).toBe(once)
   })
 })

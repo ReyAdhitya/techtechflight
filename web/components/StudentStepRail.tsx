@@ -40,9 +40,16 @@ export function StudentStepRail({
       aria-label="Where you are in the lesson"
       className="flex flex-col gap-3 border-hairline bg-surface-1 p-4 max-[46rem]:border-b min-[46rem]:w-60 min-[46rem]:border-r"
     >
+      {/*
+       * The name is large and it stays large, on every screen including the two takeovers
+       * that carry nothing else. A child looking at somebody else's name for forty minutes
+       * will say so, and that correction is the reason there is no Student PIN.
+       */}
       <div className="flex flex-col gap-0.5">
-        <span className="font-display text-body font-medium text-ink">{name}</span>
-        <span className="text-label text-ink-muted">
+        <span className="font-display text-heading font-medium text-balance text-ink">
+          {name}
+        </span>
+        <span className="text-value text-ink-subtle">
           {[teamName, droneName].filter(Boolean).join(', ') || 'No Drone yet'}
         </span>
       </div>

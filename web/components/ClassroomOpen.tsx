@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { openClassroom } from '@/lib/classroom-session'
+import { droneNumber, openClassroom, type ClassroomDrone } from '@/lib/classroom-session'
 import { readLogbook, readServerLogbook, runningLesson, subscribeLogbook } from '@/lib/logbook'
 import { readMission, subscribeMissionDraft } from '@/lib/mission-draft'
 import { MISSION_BRIEFING_RULES } from './MissionBriefing'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
+import { useDrones } from './FleetProvider'
 
 /**
  * The classroom opens itself, from the Mission the Teacher already planned.
@@ -27,6 +28,7 @@ import { scenarioOrUnknown } from '@/lib/mission-scenarios'
  */
 export function ClassroomOpen() {
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
+  const fleet = useDrones()
   const lesson = runningLesson(book)
   const lessonId = lesson?.id ?? null
   const lessonLabel = lesson?.label ?? ''
@@ -71,6 +73,13 @@ export function ClassroomOpen() {
         studentId: student.studentId,
         name: student.name,
       })),
+      /*
+       * The craft in this Lesson, by the number painted on them, so a child can tap the one
+       * in their hands. Names come from the Fleet rather than being derived from the id: a
+       * board that called it "Drone 3" and an airframe with 3 on the side must agree, and
+       * only the Fleet knows what the Teacher renamed it to.
+       */
+      drones: missionDrones(mission.droneIds, fleet),
       zones: mission.zones,
       /*
        * Live once the Mission has started. Before that the brief is readable and nothing
@@ -78,7 +87,27 @@ export function ClassroomOpen() {
        */
       live: mission.startedAt !== null,
     })
-  }, [lessonId, lessonLabel, book, missionTick])
+  }, [lessonId, lessonLabel, book, fleet, missionTick])
 
   return null
+}
+
+/**
+ * The Mission's craft as a child sees them, in the Fleet's own words.
+ *
+ * A Drone the Mission names but the Fleet has never reported is skipped rather than invented:
+ * a grid button for an aircraft that is not there is a child walking off to find one.
+ */
+function missionDrones(
+  droneIds: readonly string[],
+  fleet: readonly { readonly id: string; readonly name: string }[],
+): readonly ClassroomDrone[] {
+  return droneIds
+    .map((droneId) => fleet.find((drone) => drone.id === droneId))
+    .filter((drone): drone is { readonly id: string; readonly name: string } => drone !== undefined)
+    .map((drone) => ({
+      droneId: drone.id,
+      droneName: drone.name,
+      number: droneNumber(drone.name, drone.id),
+    }))
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
+  droneGrid,
   joinClassroomAsStudent,
   loadClassroomByCode,
   normalizeClassroomCode,
@@ -13,10 +14,12 @@ import {
   requestTakeoff,
   seatHasFlown,
   subscribeClassroom,
+  takeDroneSeat,
   type ClassroomInstruction,
   type ClassroomRosterEntry,
   type ClassroomSeat,
   type ClassroomSession,
+  type StudentSeatLocal,
 } from '@/lib/classroom-session'
 import { breachesAt, type AirspaceBreach } from '@/lib/airspace'
 import { byUrgency, playbookFor, type PlaybookEntry } from '@/lib/incident-playbook'
@@ -63,6 +66,7 @@ export function StudentMissionScreen() {
   const [hydrated, setHydrated] = useState(false)
   const [session, setSession] = useState<ClassroomSession | null>(null)
   const [studentId, setStudentId] = useState<string | null>(null)
+  const [remembered, setRemembered] = useState<StudentSeatLocal | null>(null)
 
   const onJoinedClassroom = useCallback((next: ClassroomSession) => {
     setSession(next)
@@ -72,10 +76,32 @@ export function StudentMissionScreen() {
   // must not disagree with the first client paint.
   useEffect(() => {
     setSession(readClassroomSession())
-    setStudentId(readStudentSeatLocal()?.studentId ?? null)
+    const local = readStudentSeatLocal()
+    setRemembered(local)
+    setStudentId(local?.studentId ?? null)
     setHydrated(true)
     return subscribeClassroom((next) => setSession(next))
   }, [])
+
+  const seat = session?.seats.find((row) => row.studentId === studentId) ?? null
+
+  /*
+   * Typed once, remembered after that. A tablet that already knows whose it is takes its own
+   * seat rather than asking a child the same question every morning, which is the difference
+   * between a join that takes four taps and one that takes one.
+   */
+  useEffect(() => {
+    if (session === null || seat !== null || remembered === null) return
+    if (remembered.name.trim() === '') return
+    const joined = joinClassroomAsStudent(
+      session,
+      remembered.name,
+      Date.now(),
+      remembered.studentId,
+    )
+    setSession(joined.session)
+    setStudentId(joined.seat.studentId)
+  }, [session, seat, remembered])
 
   if (!hydrated) {
     return (
@@ -89,18 +115,21 @@ export function StudentMissionScreen() {
     return <JoinClassroomDoor onJoined={onJoinedClassroom} />
   }
 
-  const seat = session.seats.find((row) => row.studentId === studentId) ?? null
-
   if (seat === null) {
     return (
-      <TakeYourSeat
+      <WhatIsYourName
         session={session}
         onSeated={(next, taken) => {
           setSession(next)
           setStudentId(taken.studentId)
+          setRemembered(readStudentSeatLocal())
         }}
       />
     )
+  }
+
+  if (seat.droneId === null) {
+    return <WhichDroneAreYouHolding session={session} seat={seat} onSession={setSession} />
   }
 
   return <SeatedStudent session={session} seat={seat} onSession={setSession} />
@@ -451,12 +480,16 @@ function JoinClassroomDoor({
 }
 
 /**
- * Who is at this tablet, chosen from the class roll on the classroom session.
+ * Who is at this tablet. Typed once, and this tablet remembers.
  *
- * The roll travels with the session so an iPad never needs the Teacher's Logbook
- * (ADR-0025). When the roll is empty, typing a name is the fallback.
+ * A list of thirty names was the old answer and it was the wrong question: a child scanning a
+ * roll for their own name is checking against memory, and the one that gets tapped is the one
+ * near their thumb. Their own name typed on their own tablet cannot be somebody else's.
+ *
+ * The roll still travels with the session (ADR-0025), so a Teacher who has typed the class in
+ * gets one tap instead of a keyboard. It is an offer, not the only way through.
  */
-function TakeYourSeat({
+function WhatIsYourName({
   session,
   onSeated,
 }: {
@@ -475,39 +508,34 @@ function TakeYourSeat({
 
   return (
     <StudentFrame>
-      <p className="label m-0 text-ink-subtle">Classroom {session.code}</p>
-      <h1 className="m-0 font-display text-heading font-medium text-ink">Who are you?</h1>
+      <h1 className="m-0 font-display text-summary font-medium text-ink">What is your name?</h1>
 
-      {roster.length === 0 ? (
-        <div className="flex max-w-md flex-col gap-3">
-          <p className="m-0 text-body text-ink-muted">
-            The class list is empty. Ask your Teacher to add names on Students, or type your
-            name here.
-          </p>
-          <label className="flex flex-col gap-1">
-            <span className="label">Your name</span>
-            <input
-              type="text"
-              value={typedName}
-              onChange={(event) => setTypedName(event.target.value)}
-              className="min-h-14 rounded-pill border border-hairline bg-surface-1 px-4 text-body text-ink"
-              aria-label="Your name"
-            />
-          </label>
-          <button
-            type="button"
-            disabled={typedName.trim() === ''}
-            className="min-h-14 w-fit cursor-pointer rounded-pill border-0 bg-ink px-6 py-2 text-body font-medium text-canvas disabled:cursor-not-allowed disabled:opacity-50"
-            onClick={() => seatAs(typedName)}
-          >
-            Take seat
-          </button>
-        </div>
-      ) : roll.length === 0 ? (
-        <p className="m-0 text-body text-ink-muted">
-          Everyone on the class list has taken a tablet already. Ask your Teacher.
-        </p>
-      ) : (
+      <form
+        className="flex max-w-md flex-col gap-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (typedName.trim() !== '') seatAs(typedName)
+        }}
+      >
+        <input
+          type="text"
+          value={typedName}
+          onChange={(event) => setTypedName(event.target.value)}
+          className="min-h-16 rounded-surface border border-hairline bg-surface-1 px-4 font-display text-heading text-ink"
+          aria-label="Your name"
+          autoComplete="given-name"
+        />
+        <button
+          type="submit"
+          disabled={typedName.trim() === ''}
+          className="min-h-16 w-full cursor-pointer rounded-surface border-0 bg-ink px-6 py-2 font-display text-heading font-medium text-canvas disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          That is me
+        </button>
+        <p className="m-0 text-value text-ink-muted">Typed once. This tablet remembers you.</p>
+      </form>
+
+      {roll.length === 0 ? null : (
         <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 min-[48rem]:grid-cols-4">
           {roll.map((student) => (
             <li key={student.studentId}>
@@ -520,6 +548,73 @@ function TakeYourSeat({
               </button>
             </li>
           ))}
+        </ul>
+      )}
+    </StudentFrame>
+  )
+}
+
+/**
+ * The last question: which aircraft is in your hands.
+ *
+ * Big number buttons, because the child is reading a number painted on a physical object
+ * rather than recalling one. A Drone somebody already has is greyed out and cannot be tapped,
+ * so two children cannot land on one, and `takeDroneSeat` refuses it as well: the greying is a
+ * courtesy and the refusal is the defence.
+ *
+ * This is not one of the two pressable things in the app (ADR-0025). Ask to take off and
+ * Understood are Mission presses, made while a Mission is under way; this is the join, and a
+ * child who has not joined is not in the Mission yet.
+ */
+function WhichDroneAreYouHolding({
+  session,
+  seat,
+  onSession,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+  readonly onSession: (session: ClassroomSession) => void
+}) {
+  const grid = droneGrid(session)
+
+  return (
+    <StudentFrame>
+      <StudentName name={seat.name} />
+      <h1 className="m-0 font-display text-summary font-medium text-ink">
+        Which Drone are you holding?
+      </h1>
+
+      {grid.length === 0 ? (
+        <p className="m-0 max-w-[50ch] text-body text-ink-muted">
+          Your teacher has not put any Drones in this lesson yet. Wait, and they will appear.
+        </p>
+      ) : (
+        <ul className="m-0 grid list-none grid-cols-3 gap-4 p-0 min-[48rem]:grid-cols-6">
+          {grid.map((drone) => {
+            const held = drone.takenBy !== null
+            return (
+              <li key={drone.droneId}>
+                <button
+                  type="button"
+                  disabled={held}
+                  onClick={() => onSession(takeDroneSeat(session, seat.studentId, drone.droneId))}
+                  aria-label={
+                    held ? `${drone.droneName}, taken by ${drone.takenBy}` : drone.droneName
+                  }
+                  className={cn(
+                    'flex min-h-28 w-full flex-col items-center justify-center gap-1 rounded-surface border font-display',
+                    held
+                      ? 'cursor-not-allowed border-hairline bg-canvas text-ink-muted'
+                      : 'cursor-pointer border-hairline bg-surface-1 text-ink hover:border-ink',
+                  )}
+                >
+                  <span className="tnum text-summary font-medium">{drone.number}</span>
+                  {/* Shape and word, never colour alone (ADR-0004). */}
+                  <span className="text-value font-normal">{held ? 'Taken' : 'Free'}</span>
+                </button>
+              </li>
+            )
+          })}
         </ul>
       )}
     </StudentFrame>
@@ -1048,18 +1143,28 @@ function StatusLine({
   )
 }
 
-/** Name and craft, thin. A Student knows their own name; this is only confirming it. */
+/**
+ * The name, large, for the whole lesson. This is the fix for a mistap.
+ *
+ * It was one thin grey line, on the reasoning that a Student knows their own name. They do;
+ * what they do not know is which name the software thinks they are. A child looking at
+ * somebody else's name for forty minutes will say so within a minute, and that is a better
+ * correction than a PIN a ten year old has to remember. So it stays big and it stays put, on
+ * every screen from joining to the score.
+ */
 function IdentityLine({ seat }: { readonly seat: ClassroomSeat }) {
   return (
-    <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-value text-ink-subtle">
-      <span className="font-medium text-ink">{seat.name}</span>
-      {seat.droneName === null ? (
-        <span>Your Teacher has not given you a Drone yet.</span>
-      ) : (
-        <span>{seat.droneName}</span>
-      )}
-    </p>
+    <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+      <StudentName name={seat.name} />
+      <span className="text-body text-ink-subtle">
+        {seat.droneName === null ? 'No Drone yet' : seat.droneName}
+      </span>
+    </div>
   )
+}
+
+function StudentName({ name }: { readonly name: string }) {
+  return <p className="m-0 font-display text-heading font-medium text-ink">{name}</p>
 }
 
 /** The rules, the clock and how many checkpoints. Quiet: read once, then remembered. */

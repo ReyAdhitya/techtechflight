@@ -7,11 +7,34 @@ import {
   chooseScenario,
   putMission,
   readMission,
+  setMissionDrones,
   setMissionZones,
   startMission,
 } from '@/lib/mission-draft'
 import type { Zone } from '@/lib/airspace'
+import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
+import { FleetProvider } from './FleetProvider'
 import { ClassroomOpen } from './ClassroomOpen'
+
+// FleetProvider reads the pathname to decide whether the Fleet is simulated.
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/demo',
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}))
+
+/**
+ * Mounted the way the Teacher shell mounts it: inside the one Fleet connection.
+ *
+ * It needs the Fleet because the join grid a child taps is the Fleet's own craft names, and
+ * a board that called it "Drone 3" beside an airframe with 3 painted on it has to agree.
+ */
+const mount = () =>
+  render(
+    <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+      <ClassroomOpen />
+    </FleetProvider>,
+  )
 
 /**
  * The classroom has to open by itself.
@@ -44,7 +67,7 @@ describe('opening the classroom from the Mission', () => {
   it('opens nothing while there is no Mission to brief', () => {
     startLesson('Year 8', 6, 6, 1_000, [])
 
-    render(<ClassroomOpen />)
+    mount()
 
     expect(readClassroomSession()).toBeNull()
   })
@@ -55,7 +78,7 @@ describe('opening the classroom from the Mission', () => {
     chooseScenario(lessonId, 'search-rescue')
     setMissionZones(lessonId, [triangle])
 
-    render(<ClassroomOpen />)
+    mount()
 
     const session = readClassroomSession()!
     expect(session.lessonId).toBe(lessonId)
@@ -76,7 +99,7 @@ describe('opening the classroom from the Mission', () => {
     const lessonId = runningLesson(readLogbook())!.id
     chooseScenario(lessonId, 'delivery')
 
-    render(<ClassroomOpen />)
+    mount()
 
     const session = readClassroomSession()!
     expect(session.rules).toEqual(MISSION_BRIEFING_RULES.map((rule) => rule.label))
@@ -91,12 +114,12 @@ describe('opening the classroom from the Mission', () => {
     const lessonId = runningLesson(readLogbook())!.id
     chooseScenario(lessonId, 'search-rescue')
 
-    const { unmount } = render(<ClassroomOpen />)
+    const { unmount } = mount()
     expect(readClassroomSession()?.live).toBe(false)
     unmount()
 
     startMission(lessonId, 2_000)
-    render(<ClassroomOpen />)
+    mount()
     expect(readClassroomSession()?.live).toBe(true)
   })
 
@@ -112,7 +135,7 @@ describe('opening the classroom from the Mission', () => {
     const mission = chooseScenario(lessonId, 'search-rescue')
     startMission(lessonId, 2_000)
 
-    const { unmount } = render(<ClassroomOpen />)
+    const { unmount } = mount()
     expect(readClassroomSession()?.outcome ?? null).toBeNull()
     unmount()
 
@@ -132,7 +155,7 @@ describe('opening the classroom from the Mission', () => {
         debrief: 'All criteria met.',
       },
     })
-    render(<ClassroomOpen />)
+    mount()
 
     expect(readClassroomSession()?.outcome?.score).toBe(1)
     expect(mission.scenarioId).toBe('search-rescue')
@@ -143,14 +166,43 @@ describe('opening the classroom from the Mission', () => {
     const lessonId = runningLesson(readLogbook())!.id
     chooseScenario(lessonId, 'search-rescue')
 
-    const { unmount } = render(<ClassroomOpen />)
+    const { unmount } = mount()
     const first = readClassroomSession()!.code
     unmount()
 
     setMissionZones(lessonId, [triangle])
-    render(<ClassroomOpen />)
+    mount()
 
     expect(readClassroomSession()!.code).toBe(first)
+  })
+
+  /*
+   * The join grid. A child taps the number painted on the aircraft in their hands, so the
+   * session has to carry the craft as well as the class.
+   */
+  it('copies the Mission craft onto the session, by the number on the airframe', () => {
+    startLesson('Year 8', 6, 6, 1_000, [])
+    const lessonId = runningLesson(readLogbook())!.id
+    chooseScenario(lessonId, 'search-rescue')
+    setMissionDrones(lessonId, ['ttf-0003', 'ttf-0001'])
+
+    mount()
+
+    expect(readClassroomSession()!.drones).toEqual([
+      { droneId: 'ttf-0003', droneName: 'Drone 3', number: 3 },
+      { droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 },
+    ])
+  })
+
+  it('leaves out a craft the Fleet has never reported, rather than inventing one', () => {
+    startLesson('Year 8', 6, 6, 1_000, [])
+    const lessonId = runningLesson(readLogbook())!.id
+    chooseScenario(lessonId, 'search-rescue')
+    setMissionDrones(lessonId, ['ttf-0001', 'ttf-9999'])
+
+    mount()
+
+    expect(readClassroomSession()!.drones?.map((drone) => drone.droneId)).toEqual(['ttf-0001'])
   })
 
   it('copies the class roll onto the session for Student tablets', () => {
@@ -159,7 +211,7 @@ describe('opening the classroom from the Mission', () => {
     const lessonId = runningLesson(readLogbook())!.id
     chooseScenario(lessonId, 'search-rescue')
 
-    render(<ClassroomOpen />)
+    mount()
 
     expect(readClassroomSession()?.roster?.map((row) => row.name)).toEqual(['Priya', 'Sam'])
   })
@@ -172,7 +224,7 @@ describe('opening the classroom from the Mission', () => {
     startLesson('Year 8', 6, 6, 1_000, [])
     const lessonId = runningLesson(readLogbook())!.id
 
-    render(<ClassroomOpen />)
+    mount()
     expect(readClassroomSession()).toBeNull()
 
     act(() => {

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   assignSeatCraft,
+  droneGrid,
+  droneNumber,
   grantSeatClearance,
   grantSeatsForDrone,
   holdSeatClearance,
@@ -16,6 +18,7 @@ import {
   resetClassroomForTests,
   seatHasFlown,
   STUDENT_SEAT_KEY,
+  takeDroneSeat,
   type ClassroomSeat,
   type ClassroomSession,
 } from './classroom-session'
@@ -250,5 +253,77 @@ describe('answering two Drones in one press', () => {
 
     expect(phaseOf(readClassroomSession()!, 'stu-bea')).toBe('held')
     expect(phaseOf(readClassroomSession()!, 'stu-ada')).not.toBe('cleared')
+  })
+})
+
+/**
+ * How a Student gets on a Drone: they tap the number painted on the one in their hands.
+ *
+ * The greying out on the tablet is a courtesy. These pin the refusal underneath it, because
+ * two children reaching for Drone 3 tap in the same second and the screen they are looking at
+ * was rendered before either of them moved.
+ */
+describe('taking the Drone in your hands', () => {
+  const withThree = () =>
+    openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [
+        { droneId: 'ttf-0003', droneName: 'Drone 3', number: 3 },
+        { droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 },
+      ],
+    })
+
+  it('reads the number off the name, then off the id', () => {
+    expect(droneNumber('Drone 12', 'ttf-0012')).toBe(12)
+    expect(droneNumber('Kestrel', 'ttf-0004')).toBe(4)
+    // Neither carries one. Zero sorts it to the front rather than dropping it off the grid.
+    expect(droneNumber('Kestrel', 'kestrel')).toBe(0)
+  })
+
+  it('offers the grid by number, not by id', () => {
+    const session = withThree()
+    expect(droneGrid(session).map((row) => row.number)).toEqual([1, 3])
+    expect(droneGrid(session).every((row) => row.takenBy === null)).toBe(true)
+  })
+
+  it('seats a Student on the Drone they tapped', () => {
+    const session = joinClassroomAsStudent(withThree(), 'Amira', 1_000, 'stu-amira').session
+    const next = takeDroneSeat(session, 'stu-amira', 'ttf-0003')
+
+    expect(next.seats[0]?.droneName).toBe('Drone 3')
+    expect(droneGrid(next).find((row) => row.number === 3)?.takenBy).toBe('Amira')
+  })
+
+  it('refuses a Drone somebody else already has', () => {
+    const first = joinClassroomAsStudent(withThree(), 'Amira', 1_000, 'stu-amira').session
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+    const second = joinClassroomAsStudent(first, 'Ben', 1_100, 'stu-ben').session
+
+    const held = takeDroneSeat(second, 'stu-amira', 'ttf-0003')
+    const refused = takeDroneSeat(held, 'stu-ben', 'ttf-0003')
+
+    expect(refused.seats.find((seat) => seat.studentId === 'stu-ben')?.droneId).toBeNull()
+    expect(refused.seats.find((seat) => seat.studentId === 'stu-amira')?.droneId).toBe('ttf-0003')
+  })
+
+  it('lets a Student change their mind, because a child has one pair of hands', () => {
+    const session = joinClassroomAsStudent(withThree(), 'Amira', 1_000, 'stu-amira').session
+    const three = takeDroneSeat(session, 'stu-amira', 'ttf-0003')
+    const one = takeDroneSeat(three, 'stu-amira', 'ttf-0001')
+
+    expect(one.seats[0]?.droneName).toBe('Drone 1')
+    expect(droneGrid(one).find((row) => row.number === 3)?.takenBy).toBeNull()
+  })
+
+  it('ignores a Drone that is not in this Lesson', () => {
+    const session = joinClassroomAsStudent(withThree(), 'Amira', 1_000, 'stu-amira').session
+    expect(takeDroneSeat(session, 'stu-amira', 'ttf-9999').seats[0]?.droneId).toBeNull()
   })
 })

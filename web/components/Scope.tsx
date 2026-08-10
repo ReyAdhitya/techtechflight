@@ -59,6 +59,7 @@ export function Scope({
   ghostPaths,
   zones,
   zonesUnsurveyed = false,
+  homeOf,
   readOnly = false,
   checkpoints,
   reachedCheckpointIds,
@@ -88,8 +89,18 @@ export function Scope({
    * draws nothing.
    */
   ghostPaths?: GhostPathStore
-  /** Mission and No-fly Zones in the Fleet frame — plan view only (ADR-0019). */
+  /** No-fly Zones in the Fleet frame. Drawn on all three views (ADR-0029). */
   zones?: readonly Zone[]
+  /**
+   * Where each Drone left the ground, or null when the board never saw it take off.
+   *
+   * `web/lib/home-point.ts` has tracked this since it was written and printed it as words in
+   * exactly two places. Nothing drew it, on the one screen where it would mean something:
+   * **Recall is one of only five Commands that reach an aircraft**, and a Teacher should be
+   * able to see where a Drone is about to fly before pressing it rather than pressing and
+   * hoping.
+   */
+  homeOf?: (droneId: string) => { readonly eastM: number; readonly northM: number } | null
   /**
    * On a hardware Fleet the geometry is honest but not surveyed against the room; say so
    * beside the zone keys rather than letting a line read as measured (ADR-0019).
@@ -232,6 +243,9 @@ export function Scope({
   const pathsReady = ghostPaths !== undefined && ghostPathsAvailable(ghostPaths)
   const drawableZones = zones?.filter(enclosesAnything) ?? []
   const hasNoFlyZone = drawableZones.length > 0
+  // Nothing has left the ground yet means nothing to key. An absent home is said by absence.
+  const anyHomeDrawn =
+    homeOf !== undefined && drawn.some((drone) => homeOf(drone.id) !== null)
   const labelById = scopeLabelPlacements(
     drawn.map((drone) => {
       const point = at(drone)
@@ -547,6 +561,63 @@ export function Scope({
             ceilingM={ceilingM}
           />
 
+          {/*
+           * Where each Drone took off, and where Recall would put it back.
+           *
+           * Top-down only. Home is a place on the floor of the room; on an elevation it would
+           * be a tick on the ground line saying nothing about height, competing with the
+           * aircraft above it for the one thing that view exists to answer.
+           *
+           * Drawn under the checkpoints and the marks, and quiet: it is a reference the eye
+           * finds when it looks for it, not a thing that should catch the eye on its own.
+           */}
+          {view === 'top-down' && homeOf !== undefined && (
+            <g data-scope-homes="" aria-hidden="true">
+              {drawn.map((drone) => {
+                const home = homeOf(drone.id)
+                if (home === null) return null
+                const mark = scope.project(home.eastM, home.northM)
+                const airborne = drone.telemetry?.airborne === true
+                const at = scope.projectOf(drone)
+                const side = 0.28
+
+                return (
+                  <g key={`home-${drone.id}`}>
+                    {airborne && (
+                      /*
+                       * Where Recall goes, drawn rather than described. Dotted, because it is
+                       * not a path the aircraft has flown and not one it is flying: it is
+                       * where it would go if the Teacher pressed the button.
+                       */
+                      <line
+                        x1={at.x}
+                        y1={at.y}
+                        x2={mark.x}
+                        y2={mark.y}
+                        className="stroke-ink-muted"
+                        strokeWidth="1.5"
+                        strokeDasharray="2 3"
+                        vectorEffect="non-scaling-stroke"
+                        data-home-line={drone.id}
+                      />
+                    )}
+                    <rect
+                      x={mark.x - side / 2}
+                      y={mark.y - side / 2}
+                      width={side}
+                      height={side}
+                      fill="none"
+                      className="stroke-ink-muted"
+                      strokeWidth="1.5"
+                      vectorEffect="non-scaling-stroke"
+                      data-home-mark={drone.id}
+                    />
+                  </g>
+                )
+              })}
+            </g>
+          )}
+
           {checkpoints === undefined ? null : (
             <ScopeCheckpoints
               checkpoints={checkpoints}
@@ -688,6 +759,9 @@ export function Scope({
         )}
         {zonesUnsurveyed && drawableZones.length > 0 && (
           <span>Not surveyed against this aircraft</span>
+        )}
+        {view === 'top-down' && homeOf !== undefined && anyHomeDrawn && (
+          <span>Small square = where it took off, and where Recall sends it</span>
         )}
         {view === 'top-down' && groups.size > 0 && <span>Dashed = linked as one group</span>}
         {showGhostPaths && (

@@ -131,7 +131,7 @@ export function ControlScreen({
    */
   readonly onSelectedCraftChange?: (name: string | null) => void
 } = {}) {
-  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios } =
+  const { snapshot, vitals, acknowledge, isAcknowledged, acknowledgedAt, now, command, commandFor, scenarios, demo } =
     useFleet()
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
@@ -618,6 +618,25 @@ export function ControlScreen({
           drones={state.drones}
           vitals={vitals}
           ghostPaths={ghostPaths}
+          /*
+           * The zones. The caption underneath has said "Scope shows them live" since zones
+           * shipped and this prop was never passed, so the one screen a Teacher watches a
+           * class from drew clear air over a No-fly Zone while the strip beside it raised the
+           * breach. Same class of defect as hiding them on Side (ADR-0029), one screen along.
+           */
+          zones={mission?.zones ?? []}
+          /*
+           * A simulated Drone is a number in a Map, so its position and a zone share an exact
+           * origin and there is no caveat to draw. On hardware the geometry is honest and not
+           * surveyed against the room, and ADR-0019 requires saying so.
+           */
+          zonesUnsurveyed={!demo}
+          /*
+           * Where each Drone left the ground, and where Recall would send it back to.
+           * `HomePointTracker` has been feeding two lines of words and nothing on the
+           * picture, on the one screen where seeing it would mean something.
+           */
+          homeOf={(droneId) => homeTracker.current.homeOf(droneId)}
           selected={selected}
           onSelect={(droneId) => setSelected((current) => (current === droneId ? null : droneId))}
           selectedPanel={

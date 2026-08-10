@@ -160,3 +160,67 @@ describe('ScopeZones', () => {
     expect(polygon?.getAttribute('points')).toMatch(/\d/)
   })
 })
+
+/**
+ * Where a Drone took off, and where Recall would put it back.
+ *
+ * `home-point.ts` tracked this from the day it was written and printed it as words in two
+ * places. Nothing drew it, on the one screen where it means something: Recall is one of only
+ * five Commands that reach an aircraft, and a Teacher should be able to see where a Drone is
+ * about to fly before pressing the button.
+ */
+describe('the starting point', () => {
+  const airborne = at('Drone 1', 3, 3)
+  const grounded = aDroneState({
+    id: 'drone-2',
+    name: 'Drone 2',
+    status: 'Ready',
+    telemetry: aTelemetry({ airborne: false, position: { eastM: 1, northM: 1 } }),
+  })
+
+  it('marks home under every Drone that has one, and lines the airborne ones to it', () => {
+    const { container } = render(
+      <Scope
+        drones={[airborne, grounded]}
+        homeOf={(droneId) => (droneId === 'drone-1' ? { eastM: 1, northM: 0 } : null)}
+      />,
+    )
+
+    expect(container.querySelector('[data-home-mark="drone-1"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-home-line="drone-1"]')).toBeInTheDocument()
+    // Dotted: not a path flown and not one being flown, but where Recall would send it.
+    expect(
+      container.querySelector('[data-home-line="drone-1"]')?.getAttribute('stroke-dasharray'),
+    ).toBeTruthy()
+    expect(screen.getByText(/where it took off, and where Recall sends it/)).toBeInTheDocument()
+  })
+
+  /* Absent is said by absence. A pair of noughts would be a launch point nobody promised. */
+  it('draws nothing for a Drone the board never saw leave the ground', () => {
+    const { container } = render(
+      <Scope drones={[grounded]} homeOf={() => null} />,
+    )
+
+    expect(container.querySelector('[data-home-mark]')).toBeNull()
+    expect(screen.queryByText(/where it took off/)).not.toBeInTheDocument()
+  })
+
+  it('draws no line from a Drone sitting on its own home', () => {
+    const { container } = render(
+      <Scope drones={[grounded]} homeOf={() => ({ eastM: 1, northM: 1 })} />,
+    )
+
+    expect(container.querySelector('[data-home-mark="drone-2"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-home-line="drone-2"]')).toBeNull()
+  })
+
+  /* Home is a place on the floor; on an elevation it says nothing about height. */
+  it('stays off the elevation views', () => {
+    const { container } = render(
+      <Scope drones={[airborne]} homeOf={() => ({ eastM: 1, northM: 0 })} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(container.querySelector('[data-scope-homes]')).toBeNull()
+  })
+})

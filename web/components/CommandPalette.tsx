@@ -132,7 +132,9 @@ export function CommandPalette() {
           aria-label="Search Drones and screens"
         />
 
-        <ul className="m-0 max-h-80 list-none overflow-y-auto p-0">
+        {/* `relative` so nothing absolute inside can escape the clip. See
+            `web/scroll-containers.test.ts`. */}
+        <ul className="relative m-0 max-h-80 list-none overflow-y-auto p-0">
           {matches.length === 0 && (
             <li className="px-4 py-3 text-value text-ink-subtle">No match.</li>
           )}

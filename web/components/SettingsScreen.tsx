@@ -2,6 +2,7 @@
 
 import { useFleet } from './FleetProvider'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
+import { DemoMissionPanel } from './DemoMissionPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
 import { SeparationThresholdPanel } from './SeparationThresholdPanel'
@@ -70,6 +71,8 @@ export function SettingsScreen() {
       </Panel>
 
       <TrainerDronesPanel />
+
+      <DemoMissionPanel />
 
       <TrainingScenariosPanel />
 

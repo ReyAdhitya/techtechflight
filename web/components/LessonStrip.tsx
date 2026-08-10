@@ -13,6 +13,7 @@ import {
   type LessonRecord,
 } from '@/lib/logbook'
 import { sealAttendanceFromBook } from '@/lib/attendance-history'
+import { closeClassroom } from '@/lib/classroom-session'
 import {
   airborneMsFromEvents,
   sealPupilFlightHours,
@@ -64,6 +65,13 @@ export function LessonStrip({
     }
     const tally = tallyEvents(sinceStart)
     endLesson(lesson.id, at, tally)
+    /*
+     * And the tablets are told, in the one way they can hear it: written into the document
+     * they are reading and pushed. A tablet on another device polls the cloud by the code it
+     * already holds, so a Lesson that merely stopped being used could never reach it. That is
+     * how an iPhone came to be sitting in a finished lesson called "bleble" with no way out.
+     */
+    closeClassroom(at)
     const book = readLogbook()
     sealAttendanceFromBook(lesson.id, book, at)
     const assignments = lesson.assignments ?? {}

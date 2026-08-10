@@ -6,8 +6,10 @@ import {
   HEARTBEAT_EVERY_MS,
   boardQuietForMs,
   canTakeDrone,
+  classroomHasEnded,
   droneGrid,
   joinClassroomAsStudent,
+  leaveClassroom,
   loadClassroomByCode,
   normalizeClassroomCode,
   readClassroomSession,
@@ -72,6 +74,8 @@ export function StudentMissionScreen() {
   const [session, setSession] = useState<ClassroomSession | null>(null)
   const [studentId, setStudentId] = useState<string | null>(null)
   const [remembered, setRemembered] = useState<StudentSeatLocal | null>(null)
+  /** Walked out on purpose, so the join door says so rather than just appearing. */
+  const [left, setLeft] = useState(false)
 
   const onJoinedClassroom = useCallback((next: ClassroomSession) => {
     setSession(next)
@@ -89,14 +93,27 @@ export function StudentMissionScreen() {
   }, [])
 
   const seat = session?.seats.find((row) => row.studentId === studentId) ?? null
+  const ended = classroomHasEnded(session)
+
+  /** Walk out of the classroom, and forget it. Nothing on the Teacher's board changes. */
+  const leave = useCallback(() => {
+    leaveClassroom()
+    setSession(null)
+    setStudentId(null)
+    setRemembered(null)
+    setLeft(true)
+  }, [])
 
   /*
    * Typed once, remembered after that. A tablet that already knows whose it is takes its own
    * seat rather than asking a child the same question every morning, which is the difference
    * between a join that takes four taps and one that takes one.
+   *
+   * Not into a classroom that has ended. Re-seating a child in a finished lesson is the loop
+   * that made the old session impossible to leave.
    */
   useEffect(() => {
-    if (session === null || seat !== null || remembered === null) return
+    if (session === null || ended || seat !== null || remembered === null) return
     if (remembered.name.trim() === '') return
     const joined = joinClassroomAsStudent(
       session,
@@ -106,7 +123,7 @@ export function StudentMissionScreen() {
     )
     setSession(joined.session)
     setStudentId(joined.seat.studentId)
-  }, [session, seat, remembered])
+  }, [session, ended, seat, remembered])
 
   if (!hydrated) {
     return (
@@ -117,7 +134,16 @@ export function StudentMissionScreen() {
   }
 
   if (session === null) {
-    return <JoinClassroomDoor onJoined={onJoinedClassroom} />
+    return <JoinClassroomDoor onJoined={onJoinedClassroom} left={left} />
+  }
+
+  /*
+   * The Lesson is over. A child still holding a flying aircraft is told to land and keeps
+   * their screen; everybody else walks out. `SeatedStudent` owns the airborne case because
+   * it is the component that reads Telemetry, and it hands this back once the Drone is down.
+   */
+  if (ended && (seat === null || seat.droneId === null)) {
+    return <ClassroomOver onLeave={leave} />
   }
 
   if (seat === null) {
@@ -129,15 +155,55 @@ export function StudentMissionScreen() {
           setStudentId(taken.studentId)
           setRemembered(readStudentSeatLocal())
         }}
+        onLeave={leave}
       />
     )
   }
 
   if (seat.droneId === null) {
-    return <WhichDroneAreYouHolding session={session} seat={seat} onSession={setSession} />
+    return (
+      <WhichDroneAreYouHolding
+        session={session}
+        seat={seat}
+        onSession={setSession}
+        onLeave={leave}
+      />
+    )
   }
 
-  return <SeatedStudent session={session} seat={seat} onSession={setSession} />
+  return (
+    <SeatedStudent session={session} seat={seat} onSession={setSession} onLeave={leave} />
+  )
+}
+
+/**
+ * The Lesson is over, so this tablet is not in a classroom any more.
+ *
+ * The screen that did not exist. A tablet held its session forever, and the nearest thing to
+ * this was the Drone grid saying "Your Teacher has not put any Drones in this lesson yet.
+ * Wait, and they will appear", which was a lie: nothing was ever going to appear.
+ *
+ * One press, and it is not a Mission press (ADR-0025): there is no Mission.
+ */
+function ClassroomOver({ onLeave }: { readonly onLeave: () => void }) {
+  return (
+    <StudentFrame>
+      <h1 className="m-0 font-display text-summary font-medium text-ink">
+        The lesson has ended
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
+        Put your Drone away and wait for your Teacher. Ask them for a new code when the next
+        lesson starts.
+      </p>
+      <button
+        type="button"
+        onClick={onLeave}
+        className="min-h-16 w-full cursor-pointer rounded-surface border-0 bg-ink px-6 py-2 font-display text-heading font-medium text-canvas min-[48rem]:w-fit"
+      >
+        Leave this classroom
+      </button>
+    </StudentFrame>
+  )
 }
 
 /**
@@ -151,10 +217,12 @@ function SeatedStudent({
   session,
   seat,
   onSession,
+  onLeave,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
   readonly onSession: (session: ClassroomSession) => void
+  readonly onLeave: () => void
 }) {
   const { vitals } = useFleet()
   const mine = seat.droneId === null
@@ -186,6 +254,35 @@ function SeatedStudent({
     return () => window.clearInterval(beat)
   }, [seat.studentId])
 
+  /*
+   * The Lesson ended while this child was flying.
+   *
+   * **The screen does not vanish.** Waiting silently is safe and leaves them not knowing why
+   * nothing is happening; the instruction is the point. Once Telemetry sees the Drone down,
+   * the screen above this one takes over and they walk out.
+   */
+  if (classroomHasEnded(session) && airborne) {
+    return (
+      <StudentFrame
+        rail={<StudentStepRail current={11} name={seat.name} droneName={seat.droneName} />}
+        tone="warning"
+        canLeave={false}
+      >
+        <StudentName name={seat.name} />
+        <h1
+          role="status"
+          className="m-0 font-display text-summary font-medium text-balance text-status-fault"
+        >
+          The lesson has ended. Land now.
+        </h1>
+        <p className="m-0 max-w-[50ch] text-body text-ink">
+          Bring your Drone down on the spot you started from, then stand clear of the
+          propellers.
+        </p>
+      </StudentFrame>
+    )
+  }
+
   return (
     <StudentPhase
       session={session}
@@ -193,6 +290,7 @@ function SeatedStudent({
       airborne={airborne}
       hasFlown={hasFlown}
       onSession={onSession}
+      onLeave={onLeave}
     />
   )
 }
@@ -211,12 +309,14 @@ function StudentPhase({
   airborne,
   hasFlown,
   onSession,
+  onLeave,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
   readonly airborne: boolean
   readonly hasFlown: boolean
   readonly onSession: (session: ClassroomSession) => void
+  readonly onLeave: () => void
 }) {
   const { vitals, now: clock } = useFleet()
   const mine = seat.droneId === null
@@ -251,7 +351,7 @@ function StudentPhase({
 
   if (seat.phase === 'complete' || session.outcome != null) {
     if (!airborne && hasFlown) {
-      return <BackOnTheGround session={session} seat={seat} rail={rail} />
+      return <BackOnTheGround session={session} seat={seat} rail={rail} onLeave={onLeave} />
     }
   }
 
@@ -277,8 +377,18 @@ function StudentPhase({
     return <FlyingScreen session={session} seat={seat} rail={rail} />
   }
 
-  if (hasFlown) return <BackOnTheGround session={session} seat={seat} rail={rail} />
-  return <MissionBrief session={session} seat={seat} onSession={onSession} rail={rail} />
+  if (hasFlown) {
+    return <BackOnTheGround session={session} seat={seat} rail={rail} onLeave={onLeave} />
+  }
+  return (
+    <MissionBrief
+      session={session}
+      seat={seat}
+      onSession={onSession}
+      rail={rail}
+      onLeave={onLeave}
+    />
+  )
 }
 
 /**
@@ -444,12 +554,18 @@ function StudentFrame({
   children,
   rail,
   tone = 'calm',
+  onLeave,
+  canLeave = true,
 }: {
   readonly children: React.ReactNode
   /** The look-only twelve. Absent before a Student has a seat to be anywhere in. */
   readonly rail?: React.ReactNode
   /** A warning takes the whole screen, and the surface changes with it (ADR-0025). */
   readonly tone?: 'calm' | 'warning'
+  /** Walk out of this classroom. Absent on the screens that have none to walk out of. */
+  readonly onLeave?: (() => void) | undefined
+  /** False while this child's Drone is up. Never take a screen from someone mid-flight. */
+  readonly canLeave?: boolean
 }) {
   return (
     <div className="flex min-h-[100dvh] w-full flex-col bg-canvas min-[46rem]:flex-row">
@@ -463,11 +579,30 @@ function StudentFrame({
         )}
       >
         {/*
-         * No Switch role here, and nothing else that leaves. It was two taps from a child to
-         * the Teacher's Land and Stop, which is the safety story this product tells a school.
-         * A child leaves this app by closing the lid.
+         * No Switch role here. It was two taps from a child to the Teacher's Land and Stop,
+         * which is the safety story this product tells a school.
+         *
+         * The way out of the *classroom* is a different thing and it had to exist: without it
+         * a tablet that joined once was joined forever, and an iPhone sat in a lesson called
+         * "bleble" that had finished weeks earlier with nothing able to tell it otherwise.
+         * Automatic alone would not have rescued it, because that session never ended.
+         *
+         * Quiet, at the foot, and gone while the Drone is up: a child holding a flying
+         * aircraft must not be able to take their own screen away. Not one of ADR-0025's two
+         * presses, for the reason written in `WhichDroneAreYouHolding` about joining.
          */}
         {children}
+        {onLeave !== undefined && canLeave ? (
+          <p className="m-0 mt-auto pt-6">
+            <button
+              type="button"
+              onClick={onLeave}
+              className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+            >
+              Leave this classroom
+            </button>
+          </p>
+        ) : null}
       </main>
     </div>
   )
@@ -481,8 +616,11 @@ function StudentFrame({
  */
 function JoinClassroomDoor({
   onJoined,
+  left = false,
 }: {
   readonly onJoined: (session: ClassroomSession) => void
+  /** This tablet walked out on purpose, so say so and do not walk it straight back in. */
+  readonly left?: boolean
 }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -490,18 +628,34 @@ function JoinClassroomDoor({
   const onJoinedRef = useRef(onJoined)
   onJoinedRef.current = onJoined
 
-  // Same laptop: Teacher opens classroom → localStorage fills without typing a code.
+  /*
+   * Same laptop: Teacher opens classroom → localStorage fills without typing a code.
+   *
+   * Off after a deliberate leave, and never for a classroom that has ended. On one machine
+   * the Teacher's own session is in the same `localStorage`, so without the first guard the
+   * child is put straight back into the room they just walked out of, and Leave does nothing
+   * at all. The second guard is the same rule the auto-seat above follows.
+   */
   useEffect(() => {
+    if (left) return
+    const usable = (next: ClassroomSession | null) =>
+      next !== null && !classroomHasEnded(next)
+
     const existing = readClassroomSession()
-    if (existing !== null) onJoinedRef.current(existing)
+    if (usable(existing)) onJoinedRef.current(existing!)
     return subscribeClassroom((next) => {
-      if (next !== null) onJoinedRef.current(next)
+      if (usable(next)) onJoinedRef.current(next!)
     })
-  }, [])
+  }, [left])
 
   return (
     <StudentFrame>
       <h1 className="m-0 font-display text-heading font-medium text-ink">Join the classroom</h1>
+      {left ? (
+        <p role="status" className="m-0 max-w-[50ch] text-body text-ink">
+          You left the classroom. Ask your Teacher for today&apos;s code to join again.
+        </p>
+      ) : null}
       <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
         Ask your Teacher for the four-letter code on their board. You fly with the controller
         in your hands. This screen only tells you what to do.
@@ -565,9 +719,11 @@ function JoinClassroomDoor({
 function WhatIsYourName({
   session,
   onSeated,
+  onLeave,
 }: {
   readonly session: ClassroomSession
   readonly onSeated: (session: ClassroomSession, seat: ClassroomSeat) => void
+  readonly onLeave: () => void
 }) {
   const [typedName, setTypedName] = useState('')
   const taken = new Set(session.seats.map((row) => row.name))
@@ -580,7 +736,7 @@ function WhatIsYourName({
   }
 
   return (
-    <StudentFrame>
+    <StudentFrame onLeave={onLeave}>
       <h1 className="m-0 font-display text-summary font-medium text-ink">What is your name?</h1>
 
       <form
@@ -643,21 +799,39 @@ function WhichDroneAreYouHolding({
   session,
   seat,
   onSession,
+  onLeave,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
   readonly onSession: (session: ClassroomSession) => void
+  readonly onLeave: () => void
 }) {
+  const { now } = useFleet()
   const grid = droneGrid(session)
+  /*
+   * An empty grid has two causes and they need different sentences.
+   *
+   * "Wait, and they will appear" is true while a Teacher is still setting up, and a lie on a
+   * session nobody has touched for an hour: nothing was ever going to appear. That lie is
+   * what an iPhone showed for weeks. A board that has stopped beating is the honest evidence
+   * this is the second case, and the way out is right underneath.
+   */
+  const boardGoneMs = now === 0 ? null : boardQuietForMs(session, now)
 
   return (
-    <StudentFrame>
+    <StudentFrame onLeave={onLeave}>
       <StudentName name={seat.name} />
       <h1 className="m-0 font-display text-summary font-medium text-ink">
         Which Drone are you holding?
       </h1>
 
-      {grid.length === 0 ? (
+      {grid.length === 0 && boardGoneMs !== null ? (
+        <p role="status" className="m-0 max-w-[50ch] text-body text-ink">
+          This lesson looks finished. Your Teacher&apos;s board stopped answering{' '}
+          {formatAge(boardGoneMs)}, and no Drones were ever put in it. Leave the classroom
+          below and ask for today&apos;s code.
+        </p>
+      ) : grid.length === 0 ? (
         <p className="m-0 max-w-[50ch] text-body text-ink-muted">
           Your Teacher has not put any Drones in this lesson yet. Wait, and they will appear.
         </p>
@@ -717,16 +891,18 @@ function BackOnTheGround({
   session,
   seat,
   rail,
+  onLeave,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
   readonly rail?: React.ReactNode
+  readonly onLeave?: (() => void) | undefined
 }) {
   const outcome = session.outcome ?? null
 
   if (outcome === null) {
     return (
-      <StudentFrame rail={rail}>
+      <StudentFrame rail={rail} onLeave={onLeave}>
         <IdentityLine seat={seat} />
 
         <h1 className="m-0 max-w-[24ch] font-display text-summary font-medium text-balance text-ink">
@@ -742,7 +918,7 @@ function BackOnTheGround({
   }
 
   return (
-    <StudentFrame rail={rail}>
+    <StudentFrame rail={rail} onLeave={onLeave}>
       <IdentityLine seat={seat} />
 
       <h1 className="m-0 font-display text-heading font-medium text-ink">Mission complete</h1>
@@ -1102,14 +1278,16 @@ function MissionBrief({
   seat,
   onSession,
   rail,
+  onLeave,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
   readonly onSession: (session: ClassroomSession) => void
   readonly rail?: React.ReactNode
+  readonly onLeave?: (() => void) | undefined
 }) {
   return (
-    <StudentFrame rail={rail}>
+    <StudentFrame rail={rail} onLeave={onLeave}>
       <IdentityLine seat={seat} />
 
       <AmIConnected seat={seat} />

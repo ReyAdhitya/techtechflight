@@ -3,6 +3,8 @@ import {
   assignSeatCraft,
   boardQuietForMs,
   canTakeDrone,
+  classroomHasEnded,
+  closeClassroom,
   droneGrid,
   droneNumber,
   grantSeatClearance,
@@ -19,12 +21,14 @@ import {
   requestTakeoff,
   resetClassroomForTests,
   freeDroneSeat,
+  leaveClassroom,
   QUIET_AFTER_MS,
   quietSeats,
   seatHasFlown,
   seatStudentByHand,
   STUDENT_SEAT_KEY,
   studentOnDrone,
+  CLASSROOM_SESSION_KEY,
   takeDroneSeat,
   touchBoard,
   touchSeat,
@@ -547,5 +551,103 @@ describe('who is flying this Drone', () => {
     const joined = joinClassroomAsStudent(withOne(), 'Amira', 1_000, 'stu-amira').session
     const taken = takeDroneSeat(joined, 'stu-amira', 'ttf-0001')
     expect(studentOnDrone(taken, 'ttf-0001', 'stu-from-logbook')).toBe('stu-amira')
+  })
+})
+
+/**
+ * A tablet can leave a classroom, and an old code stops working.
+ *
+ * The owner opened the Student app on an iPhone and found it sitting in a lesson called
+ * "bleble" that had finished weeks earlier, with no way out. Three causes, one story: there
+ * was no way to leave, the code never changed, and nothing had ever said the lesson was over.
+ */
+describe('leaving a classroom', () => {
+  const openFor = (lessonId: string | null) =>
+    openClassroom({
+      lessonId,
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [{ droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 }],
+    })
+
+  /*
+   * `input.code ?? existing?.code ?? mint(now)` reused the first code a board ever minted for
+   * every lesson after it, so last week's four letters opened today's class and a tablet
+   * could not tell today from last month.
+   */
+  it('mints a new code for a new Lesson', () => {
+    const first = openFor('lesson-1').code
+    const second = openFor('lesson-2').code
+
+    expect(first).not.toBe(second)
+    expect(second).toHaveLength(4)
+  })
+
+  /* A Teacher who reloads mid-lesson must not find the code they read out has changed. */
+  it('keeps the code while the Lesson does', () => {
+    const first = openFor('lesson-1').code
+    expect(openFor('lesson-1').code).toBe(first)
+  })
+
+  it('starts a new Lesson with nobody seated', () => {
+    joinClassroomAsStudent(openFor('lesson-1'), 'Amira', 1_000, 'stu-amira')
+    expect(readClassroomSession()?.seats).toHaveLength(1)
+
+    expect(openFor('lesson-2').seats).toHaveLength(0)
+  })
+
+  it('says the classroom is over, and keeps saying it', () => {
+    openFor('lesson-1')
+    expect(classroomHasEnded(readClassroomSession())).toBe(false)
+
+    closeClassroom(9_000)
+    expect(classroomHasEnded(readClassroomSession())).toBe(true)
+    expect(readClassroomSession()?.endedAt).toBe(9_000)
+    expect(readClassroomSession()?.live).toBe(false)
+
+    // Idempotent: closing twice does not restamp the moment it ended.
+    closeClassroom(20_000)
+    expect(readClassroomSession()?.endedAt).toBe(9_000)
+  })
+
+  /* The seats are the record of who flew what. Closing a Lesson does not un-teach it. */
+  it('keeps the seats when the classroom closes', () => {
+    joinClassroomAsStudent(openFor('lesson-1'), 'Amira', 1_000, 'stu-amira')
+    closeClassroom(9_000)
+
+    expect(readClassroomSession()?.seats).toHaveLength(1)
+  })
+
+  it('refuses a code for a lesson that has ended', async () => {
+    const code = openFor('lesson-1').code
+    expect(await loadClassroomByCode(code)).not.toBeNull()
+
+    closeClassroom(9_000)
+    expect(await loadClassroomByCode(code)).toBeNull()
+  })
+
+  /* There was no `leaveClassroom` anywhere. Once joined, joined forever. */
+  it('forgets the seat and the session on this device only', () => {
+    joinClassroomAsStudent(openFor('lesson-1'), 'Amira', 1_000, 'stu-amira')
+    expect(window.localStorage.getItem(STUDENT_SEAT_KEY)).not.toBeNull()
+
+    leaveClassroom()
+
+    expect(window.localStorage.getItem(STUDENT_SEAT_KEY)).toBeNull()
+    expect(window.localStorage.getItem(CLASSROOM_SESSION_KEY)).toBeNull()
+    expect(readClassroomSession()).toBeNull()
+  })
+
+  /* Opening a classroom is the opposite of ending one, whatever the last one did. */
+  it('clears the ended stamp when a new classroom opens', () => {
+    openFor('lesson-1')
+    closeClassroom(9_000)
+
+    expect(classroomHasEnded(openFor('lesson-2'))).toBe(false)
   })
 })

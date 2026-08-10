@@ -156,6 +156,62 @@ describe('after a grant, the Drone flies its route', () => {
   })
 })
 
+/**
+ * Home is stamped leaving the ground, and only leaving the ground.
+ *
+ * `flyRoute` calls `takeOff`, and the demonstration calls `flyRoute` on an aircraft it has
+ * already picked *because* it is airborne. Unguarded, that re-stamped home wherever the Drone
+ * happened to be: after the scripted incident a Recall landed 8.5 m from the launch point
+ * while the Scope's dotted line still pointed at the bench, because `HomePointTracker` reads
+ * the last grounded frame and was right. The line and the aircraft disagreed, and nothing on
+ * screen said so, at the one moment the demonstration exists to prove Recall trustworthy.
+ */
+describe('where Recall goes after a route change mid-flight', () => {
+  /** Where this Drone would be Recalled to, read the only way a test can: fly it there. */
+  const recallLandsAt = () => {
+    simulator.returnHome(DRONE)
+    tick(120)
+    return latest()!.position!
+  }
+
+  it('does not move home when a route is given to a Drone already in the air', () => {
+    simulator.flyRoute(DRONE, [{ eastM: 5, northM: 2 }])
+    tick(30)
+    const launch = { ...latest()!.position! }
+    expect(Math.hypot(launch.eastM, launch.northM)).toBeGreaterThan(1)
+
+    // The scripted incident: a second route, on an aircraft that is already up.
+    simulator.flyRoute(DRONE, [{ eastM: 7.2, northM: 2 }])
+    tick(20)
+
+    const home = recallLandsAt()
+    // Drone 1 is laid out at the origin, and that is where it left the ground.
+    expect(Math.hypot(home.eastM, home.northM)).toBeLessThanOrEqual(0.5)
+  })
+
+  /* Re-rolling the hover height mid-flight makes an aircraft climb for no visible reason. */
+  it('does not jump the hover height when a route is given mid-flight', () => {
+    simulator.flyRoute(DRONE, [{ eastM: 5, northM: 2 }])
+    tick(30)
+    const settled = latest()!.altitudeM!
+
+    simulator.flyRoute(DRONE, [{ eastM: 3, northM: -2 }])
+    tick(5)
+
+    expect(latest()!.altitudeM).toBeCloseTo(settled, 5)
+  })
+
+  it('still stamps home on a Drone that is genuinely on the ground', () => {
+    simulator.setPosition(DRONE, 4, 1)
+    simulator.flyRoute(DRONE, [{ eastM: 0, northM: -2 }])
+    tick(30)
+
+    const home = recallLandsAt()
+    expect(home.eastM).toBeCloseTo(4, 1)
+    expect(home.northM).toBeCloseTo(1, 1)
+  })
+})
+
 describe('how a normal flight ends', () => {
   /*
    * The same flight as Recall and a different act: the child flies it home because the

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDrones } from './FleetProvider'
-import { DESTINATIONS, MISSION_RUN_DESTINATION } from './SiteNav'
+import { DESTINATIONS } from './SiteNav'
 import { STATUS_PRESENTATION } from '@/lib/status-presentation'
 import { cn } from '@/lib/utils'
 
@@ -34,11 +34,12 @@ export function CommandPalette() {
   const commands = useMemo<Command[]>(
     () => [
       /*
-       * The Mission run leads, and is here rather than in the header button on purpose:
-       * the rail is how a Teacher walks the twelve steps, and this is the way back to them
-       * from one of the four screens that are not part of a Mission.
+       * The Mission run leads, and it is the first entry of `DESTINATIONS` now rather than a
+       * separate one bolted on here. It used to be reachable only through this palette, which
+       * is `Ctrl` + `K` and does not exist on a tablet: a Teacher on Walls with an iPad was
+       * stranded there.
        */
-      ...[MISSION_RUN_DESTINATION, ...DESTINATIONS].map((destination) => ({
+      ...DESTINATIONS.map((destination) => ({
         id: `go:${destination.href}`,
         label: destination.label,
         hint: destination.hint,

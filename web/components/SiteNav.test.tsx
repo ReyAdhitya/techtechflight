@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { useCallback, useRef, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import { DESTINATIONS, MISSION_RUN_DESTINATION, SiteNav } from './SiteNav'
+import {
+  DESTINATIONS,
+  MISSION_RUN_DESTINATION,
+  SiteNavButton,
+  SiteNavPanel,
+  useSiteNavDismiss,
+} from './SiteNav'
 
 const CSS = readFileSync(resolve(process.cwd(), 'web/app/globals.css'), 'utf8')
 
@@ -17,10 +24,37 @@ const pathname = vi.hoisted(() => ({ current: '/' }))
 vi.mock('next/navigation', () => ({ usePathname: () => pathname.current }))
 
 /**
- * Five places, behind one button.
+ * The button and the panel, composed the way `SiteHeader` composes them.
  *
- * The count matters, and so does the fact that they are shut. Seven links across the top of
- * a screen that also carries a twelve-step rail is two navigations competing, which is the
+ * They are two components because the panel is a row of the bar rather than a dropdown
+ * hanging off the button, and a test that rendered them separately would not be testing the
+ * thing that ships.
+ */
+function SiteNav() {
+  const [open, setOpen] = useState(false)
+  const shell = useRef<HTMLDivElement>(null)
+  const button = useRef<HTMLButtonElement>(null)
+  const close = useCallback(() => setOpen(false), [])
+  useSiteNavDismiss({ open, close, within: shell, buttonRef: button })
+
+  return (
+    <div ref={shell}>
+      <SiteNavButton
+        open={open}
+        onToggle={() => setOpen((was) => !was)}
+        menuId="sections"
+        buttonRef={button}
+      />
+      <SiteNavPanel open={open} onClose={close} menuId="sections" />
+    </div>
+  )
+}
+
+/**
+ * Where a Teacher can go, behind one button.
+ *
+ * The count matters, and so does the fact that they are shut. Seven links across the top of a
+ * screen that also carries a twelve-step rail is two navigations competing, which is the
  * confusion ADR-0026 exists to remove.
  */
 describe('where a Teacher can go', () => {
@@ -30,16 +64,21 @@ describe('where a Teacher can go', () => {
 
     const button = screen.getByRole('button', { name: /go to/i })
     expect(button).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 
-  it('offers the five places that are not part of one Mission run', () => {
+  /*
+   * Mission run leads. It left the list when the rail returned, which was right on the
+   * Mission run page and wrong everywhere else: from Walls there was no way back to the
+   * lesson at all except Ctrl + K, which does not exist on a tablet.
+   */
+  it('leads with the Mission run, then the five places a Mission run does not answer', () => {
     pathname.current = '/'
     render(<SiteNav />)
 
     fireEvent.click(screen.getByRole('button', { name: /go to/i }))
 
     expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'Mission run',
       'Fleet',
       'Walls',
       'Students',
@@ -49,12 +88,9 @@ describe('where a Teacher can go', () => {
   })
 
   /*
-   * The two that left. They are steps on the Mission run page now, and the rail is how a
-   * Teacher reaches them. Offering them here as well would put a Teacher on `/lesson` and
+   * Lesson and Control are steps on the Mission run page now, and the rail is how a Teacher
+   * reaches them. Offering them here as well would put a Teacher on `/lesson` and
    * `/mission?step=1` by two different routes to the same work.
-   *
-   * Reports is not one of them. Step 12 is the debrief of the Mission just sealed; `/reports`
-   * is the term, and it must not be behind a step that can be locked.
    */
   it('does not offer Lesson or Control, which are steps now', () => {
     pathname.current = '/'
@@ -148,6 +184,7 @@ describe('where a Teacher can go', () => {
 
   it('every destination is a real route', () => {
     expect(DESTINATIONS.map((destination) => destination.href)).toEqual([
+      '/mission',
       '/',
       '/walls',
       '/students',
@@ -159,7 +196,7 @@ describe('where a Teacher can go', () => {
 })
 
 /**
- * How the panel hides, read from the stylesheet.
+ * How the panel hides and where it sits, read from the stylesheet.
  *
  * jsdom has no cascade, so `hidden` on a `display: flex` element reads as hidden to a test
  * and renders as a permanently open menu over the board. The attribute's own default is
@@ -168,13 +205,25 @@ describe('where a Teacher can go', () => {
  */
 describe('how the sections panel opens and shuts', () => {
   it('says display none for a hidden panel, because flex would beat the attribute', () => {
-    expect(rule('.site-nav__list')).toMatch(/display:\s*flex/)
-    expect(rule('.site-nav__list[hidden]')).toMatch(/display:\s*none/)
+    expect(rule('.site-nav__panel')).toMatch(/display:\s*flex/)
+    expect(rule('.site-nav__panel[hidden]')).toMatch(/display:\s*none/)
   })
 
-  it('hangs the panel off the button rather than pushing the bar around', () => {
-    expect(rule('.site-nav')).toMatch(/position:\s*relative/)
-    expect(rule('.site-nav__list')).toMatch(/position:\s*absolute/)
+  /*
+   * The panel is the bar's second row rather than a dropdown over the page. Anchored to the
+   * button it covered the status bar underneath — the one strip that says which Fleet a
+   * Teacher is looking at — so the thing you opened hid the thing that says what you see.
+   */
+  it('sits in the flow of the bar rather than over what follows it', () => {
+    expect(rule('.site-header')).toMatch(/flex-direction:\s*column/)
+    expect(rule('.site-nav__panel')).not.toMatch(/position:\s*absolute/)
+    expect(rule('.site-nav')).not.toMatch(/position:\s*relative/)
+  })
+
+  /* Nothing in the bar may wrap. Settings fell to a second row and turned up in a corner. */
+  it('refuses to wrap the room controls', () => {
+    expect(rule('.site-header__controls')).toMatch(/flex-wrap:\s*nowrap/)
+    expect(rule('.site-header__settings')).toMatch(/white-space:\s*nowrap/)
   })
 
   /* The current section is marked without colour, so it survives a projector (ADR-0004). */

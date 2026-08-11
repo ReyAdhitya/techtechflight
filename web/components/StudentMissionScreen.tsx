@@ -48,7 +48,13 @@ import { CRITERION_WORDS, emptyMission, type MissionOutcome } from '@/lib/missio
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
 import { missionClock } from '@/lib/mission-clock'
 import { StudentStepRail } from './StudentStepRail'
-import { pointsLeft, studentStep, type StudentNow } from '@/lib/student-steps'
+import {
+  STUDENT_STEPS,
+  STUDENT_STEP_RECAP,
+  pointsLeft,
+  studentStep,
+  type StudentNow,
+} from '@/lib/student-steps'
 import { worstWhatIf, type WhatIfAnswer } from '@/lib/student-what-if'
 import { studentWarning } from '@/lib/student-rules'
 import { cn } from '@/lib/utils'
@@ -174,6 +180,60 @@ export function StudentMissionScreen() {
 
   return (
     <SeatedStudent session={session} seat={seat} onSession={setSession} onLeave={leave} />
+  )
+}
+
+/**
+ * A step a Student already did, read again.
+ *
+ * One sentence saying what the step was, plus the live detail the step actually carried where
+ * there is one. Step 2 gets the three rules in full, because a child who cannot re-read the
+ * rules is the reason ADR-0031 exists; step 1 gets the objective, which is the other thing
+ * anybody looks back at. The rest is a sentence, because a wall of text behind a tap is still
+ * a wall of text.
+ *
+ * Nothing here is pressable. Reading does not write a record, does not ask the Teacher for
+ * anything and does not reach an aircraft, which is why it is not one of the two.
+ */
+function LookingBack({
+  step,
+  session,
+  seat,
+  rail,
+}: {
+  readonly step: number
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+  readonly rail: React.ReactNode
+}) {
+  return (
+    <StudentFrame rail={rail}>
+      <p className="m-0 label">Looking back at step {step}</p>
+      <h1 className="m-0 font-display text-summary font-medium text-balance text-ink">
+        {STUDENT_STEPS[step - 1]}
+      </h1>
+      <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
+        {STUDENT_STEP_RECAP[step - 1]}
+      </p>
+
+      {step === 1 && session.objective.trim() !== '' ? (
+        <p className="m-0 max-w-[50ch] text-body text-ink">{session.objective}</p>
+      ) : null}
+
+      {step === 2 && session.rules.length > 0 ? (
+        <ol className="m-0 flex list-none flex-col gap-1 p-0">
+          {session.rules.map((rule) => (
+            <li key={rule} className="text-body text-ink">
+              {rule}
+            </li>
+          ))}
+        </ol>
+      ) : null}
+
+      <p className="m-0 text-value text-ink-muted">
+        This already happened. Your screen comes back on its own when something changes.
+      </p>
+    </StudentFrame>
   )
 }
 
@@ -372,9 +432,46 @@ function StudentPhase({
   const step = studentStep(seat, session, now)
   const lostBoardMs = boardQuietForMs(session, clock)
 
+  /*
+   * An earlier step being re-read, or null for now (ADR-0031).
+   *
+   * **It clears itself the instant the lesson moves.** A child re-reading the rules must not
+   * miss their takeoff clearance: the Teacher's answer outranks whatever the child chose to
+   * look at, and it arrives without being asked for because every phase here comes from a
+   * record or from Telemetry. A screen a child could leave stale by reading is a screen that
+   * can hide a Teacher's instruction, which would be worse than the interruption this
+   * removes.
+   */
+  const [reading, setReading] = useState<number | null>(null)
+  const liveStep = useRef(step)
+  useEffect(() => {
+    if (liveStep.current === step) return
+    liveStep.current = step
+    setReading(null)
+  }, [step])
+
   const rail = (
-    <StudentStepRail current={step} name={seat.name} droneName={seat.droneName} />
+    <StudentStepRail
+      current={step}
+      name={seat.name}
+      droneName={seat.droneName}
+      reading={reading}
+      onLookBack={setReading}
+      onBackToNow={() => setReading(null)}
+    />
   )
+
+  /*
+   * Re-reading wins over every screen below except the two that are shouting. A red zone is
+   * the one thing a child has to act on this second, and a board that has gone quiet means
+   * every figure here is stale — neither waits for somebody to finish reading. A Teacher's
+   * instruction is not on this list because it does not need to be: it moves the lesson to
+   * step 9, and moving the lesson is already what puts a child back on their own screen.
+   */
+  const shouting = (airborne && breaches.length > 0) || lostBoardMs !== null
+  if (reading !== null && reading < step && !shouting) {
+    return <LookingBack step={reading} session={session} seat={seat} rail={rail} />
+  }
 
   if (seat.phase === 'complete' || session.outcome != null) {
     if (!airborne && hasFlown) {

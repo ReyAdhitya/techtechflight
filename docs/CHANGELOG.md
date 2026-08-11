@@ -5,8 +5,30 @@ would notice.
 
 ## Unreleased
 
+### Fixed
+
+- **The demonstration's one Recall flew 8.5 m from where the dotted line said.** `takeOff`
+  stamped home from the current position unconditionally and `flyRoute` calls it with no
+  airborne guard, so the scripted incident moved the Drone's home to wherever the drift had
+  taken it. The Scope was right and the aircraft was wrong, at the one moment the ninety
+  seconds exists to prove Recall trustworthy. Home and the hover height are gated on being on
+  the ground, which is what made them true.
+- **The Student screen scrolled 856 pixels sideways on a phone.** `.sr-only` is
+  `position: absolute` and the rail's scrolling list was `position: static`, so the
+  screen-reader marks escaped the clip: `scrollWidth` was 1246 against a 390 viewport. One
+  word, `relative`. `web/scroll-containers.test.ts` refuses a scroller with no positioning
+  context, because jsdom can see neither half of this.
+- **The type-scale test now catches what it claims.** It read `.tsx` only and could not see an
+  arbitrary value at all, so thirteen sizes typed into the markup had accumulated while two
+  were reported in each of two waves. The showcase gains its own `--sc-text-*` scale.
+
 ### Added
 
+- **A tablet can leave a classroom, and a new Lesson mints a new code.** The owner found an
+  iPhone sitting in a lesson called "bleble" that had finished weeks earlier: there was no way
+  to leave, the code never changed, and nothing had ever said the lesson was over. All three
+  now do. A Lesson ending mid-flight reads "The lesson has ended. Land now." and hands the way
+  out over once Telemetry sees the Drone down.
 - **Roles are secrets.** A Student types the classroom code, which is public and read out
   loud; a Teacher types a four digit PIN, private and set once. The door asks for the
   matching one. **Switch role has left the Student chrome entirely** — it was two taps from a
@@ -47,6 +69,12 @@ would notice.
 
 ### Changed
 
+- **The air is one step at a time, over a bar that does not move (ADR-0030).** Steps 6 to 10
+  each show their own panel in the rail's order. The page used to be nine sections on one
+  scroller running 10, 6, 9, 7, so tapping step 7 scrolled past 9 and 10 to reach it. The
+  Attention bar and Land all / Hover all / Stop all are above every step and never scroll
+  away, which is how ADR-0026's safety argument is answered rather than dropped. The cost is
+  in the ADR: per-Drone commands are one rail tap away rather than zero.
 - **Nothing is airborne that a Teacher did not clear.** The board opened with Drones already
   in the air: the simulator's `#wander` lifted them on a dice roll every tick, so the opening
   shot contradicted the product's own safety story before a Teacher had touched it. Lost

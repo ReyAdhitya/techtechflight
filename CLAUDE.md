@@ -321,6 +321,26 @@ it for `components` and `app`. Anything a screen needs from there is re-exported
 `web/lib` (see `classroom-fleet-size.ts`), and display facts like `COMFORTABLE_BOARD_SIZE`
 belong in `web/lib` outright.
 
+**A scroll container must be a positioning context, or it clips nothing.** `.sr-only` and
+`.visually-hidden` are `position: absolute`, and an `overflow-x: auto` element that is
+`position: static` is not a containing block, so the screen-reader text lays out against a
+further ancestor and escapes the clip. The Student rail shipped that way and a phone scrolled
+856 pixels sideways at 390. Add `relative`. `web/scroll-containers.test.ts` refuses a scroller
+without it; jsdom can see neither the layout nor the cascade, so it is a source scan.
+
+**`takeOff` only takes off from the ground.** Home and the hover height are stamped inside a
+`if (drone.airborne) return` guard, because `flyRoute` calls `takeOff` and the demonstration
+calls `flyRoute` on an aircraft it picked *because* it is airborne. Unguarded, the scripted
+incident moved a Drone's home to wherever it had drifted and a Recall landed 8.5 m from the
+launch point while the Scope's dotted line still pointed at the bench.
+
+**A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
+`lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board
+ever minted, forever. Ending a Lesson calls `closeClassroom`, which is the only thing that
+makes an old session *provably* dead: a tablet on another device polls the cloud by the code it
+already holds, so the truth has to be written into the document it is reading. `leaveClassroom`
+is per device and touches nothing the Teacher owns.
+
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
 nomination, and ceiling-breach counts each live in their own `localStorage`

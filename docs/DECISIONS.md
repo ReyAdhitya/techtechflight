@@ -30,6 +30,16 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
   Teacher can see where the forbidden half starts. Only a zone with nothing at all inside the
   frame goes unnamed. Bounding boxes rather than true clipping, because every zone a Teacher
   can draw here is a rectangle dragged out with a finger.
+- **`mayLeaveClassroom` is a predicate rather than an expression inside the screen.** The
+  pinned demonstration the jsdom suite flies never leaves the ground, so the airborne half of
+  "silence is not flight" is unreachable there whatever the session says, and the browser walk
+  cannot reach it either: the standalone build runs one Fleet per tab, so a Teacher's grant
+  flies the Teacher's simulated craft and never the child's. Three of the four answers were
+  provable and the fourth was the one that matters. Now all four are.
+- **The team sits beside the child's name in the rail, on every screen.** The brief names it
+  once, at the start of a lesson that runs forty minutes; the rail is the one thing that never
+  leaves, including on the two takeovers that carry nothing else. The prop had been there
+  unused since the rail shipped.
 - **The Student's team is found by the Drone, not by a roster id.** A child joins by tapping
   the number painted on the craft in their hands, so the craft is the one thing the Teacher's
   team list and the child's seat both know. Matching ids would have worked only for a child

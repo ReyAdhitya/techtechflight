@@ -211,6 +211,9 @@ per package rather than inside the junction (which is the main repo's directory)
 `/enter`, so every Teacher screenshot taken between the role gate shipping and 2026-08-07 was
 a photograph of that door. `TTF_SHOT_ROLE=student` seeds the other one. A shot needs
 `NEXT_PUBLIC_DEMO_ONLY=1` at build time too, or the board waits for a ground station.
+`TTF_SHOT_THEME=dark` photographs the other theme, and it stamps `data-theme` back on after
+load rather than only seeding the preference, because hydration drops the attribute (below) —
+seeding alone photographs the light board and calls it dark.
 
 **The address decides the role for that tab; the remembered role only routes the bare
 address.** Two keys, two lifetimes, and they are not interchangeable: `techtechflight:role`

@@ -21,6 +21,9 @@
  * fresh browser profile has never answered. Without a seeded role every shot of every
  * Teacher screen is a photograph of that door, which looks enough like a screen to be
  * mistaken for one. So the role is seeded, and `TTF_SHOT_ROLE=student` seeds the other one.
+ *
+ * `TTF_SHOT_THEME=dark` photographs the other theme. It both seeds the preference and stamps
+ * the attribute back on after hydration, which is not belt and braces: hydration drops it.
  */
 import { createServer } from 'node:http'
 import { readdir, readFile, stat } from 'node:fs/promises'
@@ -95,10 +98,24 @@ const browser = await chromium.launch({ executablePath })
 const page = await browser.newPage({ viewport: { width: Number(width), height: 900 } })
 // Answered before the first script runs, or the board redirects to the door and stays there.
 const role = process.env.TTF_SHOT_ROLE ?? 'teacher'
-await page.addInitScript((chosen) => {
-  window.localStorage.setItem('techtechflight:board-role', chosen)
-}, role)
+const theme = process.env.TTF_SHOT_THEME ?? 'light'
+await page.addInitScript(
+  (chosen) => {
+    window.localStorage.setItem('techtechflight:board-role', chosen.role)
+    window.localStorage.setItem('theme', chosen.theme)
+  },
+  { role, theme },
+)
 await page.goto(`http://localhost:${port}${route}`, { waitUntil: 'networkidle' })
+/*
+ * Stamped again after hydration, because a saved theme does not survive it: the boot script
+ * in `layout.tsx` sets `data-theme` before paint and React drops the attribute on the way
+ * past. The toggle works, so the theme itself is fine — but a dark shot taken without this
+ * is a photograph of the light board, which is worse than no shot at all.
+ */
+await page.evaluate((chosen) => {
+  document.documentElement.dataset.theme = chosen
+}, theme)
 // The board settles: fonts land, the first Fleet State arrives, ages start counting.
 await page.waitForTimeout(2500)
 const path = resolve(process.cwd(), `scripts/shots/${label}.png`)

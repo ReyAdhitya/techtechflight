@@ -5,6 +5,7 @@ import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
   HEARTBEAT_EVERY_MS,
   boardQuietForMs,
+  mayLeaveClassroom,
   canTakeDrone,
   classroomHasEnded,
   droneGrid,
@@ -291,19 +292,9 @@ function SeatedStudent({
     : (vitals.find((entry) => entry.droneId === seat.droneId) ?? null)
   const airborne = mine?.airborne === true
 
-  /*
-   * Whether the way out belongs on screen, and **silence is not flight**.
-   *
-   * The exit used to be gated on `!airborne` alone. A tablet that last heard "airborne"
-   * seventeen hours ago still believes it, so a child sat on "Land and wait" with nothing to
-   * press, forever, in a room where the lesson had finished the previous afternoon. The
-   * heartbeat already knows the difference: a board that has not spoken for forty seconds is
-   * not telling this tablet anything, including that the Drone is up.
-   *
-   * A child genuinely flying still gets no exit, which is the point of the gate.
-   */
+  /* Silence is not flight. The rule and its reasoning are in `mayLeaveClassroom`. */
   const boardQuiet = boardQuietForMs(session, clock) !== null
-  const canLeave = !airborne || boardQuiet
+  const canLeave = mayLeaveClassroom({ airborne, boardQuiet })
 
   /*
    * Down after flying is not the same as never having left, and neither is decided by a
@@ -450,11 +441,17 @@ function StudentPhase({
     setReading(null)
   }, [step])
 
+  /*
+   * The team beside the name, on every screen including the two takeovers that carry nothing
+   * else. A child flies as part of a team all lesson and the brief said so once, at the start;
+   * the rail is the one thing that never leaves.
+   */
   const rail = (
     <StudentStepRail
       current={step}
       name={seat.name}
       droneName={seat.droneName}
+      teamName={roomAround(session, seat.studentId).teamName}
       reading={reading}
       onLookBack={setReading}
       onBackToNow={() => setReading(null)}

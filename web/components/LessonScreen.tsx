@@ -38,7 +38,7 @@ import { TeamBriefPrint } from './TeamBriefPrint'
 import { ClassroomCodePanel } from './ClassroomCodePanel'
 import { ClassroomSeatsPanel } from './ClassroomSeatsPanel'
 import type { Mission } from '@/lib/mission'
-import { readTeams } from '@/lib/teams'
+import { readServerTeams, readTeams, subscribeTeams } from '@/lib/teams'
 import {
   adoptMissionDraft,
   chooseScenario,
@@ -347,7 +347,12 @@ function MissionPrep({
   readonly onMissionChange: (mission: Mission | null) => void
   readonly step?: number | undefined
 }) {
-  const teams = readTeams()
+  /*
+   * Subscribed rather than read during render. Read once per render, this screen only noticed
+   * a team getting a Drone when something else re-rendered it, so "Put these craft on the
+   * Mission" stayed away until the page was reloaded.
+   */
+  const teams = useSyncExternalStore(subscribeTeams, readTeams, readServerTeams)
   const scenarioId = mission?.scenarioId ?? null
   const zones = mission?.zones ?? []
   const craftIds = missionCraftIds(teams, mission)

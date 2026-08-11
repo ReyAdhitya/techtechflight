@@ -1,6 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import {
   HEARTBEAT_EVERY_MS,
@@ -10,6 +18,7 @@ import {
   classroomHasEnded,
   droneGrid,
   joinClassroomAsStudent,
+  changeClassroom,
   leaveClassroom,
   loadClassroomByCode,
   normalizeClassroomCode,
@@ -77,13 +86,34 @@ import { cn } from '@/lib/utils'
  * Nothing on this screen reaches an aircraft. Asking for takeoff is a record (ADR-0021);
  * the Students fly by hand.
  */
+/**
+ * Go to a different classroom, keeping the name. Read by every frame's foot.
+ *
+ * A context rather than a ninth prop threaded through six components. It belongs beside
+ * Leave on every screen that offers Leave, and the two must never come apart: a foot with one
+ * of them is the state this change exists to remove. Threading it by hand is six chances to
+ * forget, and `StudentFrame` already knows whether the foot is showing.
+ */
+const ChangeClassroomContext = createContext<(() => void) | undefined>(undefined)
+
 export function StudentMissionScreen() {
+  return <StudentMission />
+}
+
+function StudentMission() {
   const [hydrated, setHydrated] = useState(false)
   const [session, setSession] = useState<ClassroomSession | null>(null)
   const [studentId, setStudentId] = useState<string | null>(null)
   const [remembered, setRemembered] = useState<StudentSeatLocal | null>(null)
-  /** Walked out on purpose, so the join door says so rather than just appearing. */
-  const [left, setLeft] = useState(false)
+  /*
+   * Why this tablet is at the door, when it is.
+   *
+   * `left` walked out and kept nothing. `change` is going to a different classroom and keeps
+   * whose tablet it is. They were one action, and the one on offer was the destructive one:
+   * the only route to the code screen forgot the name too, so a Teacher moving a tablet to
+   * the other room landed on "What is your name?" with nothing to do but type it again.
+   */
+  const [door, setDoor] = useState<'left' | 'change' | null>(null)
 
   const onJoinedClassroom = useCallback((next: ClassroomSession) => {
     setSession(next)
@@ -109,7 +139,22 @@ export function StudentMissionScreen() {
     setSession(null)
     setStudentId(null)
     setRemembered(null)
-    setLeft(true)
+    setDoor('left')
+  }, [])
+
+  /*
+   * Go to a different classroom, and keep the name.
+   *
+   * `remembered` is deliberately left alone: it is what makes the tablet re-seat itself under
+   * the same child the moment the new code lands, which is the whole difference between this
+   * and Leave. The seat in the old room stays where it is, the same as leaving — this device
+   * is walking out of a room, not deleting a record.
+   */
+  const changeRoom = useCallback(() => {
+    changeClassroom()
+    setSession(null)
+    setStudentId(null)
+    setDoor('change')
   }, [])
 
   /*
@@ -133,54 +178,72 @@ export function StudentMissionScreen() {
     setStudentId(joined.seat.studentId)
   }, [session, ended, seat, remembered])
 
-  if (!hydrated) {
-    return (
-      <StudentFrame>
-        <p className="m-0 text-body text-ink-muted">Opening…</p>
-      </StudentFrame>
-    )
-  }
+  const screen = () => {
+    if (!hydrated) {
+      return (
+        <StudentFrame>
+          <p className="m-0 text-body text-ink-muted">Opening…</p>
+        </StudentFrame>
+      )
+    }
 
-  if (session === null) {
-    return <JoinClassroomDoor onJoined={onJoinedClassroom} left={left} />
+    if (session === null) {
+      return (
+        <JoinClassroomDoor
+          onJoined={onJoinedClassroom}
+          door={door}
+          name={remembered?.name ?? null}
+        />
+      )
+    }
+
+    /*
+     * The Lesson is over. A child still holding a flying aircraft is told to land and keeps
+     * their screen; everybody else walks out. `SeatedStudent` owns the airborne case because
+     * it is the component that reads Telemetry, and it hands this back once the Drone is down.
+     */
+    if (ended && (seat === null || seat.droneId === null)) {
+      return <ClassroomOver onLeave={leave} />
+    }
+
+    if (seat === null) {
+      return (
+        <WhatIsYourName
+          session={session}
+          onSeated={(next, taken) => {
+            setSession(next)
+            setStudentId(taken.studentId)
+            setRemembered(readStudentSeatLocal())
+          }}
+          onLeave={leave}
+        />
+      )
+    }
+
+    if (seat.droneId === null) {
+      return (
+        <WhichDroneAreYouHolding
+          session={session}
+          seat={seat}
+          onSession={setSession}
+          onLeave={leave}
+        />
+      )
+    }
+
+    return (
+      <SeatedStudent session={session} seat={seat} onSession={setSession} onLeave={leave} />
+    )
   }
 
   /*
-   * The Lesson is over. A child still holding a flying aircraft is told to land and keeps
-   * their screen; everybody else walks out. `SeatedStudent` owns the airborne case because
-   * it is the component that reads Telemetry, and it hands this back once the Drone is down.
+   * Change classroom is offered on the code screen itself only when there is a room to change
+   * out of. On the door it would be a button that goes where the child already is.
    */
-  if (ended && (seat === null || seat.droneId === null)) {
-    return <ClassroomOver onLeave={leave} />
-  }
-
-  if (seat === null) {
-    return (
-      <WhatIsYourName
-        session={session}
-        onSeated={(next, taken) => {
-          setSession(next)
-          setStudentId(taken.studentId)
-          setRemembered(readStudentSeatLocal())
-        }}
-        onLeave={leave}
-      />
-    )
-  }
-
-  if (seat.droneId === null) {
-    return (
-      <WhichDroneAreYouHolding
-        session={session}
-        seat={seat}
-        onSession={setSession}
-        onLeave={leave}
-      />
-    )
-  }
-
   return (
-    <SeatedStudent session={session} seat={seat} onSession={setSession} onLeave={leave} />
+    <ChangeClassroomContext.Provider value={session === null ? undefined : changeRoom}>
+      {screen()}
+    </ChangeClassroomContext.Provider>
   )
 }
 
@@ -710,6 +773,7 @@ function StudentFrame({
   /** False while this child's Drone is up. Never take a screen from someone mid-flight. */
   readonly canLeave?: boolean
 }) {
+  const onChangeClassroom = useContext(ChangeClassroomContext)
   return (
     <div className="flex min-h-[100dvh] w-full flex-col bg-canvas min-[46rem]:flex-row">
       {rail}
@@ -736,7 +800,16 @@ function StudentFrame({
          */}
         {children}
         {onLeave !== undefined && canLeave ? (
-          <p className="m-0 mt-auto pt-6">
+          <p className="m-0 mt-auto flex flex-wrap gap-2 pt-6">
+            {onChangeClassroom !== undefined ? (
+              <button
+                type="button"
+                onClick={onChangeClassroom}
+                className="min-h-11 cursor-pointer rounded-pill border border-hairline bg-transparent px-4 py-1.5 text-value text-ink-muted hover:border-ink hover:text-ink"
+              >
+                Change classroom
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onLeave}
@@ -759,11 +832,18 @@ function StudentFrame({
  */
 function JoinClassroomDoor({
   onJoined,
-  left = false,
+  door = null,
+  name = null,
 }: {
   readonly onJoined: (session: ClassroomSession) => void
-  /** This tablet walked out on purpose, so say so and do not walk it straight back in. */
-  readonly left?: boolean
+  /**
+   * Why this tablet is here, when it did not simply arrive. Either way the automatic join is
+   * off: a device that asked for the code screen must not be pulled back into the room it
+   * just asked to leave, which on one laptop is sitting in the same `localStorage`.
+   */
+  readonly door?: 'left' | 'change' | null
+  /** Kept across a change of classroom, so the tablet says whose it still is. */
+  readonly name?: string | null
 }) {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -780,7 +860,7 @@ function JoinClassroomDoor({
    * at all. The second guard is the same rule the auto-seat above follows.
    */
   useEffect(() => {
-    if (left) return
+    if (door !== null) return
     const usable = (next: ClassroomSession | null) =>
       next !== null && !classroomHasEnded(next)
 
@@ -789,14 +869,21 @@ function JoinClassroomDoor({
     return subscribeClassroom((next) => {
       if (usable(next)) onJoinedRef.current(next!)
     })
-  }, [left])
+  }, [door])
 
   return (
     <StudentFrame>
-      <h1 className="m-0 font-display text-heading font-medium text-ink">Join the classroom</h1>
-      {left ? (
+      <h1 className="m-0 font-display text-heading font-medium text-ink">
+        {door === 'change' ? 'Which classroom?' : 'Join the classroom'}
+      </h1>
+      {door === 'left' ? (
         <p role="status" className="m-0 max-w-[50ch] text-body text-ink">
           You left the classroom. Ask your Teacher for today&apos;s code to join again.
+        </p>
+      ) : null}
+      {door === 'change' && name !== null ? (
+        <p role="status" className="m-0 max-w-[50ch] text-body text-ink">
+          Still {name}&apos;s tablet. Type the code for the room you want.
         </p>
       ) : null}
       <p className="m-0 max-w-[50ch] text-body text-ink-subtle">
@@ -856,8 +943,10 @@ function JoinClassroomDoor({
  * roll for their own name is checking against memory, and the one that gets tapped is the one
  * near their thumb. Their own name typed on their own tablet cannot be somebody else's.
  *
- * The roll still travels with the session (ADR-0025), so a Teacher who has typed the class in
- * gets one tap instead of a keyboard. It is an offer, not the only way through.
+ * **The list under it is the room, not this device's history.** It used to be the Logbook
+ * roll, which is kept on purpose so a Teacher types the class once rather than every period —
+ * and which therefore accumulates: one tablet offered five names from five different lessons,
+ * and it only ever grew. What is offered now is who has joined *this* classroom.
  */
 function WhatIsYourName({
   session,
@@ -869,9 +958,6 @@ function WhatIsYourName({
   readonly onLeave: () => void
 }) {
   const [typedName, setTypedName] = useState('')
-  const taken = new Set(session.seats.map((row) => row.name))
-  const roster: readonly ClassroomRosterEntry[] = session.roster ?? []
-  const roll = roster.filter((student) => !taken.has(student.name))
 
   const seatAs = (name: string, studentId?: string) => {
     const joined = joinClassroomAsStudent(session, name, Date.now(), studentId)
@@ -907,22 +993,47 @@ function WhatIsYourName({
         <p className="m-0 text-value text-ink-muted">Typed once. This tablet remembers you.</p>
       </form>
 
-      {roll.length === 0 ? null : (
-        <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 min-[48rem]:grid-cols-4">
-          {roll.map((student) => (
-            <li key={student.studentId}>
-              <button
-                type="button"
-                onClick={() => seatAs(student.name, student.studentId)}
-                className="min-h-14 w-full cursor-pointer rounded-surface border border-hairline bg-surface-1 px-4 py-3 font-display text-body font-medium text-ink hover:border-ink"
-              >
-                {student.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <AlreadyInThisClassroom session={session} />
     </StudentFrame>
+  )
+}
+
+/**
+ * Everyone who has joined this classroom, and which craft they took.
+ *
+ * **Nothing here is tappable, and that is the same rule as the Drone picker.** A name in this
+ * list belongs to a child at another tablet, so offering it would be offering to be them; it
+ * stays on screen and says why instead of disappearing, because a child hunting for their own
+ * name needs to see that somebody has already used it rather than be left wondering. One
+ * behaviour, learned once, in two places.
+ *
+ * Silent in an empty room. "Nobody else is here yet" under a screen asking for a name is a
+ * sentence about nothing.
+ */
+function AlreadyInThisClassroom({ session }: { readonly session: ClassroomSession }) {
+  const here = [...session.seats].sort((a, b) => a.joinedAt - b.joinedAt)
+  if (here.length === 0) return null
+
+  return (
+    <section className="flex flex-col gap-2" aria-label="Already in this classroom">
+      <p className="label m-0">Already here</p>
+      <ul className="m-0 grid list-none grid-cols-2 gap-3 p-0 min-[48rem]:grid-cols-4">
+        {here.map((seat) => (
+          <li key={seat.studentId}>
+            <span
+              aria-disabled="true"
+              className="flex min-h-14 w-full flex-col justify-center rounded-surface border border-hairline bg-surface-1 px-4 py-3 opacity-60"
+              data-seat-taken=""
+            >
+              <span className="font-display text-body font-medium text-ink">{seat.name}</span>
+              <span className="text-label text-ink-muted">
+                {seat.droneName === null ? 'On another tablet' : `Has ${seat.droneName}`}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

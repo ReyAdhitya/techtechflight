@@ -8,9 +8,11 @@ import {
   joinClassroomAsStudent,
   openClassroom,
   readClassroomSession,
+  readStudentSeatLocal,
   requestTakeoff,
   resetClassroomForTests,
   CLASSROOM_SESSION_KEY,
+  STUDENT_SEAT_KEY,
   QUIET_AFTER_MS,
   closeClassroom,
   takeDroneSeat,
@@ -98,6 +100,19 @@ afterEach(() => {
  */
 const stage = () => document.querySelector('main')!
 
+/**
+ * Say who is at this tablet.
+ *
+ * Typed, because the list under the box is the room rather than a roll to pick from: it names
+ * the children already here and none of them is tappable, for the same reason a Drone somebody
+ * has is not (#item 3). A child's own name typed on their own tablet cannot be somebody
+ * else's, which was always the argument for the box.
+ */
+const sayIAm = (name: string) => {
+  fireEvent.change(screen.getByLabelText(/your name/i), { target: { value: name } })
+  fireEvent.click(screen.getByRole('button', { name: 'That is me' }))
+}
+
 describe('before a Teacher has opened the classroom', () => {
   it('says so, rather than showing an empty screen', () => {
     studentScreen()
@@ -118,25 +133,54 @@ describe('joining', () => {
     expect(screen.getByLabelText(/your name/i)).toBeInTheDocument()
   })
 
-  it('offers the class roll as well, when the Teacher has typed one in', () => {
+  /*
+   * The list under the box is **this classroom**, not this device's history.
+   *
+   * It used to be the Logbook roll, which is kept on purpose so a Teacher types the class once
+   * rather than every period — and which therefore only ever grows. One tablet offered five
+   * names from five different lessons, and a child scanning them for their own was choosing
+   * from a list of strangers.
+   */
+  it('says nothing about the room before anybody has joined it', () => {
     classroomWithBrief(['Priya', 'Sam'])
 
     studentScreen()
     settle()
 
-    expect(screen.getByRole('button', { name: 'Priya' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Sam' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Already in this classroom' })).not
+      .toBeInTheDocument()
+    expect(screen.queryByText('Sam')).not.toBeInTheDocument()
   })
 
-  it('seats the Student who picked their name', () => {
+  it('seats the Student who says their name', () => {
     classroomWithBrief(['Priya', 'Sam'])
 
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
 
     expect(readClassroomSession()?.seats.map((seat) => seat.name)).toEqual(['Priya'])
+  })
+
+  /*
+   * A name somebody else has stays on screen and says why, exactly as a taken Drone does. It
+   * used to be filtered out, so a child hunting for their own name found nothing and could not
+   * tell "not offered" from "already used".
+   */
+  it('shows a name another child has taken, and does not offer it', () => {
+    const opened = classroomWithBrief(['Priya', 'Sam'])
+    const joined = joinClassroomAsStudent(opened, 'Sam', 1_000, 'stu-sam').session
+    writeClassroomSession(takeDroneSeat(joined, 'stu-sam', 'ttf-0002'))
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+
+    studentScreen()
+    settle()
+
+    const room = screen.getByRole('region', { name: 'Already in this classroom' })
+    expect(within(room).getByText('Sam')).toBeInTheDocument()
+    expect(within(room).getByText('Has Drone 2')).toBeInTheDocument()
+    expect(within(room).queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('remembers the name on this tablet, so the next morning is one tap', () => {
@@ -164,7 +208,7 @@ describe('joining', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
 
     expect(screen.getByRole('heading', { name: 'Which Drone are you holding?' }))
@@ -186,7 +230,7 @@ describe('joining', () => {
 
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
 
     const taken = screen.getByRole('button', { name: 'Drone 2, taken by Sam' })
@@ -204,7 +248,7 @@ describe('joining', () => {
     classroomWithBrief(['Priya'], [])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
 
     expect(screen.getByText(/has not put any Drones in this lesson yet/i)).toBeInTheDocument()
@@ -223,7 +267,7 @@ describe('when the tablet loses the board', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -238,19 +282,22 @@ describe('when the tablet loses the board', () => {
     expect(within(stage()).queryByText(/% charge/)).not.toBeInTheDocument()
     /*
      * No Mission press: nothing here asks the Teacher for anything, because the Teacher is
-     * not listening. The way out is the one thing on it, and it is the fix for the trap this
-     * screen used to be.
+     * not listening. What is on it is the way out, and it is the fix for the trap this screen
+     * used to be. Two of them now — leaving and changing rooms are different intentions, and
+     * the only route to the code screen used to be the one that forgets the name.
      */
     const pressable = within(stage()).queryAllByRole('button')
-    expect(pressable).toHaveLength(1)
-    expect(pressable[0]).toHaveAccessibleName('Leave this classroom')
+    expect(pressable.map((button) => button.textContent)).toEqual([
+      'Change classroom',
+      'Leave this classroom',
+    ])
   })
 
   it('says nothing while the board is answering', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -269,7 +316,7 @@ describe('the brief', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -333,7 +380,7 @@ describe('the brief', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
 
     expect(screen.queryByText(/do not have a Drone yet/i)).not.toBeInTheDocument()
@@ -365,7 +412,7 @@ describe('asking for takeoff, and the answer', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -436,7 +483,9 @@ describe('asking for takeoff, and the answer', () => {
     const missionPresses = () =>
       within(stage())
         .queryAllByRole('button')
-        .filter((button) => !/leave this classroom/i.test(button.textContent ?? ''))
+        .filter(
+          (button) => !/(leave|change) (this )?classroom/i.test(button.textContent ?? ''),
+        )
 
     seatWithCraft()
     expect(missionPresses()).toHaveLength(1)
@@ -497,7 +546,7 @@ describe('the score after landing', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     const seated = readClassroomSession()!
     const studentId = seated.seats[0]!.studentId
@@ -619,7 +668,7 @@ describe('the way out when the board has gone quiet', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -654,7 +703,7 @@ describe('leaving the classroom', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
   }
 
@@ -740,7 +789,7 @@ describe('leaving the classroom', () => {
     classroomWithBrief(['Priya'], [])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
 
     writeClassroomSession({
@@ -761,7 +810,7 @@ describe('leaving the classroom', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -786,7 +835,7 @@ describe('looking back at a step already done', () => {
     classroomWithBrief(['Priya'])
     studentScreen()
     settle()
-    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    sayIAm('Priya')
     settle()
     fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
     settle()
@@ -874,5 +923,88 @@ describe('looking back at a step already done', () => {
 
     expect(within(rail()).queryByRole('button', { name: /Score/ })).not.toBeInTheDocument()
     expect(within(rail()).queryByRole('button', { name: /Land/ })).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * Changing classroom, which is not leaving.
+ *
+ * The only route to the code screen was Leave, and Leave forgets the name as well as the room
+ * and reads as final. A Teacher moving a tablet to the other class landed back on *What is
+ * your name?* with nothing to do but type it again — same tablet, same child, same morning.
+ * Two intentions, two buttons, and only one of them is destructive.
+ */
+describe('changing classroom, which is not leaving', () => {
+  const seatedPriya = () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    sayIAm('Priya')
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+  }
+
+  it('goes to the code screen and keeps whose tablet it is', () => {
+    seatedPriya()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change classroom' }))
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'Which classroom?' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Classroom code')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent("Still Priya's tablet")
+    /* The name is the thing that had to survive, and it lives in this key. */
+    expect(readStudentSeatLocal()?.name).toBe('Priya')
+  })
+
+  /* And it does not walk straight back into the room it just left, on one laptop. */
+  it('stays at the code screen with the old classroom still in this browser', () => {
+    seatedPriya()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Change classroom' }))
+    settle()
+    settle()
+
+    expect(screen.getByRole('heading', { name: 'Which classroom?' })).toBeInTheDocument()
+  })
+
+  it('re-seats the same child in the new classroom without asking their name again', () => {
+    seatedPriya()
+    fireEvent.click(screen.getByRole('button', { name: 'Change classroom' }))
+    settle()
+
+    /* The other room opens on this machine, the way a second tab of the board would. */
+    act(() => {
+      writeClassroomSession(
+        openClassroom({
+          lessonId: 'L-0002',
+          lessonLabel: 'Year 9',
+          scenarioId: 'search-rescue',
+          scenarioName: 'Search and Rescue',
+          objective: 'Find the missing hiker.',
+          rules: [],
+          limitMinutes: 12,
+          zones: [],
+          drones: THREE_DRONES,
+        }),
+      )
+      window.dispatchEvent(new StorageEvent('storage', { key: CLASSROOM_SESSION_KEY }))
+    })
+    settle()
+
+    expect(screen.queryByRole('heading', { name: 'What is your name?' })).not.toBeInTheDocument()
+    expect(readClassroomSession()?.seats.map((seat) => seat.name)).toEqual(['Priya'])
+  })
+
+  /* Leave still forgets everything. That was never the broken half. */
+  it('leaves the name behind when a child actually leaves', () => {
+    seatedPriya()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Leave this classroom' }))
+    settle()
+
+    expect(screen.getByRole('status')).toHaveTextContent('You left the classroom')
+    expect(readStudentSeatLocal()).toBeNull()
   })
 })

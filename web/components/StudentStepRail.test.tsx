@@ -1,14 +1,17 @@
-import { describe, expect, it } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { StudentStepRail } from './StudentStepRail'
 
 /**
  * The rail on a Student's tablet, and the one property that matters most about it.
  *
- * ADR-0028: it shows all twelve and **not one row is pressable**. That is what keeps
- * ADR-0025's two-press rule true, because fourteen pressable things of which twelve do
- * nothing is not two, and a child who pressed *Land* on a rail and watched nothing happen
- * has learned that the screen lies.
+ * ADR-0028, as amended by ADR-0031: a step that has **already happened** can be tapped and
+ * re-read; a later step is not a link, not a button and not focusable. A child who pressed
+ * *Land* on a rail and watched nothing happen has learned that the screen lies, and that is
+ * still refused. Looking back asks for nothing and moves nothing.
+ *
+ * ADR-0025's two presses are untouched: those are Mission presses on the stage, and these are
+ * in the rail, in exactly the way joining and leaving are not one of the two.
  */
 describe('the Student step rail', () => {
   it('shows all twelve steps of the lesson', () => {
@@ -21,8 +24,8 @@ describe('the Student step rail', () => {
     expect(within(rows[11]!).getByText('Score')).toBeInTheDocument()
   })
 
-  /* The whole of ADR-0028 in one assertion. */
-  it('offers nothing to press, anywhere', () => {
+  /* Handed no way to look back, it is the look-only rail ADR-0028 shipped. */
+  it('offers nothing to press when looking back is not on offer', () => {
     const { container } = render(
       <StudentStepRail current={7} name="Amira" droneName="Drone 1" />,
     )
@@ -31,12 +34,88 @@ describe('the Student step rail', () => {
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
     expect(container.querySelector('[tabindex]')).toBeNull()
     expect(container.querySelector('a, button, input, select, textarea')).toBeNull()
+    expect(screen.getByText('Look only. Nothing here is pressable.')).toBeInTheDocument()
   })
 
-  it('says so out loud, so a Student does not try', () => {
-    render(<StudentStepRail current={1} name="Amira" droneName="Drone 1" />)
+  /* The whole of ADR-0031 in one assertion: behind them yes, ahead of them never. */
+  it('lets a Student tap what already happened, and nothing else', () => {
+    const onLookBack = vi.fn()
+    render(
+      <StudentStepRail
+        current={7}
+        name="Amira"
+        droneName="Drone 1"
+        onLookBack={onLookBack}
+      />,
+    )
 
-    expect(screen.getByText('Look only. Nothing here is pressable.')).toBeInTheDocument()
+    const rows = screen.getAllByRole('listitem')
+    expect(screen.getAllByRole('button')).toHaveLength(6)
+    expect(within(rows[1]!).getByRole('button')).toBeInTheDocument()
+    expect(within(rows[6]!).queryByRole('button')).not.toBeInTheDocument()
+    expect(within(rows[7]!).queryByRole('button')).not.toBeInTheDocument()
+
+    // Nothing ahead is even reachable by a wandering finger or a tab key.
+    for (const row of rows.slice(6)) {
+      expect(row.querySelector('a, button, [tabindex]')).toBeNull()
+    }
+
+    fireEvent.click(within(rows[1]!).getByRole('button'))
+    expect(onLookBack).toHaveBeenCalledWith(2)
+  })
+
+  it('tells a Student the rows behind them can be read again', () => {
+    render(
+      <StudentStepRail current={7} name="Amira" droneName="Drone 1" onLookBack={vi.fn()} />,
+    )
+
+    expect(screen.getByText('Tap a step you have done to read it again.')).toBeInTheDocument()
+  })
+
+  /*
+   * The way back, for when the lesson does not move on its own. Without it a child who tapped
+   * back is stuck reading history while their Teacher waits, which is the trap this whole
+   * change exists to avoid rather than create.
+   */
+  it('always offers a way back to now while something is being re-read', () => {
+    const onBackToNow = vi.fn()
+    render(
+      <StudentStepRail
+        current={7}
+        name="Amira"
+        droneName="Drone 1"
+        reading={2}
+        onLookBack={vi.fn()}
+        onBackToNow={onBackToNow}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to now' }))
+    expect(onBackToNow).toHaveBeenCalled()
+  })
+
+  /*
+   * Being re-read and being here are two different things and they must not look alike: the
+   * brand fill goes on "you are here" and nothing else, or a child reading step 2 sees two
+   * rows claiming to be the present.
+   */
+  it('marks the row being read apart from the row they are on', () => {
+    render(
+      <StudentStepRail
+        current={7}
+        name="Amira"
+        droneName="Drone 1"
+        reading={2}
+        onLookBack={vi.fn()}
+        onBackToNow={vi.fn()}
+      />,
+    )
+
+    const rows = screen.getAllByRole('listitem')
+    expect(screen.getAllByText('You are here.')).toHaveLength(1)
+    expect(rows[6]).toHaveAttribute('data-state', 'now')
+    expect(within(rows[1]!).getByRole('button')).toHaveAttribute('aria-pressed', 'true')
+    expect(within(rows[0]!).getByRole('button')).toHaveAttribute('aria-pressed', 'false')
   })
 
   it('marks where they are, and only that one', () => {

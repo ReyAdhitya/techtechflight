@@ -427,9 +427,14 @@ describe('asking for takeoff, and the answer', () => {
      *
      * Switch role is a different thing and is still gone. It was two taps from a child to the
      * Teacher's Land and Stop, and the test below refuses it by name.
+     *
+     * Counted on the **stage**, which is where a Mission press lives. The rail's look-back
+     * taps (ADR-0031) are not Mission presses for the same reason leaving is not: they ask
+     * the Teacher for nothing, write no record and reach no aircraft. `StudentStepRail.test`
+     * holds the other half, that no row ahead of a child is pressable at all.
      */
     const missionPresses = () =>
-      screen
+      within(stage())
         .queryAllByRole('button')
         .filter((button) => !/leave this classroom/i.test(button.textContent ?? ''))
 
@@ -763,5 +768,111 @@ describe('leaving the classroom', () => {
 
     // On the ground, the way out is there.
     expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
+  })
+})
+
+/**
+ * Looking back at a step already done (ADR-0031).
+ *
+ * The two conditions the ADR rests on are both here, and neither is decoration: a way back to
+ * now for when nothing else happens, and the screen pulling itself back the moment the lesson
+ * moves. The second is the one that matters. A child re-reading the rules must not miss their
+ * takeoff clearance, and the Teacher's answer outranks whatever the child chose to look at.
+ */
+describe('looking back at a step already done', () => {
+  const rail = () => document.querySelector('aside')!
+
+  const asked = () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+    return readClassroomSession()!.seats[0]!.studentId
+  }
+
+  const lookBackAt = (label: RegExp) => {
+    fireEvent.click(within(rail()).getByRole('button', { name: label }))
+    settle()
+  }
+
+  /*
+   * The Teacher answers from their own board, which is another tab. One jsdom is one window,
+   * so the storage event that tab would raise is raised by hand; the browser walk proves the
+   * real thing across two real tabs.
+   */
+  const teacherAnswers = (studentId: string) => {
+    act(() => {
+      grantSeatClearance(readClassroomSession()!, studentId)
+      window.dispatchEvent(new StorageEvent('storage', { key: CLASSROOM_SESSION_KEY }))
+    })
+    settle()
+  }
+
+  it('re-reads the rules a child was given, without asking the Teacher', () => {
+    asked()
+    lookBackAt(/Rules and time/)
+
+    expect(within(stage()).getByText('Looking back at step 2')).toBeInTheDocument()
+    expect(within(stage()).getByText('Land when the Teacher says land.')).toBeInTheDocument()
+  })
+
+  it('reads what the class was asked to do when they tap the briefing', () => {
+    asked()
+    lookBackAt(/Briefing/)
+
+    expect(
+      within(stage()).getByText('Find the missing hiker and hover over them.'),
+    ).toBeInTheDocument()
+  })
+
+  /* Reading is memory, not a choice: there is nothing on the stage to press while it is up. */
+  it('offers no Mission press while a child is reading', () => {
+    asked()
+    lookBackAt(/Rules and time/)
+
+    expect(
+      within(stage())
+        .queryAllByRole('button')
+        .filter((button) => !/leave this classroom/i.test(button.textContent ?? '')),
+    ).toHaveLength(0)
+  })
+
+  it('comes back to now when the child asks it to', () => {
+    asked()
+    lookBackAt(/Rules and time/)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to now' }))
+    settle()
+
+    expect(within(stage()).queryByText('Looking back at step 2')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Waiting for your Teacher')
+  })
+
+  /*
+   * The half that cannot be left to a child. A clearance arrives while step 2 is on the
+   * screen, and the screen is the Teacher's answer again without anybody pressing anything.
+   */
+  it('pulls itself back the moment the Teacher answers', () => {
+    const studentId = asked()
+    lookBackAt(/Rules and time/)
+    expect(within(stage()).getByText('Looking back at step 2')).toBeInTheDocument()
+
+    teacherAnswers(studentId)
+
+    expect(within(stage()).queryByText('Looking back at step 2')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Cleared for takeoff')
+  })
+
+  /* And a step the lesson has not reached is not on offer in the first place. */
+  it('never offers a step still to come', () => {
+    asked()
+
+    expect(within(rail()).queryByRole('button', { name: /Score/ })).not.toBeInTheDocument()
+    expect(within(rail()).queryByRole('button', { name: /Land/ })).not.toBeInTheDocument()
   })
 })

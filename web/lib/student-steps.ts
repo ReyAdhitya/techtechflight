@@ -31,6 +31,32 @@ export const STUDENT_STEPS = [
 
 export const STUDENT_STEP_COUNT = STUDENT_STEPS.length
 
+/**
+ * What each step was, in one sentence, for a child who taps back to re-read it (ADR-0031).
+ *
+ * Past tense where it has happened, because that is what looking back is: a child at step 7
+ * tapping *Rules and time* is not being told what to do next, they are being reminded what
+ * they were told. A sentence each, and no more — a wall of text is the thing the three rules
+ * replaced, and putting it back behind a tap would be putting it back.
+ *
+ * The live details a step carries are added by the screen, which has the session. This is the
+ * part that is the same in every classroom.
+ */
+export const STUDENT_STEP_RECAP: readonly string[] = [
+  'Your Teacher said what the class is doing today.',
+  'The rules, how long you have, and how many points to reach.',
+  'You checked your Drone over before anyone flew.',
+  'Your tablet found the board, and your Drone answered.',
+  'You asked your Teacher, and waited to be told.',
+  'Your Teacher cleared you and you left the ground.',
+  'You fly to each point. They tick off in any order.',
+  'Stay out of the red areas. If you are in one, move away.',
+  'Your Teacher can send you a message. Press Understood when you have read it.',
+  'Every point reached. Your Teacher checks it and approves.',
+  'Return home and land on the spot you started from.',
+  'Your Teacher seals the Mission and your score appears.',
+]
+
 /** What the tablet is being told right now, beyond what the seat records. */
 export interface StudentNow {
   /** The Drone is off the ground this instant, from Telemetry. */

@@ -12,6 +12,7 @@ import { readLogbook, readServerLogbook, runningLesson, subscribeLogbook } from 
 import { readMission, subscribeMissionDraft } from '@/lib/mission-draft'
 import { STUDENT_RULE_WORDS } from '@/lib/student-rules'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
+import { readTeams } from '@/lib/teams'
 import { useDrones } from './FleetProvider'
 
 /**
@@ -103,6 +104,16 @@ export function ClassroomOpen() {
        * only the Fleet knows what the Teacher renamed it to.
        */
       drones: missionDrones(mission.droneIds, fleet),
+      /*
+       * The teams, by name and craft. A child at a flight line wants to know which name the
+       * Teacher will shout, and matching it to themselves by the Drone in their hands is the
+       * only pairing both halves reliably agree on.
+       */
+      teams: readTeams().map((team) => ({
+        id: team.id,
+        name: team.name,
+        droneId: team.droneId,
+      })),
       zones: mission.zones,
       /*
        * Live once the Mission has started. Before that the brief is readable and nothing

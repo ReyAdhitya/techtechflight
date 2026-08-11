@@ -7,6 +7,7 @@ import {
   freeDroneSeat,
   readClassroomSession,
   seatStudentByHand,
+  seatsWithoutADrone,
   subscribeClassroom,
   type ClassroomSeat,
   type ClassroomSession,
@@ -140,6 +141,7 @@ export function ClassroomSeatsPanel() {
                     <span className="text-value text-ink-subtle">
                       {row.seat === null ? 'No Student' : row.seat.name}
                     </span>
+                    {row.seat === null ? null : <JoinedAt at={row.seat.joinedAt} />}
                     {row.seat === null ? null : <Liveness seat={row.seat} now={now} />}
                   </span>
                   <button
@@ -167,7 +169,51 @@ export function ClassroomSeatsPanel() {
           )
         })}
       </ul>
+
+      <NotOnACraftYet session={session} />
     </section>
+  )
+}
+
+/**
+ * When this child joined, in clock time.
+ *
+ * A time rather than an age, because a Teacher reading this is placing a child against the
+ * lesson — "she came in late" — and an age that counts up every second is a fact about the
+ * page rather than about the morning.
+ */
+function JoinedAt({ at }: { readonly at: number }) {
+  return (
+    <span className="tnum text-value text-ink-muted">
+      Joined{' '}
+      {new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    </span>
+  )
+}
+
+/**
+ * Children who joined and have not taken a craft.
+ *
+ * The list above is keyed by Drone, so a child who typed their name and then put the tablet
+ * down was in the room and on no row: the Teacher's count of who is here disagreed with the
+ * number of children in front of them. Nothing to press — a child with no craft is a child
+ * the Teacher walks over to, not a row to fix.
+ */
+function NotOnACraftYet({ session }: { readonly session: ClassroomSession }) {
+  const waiting = seatsWithoutADrone(session)
+  if (waiting.length === 0) return null
+
+  return (
+    <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-value text-ink-subtle">
+      <span className="label">Here, no Drone yet</span>
+      {waiting.map((seat) => (
+        <span key={seat.studentId}>
+          <span className="text-ink">{seat.name}</span>
+          {', '}
+          <JoinedAt at={seat.joinedAt} />
+        </span>
+      ))}
+    </p>
   )
 }
 

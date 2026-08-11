@@ -22,6 +22,8 @@ import {
   resetClassroomForTests,
   freeDroneSeat,
   leaveClassroom,
+  roomAround,
+  seatsWithoutADrone,
   QUIET_AFTER_MS,
   quietSeats,
   seatHasFlown,
@@ -649,5 +651,86 @@ describe('leaving a classroom', () => {
     closeClassroom(9_000)
 
     expect(classroomHasEnded(openFor('lesson-2'))).toBe(false)
+  })
+})
+
+/**
+ * Who else is in the room, from one child's point of view.
+ *
+ * The team is found by the Drone rather than by matching roster ids, because the Drone is the
+ * one thing both halves agree on: a Teacher puts a team on a craft, and a child taps the
+ * number painted on the craft in their hands.
+ */
+describe('who else is in the room', () => {
+  const withTeams = () =>
+    openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [
+        { droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 },
+        { droneId: 'ttf-0002', droneName: 'Drone 2', number: 2 },
+      ],
+      teams: [
+        { id: 'team-1', name: 'Red Team', droneId: 'ttf-0001' },
+        { id: 'team-2', name: 'Blue Team', droneId: 'ttf-0002' },
+      ],
+    })
+
+  const twoChildren = () => {
+    const amira = joinClassroomAsStudent(withTeams(), 'Amira', 1_000, 'stu-amira').session
+    const seated = takeDroneSeat(amira, 'stu-amira', 'ttf-0001')
+    window.localStorage.removeItem(STUDENT_SEAT_KEY)
+    const ben = joinClassroomAsStudent(seated, 'Ben', 2_000, 'stu-ben').session
+    return takeDroneSeat(ben, 'stu-ben', 'ttf-0002')
+  }
+
+  it('names the team by the craft the child is holding', () => {
+    const room = roomAround(twoChildren(), 'stu-amira')
+
+    expect(room.teamName).toBe('Red Team')
+    expect(room.mine?.name).toBe('Amira')
+  })
+
+  it('lists everybody else, oldest join first, and never the child themselves', () => {
+    const room = roomAround(twoChildren(), 'stu-amira')
+
+    expect(room.others.map((seat) => seat.name)).toEqual(['Ben'])
+    expect(room.others.some((seat) => seat.studentId === 'stu-amira')).toBe(false)
+  })
+
+  /* No team named for this craft is a real answer, and inventing one would be worse. */
+  it('says nothing about a team when the Teacher named none', () => {
+    const bare = openClassroom({
+      lessonId: 'lesson-2',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [{ droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 }],
+    })
+    const joined = joinClassroomAsStudent(bare, 'Amira', 1_000, 'stu-amira').session
+    const seated = takeDroneSeat(joined, 'stu-amira', 'ttf-0001')
+
+    expect(roomAround(seated, 'stu-amira').teamName).toBeNull()
+  })
+
+  /*
+   * The Teacher's list is keyed by Drone, so a child who typed their name and put the tablet
+   * down was in the room and on no row.
+   */
+  it('counts a child who joined and took no craft', () => {
+    const joined = joinClassroomAsStudent(withTeams(), 'Amira', 1_000, 'stu-amira').session
+
+    expect(seatsWithoutADrone(joined).map((seat) => seat.name)).toEqual(['Amira'])
+    expect(seatsWithoutADrone(takeDroneSeat(joined, 'stu-amira', 'ttf-0001'))).toHaveLength(0)
   })
 })

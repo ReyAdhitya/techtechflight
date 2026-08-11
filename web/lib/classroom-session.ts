@@ -103,6 +103,19 @@ export interface ClassroomDrone {
 }
 
 /**
+ * A team, as a child needs to hear it: a name attached to a craft.
+ *
+ * Only the name and the Drone travel. Who is in the team is the Teacher's Logbook business,
+ * and a tablet that carried a class list of thirty names would be carrying a class list of
+ * thirty names.
+ */
+export interface ClassroomTeam {
+  readonly id: string
+  readonly name: string
+  readonly droneId: DroneId | null
+}
+
+/**
  * The number a Teacher would read off the aircraft.
  *
  * From the name first, because that is what the board and the child both say out loud, and
@@ -168,6 +181,48 @@ export function classroomRows(
   return [...(session.drones ?? [])]
     .sort((a, b) => a.number - b.number)
     .map((drone) => ({ ...drone, seat: seatOnDrone(session, drone.droneId) }))
+}
+
+/** Children who have joined and not taken a Drone yet. The Teacher's board still counts them. */
+export function seatsWithoutADrone(session: ClassroomSession): readonly ClassroomSeat[] {
+  return session.seats.filter((seat) => seat.droneId === null)
+}
+
+/**
+ * Who else is in the room, from one child's point of view.
+ *
+ * **My team named, and everybody else smaller underneath.** A child at a flight line looks up
+ * and wants to know who is flying, and the answer they care about most is their own team's
+ * name: it is the thing a Teacher shouts across a hall, and a child who cannot match it to
+ * themselves is a child who does not know when they are being spoken to.
+ *
+ * The team is found by the Drone rather than by matching roster ids, because the Drone is the
+ * one thing both halves agree on: a Teacher puts a team on a craft at step 3, and a child taps
+ * the number painted on the craft in their hands. Ids only line up when a child joined by
+ * tapping their name off the roll, which is the lucky case rather than the ordinary one.
+ */
+export function roomAround(
+  session: ClassroomSession,
+  studentId: string,
+): {
+  readonly teamName: string | null
+  readonly mine: ClassroomSeat | null
+  readonly others: readonly ClassroomSeat[]
+} {
+  const mine = session.seats.find((seat) => seat.studentId === studentId) ?? null
+  const teamName =
+    mine?.droneId == null
+      ? null
+      : ((session.teams ?? []).find((team) => team.droneId === mine.droneId)?.name ?? null)
+
+  return {
+    teamName,
+    mine,
+    others: session.seats
+      .filter((seat) => seat.studentId !== studentId)
+      .slice()
+      .sort((a, b) => a.joinedAt - b.joinedAt),
+  }
 }
 
 /**
@@ -345,6 +400,13 @@ export interface ClassroomSession {
    * which case the tablet says so rather than showing an empty grid.
    */
   readonly drones?: readonly ClassroomDrone[]
+  /**
+   * The teams, by name and craft, so a child can be told which one is theirs.
+   *
+   * Absent on a session written before this existed and on a Lesson with no teams named, in
+   * which case the tablet says nothing about teams rather than inventing one.
+   */
+  readonly teams?: readonly ClassroomTeam[]
   readonly zones: readonly Zone[]
   readonly seats: readonly ClassroomSeat[]
   readonly instructions: readonly ClassroomInstruction[]
@@ -393,6 +455,7 @@ function emptySession(code: string, now: number): ClassroomSession {
     outcome: null,
     roster: [],
     drones: [],
+    teams: [],
     zones: [],
     seats: [],
     instructions: [],
@@ -555,6 +618,8 @@ export function openClassroom(input: {
   readonly roster?: readonly ClassroomRosterEntry[]
   /** The craft in the Lesson, for the join grid. Absent keeps whatever was already there. */
   readonly drones?: readonly ClassroomDrone[]
+  /** The teams, by name and craft. Absent keeps whatever was already there. */
+  readonly teams?: readonly ClassroomTeam[]
   readonly zones: readonly Zone[]
   readonly live?: boolean
   readonly now?: number
@@ -598,6 +663,7 @@ export function openClassroom(input: {
     outcome: input.outcome ?? base.outcome ?? null,
     roster: input.roster ?? base.roster ?? [],
     drones: input.drones ?? base.drones ?? [],
+    teams: input.teams ?? base.teams ?? [],
     zones: input.zones,
     live: input.live ?? true,
     updatedAt: now,

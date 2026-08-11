@@ -463,13 +463,19 @@ export function ControlScreen({
   }
 
   /*
-   * What is true of the room, on every step and never scrolling away (ADR-0030).
+   * What is true of the room, on every step and never scrolling away (ADR-0030, ADR-0032).
    *
-   * The Lesson and its clock, how many are up, the Attention bar, and the fleet-wide Land
-   * all / Hover all / Stop all. Steps 6 to 10 show one panel each underneath; this does not
-   * move between them, which is what makes putting the air behind steps safe rather than
-   * reckless: an emergency in a room full of children is "everything, now", and that is one
-   * tap from anywhere in the run.
+   * The Lesson and its clock, how many are up, and the fleet-wide Land all / Hover all /
+   * Stop all. Steps 6 to 10 show one panel each underneath; this does not move between them,
+   * which is what makes putting the air behind steps safe rather than reckless: an emergency
+   * in a room full of children is "everything, now", and that is one tap from anywhere in the
+   * run.
+   *
+   * **The Attention bar is no longer here.** It repeated the whole Alerts panel — cards,
+   * buttons and "2 more in the queue" — on every step, and a Teacher on step 6 was reading
+   * step 10. It now lives on step 10 alone and nowhere else (ADR-0032). The cost is written
+   * down rather than left to be discovered: a Teacher on step 8 will not learn that a Drone
+   * entered a No-fly Zone until they visit step 10. That was put to the owner and overruled.
    */
   const alwaysOn = (
     <>
@@ -481,20 +487,6 @@ export function ControlScreen({
         <FleetAllWellLine drones={state.drones} />
         <LiveHeadcount airborne={airborneCount} grounded={groundedCount} />
       </div>
-
-      <section aria-label="Attention">
-        <AttentionBar
-          queue={queue}
-          studentFor={(droneId) => studentOf(book, droneId)}
-          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
-          onResponse={(entry, response) => {
-            if (response.command !== null) {
-              issueCommand(entry.droneId, response.command, entry.callsign)
-            }
-            acknowledge(entry.droneId, entry)
-          }}
-        />
-      </section>
 
       {/*
        * The emergency bar. It is on every step and it never scrolls away, which is what
@@ -874,14 +866,31 @@ export function ControlScreen({
   )
 
   /**
-   * Step 10, alerts: everything the board is watching that is not already in Attention.
+   * Step 10, alerts: everything the board is watching, and **the only place it is watched**.
    *
-   * Attention itself is on every step, because a Teacher on step 6 must not miss an Alert
-   * raised about step 10. What is here is the rest of the watch: the ceiling, the floor, the
-   * tablets that have gone quiet, and what this Scenario says to look out for.
+   * Attention used to be on every step, on the argument that a Teacher on step 6 must not
+   * miss an Alert raised about step 10. It was reversed (ADR-0032): repeating the whole panel
+   * under every step meant five surfaces showing the same cards, and a step that was supposed
+   * to answer one question answered two. The cost is real and it is stated in the ADR — an
+   * Alert now waits here until a Teacher comes to it — and the fleet-wide Land all / Hover
+   * all / Stop all stay on every step, so the emergency answer never moved.
    */
   const alertsStep = (
     <>
+      <section aria-label="Attention">
+        <AttentionBar
+          queue={queue}
+          studentFor={(droneId) => studentOf(book, droneId)}
+          onAcknowledge={(entry) => acknowledge(entry.droneId, entry)}
+          onResponse={(entry, response) => {
+            if (response.command !== null) {
+              issueCommand(entry.droneId, response.command, entry.callsign)
+            }
+            acknowledge(entry.droneId, entry)
+          }}
+        />
+      </section>
+
       {mission !== null ? <ScenarioWatchList scenarioId={mission.scenarioId} /> : null}
 
       {/*

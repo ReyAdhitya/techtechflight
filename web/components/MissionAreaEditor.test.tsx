@@ -34,14 +34,14 @@ describe('Mission area editor', () => {
     const user = userEvent.setup()
     render(<Harness />)
 
-    await addPoint(user, '0', '0')
-    await addPoint(user, '8', '0')
-    await addPoint(user, '8', '6')
+    await addPoint(user, '-3', '-2')
+    await addPoint(user, '3', '-2')
+    await addPoint(user, '3', '2')
 
     // Three points enclose an area, but they are not the most a classroom needs — and
     // tapping the grid would still add a fourth, so typing one must work too.
     expect(screen.getByRole('button', { name: 'Add point' })).toBeEnabled()
-    await addPoint(user, '0', '6')
+    await addPoint(user, '-3', '2')
     expect(screen.getByRole('listitem')).toHaveTextContent('4 points')
   })
 
@@ -54,9 +54,9 @@ describe('Mission area editor', () => {
     const user = userEvent.setup()
     render(<Harness />)
 
-    await addPoint(user, '0', '0')
-    await addPoint(user, '8', '0')
-    await addPoint(user, '8', '6')
+    await addPoint(user, '-3', '-2')
+    await addPoint(user, '3', '-2')
+    await addPoint(user, '3', '2')
     await user.click(screen.getByRole('button', { name: 'Finish zone' }))
 
     expect(screen.getByRole('button', { name: 'Add point' })).toBeEnabled()
@@ -66,9 +66,9 @@ describe('Mission area editor', () => {
     const user = userEvent.setup()
     render(<Harness />)
 
-    await addPoint(user, '0', '0')
-    await addPoint(user, '8', '0')
-    await addPoint(user, '8', '6')
+    await addPoint(user, '-3', '-2')
+    await addPoint(user, '3', '-2')
+    await addPoint(user, '3', '2')
 
     expect(screen.getByRole('listitem')).toHaveTextContent('No-fly Zone 1')
     expect(screen.getByRole('listitem')).toHaveTextContent('3 points')
@@ -80,14 +80,14 @@ describe('Mission area editor', () => {
     const user = userEvent.setup()
     render(<Harness />)
 
+    await addPoint(user, '1', '1')
+    await addPoint(user, '2', '1')
     await addPoint(user, '2', '2')
-    await addPoint(user, '4', '2')
-    await addPoint(user, '4', '4')
     await user.click(screen.getByRole('button', { name: 'Finish zone' }))
 
-    await addPoint(user, '10', '10')
-    await addPoint(user, '12', '10')
-    await addPoint(user, '12', '12')
+    await addPoint(user, '-3', '-2')
+    await addPoint(user, '-1', '-2')
+    await addPoint(user, '-1', '-1')
 
     expect(screen.getByText(/No-fly Zone 1/)).toBeInTheDocument()
     expect(screen.getByText(/No-fly Zone 2/)).toBeInTheDocument()
@@ -194,10 +194,92 @@ describe('a zone outside the picture the Scope draws', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  /* No Drone reporting a position means no window, and "outside" would be a guess. */
-  it('says nothing before there is a window to be outside of', () => {
+  /*
+   * With no Drone reporting a position there is still a space: the classroom boundary, which
+   * is what this surface draws until the Scope has a window of its own. A zone outside *that*
+   * is outside the picture on both screens, so it is named rather than waved through.
+   *
+   * This used to say nothing at all, on the argument that "outside" would be a guess. It was
+   * not a guess; it was the whole room, and the guess was calling a twenty metre grid the
+   * space a Teacher was drawing in.
+   */
+  it('names a zone outside the room even before the Scope has a window', () => {
     render(<MissionAreaEditor zones={[far]} onChange={() => {}} />)
 
+    expect(screen.getByRole('status').textContent ?? '').toContain('The far corner')
+  })
+
+  it('says nothing about a zone drawn inside the room', () => {
+    const inTheRoom: Zone = {
+      id: 'in-the-room',
+      kind: 'no-fly',
+      name: 'Over the desks',
+      points: [
+        { eastM: -2, northM: -1 },
+        { eastM: 1, northM: -1 },
+        { eastM: 1, northM: 2 },
+      ],
+    }
+    render(<MissionAreaEditor zones={[inTheRoom]} onChange={() => {}} />)
+
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * The surface draws the space the Scope draws, and that is the whole of defect 5.
+ *
+ * It used to be a fixed twenty metres square running north-east from the origin, while the
+ * Scope draws a window around where the Drones are: about eight metres by six, astride the
+ * origin, half of it in negative metres this grid could not express. Every zone a Teacher drew
+ * landed outside the picture. The rail said "2 no-fly zones" and the Scope's key named no
+ * hatch, and neither was lying.
+ */
+describe('the space the surface draws', () => {
+  const spaceOf = (container: HTMLElement) =>
+    container.querySelector('svg[role="img"]')?.getAttribute('data-space')
+
+  it('draws the classroom boundary when the Scope has no window yet', () => {
+    const { container } = render(<MissionAreaEditor zones={[]} onChange={() => {}} />)
+
+    expect(spaceOf(container)).toBe('-4,4,-3,3')
+    expect(container.querySelector('[data-classroom-geofence]')).toBeInTheDocument()
+  })
+
+  it('follows the Scope window once there is one', () => {
+    const { container } = render(
+      <MissionAreaEditor
+        zones={[]}
+        onChange={() => {}}
+        scopeSpace={{ westM: -8, eastM: 8, southM: -8, northM: 8 }}
+      />,
+    )
+
+    expect(spaceOf(container)).toBe('-8,8,-8,8')
+  })
+
+  /* A Teacher typing a corner past the edge gets the edge, not a zone nobody will see. */
+  it('holds a typed corner inside the space', async () => {
+    const user = userEvent.setup()
+    let latest: readonly Zone[] = []
+    render(
+      <MissionAreaEditor
+        zones={[]}
+        onChange={(next) => {
+          latest = next
+        }}
+      />,
+    )
+
+    await addPoint(user, '40', '-40')
+
+    expect(latest[0]?.points[0]).toEqual({ eastM: 4, northM: -3 })
+  })
+
+  /* And the room's own metres are said in words, because the grid cannot say them. */
+  it('names the metres it covers', () => {
+    render(<MissionAreaEditor zones={[]} onChange={() => {}} />)
+
+    expect(screen.getByText(/The same space the Scope draws/)).toBeInTheDocument()
   })
 })

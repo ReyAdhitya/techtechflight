@@ -56,7 +56,7 @@ describe('Scope zones overlay', () => {
 
     expect(container.querySelector('pattern[id^="scope-no-fly-hatch-"]')).toBeInTheDocument()
     expect(screen.queryByText('Outline = Mission Zone')).not.toBeInTheDocument()
-    expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
+    expect(screen.getByText('Red hatched = No-fly Zone')).toBeInTheDocument()
   })
 
   /*
@@ -81,7 +81,7 @@ describe('Scope zones overlay', () => {
         expect(Number(band.getAttribute('width'))).toBeGreaterThan(0)
         expect(Number(band.getAttribute('height'))).toBeGreaterThan(0)
       }
-      expect(screen.getByText('Hatched band = No-fly Zone, floor to ceiling')).toBeInTheDocument()
+      expect(screen.getByText('Red hatched band = No-fly Zone, floor to ceiling')).toBeInTheDocument()
     }
   })
 
@@ -120,7 +120,7 @@ describe('Scope zones overlay', () => {
 
     // The half-drawn one is skipped; the finished one is still there.
     expect(container.querySelectorAll('[data-zone-kind="no-fly"]')).toHaveLength(1)
-    expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
+    expect(screen.getByText('Red hatched = No-fly Zone')).toBeInTheDocument()
   })
 
   it('names the hardware caveat beside the zone keys', () => {
@@ -249,7 +249,7 @@ describe('the key against what is actually on the picture', () => {
     const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[farAway]} />)
 
     expect(container.querySelector('[data-zone-kind="no-fly"]')).toBeNull()
-    expect(screen.queryByText('Hatched = No-fly Zone')).not.toBeInTheDocument()
+    expect(screen.queryByText('Red hatched = No-fly Zone')).not.toBeInTheDocument()
   })
 
   it('keeps the key when one zone is off the window and another is on it', () => {
@@ -258,7 +258,7 @@ describe('the key against what is actually on the picture', () => {
     )
 
     expect(container.querySelectorAll('[data-zone-kind="no-fly"]')).toHaveLength(1)
-    expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
+    expect(screen.getByText('Red hatched = No-fly Zone')).toBeInTheDocument()
   })
 
   /* And the same promise on the elevation views, which have a key of their own. */
@@ -268,7 +268,7 @@ describe('the key against what is actually on the picture', () => {
 
     expect(container.querySelector('[data-zone-band]')).toBeNull()
     expect(
-      screen.queryByText('Hatched band = No-fly Zone, floor to ceiling'),
+      screen.queryByText('Red hatched band = No-fly Zone, floor to ceiling'),
     ).not.toBeInTheDocument()
   })
 
@@ -291,7 +291,87 @@ describe('the key against what is actually on the picture', () => {
 
     expect(container.querySelector('[data-zone-band]')).toBeInTheDocument()
     expect(
-      screen.getByText('Hatched band = No-fly Zone, floor to ceiling'),
+      screen.getByText('Red hatched band = No-fly Zone, floor to ceiling'),
     ).toBeInTheDocument()
+  })
+})
+
+/**
+ * A zone that exists and is not on the picture says so.
+ *
+ * The key naming only what is drawn is right, and on its own it is silent: a Teacher who drew
+ * two zones and sees no hatch cannot tell "there are none" from "yours are off the frame". A
+ * safety boundary that is invisible and unmentioned is a feature that looks present and is
+ * not, which is worse than one that is plainly absent.
+ */
+describe('a No-fly Zone that is real and not on this picture', () => {
+  const nextField: Zone = {
+    id: 'next-field',
+    kind: 'no-fly',
+    name: 'The next field',
+    points: [
+      { eastM: 400, northM: 400 },
+      { eastM: 406, northM: 400 },
+      { eastM: 406, northM: 406 },
+    ],
+  }
+
+  it('names it under the key, rather than leaving the picture blank and quiet', () => {
+    render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[nextField]} />)
+
+    expect(screen.getByText(/The next field is outside this picture/)).toBeInTheDocument()
+    expect(screen.getByText(/The Alert still fires/)).toBeInTheDocument()
+  })
+
+  it('says nothing when every zone is on the picture', () => {
+    render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone]} />)
+
+    expect(screen.queryByText(/outside this picture/)).not.toBeInTheDocument()
+  })
+
+  /* Side flattens east away, so this one is drawn there and must not be reported missing. */
+  it('drops the warning on the view that does draw it', () => {
+    const eastOfHere: Zone = {
+      ...nextField,
+      points: [
+        { eastM: 400, northM: 2 },
+        { eastM: 406, northM: 2 },
+        { eastM: 406, northM: 4 },
+      ],
+    }
+    render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[eastOfHere]} />)
+
+    expect(screen.getByText(/outside this picture/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(screen.queryByText(/outside this picture/)).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * Three colours, three meanings (ADR-0033).
+ *
+ * The classroom boundary is the only coloured thing on this picture that never changes, and
+ * it used to be drawn in the amber an Alert arrives in. A Teacher who sees that colour on
+ * every screen of every lesson learns to read it as furniture, which is the opposite of what
+ * an Alert needs from it.
+ */
+describe('three colours, three meanings', () => {
+  it('draws the classroom boundary in blue, not the Alert amber', () => {
+    const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} />)
+
+    const box = container.querySelector('[data-classroom-geofence]')
+    expect(box?.classList.contains('stroke-info')).toBe(true)
+    expect(box?.classList.contains('stroke-status-not-ready')).toBe(false)
+  })
+
+  it('keeps No-fly red, and says which colour is which in the key', () => {
+    const { container } = render(
+      <Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone]} />,
+    )
+
+    const zone = container.querySelector('[data-zone-kind="no-fly"]')
+    expect(zone?.classList.contains('stroke-status-fault')).toBe(true)
+    expect(screen.getByText(/Blue dashed box = classroom boundary/)).toBeInTheDocument()
+    expect(screen.getByText('Red hatched = No-fly Zone')).toBeInTheDocument()
   })
 })

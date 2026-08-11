@@ -171,14 +171,19 @@ describe('the Mission run page', () => {
   })
 
   /*
-   * The safety property, restated for ADR-0030.
+   * The safety property, restated for ADR-0030 and narrowed by ADR-0032.
    *
    * Steps 6 to 10 used to be one board, so that no Command could be behind a navigation
    * press. They are one panel each now, and the argument is answered rather than dropped:
-   * the Attention bar and the fleet-wide Land all / Hover all / Stop all are above every one
-   * of them, so a Teacher can bring every aircraft down from anywhere in one tap.
+   * the fleet-wide Land all / Hover all / Stop all are above every one of them, so a Teacher
+   * can bring every aircraft down from anywhere in one tap.
+   *
+   * **Attention is no longer among them.** It repeated the whole Alerts panel under every
+   * step, and step 6 was answering step 10's question as well as its own. The cost is written
+   * into ADR-0032 in the plainest words available: a Teacher on step 8 will not learn about a
+   * No-fly breach until they visit step 10.
    */
-  it('keeps Attention and the fleet-wide stop above every in-the-air step', () => {
+  it('keeps the fleet-wide stop above every in-the-air step', () => {
     classReadyToFly()
 
     for (const step of [6, 7, 8, 9, 10]) {
@@ -187,16 +192,35 @@ describe('the Mission run page', () => {
       settle()
 
       expect(
-        surface().getByRole('region', { name: 'Attention' }),
-        `step ${step} lost the Attention bar`,
-      ).toBeInTheDocument()
-      expect(
         surface().getByRole('region', { name: 'Fleet actions' }),
         `step ${step} lost the fleet-wide buttons`,
       ).toBeInTheDocument()
 
       unmount()
     }
+  }, 20_000)
+
+  /* And Alerts are on step 10 and nowhere else (ADR-0032). */
+  it('shows the Attention bar on step 10 alone', () => {
+    classReadyToFly()
+
+    for (const step of [6, 7, 8, 9]) {
+      at(step)
+      const { unmount } = missionRun()
+      settle()
+
+      expect(
+        surface().queryByRole('region', { name: 'Attention' }),
+        `step ${step} is repeating step 10's Alerts`,
+      ).not.toBeInTheDocument()
+
+      unmount()
+    }
+
+    at(10)
+    missionRun()
+    settle()
+    expect(surface().getByRole('region', { name: 'Attention' })).toBeInTheDocument()
   }, 20_000)
 
   /*

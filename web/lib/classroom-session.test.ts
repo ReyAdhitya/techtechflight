@@ -22,6 +22,7 @@ import {
   resetClassroomForTests,
   freeDroneSeat,
   leaveClassroom,
+  mayLeaveClassroom,
   roomAround,
   seatsWithoutADrone,
   QUIET_AFTER_MS,
@@ -732,5 +733,32 @@ describe('who else is in the room', () => {
 
     expect(seatsWithoutADrone(joined).map((seat) => seat.name)).toEqual(['Amira'])
     expect(seatsWithoutADrone(takeDroneSeat(joined, 'stu-amira', 'ttf-0001'))).toHaveLength(0)
+  })
+})
+
+/**
+ * Whether the way out belongs on a child's screen.
+ *
+ * The airborne half is unreachable in the jsdom suite — the pinned demonstration never leaves
+ * the ground — so it is pinned here, on the rule itself, rather than left to a browser walk
+ * that only ever exercises three of the four answers.
+ */
+describe('whether a child may leave a classroom', () => {
+  it('lets a child on the ground leave', () => {
+    expect(mayLeaveClassroom({ airborne: false, boardQuiet: false })).toBe(true)
+  })
+
+  /* Never take the screen away from a child holding a flying aircraft. */
+  it('refuses a child whose Drone is genuinely up', () => {
+    expect(mayLeaveClassroom({ airborne: true, boardQuiet: false })).toBe(false)
+  })
+
+  /*
+   * The trap this exists to remove: "airborne" is the last thing the board said, and a board
+   * that has stopped speaking is not saying it any more.
+   */
+  it('lets a child out when the board has gone quiet, whatever it last said', () => {
+    expect(mayLeaveClassroom({ airborne: true, boardQuiet: true })).toBe(true)
+    expect(mayLeaveClassroom({ airborne: false, boardQuiet: true })).toBe(true)
   })
 })

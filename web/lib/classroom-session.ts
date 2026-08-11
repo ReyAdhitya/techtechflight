@@ -534,6 +534,27 @@ export function boardQuietForMs(session: ClassroomSession, now: number): number 
   return quiet >= QUIET_AFTER_MS ? quiet : null
 }
 
+/**
+ * Whether the way out of a classroom belongs on a child's screen. **Silence is not flight.**
+ *
+ * Never take the screen away from a child holding a flying aircraft — that half has not
+ * changed. What changed is what counts as flying: `airborne` is the last thing the board
+ * *said*, and a tablet that heard it seventeen hours ago still believes it, so a child sat on
+ * "Land and wait" with nothing to press, forever, in a room where the lesson had finished the
+ * previous afternoon. A board that has not spoken for forty seconds is not telling this tablet
+ * anything, including that the Drone is up.
+ *
+ * A predicate rather than an expression inside the screen, because the pinned demonstration
+ * the jsdom suite flies never leaves the ground: the airborne half of this rule is unreachable
+ * there whatever the session says, and a rule nothing can test is a rule that quietly rots.
+ */
+export function mayLeaveClassroom(input: {
+  readonly airborne: boolean
+  readonly boardQuiet: boolean
+}): boolean {
+  return !input.airborne || input.boardQuiet
+}
+
 /** Four-character classroom code — short enough to shout across a room. */
 export function mintClassroomCode(now = Date.now()): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'

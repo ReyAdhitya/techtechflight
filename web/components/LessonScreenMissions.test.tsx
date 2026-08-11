@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { clearLogbook } from '@/lib/logbook'
-import { MISSION_DRAFT_KEY, readMission } from '@/lib/mission-draft'
+import { MISSION_DRAFT_KEY, chooseScenario, readMission } from '@/lib/mission-draft'
 import { assignDroneToTeam, createTeam, readTeams } from '@/lib/teams'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
@@ -103,5 +103,52 @@ describe('mission set-up on one page', () => {
     settle()
 
     expect(screen.getByRole('link', { name: /serviceable/ })).toHaveAttribute('href', '/')
+  })
+})
+
+/**
+ * Putting a team on a craft has to reach this screen without a reload.
+ *
+ * `readTeams()` was called during render, so the screen only noticed a team getting a Drone
+ * when something else happened to re-render it. Choosing the Drone left "Put these craft on
+ * the Mission" absent: the team had the craft, the Mission did not, and the only way through
+ * was a refresh nobody would guess at. It is a subscription now, the way the Logbook is.
+ */
+describe('a team getting a craft, without a reload', () => {
+  it('offers the craft to the Mission as soon as the team has one', () => {
+    chooseScenario(null, 'search-rescue')
+    createTeam('Red Team')
+    const teamId = readTeams()[0]!.id
+
+    lesson()
+    settle()
+    expect(
+      screen.queryByRole('button', { name: /craft on the Mission/i }),
+    ).not.toBeInTheDocument()
+
+    act(() => {
+      assignDroneToTeam(teamId, 'ttf-0001')
+    })
+    settle()
+
+    expect(screen.getByRole('button', { name: /craft on the Mission/i })).toBeInTheDocument()
+  })
+
+  /* And the whole point of the button: pressing it writes the craft onto the Mission. */
+  it('writes the craft onto the Mission when pressed', () => {
+    chooseScenario(null, 'search-rescue')
+    createTeam('Red Team')
+    const teamId = readTeams()[0]!.id
+    lesson()
+    settle()
+
+    act(() => {
+      assignDroneToTeam(teamId, 'ttf-0001')
+    })
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: /craft on the Mission/i }))
+    settle()
+
+    expect(readMission(null)?.droneIds ?? []).toContain('ttf-0001')
   })
 })

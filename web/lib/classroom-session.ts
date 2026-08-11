@@ -737,6 +737,26 @@ export function leaveClassroom(): void {
   }
 }
 
+/**
+ * This tablet moves to a different classroom, and **keeps whose tablet it is**.
+ *
+ * Leaving and changing rooms are two different intentions and only one of them was on offer.
+ * The only route to the code screen was Leave, which forgets the name as well as the room and
+ * reads as final, so a Teacher who wanted the other classroom landed back on *What is your
+ * name?* with no way forward but to type it again. Same tablet, same child, same morning.
+ *
+ * The session copy goes, because that is the room. The seat stays, because that is the child,
+ * and the tablet re-seats itself under the same name the moment the new code lands.
+ */
+export function changeClassroom(): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
 export function readStudentSeatLocal(): StudentSeatLocal | null {
   if (typeof window === 'undefined') return null
   try {

@@ -70,12 +70,74 @@ function persist(teams: readonly Team[]): readonly Team[] {
   } catch {
     /* memory only on locked-down browsers */
   }
+  notify()
   return teams
 }
 
-/** All Mission teams in this browser. */
+const EMPTY: readonly Team[] = []
+const listeners = new Set<() => void>()
+let cache: readonly Team[] = EMPTY
+let cachedRaw: string | null = null
+let cacheIsFresh = false
+
+function notify(): void {
+  cacheIsFresh = false
+  for (const listener of listeners) listener()
+}
+
+/**
+ * Watch the team list, the way the Logbook is watched.
+ *
+ * A screen that called `readTeams()` during render only saw a change when something else
+ * happened to re-render it. The Lesson screen did exactly that, so putting a team on a craft
+ * left "Put these craft on the Mission" absent until the page was reloaded: the team had the
+ * Drone, the Mission did not, and the only way through was a refresh nobody would guess at.
+ */
+export function subscribeTeams(onChange: () => void): () => void {
+  listeners.add(onChange)
+  /* `storage` fires in the *other* tabs, which are the ones holding a stale copy. */
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === TEAMS_KEY) notify()
+  }
+  window.addEventListener('storage', onStorage)
+
+  return () => {
+    listeners.delete(onChange)
+    window.removeEventListener('storage', onStorage)
+  }
+}
+
+/**
+ * All Mission teams in this browser.
+ *
+ * Cached on purpose. `useSyncExternalStore` calls this on every render and compares by
+ * identity, so parsing the JSON afresh each time would hand React a new array every render
+ * and spin forever.
+ *
+ * The cache is checked against the raw string rather than trusted until the next `notify`.
+ * A cache that only a writer can invalidate is a cache that lies to anybody who touches the
+ * key another way — `localStorage.removeItem` in a test setup, or a future writer that
+ * forgets — and the failure is a screen showing a team list that is no longer there. Reading
+ * one string per render is what `load` already did, minus the parse.
+ */
 export function readTeams(): readonly Team[] {
-  return load()
+  if (typeof window === 'undefined') return EMPTY
+  let raw: string | null = null
+  try {
+    raw = window.localStorage.getItem(TEAMS_KEY)
+  } catch {
+    /* locked-down browser: fall through to whatever is cached */
+  }
+  if (cacheIsFresh && raw === cachedRaw) return cache
+  cache = load()
+  cachedRaw = raw
+  cacheIsFresh = true
+  return cache
+}
+
+/** The server has no Teacher's browser to read. An empty list hydrates cleanly. */
+export function readServerTeams(): readonly Team[] {
+  return EMPTY
 }
 
 /** Name a new team and append it to the list. Returns null when the name is blank. */
@@ -169,6 +231,7 @@ export function clearTeams(): void {
   if (typeof window !== 'undefined') {
     try {
       window.localStorage.removeItem(TEAMS_KEY)
+      notify()
     } catch {
       /* ignore */
     }

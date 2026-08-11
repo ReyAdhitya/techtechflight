@@ -3,6 +3,13 @@
 The Student's tablet carries a rail down its left edge showing all twelve steps of the lesson,
 marking the one they are on. It is **look only**. Nothing in it is a link, a button, or focusable.
 
+> **Amended by [ADR-0031](./0031-a-student-may-look-back-but-never-forward.md), 2026-08-11.**
+> A Student may tap a step that has **already happened** and re-read it. A later step is still
+> untappable. The argument below is about the future and is correct about the future; looking
+> back at what already happened is memory rather than navigation, and a child who cannot
+> re-read the rules asks the Teacher instead, mid-lesson, holding a drone. Everything else
+> here stands.
+
 This amends rule 6 of
 [ADR-0025](./0025-the-student-screen-is-a-second-audience-not-a-second-board.md), which reads
 *"Nothing on screen talks about the software. No phase counter, no permanent classroom code."*

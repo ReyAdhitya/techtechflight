@@ -277,13 +277,21 @@ is not sending. Which screen a Student is on comes from Telemetry and the Teache
 never from a press: `flownAt` is the first sighting off the ground, and `held` is its own phase.
 Limits: nothing here reaches an aircraft (ADR-0021), and an absent reading is printed as absent.
 
-**The Student rail is a paragraph, not a navigation (ADR-0028).** The tablet shows all twelve
-steps down the left, marking the one they are on, and **not one row is pressable**: no link, no
-button, nothing focusable. That is what keeps the two-press rule true, and it is why ADR-0025's
-"no phase counter" was amended rather than broken. A Student never chooses what happens next, so
-a rail that answered a press would be offering a choice that does not exist. The twelve are the
-lesson, not the software: Briefing, Rules and time, Prepare, Connect, Ask to take off, Take off,
-Fly the points, Stay out of red, Teacher says, Task done, Land, Score.
+**The Student rail is a paragraph, not a navigation (ADR-0028), and a Student may look back but
+never forward (ADR-0031).** The tablet shows all twelve steps down the left, marking the one
+they are on. A step that has **already happened** is tappable and re-reads itself; a later step
+is not a link, not a button and not focusable. A Student never chooses what happens *next*, so a
+rail that offered a later step would be offering a choice that does not exist; looking back at
+what already happened is memory rather than navigation, and a child who cannot re-read the rules
+asks the Teacher instead, mid-lesson, holding a drone. The twelve are the lesson, not the
+software: Briefing, Rules and time, Prepare, Connect, Ask to take off, Take off, Fly the points,
+Stay out of red, Teacher says, Task done, Land, Score.
+
+**Looking back must never hide the Teacher.** Two things hold ADR-0031 up and neither is
+optional: a way back to now for when nothing else happens, and the screen pulling itself back
+the instant the step a child is *actually* on changes. A Student re-reading step 2 must not miss
+their takeoff clearance, because phases come from records and Telemetry rather than presses, and
+a screen a child could leave stale by reading is a screen that can hide a Teacher's answer.
 
 **A role is a secret, not a preference.** The door asks for the classroom code (Student,
 public, read out loud) or a four-digit Teacher PIN (`web/lib/teacher-pin.ts`, private, set

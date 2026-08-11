@@ -9,6 +9,39 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-11 · The calls made inside the eight.
+
+- **The drawing surface follows the Scope's window, and falls back to the classroom
+  boundary.** The alternative was to keep a fixed grid and warn harder, which is what the old
+  notice did: it fired on every zone a Teacher drew, so it was not a warning, it was the
+  product. Following the window means the surface changes shape between lessons, and that is
+  the honest cost — it draws the space that exists rather than a tidy square that does not.
+- **The boundary is drawn on the editor too.** A Teacher placing a zone is placing it against
+  the room, and the room was the one thing that surface did not show. Same blue dashed line as
+  the Scope, so the two pictures are the same picture.
+- **Bounding boxes, not polygon clipping, for "is this zone on the picture".** Every zone a
+  Teacher can draw here is a rectangle dragged out with a finger, so the two agree; where they
+  would not, a box errs towards keeping a key over a sliver rather than dropping one over a
+  shape that is there.
+- **The Student's name list dropped the class roll entirely.** The roll is kept on purpose so a
+  Teacher types the class once rather than every period, and offering it as a name picker was
+  the reason five lessons' worth of names accumulated on one tablet. A child typing their own
+  name on their own tablet was always the argument; the roll was a convenience that cost more
+  than it saved. A Teacher who wants a child on a craft without a tablet seats them by hand
+  from the board.
+- **Change classroom and Leave come from a context, not eight threaded props.** They belong
+  together on every screen that has a foot, and threading a ninth prop through six components
+  is six chances to ship a foot with one of them.
+- **The team-list cache is checked against the raw string.** A cache only a writer can
+  invalidate lies to anybody who touches the key another way — a test's `removeItem`, or a
+  future writer that forgets — and the failure is a screen showing a team list that is not
+  there. One string read per render, which is what the old code already did minus the parse.
+- **The classroom code stays.** It was questioned and kept: without it, anyone who opens the
+  site joins the live class. It is public and read out loud, which is the point — it is a
+  door, not a secret (see `docs/adr/` on roles).
+
+---
+
 ## 2026-08-11 · The calls made inside the five.
 
 - **Tab role lives in `sessionStorage`, and the remembered role stays in `localStorage`.**

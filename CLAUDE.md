@@ -159,11 +159,26 @@ the scan path. **What changed is the step, not the strip:** steps 6 to 10 each s
 now, so per-Drone commands are one rail tap away rather than zero. That cost is a ruling, not
 an oversight, and it is paid for by the fixed emergency bar below.
 
-**The Attention bar and Land all · Hover all · Stop all are on every step, 6 to 10
-(ADR-0030).** They never scroll away, are never gated on selection, and are the answer to
-ADR-0026's objection that a Command behind a navigation press is a Command a Teacher cannot
-reach in ten seconds. An emergency in a room full of children is "everything, now", and that
-is one tap from anywhere in the run. Do not move them into a step.
+**Land all · Hover all · Stop all are on every step, 6 to 10 (ADR-0030). The Attention bar is
+not (ADR-0032).** The buttons never scroll away, are never gated on selection, and are the
+answer to ADR-0026's objection that a Command behind a navigation press is a Command a Teacher
+cannot reach in ten seconds. An emergency in a room full of children is "everything, now", and
+that is one tap from anywhere in the run. Do not move them into a step.
+
+**Alerts live on step 10 alone, and the cost is written down (ADR-0032).** ADR-0030 pinned the
+Attention bar above every in-the-air step; repeating the whole panel under five surfaces meant
+step 6 answered step 10's question as well as its own, and the board had drifted back to the
+arrangement the rail exists to replace. **A Teacher on step 8 will not learn that a Drone
+entered a No-fly Zone until they visit step 10.** That was put to the owner and overruled, and
+it is in the ADR so the next person finds a decision rather than a mystery. `FleetAllWellLine`
+still says *0 need attention* on every step, which is the count without the panel.
+
+**Three colours, three meanings (ADR-0033).** Classroom boundary **blue dashed**
+(`stroke-info`), No-fly Zone **red hatched** (`stroke-status-fault`), and **amber means
+something needs you** and nothing else. The boundary used to be amber, and it is the one
+coloured thing on the top-down that never changes: forty minutes of it teaches a Teacher to
+skim the colour an Alert arrives in. The key names the colour out loud, which is what keeps
+this true for anybody who cannot tell them apart. It matches the customer's poster.
 
 **Parallel-wave changelog fragments.** During a multi-agent wave, agents write
 `docs/changelog.d/<issue>.md` instead of editing `CHANGELOG.md` / `DECISIONS.md`. The
@@ -317,13 +332,45 @@ nothing to press, forever. `boardQuietForMs` is the heartbeat that already exist
 exit appears when the Drone is down **or** the board has gone quiet. A child genuinely flying
 still gets none, which is the rule working.
 
-**A key may only name what is on the picture.** The Scope's window is fixed (ADR-0014), so a
-zone can exist, be drawn correctly and land entirely off the frame — and "Hatched = No-fly
-Zone" then sends a Teacher hunting a shape that is not there (found at 390 on step 7). The
-legend and `ScopeZones` both take `visibleZones`, filtered by `zoneShowsInWindow`. Side and
-Front flatten one axis, so a zone away to the east still bands on Side and is still named
-there; a zone touching the edge keeps its key, because the Scope holds a shape on the frame
-rather than dropping it and the boundary line is drawn.
+**A key may only name what is on the picture, and a zone that is not on it says so.** The
+Scope's window is fixed (ADR-0014), so a zone can exist, be drawn correctly and land entirely
+off the frame — and "Hatched = No-fly Zone" then sends a Teacher hunting a shape that is not
+there (found at 390 on step 7). The legend and `ScopeZones` both take `visibleZones`, filtered
+by `zoneShowsInWindow`; what is left over is named under the key. Side and Front flatten one
+axis, so a zone away to the east still bands on Side and is still named there; a zone touching
+the edge keeps its key, because the Scope holds a shape on the frame rather than dropping it
+and the boundary line is drawn.
+
+**The drawing surface draws the Scope's window, and that is why zones are visible at all.**
+`MissionAreaEditor` used to be a fixed twenty metres square running north-east from the
+origin. The classroom sits *astride* its origin — roughly -4 to 4 m east, -3 to 3 m north —
+so **every** zone a Teacher drew landed outside the picture: real, breaching, hatched
+nowhere. The rail said "2 no-fly zones" and the Scope's key named no hatch, and neither was
+lying. The surface now takes `scopeSpace` (the Scope's own `scopeWindow`) and falls back to
+`CLASSROOM_GEOFENCE`, clamps a typed corner into it, and reports the metres it covers in
+`data-space`. It draws the blue boundary box too, because a Teacher places a zone against the
+room. Do not put a fixed grid back.
+
+**Count zones that enclose something.** `noFlyZones` in `MissionRunScreen` filters by
+`enclosesAnything`. A shape with two corners is a zone a Teacher started: `breachesAt` ignores
+it, `ScopeZones` draws nothing for it, and counting it puts a number on the rail that the
+picture cannot account for.
+
+**The Student's name list is the room, not the device.** It used to offer the Logbook roll,
+which is kept on purpose so a Teacher types the class once rather than every period — and
+which therefore accumulates: one tablet showed five names from five different lessons. What is
+offered now is who has joined *this* classroom, and **none of it is pressable**: a name
+somebody has stays visible and says which Drone they took, the same rule as the Drone picker,
+so a child learns one behaviour. A child types their own name; a Teacher seats a child with no
+tablet by hand from the board.
+
+**Change classroom is not Leave, and both are in one context.** `changeClassroom()` drops the
+session copy and keeps `techtechflight:student-seat`, so the tablet re-seats itself under the
+same name when the new code lands; `leaveClassroom()` drops both. The door reads *Which
+classroom?* and says whose tablet it still is. Both buttons come from `ChangeClassroomContext`
+rather than threaded props, because they belong together on every screen with a foot and
+threading a ninth prop through six components is six chances to ship a foot with one of them.
+Neither is one of ADR-0025's two Mission presses, for the reason already written about joining.
 
 **A role is a secret, not a preference.** The door asks for the classroom code (Student,
 public, read out loud) or a four-digit Teacher PIN (`web/lib/teacher-pin.ts`, private, set

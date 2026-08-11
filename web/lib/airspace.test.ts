@@ -6,6 +6,7 @@ import {
   distanceToEdge,
   enclosesAnything,
   metresToNearestLimit,
+  zoneShowsInWindow,
   type Zone,
 } from './airspace.ts'
 
@@ -230,5 +231,80 @@ describe('how much room is left', () => {
 
     // Three metres from the wide zone's west edge, one from the small one's west edge.
     expect(metresToNearestLimit([wide, noFly], { eastM: 3, northM: 5 })).toBe(1)
+  })
+})
+
+/**
+ * Whether a zone is on the picture at all.
+ *
+ * The Scope's window is fixed (ADR-0014), so this is a question with a real answer rather
+ * than always yes: a zone can exist, be drawn correctly, and land entirely off the frame.
+ * The key underneath the picture may only name what is in it.
+ */
+describe('a zone against the Scope window', () => {
+  const window8m = { westM: 0, southM: 0, widthM: 8, heightM: 8 }
+
+  const box = (eastM: number, northM: number, size = 2): Zone => ({
+    id: `z-${eastM}-${northM}`,
+    kind: 'no-fly',
+    name: 'a box',
+    points: [
+      { eastM, northM },
+      { eastM: eastM + size, northM },
+      { eastM: eastM + size, northM: northM + size },
+      { eastM, northM: northM + size },
+    ],
+  })
+
+  it('shows a zone inside the window', () => {
+    expect(zoneShowsInWindow(box(2, 2), 'top-down', window8m)).toBe(true)
+  })
+
+  it('shows a zone that only overlaps the edge', () => {
+    expect(zoneShowsInWindow(box(-1, 3), 'top-down', window8m)).toBe(true)
+  })
+
+  /* The case the key was lying about. */
+  it('refuses a zone entirely off the frame', () => {
+    expect(zoneShowsInWindow(box(40, 40), 'top-down', window8m)).toBe(false)
+    expect(zoneShowsInWindow(box(2, 40), 'top-down', window8m)).toBe(false)
+  })
+
+  /*
+   * Touching the edge counts, because the Scope holds a shape on the frame rather than
+   * dropping it: the boundary line is drawn, and it is worth naming. A zone entirely past the
+   * edge draws nothing and is not.
+   */
+  it('keeps a zone that reaches the edge and refuses one beyond it', () => {
+    expect(zoneShowsInWindow(box(8, 3), 'top-down', window8m)).toBe(true)
+    expect(zoneShowsInWindow(box(9, 3), 'top-down', window8m)).toBe(false)
+    expect(zoneShowsInWindow(box(-5, 3), 'top-down', window8m)).toBe(false)
+  })
+
+  /*
+   * The elevation views flatten one axis. A zone away to the east is still at those heights
+   * and those northings, so Side draws it and Side's key may say so; Front, which reads east
+   * across the picture, may not.
+   */
+  it('reads only the axis the elevation view draws', () => {
+    const eastOfTheWindow = box(40, 3)
+
+    expect(zoneShowsInWindow(eastOfTheWindow, 'side', window8m)).toBe(true)
+    expect(zoneShowsInWindow(eastOfTheWindow, 'front', window8m)).toBe(false)
+    expect(zoneShowsInWindow(eastOfTheWindow, 'top-down', window8m)).toBe(false)
+  })
+
+  it('refuses a zone still being drawn, wherever it is', () => {
+    const halfDrawn: Zone = {
+      id: 'half',
+      kind: 'no-fly',
+      name: 'half a zone',
+      points: [
+        { eastM: 2, northM: 2 },
+        { eastM: 4, northM: 2 },
+      ],
+    }
+
+    expect(zoneShowsInWindow(halfDrawn, 'top-down', window8m)).toBe(false)
   })
 })

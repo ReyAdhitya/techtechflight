@@ -9,6 +9,34 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-11 · The calls made inside the five.
+
+- **Tab role lives in `sessionStorage`, and the remembered role stays in `localStorage`.**
+  They answer two different questions and needed two different lifetimes: what this *device*
+  is for, which survives a reboot and routes the bare address, and what this *tab* is showing,
+  which dies with the tab. One key could not have held both, and a Teacher's laptop showing
+  the board and a pupil's view side by side is the whole reason the second one exists.
+- **The look-back taps sit in the rail, not on the stage.** ADR-0025's two presses are Mission
+  presses, and the count that guards them is a count of `<main>`. Reading history asks the
+  Teacher for nothing and reaches no aircraft, in exactly the way joining and leaving do not;
+  putting the taps where the rail already is keeps the stage at two and keeps the test that
+  proves it honest rather than widened.
+- **A Teacher's instruction is not on the list of things that interrupt reading.** A red zone
+  and a quiet board take the screen from a child mid-sentence. An instruction does not need
+  to, because it moves the lesson to step 9, and moving the lesson is already what puts a
+  child back on their own screen. One mechanism, not two.
+- **A zone touching the window's edge keeps its key.** The Scope holds a shape on the frame
+  rather than letting it run off, so a zone reaching the boundary draws a line down it and a
+  Teacher can see where the forbidden half starts. Only a zone with nothing at all inside the
+  frame goes unnamed. Bounding boxes rather than true clipping, because every zone a Teacher
+  can draw here is a rectangle dragged out with a finger.
+- **The Student's team is found by the Drone, not by a roster id.** A child joins by tapping
+  the number painted on the craft in their hands, so the craft is the one thing the Teacher's
+  team list and the child's seat both know. Matching ids would have worked only for a child
+  who came off the roll, which is the case that needed it least.
+
+---
+
 ## 2026-08-11 · The calls made inside the eleven.
 
 - **The emergency bar carries four things, not the two the plan drew.** The plan's diagram is

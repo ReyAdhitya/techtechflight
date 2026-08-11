@@ -224,3 +224,74 @@ describe('the starting point', () => {
     expect(container.querySelector('[data-scope-homes]')).toBeNull()
   })
 })
+
+/**
+ * The key may not name what is not drawn.
+ *
+ * Found at 390 on step 7: "Hatched = No-fly Zone" under a picture with no hatching anywhere
+ * in it, because the zone sat outside the window the Scope had chosen. A key is a promise
+ * about the picture above it, and a Teacher who reads one hunts for the shape it names.
+ */
+describe('the key against what is actually on the picture', () => {
+  const farAway: Zone = {
+    id: 'next-field',
+    kind: 'no-fly',
+    name: 'the next field',
+    points: [
+      { eastM: 400, northM: 400 },
+      { eastM: 406, northM: 400 },
+      { eastM: 406, northM: 406 },
+      { eastM: 400, northM: 406 },
+    ],
+  }
+
+  it('says nothing about hatching when the zone is off the window', () => {
+    const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[farAway]} />)
+
+    expect(container.querySelector('[data-zone-kind="no-fly"]')).toBeNull()
+    expect(screen.queryByText('Hatched = No-fly Zone')).not.toBeInTheDocument()
+  })
+
+  it('keeps the key when one zone is off the window and another is on it', () => {
+    const { container } = render(
+      <Scope drones={[at('Drone 1', 3, 3)]} zones={[farAway, hallZone]} />,
+    )
+
+    expect(container.querySelectorAll('[data-zone-kind="no-fly"]')).toHaveLength(1)
+    expect(screen.getByText('Hatched = No-fly Zone')).toBeInTheDocument()
+  })
+
+  /* And the same promise on the elevation views, which have a key of their own. */
+  it('says nothing about a band when the zone is off the window on Side', () => {
+    const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[farAway]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+
+    expect(container.querySelector('[data-zone-band]')).toBeNull()
+    expect(
+      screen.queryByText('Hatched band = No-fly Zone, floor to ceiling'),
+    ).not.toBeInTheDocument()
+  })
+
+  /*
+   * Side flattens east away, so a zone in the next field along is still at these northings
+   * and a Drone climbing through them is inside it. Drawn, and keyed.
+   */
+  it('keeps the band on Side for a zone that is only off the east axis', () => {
+    const eastOfHere: Zone = {
+      ...farAway,
+      points: [
+        { eastM: 400, northM: 2 },
+        { eastM: 406, northM: 2 },
+        { eastM: 406, northM: 4 },
+        { eastM: 400, northM: 4 },
+      ],
+    }
+    const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} zones={[eastOfHere]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+
+    expect(container.querySelector('[data-zone-band]')).toBeInTheDocument()
+    expect(
+      screen.getByText('Hatched band = No-fly Zone, floor to ceiling'),
+    ).toBeInTheDocument()
+  })
+})

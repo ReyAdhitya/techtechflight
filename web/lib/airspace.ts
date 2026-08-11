@@ -49,6 +49,58 @@ export function enclosesAnything(zone: Zone): boolean {
   return zone.points.length >= MIN_POINTS
 }
 
+/** The Scope's window on the flight area, in metres, in the Fleet's own frame. */
+export interface ScopeWindow {
+  readonly westM: number
+  readonly southM: number
+  readonly widthM: number
+  readonly heightM: number
+}
+
+/**
+ * Whether any part of this zone falls inside the Scope's window, in the view that is showing.
+ *
+ * The Scope's window is fixed (ADR-0014) rather than fitted to whatever is out there, so a
+ * zone can exist, be drawn correctly and land entirely off the picture. That is not a bug on
+ * its own — the window is deliberately the flight area rather than the whole world — but a
+ * **key that names it is**, because a Teacher then hunts a hatched shape that is not on the
+ * screen. Reported at 390 on step 7: "Hatched = No-fly Zone" over a picture with no hatching
+ * anywhere in it.
+ *
+ * The elevation views flatten one axis, so a zone off to the side is still at those heights
+ * and still shows: Side reads north across the picture, Front reads east, and only that axis
+ * decides. Top-down needs both.
+ *
+ * Touching the edge counts. The Scope holds a shape on the frame rather than letting it run
+ * off (the same rule it applies to a Drone), so a zone reaching the boundary draws a line down
+ * it and a Teacher can see where the forbidden half starts. Only a zone with nothing at all
+ * inside the frame is unkeyed.
+ *
+ * Bounding boxes rather than true polygon clipping. Every zone a Teacher can draw here is a
+ * rectangle dragged out with a finger, so the two agree; and where they would not, a box is
+ * the generous answer, which errs towards keeping a key over a shape that is a sliver rather
+ * than dropping one over a shape that is there.
+ */
+export function zoneShowsInWindow(
+  zone: Zone,
+  view: 'top-down' | 'side' | 'front',
+  window: ScopeWindow,
+): boolean {
+  if (!enclosesAnything(zone)) return false
+
+  const overlaps = (values: readonly number[], low: number, span: number): boolean =>
+    Math.min(...values) <= low + span && Math.max(...values) >= low
+
+  const easts = zone.points.map((point) => point.eastM)
+  const norths = zone.points.map((point) => point.northM)
+  const acrossEast = overlaps(easts, window.westM, window.widthM)
+  const acrossNorth = overlaps(norths, window.southM, window.heightM)
+
+  if (view === 'side') return acrossNorth
+  if (view === 'front') return acrossEast
+  return acrossEast && acrossNorth
+}
+
 /**
  * Whether a point is inside a polygon, by ray casting.
  *

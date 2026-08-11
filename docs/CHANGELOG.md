@@ -7,6 +7,18 @@ would notice.
 
 ### Fixed
 
+- **A tablet that lost the board had no way out of it.** The exit was gated on the Drone
+  being down, and "airborne" was the last thing the board said rather than something known to
+  be true now: an iPad that heard it seventeen hours ago still believed it, so a child sat on
+  *Land and wait* with nothing to press, forever. Silence is not flight. The way out appears
+  when the Drone is down **or** when the board has gone quiet, on the heartbeat that was
+  already there. A child genuinely flying still gets none, which is the point of the rule.
+- **The Scope's key named a shape that was not on the picture.** "Hatched = No-fly Zone" read
+  under a picture with no hatching in it, at 390 on step 7, because the window is fixed
+  (ADR-0014) and the zone sat outside it. The key is now computed from what is drawn in the
+  view that is showing rather than from what exists. Side and Front flatten one axis, so a
+  zone off to the east still bands on Side and is still named there.
+
 - **The demonstration's one Recall flew 8.5 m from where the dotted line said.** `takeOff`
   stamped home from the current position unconditionally and `flyRoute` calls it with no
   airborne guard, so the scripted incident moved the Drone's home to wherever the drift had
@@ -23,6 +35,21 @@ would notice.
   were reported in each of two waves. The showcase gains its own `--sc-text-*` scale.
 
 ### Added
+
+- **The address decides the role for that tab.** `/mission` is the Teacher and `/student` is
+  the Student, for as long as that tab is open, so a Teacher's laptop can hold both at once
+  and a demonstration does not have to keep switching one board between two people. The
+  remembered role now routes only the bare address. The PIN gate has not moved: a child typing
+  `/mission` is still stopped at it, because the lock was never the hidden button.
+- **A Student may tap a step they have done and re-read it (ADR-0031).** A child who cannot
+  re-read the rules asks the Teacher instead, mid-lesson, holding a drone. Later steps stay
+  untappable. Two things hold it up: *Back to now* in the rail, and the screen pulling itself
+  back the instant the lesson moves, so a takeoff clearance cannot arrive behind something a
+  child chose to look at.
+- **Who else is in the room, on both sides.** The Student sees their own team named and spaced
+  from everyone else, who are listed smaller underneath. The Teacher's board keeps the full
+  list: every child, the Drone they took, and the time they joined, plus a line for anybody
+  who joined and has not taken a craft, who used to be in the room and on no row.
 
 - **A tablet can leave a classroom, and a new Lesson mints a new code.** The owner found an
   iPhone sitting in a lesson called "bleble" that had finished weeks earlier: there was no way

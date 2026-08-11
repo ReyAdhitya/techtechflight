@@ -9,7 +9,7 @@ import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
 import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
 import type { GhostPathStore } from '@/lib/scope-ghost-paths'
 import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
-import { enclosesAnything, type Zone } from '@/lib/airspace'
+import { enclosesAnything, zoneShowsInWindow, type Zone } from '@/lib/airspace'
 import type { MissionCheckpoint } from '@/lib/mission'
 import { ScopeCheckpoints } from './ScopeCheckpoints'
 import { cn } from '@/lib/utils'
@@ -242,7 +242,21 @@ export function Scope({
   const showSelectedPanel = expanded && selected != null && selectedPanel != null
   const pathsReady = ghostPaths !== undefined && ghostPathsAvailable(ghostPaths)
   const drawableZones = zones?.filter(enclosesAnything) ?? []
-  const hasNoFlyZone = drawableZones.length > 0
+  /*
+   * What is actually on the picture, which is not the same as what exists.
+   *
+   * The window is fixed (ADR-0014), so a zone can be drawn correctly and land entirely
+   * outside it — and the key underneath went on naming a hatched shape a Teacher could not
+   * find. A key is a promise about the picture above it, and it may only name what is in it.
+   */
+  const windowM = {
+    westM: scope.westM,
+    southM: scope.southM,
+    widthM: scope.widthM,
+    heightM: scope.heightM,
+  }
+  const visibleZones = drawableZones.filter((zone) => zoneShowsInWindow(zone, view, windowM))
+  const hasNoFlyZone = visibleZones.length > 0
   // Nothing has left the ground yet means nothing to key. An absent home is said by absence.
   const anyHomeDrawn =
     homeOf !== undefined && drawn.some((drone) => homeOf(drone.id) !== null)
@@ -548,16 +562,11 @@ export function Scope({
           })()}
 
           <ScopeZones
-            zones={drawableZones}
+            zones={visibleZones}
             project={scope.project}
             view={view}
             noFlyHatchId={noFlyHatchId}
-            bounds={{
-              westM: scope.westM,
-              southM: scope.southM,
-              widthM: scope.widthM,
-              heightM: scope.heightM,
-            }}
+            bounds={windowM}
             ceilingM={ceilingM}
           />
 
@@ -757,7 +766,7 @@ export function Scope({
             {elevation ? 'Hatched band = No-fly Zone, floor to ceiling' : 'Hatched = No-fly Zone'}
           </span>
         )}
-        {zonesUnsurveyed && drawableZones.length > 0 && (
+        {zonesUnsurveyed && visibleZones.length > 0 && (
           <span>Not surveyed against this aircraft</span>
         )}
         {view === 'top-down' && homeOf !== undefined && anyHomeDrawn && (

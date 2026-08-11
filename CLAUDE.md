@@ -212,6 +212,16 @@ per package rather than inside the junction (which is the main repo's directory)
 a photograph of that door. `TTF_SHOT_ROLE=student` seeds the other one. A shot needs
 `NEXT_PUBLIC_DEMO_ONLY=1` at build time too, or the board waits for a ground station.
 
+**The address decides the role for that tab; the remembered role only routes the bare
+address.** Two keys, two lifetimes, and they are not interchangeable: `techtechflight:role`
+in `localStorage` is what this *device* is for, and `techtechflight:tab-role` in
+`sessionStorage` is what this *tab* is showing. `/mission` is the Teacher and `/student` is
+the Student for as long as that tab is open, so one laptop can hold both. `RequireRole` no
+longer redirects anybody. **The PIN gate did not move**: a tab on `/mission` whose device is
+remembered as a Student is asked for the PIN, and a right answer unlocks that tab alone,
+leaving `localStorage` saying `student`. One jsdom is one session store, so the two-tabs
+property is proved in a browser and stood in for in `RoleGate.test.tsx` with `clearTabRole()`.
+
 **A saved theme does not survive hydration, and this predates the rail.** The boot script in
 `layout.tsx` stamps `data-theme` on `<html>` before paint, and after React hydrates the
 attribute is gone: `document.documentElement.dataset.theme` reads `undefined` on a load where
@@ -291,7 +301,26 @@ Stay out of red, Teacher says, Task done, Land, Score.
 optional: a way back to now for when nothing else happens, and the screen pulling itself back
 the instant the step a child is *actually* on changes. A Student re-reading step 2 must not miss
 their takeoff clearance, because phases come from records and Telemetry rather than presses, and
-a screen a child could leave stale by reading is a screen that can hide a Teacher's answer.
+a screen a child could leave stale by reading is a screen that can hide a Teacher's answer. The
+taps live in the **rail**, outside `<main>`, which is what keeps ADR-0025's two-press count — a
+count of the stage — true. A red zone and a quiet board still take the screen mid-sentence; a
+Teacher's instruction does not need to, because it moves the lesson to step 9 and moving the
+lesson already puts a child back on their own screen.
+
+**Silence is not flight.** A tablet's `airborne` is the last thing the board said, not
+something known to be true now, so the way out of a classroom cannot be gated on `!airborne`
+alone: an iPad that last heard "airborne" seventeen hours ago sat on *Land and wait* with
+nothing to press, forever. `boardQuietForMs` is the heartbeat that already existed, and the
+exit appears when the Drone is down **or** the board has gone quiet. A child genuinely flying
+still gets none, which is the rule working.
+
+**A key may only name what is on the picture.** The Scope's window is fixed (ADR-0014), so a
+zone can exist, be drawn correctly and land entirely off the frame — and "Hatched = No-fly
+Zone" then sends a Teacher hunting a shape that is not there (found at 390 on step 7). The
+legend and `ScopeZones` both take `visibleZones`, filtered by `zoneShowsInWindow`. Side and
+Front flatten one axis, so a zone away to the east still bands on Side and is still named
+there; a zone touching the edge keeps its key, because the Scope holds a shape on the frame
+rather than dropping it and the boundary line is drawn.
 
 **A role is a secret, not a preference.** The door asks for the classroom code (Student,
 public, read out loud) or a four-digit Teacher PIN (`web/lib/teacher-pin.ts`, private, set

@@ -14,6 +14,7 @@ import {
   normalizeClassroomCode,
   readClassroomSession,
   readStudentSeatLocal,
+  roomAround,
   markSeatComplete,
   markSeatFlown,
   requestTakeoff,
@@ -1348,6 +1349,8 @@ function MissionBrief({
 
       <MissionTerms session={session} />
 
+      <WhoElseIsInTheRoom session={session} seat={seat} />
+
       <PreFlightForMyCraft seat={seat} />
 
       <TakeoffAnswer seat={seat} session={session} onSession={onSession} />
@@ -1518,6 +1521,62 @@ function MissionTerms({ session }: { readonly session: ClassroomSession }) {
         </section>
       )}
     </div>
+  )
+}
+
+/**
+ * My team, named and given room, and everybody else smaller underneath.
+ *
+ * A child at a flight line looks up and wants to know who is flying, and the answer they care
+ * about most is their own team's name: it is the thing a Teacher shouts across a hall, and a
+ * child who cannot match it to themselves is a child who does not know when they are being
+ * spoken to.
+ *
+ * On the brief and nowhere else. One dominant thing at a time (ADR-0025), and a class list
+ * beside a battery reading mid-flight is a class list nobody reads and a battery reading
+ * nobody sees. Before takeoff is when a child is looking around the room anyway.
+ *
+ * Nobody else joined yet is said in words rather than by an empty box.
+ */
+function WhoElseIsInTheRoom({
+  session,
+  seat,
+}: {
+  readonly session: ClassroomSession
+  readonly seat: ClassroomSeat
+}) {
+  const room = roomAround(session, seat.studentId)
+
+  return (
+    <section className="flex flex-col gap-3" aria-labelledby="who-else">
+      <div className="flex flex-col gap-1">
+        <h2 id="who-else" className="label m-0">
+          Your team
+        </h2>
+        <p className="m-0 font-display text-heading font-medium text-ink">
+          {room.teamName ?? seat.name}
+        </p>
+        <p className="m-0 text-body text-ink-subtle">
+          {[seat.name, seat.droneName].filter(Boolean).join(', ')}
+        </p>
+      </div>
+
+      {room.others.length === 0 ? (
+        <p className="m-0 text-value text-ink-muted">Nobody else has joined yet.</p>
+      ) : (
+        <div className="flex flex-col gap-1">
+          <h3 className="label m-0">Everyone else</h3>
+          <ul className="m-0 flex list-none flex-wrap gap-x-6 gap-y-1 p-0">
+            {room.others.map((other) => (
+              <li key={other.studentId} className="text-value text-ink-subtle">
+                <span className="text-ink">{other.name}</span>
+                {other.droneName === null ? null : <span>, {other.droneName}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   )
 }
 

@@ -7,6 +7,24 @@ would notice.
 
 ### Fixed
 
+- **Every No-fly Zone a Teacher drew landed outside the picture.** The rail read "2 no-fly
+  zones" while the Scope's key named no hatch, and both were telling the truth: the drawing
+  surface was a fixed twenty metres square running north-east from the origin, and the Scope
+  draws a window around where the Drones are — about eight metres by six, astride the origin,
+  half of it in negative metres the grid could not express. The surface now draws the Scope's
+  own window, or the classroom boundary before there is one, and holds a typed corner inside
+  it. Where a zone still cannot be seen, both screens say so.
+- **The rail counted zones nobody had finished.** A shape with two corners is a zone a Teacher
+  started; `breachesAt` ignores it and the Scope draws no hatch for it. Only zones that
+  enclose something are counted now.
+- **Putting a team on a craft needed a page reload.** The Lesson screen read the team list
+  once per render, so "Put these craft on the Mission" stayed away until something else
+  re-rendered the page. It subscribes now, the way the Logbook is subscribed to.
+- **The Student's name list was this device's history, not the room.** It offered every name
+  ever typed on that tablet — one showed five, from five different lessons, and it only ever
+  grew. It is this classroom now: a name somebody has stays on screen, is not pressable, and
+  says which Drone they took, which is the rule the Drone picker already teaches.
+
 - **A tablet that lost the board had no way out of it.** The exit was gated on the Drone
   being down, and "airborne" was the last thing the board said rather than something known to
   be true now: an iPad that heard it seventeen hours ago still believed it, so a child sat on
@@ -35,6 +53,22 @@ would notice.
   were reported in each of two waves. The showcase gains its own `--sc-text-*` scale.
 
 ### Added
+
+- **Change classroom, beside Leave.** Leaving and moving rooms are different intentions and
+  only the destructive one was on offer: the sole route to the code screen forgot the name as
+  well as the room, so a Teacher moving a tablet to the other class landed on *What is your
+  name?* with nothing to do but type it again. Change keeps whose tablet it is and re-seats
+  them the moment the new code lands.
+- **Alerts live on step 10 alone (ADR-0032).** The whole panel — cards, buttons and "2 more in
+  the queue" — repeated under every in-the-air step, so step 6 answered step 10's question as
+  well as its own. Land all, Hover all and Stop all stay on every step, unchanged. The cost is
+  written into the ADR: a Teacher on step 8 will not learn about a No-fly breach until they
+  visit step 10.
+- **Three colours, three meanings (ADR-0033).** The classroom boundary is blue dashed, a
+  No-fly Zone is red hatched, and amber means something needs you. The boundary was drawn in
+  the Alert amber and is the only coloured thing on the picture that never changes, which
+  trained a Teacher to skim the colour Alerts arrive in. The Mission area editor draws the
+  same blue box, so a Teacher places a zone against the room.
 
 - **The address decides the role for that tab.** `/mission` is the Teacher and `/student` is
   the Student, for as long as that tab is open, so a Teacher's laptop can hold both at once

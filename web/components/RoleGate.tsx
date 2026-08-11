@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import {
-  BOARD_ROLE_EVENT,
-  BOARD_ROLE_KEY,
   readBoardRole,
+  readTabRole,
   writeBoardRole,
+  writeTabRole,
   type BoardRole,
 } from '@/lib/role'
 import { checkTeacherPin, hasTeacherPin, isTeacherPinShape, setTeacherPin } from '@/lib/teacher-pin'
@@ -80,7 +80,8 @@ function TeacherSecret({
   onBack,
   onIn,
 }: {
-  readonly onBack: () => void
+  /** Absent when this is the gate on the Teacher route rather than a step of the door. */
+  readonly onBack?: () => void
   readonly onIn: () => void
 }) {
   const [pin, setPin] = useState('')
@@ -247,7 +248,7 @@ function DoorFrame({
 }: {
   readonly ask: string
   readonly children: ReactNode
-  readonly onBack?: () => void
+  readonly onBack?: (() => void) | undefined
 }) {
   return (
     <main id="content" tabIndex={-1} className="door">
@@ -273,10 +274,21 @@ function Opening() {
 }
 
 /**
- * Teacher chrome never mounts for a Student device, and the reverse.
+ * The address decides what this tab is, and the Teacher side is still behind the PIN.
  *
- * Role is read on the client before children render (not only in an effect), so a Student
- * who types `/lesson` or `/control` never sees Teacher UI. Wrong role always redirects.
+ * `/mission` is the Teacher and `/student` is the Student, for as long as that tab is open.
+ * The remembered role only routes somebody who opened the bare address; it used to overrule
+ * the address, so every new tab inherited the last role anybody picked and one browser could
+ * not hold a board and a tablet at once.
+ *
+ * **The lock did not move, because the lock was never the hidden button.** A child who types
+ * `/mission` is stopped here by the same four digit PIN the door asks for, on the same screen.
+ * What has gone is the redirect, which was never a lock: it sent a child to `/student` rather
+ * than asking them for anything, and it sent a Teacher's second tab there too.
+ *
+ * A tab already unlocked as Teacher stays unlocked while it is open, and so does a browser
+ * whose remembered role is Teacher — that device answered the PIN at the door, and asking
+ * again on every reload of a laptop that is nobody else's is ceremony.
  */
 export function RequireRole({
   role,
@@ -285,39 +297,49 @@ export function RequireRole({
   readonly role: BoardRole
   readonly children: ReactNode
 }) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const [generation, setGeneration] = useState(0)
+  /*
+   * Resolved in an effect rather than read during render. `sessionStorage` is a device read
+   * and this is a static export, so reading it in the render body is the hydration mismatch
+   * `CLAUDE.md` warns about — the export has no tab role and the browser does.
+   */
+  const [tabRole, setTabRole] = useState<BoardRole | null>(null)
+  const [settled, setSettled] = useState(false)
 
   useEffect(() => {
-    const current = readBoardRole()
-    if (current === null) {
-      router.replace('/enter')
+    const already = readTabRole()
+    if (already === role) {
+      setTabRole(role)
+      setSettled(true)
       return
     }
-    if (current !== role) {
-      // Student devices stay on /student. Teacher devices stay in Teacher chrome.
-      router.replace(current === 'student' ? '/student' : '/lesson')
+    /*
+     * The Student side has no secret of its own: the classroom code is asked for by the
+     * tablet itself the moment it has no session, so nothing is skipped by adopting here.
+     */
+    if (role === 'student' || readBoardRole() === 'teacher') {
+      writeTabRole(role)
+      setTabRole(role)
     }
-  }, [role, router, pathname, generation])
+    setSettled(true)
+  }, [role])
 
-  useEffect(() => {
-    const bump = () => setGeneration((n) => n + 1)
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === BOARD_ROLE_KEY || event.key === null) bump()
-    }
-    window.addEventListener('storage', onStorage)
-    window.addEventListener(BOARD_ROLE_EVENT, bump)
-    return () => {
-      window.removeEventListener('storage', onStorage)
-      window.removeEventListener(BOARD_ROLE_EVENT, bump)
-    }
-  }, [])
+  if (!settled) return <Opening />
 
-  if (typeof window === 'undefined') return <Opening />
-
-  const current = readBoardRole()
-  if (current !== role) return <Opening />
+  if (tabRole !== role) {
+    return (
+      <TeacherSecret
+        onIn={() => {
+          /*
+           * The tab, and only the tab. Answering the PIN on a child's iPad must not leave that
+           * iPad remembering it is a Teacher's: the remembered role is written at the door,
+           * where somebody says what the device is for, and nowhere else.
+           */
+          writeTabRole('teacher')
+          setTabRole('teacher')
+        }}
+      />
+    )
+  }
 
   return <>{children}</>
 }

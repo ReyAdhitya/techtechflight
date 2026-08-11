@@ -236,7 +236,14 @@ describe('when the tablet loses the board', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Land and wait')
     expect(within(stage()).queryByText(/% charge/)).not.toBeInTheDocument()
-    expect(within(stage()).queryByRole('button')).not.toBeInTheDocument()
+    /*
+     * No Mission press: nothing here asks the Teacher for anything, because the Teacher is
+     * not listening. The way out is the one thing on it, and it is the fix for the trap this
+     * screen used to be.
+     */
+    const pressable = within(stage()).queryAllByRole('button')
+    expect(pressable).toHaveLength(1)
+    expect(pressable[0]).toHaveAccessibleName('Leave this classroom')
   })
 
   it('says nothing while the board is answering', () => {
@@ -594,6 +601,49 @@ describe('what to do when something happens', () => {
  * had finished weeks earlier. There was no way to leave, the code never changed, and nothing
  * had ever said the lesson was over.
  */
+/**
+ * Silence is not flight.
+ *
+ * The way out was gated on `!airborne` alone, and a tablet that last heard "airborne"
+ * seventeen hours ago still believes it: a child sat on "Land and wait" with nothing to press,
+ * for as long as the tablet stayed open, in a room where the lesson had finished the previous
+ * afternoon. The heartbeat already knows the difference.
+ */
+describe('the way out when the board has gone quiet', () => {
+  const seatOnDroneOne = () => {
+    classroomWithBrief(['Priya'])
+    studentScreen()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Priya' }))
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+  }
+
+  const withBoardSilentFor = (ms: number) => {
+    writeClassroomSession({ ...readClassroomSession()!, boardSeenAt: Date.now() - ms })
+    cleanup()
+    studentScreen()
+    settle()
+  }
+
+  it('offers the way out on the lost-board screen', () => {
+    seatOnDroneOne()
+    withBoardSilentFor(QUIET_AFTER_MS + 60_000)
+
+    expect(screen.getByRole('status')).toHaveTextContent('Land and wait')
+    expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
+  })
+
+  /* The board is answering, so the screen is true and there is nothing to escape from. */
+  it('says nothing about leaving while the board is answering', () => {
+    seatOnDroneOne()
+    withBoardSilentFor(1_000)
+
+    expect(screen.queryByText('Land and wait')).not.toBeInTheDocument()
+  })
+})
+
 describe('leaving the classroom', () => {
   const joinAsPriya = () => {
     classroomWithBrief(['Priya'])

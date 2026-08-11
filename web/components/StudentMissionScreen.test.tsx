@@ -644,14 +644,12 @@ describe('leaving the classroom', () => {
   })
 
   /*
-   * Never take a screen away from a child holding a flying aircraft: the tablet reads "The
-   * lesson has ended. Land now." until Telemetry sees the Drone down.
+   * A child whose Drone is on the ground walks out, even with a Drone chosen.
    *
-   * Not pinned here, and that is deliberate rather than an omission. `airborne` comes from
-   * the Fleet, and the pinned demonstration this suite runs never leaves the ground, so the
-   * branch is unreachable in jsdom whatever the session says. It is walked in a browser
-   * instead, which is where every serious defect in this product has been found. What is
-   * pinned here is the half that is reachable: a Drone that is down gets the way out.
+   * This asserted only that the way out was on the screen somewhere, and passed on a screen
+   * that was still showing the brief of a finished lesson: the foot control is on the brief
+   * too. A screenshot caught it. The heading is what distinguishes the two, so the heading is
+   * what is asserted.
    */
   it('shows a child whose Drone is down the way out, once the Lesson has ended', () => {
     joinAsPriya()
@@ -663,8 +661,21 @@ describe('leaving the classroom', () => {
     studentScreen()
     settle()
 
+    expect(screen.getByRole('heading', { name: 'The lesson has ended' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Find the missing hiker/ }))
+      .not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Leave this classroom' })).toBeInTheDocument()
   })
+
+  /*
+   * Never take a screen away from a child holding a flying aircraft: the tablet reads "The
+   * lesson has ended. Land now." until Telemetry sees the Drone down.
+   *
+   * Not pinned here, and that is deliberate rather than an omission. `airborne` comes from
+   * the Fleet, and the pinned demonstration this suite runs never leaves the ground, so the
+   * branch is unreachable in jsdom whatever the session says. It is walked in a browser
+   * instead, which is where every serious defect in this product has been found.
+   */
 
   /*
    * "Wait, and they will appear" is a lie on a session nobody has touched for an hour. The

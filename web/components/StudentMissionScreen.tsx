@@ -255,13 +255,20 @@ function SeatedStudent({
   }, [seat.studentId])
 
   /*
-   * The Lesson ended while this child was flying.
+   * The Lesson has ended, and what happens next is decided by the aircraft.
    *
-   * **The screen does not vanish.** Waiting silently is safe and leaves them not knowing why
-   * nothing is happening; the instruction is the point. Once Telemetry sees the Drone down,
-   * the screen above this one takes over and they walk out.
+   * **Flying: the screen does not vanish.** Waiting silently is safe and leaves a child not
+   * knowing why nothing is happening; the instruction is the point.
+   *
+   * **Down: they walk out.** This is the branch the screen above cannot take, because it has
+   * no Telemetry to consult — it only knows whether a Drone was chosen, not whether it is up.
+   * Left to it, a child whose Drone was on the ground went on reading the brief of a lesson
+   * that had finished, which is the whole defect this work exists to remove wearing a
+   * slightly different hat. A screenshot caught it; the test did not.
    */
-  if (classroomHasEnded(session) && airborne) {
+  if (classroomHasEnded(session)) {
+    if (!airborne) return <ClassroomOver onLeave={onLeave} />
+
     return (
       <StudentFrame
         rail={<StudentStepRail current={11} name={seat.name} droneName={seat.droneName} />}

@@ -224,11 +224,25 @@ function SeatedStudent({
   readonly onSession: (session: ClassroomSession) => void
   readonly onLeave: () => void
 }) {
-  const { vitals } = useFleet()
+  const { vitals, now: clock } = useFleet()
   const mine = seat.droneId === null
     ? null
     : (vitals.find((entry) => entry.droneId === seat.droneId) ?? null)
   const airborne = mine?.airborne === true
+
+  /*
+   * Whether the way out belongs on screen, and **silence is not flight**.
+   *
+   * The exit used to be gated on `!airborne` alone. A tablet that last heard "airborne"
+   * seventeen hours ago still believes it, so a child sat on "Land and wait" with nothing to
+   * press, forever, in a room where the lesson had finished the previous afternoon. The
+   * heartbeat already knows the difference: a board that has not spoken for forty seconds is
+   * not telling this tablet anything, including that the Drone is up.
+   *
+   * A child genuinely flying still gets no exit, which is the point of the gate.
+   */
+  const boardQuiet = boardQuietForMs(session, clock) !== null
+  const canLeave = !airborne || boardQuiet
 
   /*
    * Down after flying is not the same as never having left, and neither is decided by a
@@ -273,7 +287,8 @@ function SeatedStudent({
       <StudentFrame
         rail={<StudentStepRail current={11} name={seat.name} droneName={seat.droneName} />}
         tone="warning"
-        canLeave={false}
+        onLeave={onLeave}
+        canLeave={canLeave}
       >
         <StudentName name={seat.name} />
         <h1
@@ -298,6 +313,7 @@ function SeatedStudent({
       hasFlown={hasFlown}
       onSession={onSession}
       onLeave={onLeave}
+      canLeave={canLeave}
     />
   )
 }
@@ -317,6 +333,7 @@ function StudentPhase({
   hasFlown,
   onSession,
   onLeave,
+  canLeave,
 }: {
   readonly session: ClassroomSession
   readonly seat: ClassroomSeat
@@ -324,6 +341,8 @@ function StudentPhase({
   readonly hasFlown: boolean
   readonly onSession: (session: ClassroomSession) => void
   readonly onLeave: () => void
+  /** False only while a Drone is genuinely up and the board is still answering. */
+  readonly canLeave: boolean
 }) {
   const { vitals, now: clock } = useFleet()
   const mine = seat.droneId === null
@@ -363,7 +382,15 @@ function StudentPhase({
   }
 
   if (seat.phase === 'returning') {
-    return <LandOnYourPad seat={seat} rail={rail} airborne={airborne} />
+    return (
+      <LandOnYourPad
+        seat={seat}
+        rail={rail}
+        airborne={airborne}
+        onLeave={onLeave}
+        canLeave={canLeave}
+      />
+    )
   }
 
   if (airborne && breaches.length > 0) {
@@ -377,7 +404,9 @@ function StudentPhase({
    * because a screen of held numbers wearing a live screen's clothes is the failure this
    * product refuses everywhere else, one reading at a time.
    */
-  if (lostBoardMs !== null) return <LostTheBoard quietForMs={lostBoardMs} rail={rail} />
+  if (lostBoardMs !== null) {
+    return <LostTheBoard quietForMs={lostBoardMs} rail={rail} onLeave={onLeave} />
+  }
 
   if (airborne) {
     if (whatIf !== null) return <WhatIfTakeover answer={whatIf} rail={rail} />
@@ -432,13 +461,17 @@ function LandOnYourPad({
   seat,
   rail,
   airborne,
+  onLeave,
+  canLeave,
 }: {
   readonly seat: ClassroomSeat
   readonly rail: React.ReactNode
   readonly airborne: boolean
+  readonly onLeave: () => void
+  readonly canLeave: boolean
 }) {
   return (
-    <StudentFrame rail={rail}>
+    <StudentFrame rail={rail} onLeave={onLeave} canLeave={canLeave}>
       <IdentityLine seat={seat} />
       <p className="m-0 label">Your Teacher approved it</p>
       {/*
@@ -508,12 +541,20 @@ function RedZoneTakeover({
 function LostTheBoard({
   quietForMs,
   rail,
+  onLeave,
 }: {
   readonly quietForMs: number
   readonly rail: React.ReactNode
+  readonly onLeave: () => void
 }) {
+  /*
+   * The way out is always here, because this screen only exists when the board has gone
+   * quiet, and a quiet board is the one thing that can never tell a child to leave. Without
+   * it this was the trap: "Land and wait", and nothing to press, for as long as the tablet
+   * stayed open.
+   */
   return (
-    <StudentFrame rail={rail} tone="warning">
+    <StudentFrame rail={rail} tone="warning" onLeave={onLeave}>
       <p className="m-0 label">Not hearing your Teacher&apos;s board</p>
       <h1
         role="status"

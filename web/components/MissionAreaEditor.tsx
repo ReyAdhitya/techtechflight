@@ -3,11 +3,18 @@
 import { useCallback, useId, useRef, useState, type MouseEvent } from 'react'
 import type { LocalPosition } from '@techtechflight/contract'
 import { enclosesAnything, type Zone } from '@/lib/airspace'
+import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
 import { zonesOutsideWindow, type ZoneWindow } from '@/lib/zone-visibility'
 import { cn } from '@/lib/utils'
 
-/** Metres east and north shown on the drawing surface. */
-const GRID_SIZE_M = 20
+/**
+ * The space to draw in when no Drone has reported a position yet.
+ *
+ * The classroom boundary, which is the one rectangle the Scope draws whatever else is on it.
+ * It is a teaching default rather than a measurement, and that is fine here: it is the right
+ * order of magnitude for a room, and every corner of it is somewhere the Scope will show.
+ */
+const DEFAULT_SPACE: ZoneWindow = CLASSROOM_GEOFENCE
 
 export type MissionAreaEditorProps = {
   readonly zones: readonly Zone[]
@@ -26,12 +33,19 @@ function defaultZoneName(zones: readonly Zone[]): string {
   return `No-fly Zone ${zones.length + 1}`
 }
 
-function roundMetre(value: number): number {
-  return Math.max(0, Math.min(GRID_SIZE_M, Math.round(value * 10) / 10))
+function roundTo(value: number, low: number, high: number): number {
+  return Math.max(low, Math.min(high, Math.round(value * 10) / 10))
 }
 
+/**
+ * North is up, so the axis is flipped, and the viewBox starts at `-northM`.
+ *
+ * Plotting `-north` rather than `top - north` is what lets the same expression serve a window
+ * that starts at a negative metre. The classroom sits astride its own origin: the Fleet is set
+ * up somewhere in the middle of the room, so half of it is west and south of zero.
+ */
 function svgY(northM: number): number {
-  return GRID_SIZE_M - northM
+  return -northM
 }
 
 function pointsToPolygon(points: readonly LocalPosition[]): string {
@@ -41,6 +55,13 @@ function pointsToPolygon(points: readonly LocalPosition[]): string {
 function polylinePoints(points: readonly LocalPosition[]): string {
   if (points.length === 0) return ''
   return pointsToPolygon(points)
+}
+
+/** Every whole metre line inside the window, on one axis. */
+function metreLines(low: number, high: number): readonly number[] {
+  const lines: number[] = []
+  for (let m = Math.ceil(low); m <= Math.floor(high); m += 1) lines.push(m)
+  return lines
 }
 
 /**
@@ -63,8 +84,27 @@ export function MissionAreaEditor({
   const baseId = useId()
   const nextZoneCounter = useRef(1)
   const [activeZoneId, setActiveZoneId] = useState<string | null>(null)
-  const [eastDraft, setEastDraft] = useState('4')
-  const [northDraft, setNorthDraft] = useState('4')
+
+  /*
+   * **Draw the space the Scope draws.** This surface used to be a fixed twenty metres square
+   * running from the origin north-east, and the Scope draws a window around where the Drones
+   * actually are — about eight metres by six, astride the origin, with half of it in negative
+   * metres this grid could not express. So *every* zone a Teacher drew here landed outside the
+   * picture: real, breaching, and invisible on all three views. The rail said "2 no-fly zones"
+   * beside a Scope whose key named no hatch, and both were telling the truth.
+   *
+   * The notice at the foot stays. It is now the exception it was always meant to be — a zone
+   * typed beyond the frame, or drawn before the window grew — rather than the state every
+   * Teacher was in.
+   */
+  const space = scopeSpace ?? DEFAULT_SPACE
+  const widthM = space.eastM - space.westM
+  const heightM = space.northM - space.southM
+  const midEast = Math.round((space.westM + space.eastM) / 2)
+  const midNorth = Math.round((space.southM + space.northM) / 2)
+
+  const [eastDraft, setEastDraft] = useState(String(midEast))
+  const [northDraft, setNorthDraft] = useState(String(midNorth))
 
   const activeZone = activeZoneId ? zones.find((zone) => zone.id === activeZoneId) : undefined
   const hasAnyGeometry = zones.some((zone) => zone.points.length > 0)
@@ -114,11 +154,14 @@ export function MissionAreaEditor({
   )
 
   const addPointFromDraft = useCallback(() => {
-    const eastM = roundMetre(Number.parseFloat(eastDraft))
-    const northM = roundMetre(Number.parseFloat(northDraft))
-    if (!Number.isFinite(eastM) || !Number.isFinite(northM)) return
-    addPoint({ eastM, northM })
-  }, [addPoint, eastDraft, northDraft])
+    const east = Number.parseFloat(eastDraft)
+    const north = Number.parseFloat(northDraft)
+    if (!Number.isFinite(east) || !Number.isFinite(north)) return
+    addPoint({
+      eastM: roundTo(east, space.westM, space.eastM),
+      northM: roundTo(north, space.southM, space.northM),
+    })
+  }, [addPoint, eastDraft, northDraft, space.eastM, space.northM, space.southM, space.westM])
 
   const finishActiveZone = useCallback(() => {
     setActiveZoneId(null)
@@ -152,11 +195,13 @@ export function MissionAreaEditor({
     const svg = event.currentTarget
     const rect = svg.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return
-    const eastM = roundMetre(((event.clientX - rect.left) / rect.width) * GRID_SIZE_M)
-    const northM = roundMetre(
-      ((rect.height - (event.clientY - rect.top)) / rect.height) * GRID_SIZE_M,
-    )
-    addPoint({ eastM, northM })
+    const east = space.westM + ((event.clientX - rect.left) / rect.width) * widthM
+    const north =
+      space.southM + ((rect.height - (event.clientY - rect.top)) / rect.height) * heightM
+    addPoint({
+      eastM: roundTo(east, space.westM, space.eastM),
+      northM: roundTo(north, space.southM, space.northM),
+    })
   }
 
   return (
@@ -220,30 +265,52 @@ export function MissionAreaEditor({
         <svg
           role="img"
           aria-label="Mission area drawing surface in metres east and north"
-          viewBox={`0 0 ${GRID_SIZE_M} ${GRID_SIZE_M}`}
-          className="block aspect-square w-full cursor-crosshair touch-none"
+          viewBox={`${space.westM} ${-space.northM} ${widthM} ${heightM}`}
+          /* The window's own shape, which is not square once it is a room rather than a grid. */
+          style={{ aspectRatio: `${widthM} / ${heightM}` }}
+          className="block w-full cursor-crosshair touch-none"
           onClick={onCanvasClick}
+          data-space={`${space.westM},${space.eastM},${space.southM},${space.northM}`}
         >
-          {Array.from({ length: GRID_SIZE_M + 1 }, (_, index) => (
-            <g key={index}>
-              <line
-                x1={index}
-                y1={0}
-                x2={index}
-                y2={GRID_SIZE_M}
-                className="stroke-hairline"
-                strokeWidth={0.05}
-              />
-              <line
-                x1={0}
-                y1={index}
-                x2={GRID_SIZE_M}
-                y2={index}
-                className="stroke-hairline"
-                strokeWidth={0.05}
-              />
-            </g>
+          {metreLines(space.westM, space.eastM).map((east) => (
+            <line
+              key={`e${east}`}
+              x1={east}
+              y1={svgY(space.northM)}
+              x2={east}
+              y2={svgY(space.southM)}
+              className="stroke-hairline"
+              strokeWidth={0.03}
+            />
           ))}
+          {metreLines(space.southM, space.northM).map((north) => (
+            <line
+              key={`n${north}`}
+              x1={space.westM}
+              y1={svgY(north)}
+              x2={space.eastM}
+              y2={svgY(north)}
+              className="stroke-hairline"
+              strokeWidth={0.03}
+            />
+          ))}
+
+          {/*
+           * The classroom boundary, in the same blue dashed line the Scope draws it in
+           * (ADR-0033). A Teacher drawing a zone is placing it against the room, and the room
+           * was the one thing this surface did not show.
+           */}
+          <rect
+            x={CLASSROOM_GEOFENCE.westM}
+            y={svgY(CLASSROOM_GEOFENCE.northM)}
+            width={CLASSROOM_GEOFENCE.eastM - CLASSROOM_GEOFENCE.westM}
+            height={CLASSROOM_GEOFENCE.northM - CLASSROOM_GEOFENCE.southM}
+            fill="none"
+            className="stroke-info"
+            strokeWidth={0.06}
+            strokeDasharray="0.3 0.24"
+            data-classroom-geofence=""
+          />
 
           {zones.map((zone) => {
             if (zone.points.length === 0) return null
@@ -254,8 +321,8 @@ export function MissionAreaEditor({
                 key={zone.id}
                 points={pointList}
                 className="fill-status-fault/15 stroke-status-fault"
-                strokeWidth={0.15}
-                strokeDasharray="0.3 0.25"
+                strokeWidth={0.08}
+                strokeDasharray="0.2 0.16"
                 data-zone-kind="no-fly"
               />
             ) : (
@@ -264,8 +331,8 @@ export function MissionAreaEditor({
                 points={pointList}
                 fill="none"
                 className="stroke-status-fault"
-                strokeWidth={0.15}
-                strokeDasharray="0.4 0.3"
+                strokeWidth={0.08}
+                strokeDasharray="0.24 0.2"
                 data-zone-kind="no-fly"
               />
             )
@@ -277,13 +344,19 @@ export function MissionAreaEditor({
                 key={`${zone.id}-${index}`}
                 cx={point.eastM}
                 cy={svgY(point.northM)}
-                r={0.2}
+                r={0.1}
                 className="fill-status-fault"
               />
             )),
           )}
         </svg>
       </div>
+
+      <p className="m-0 text-center text-label text-ink-muted">
+        <span className="tnum">{space.westM}</span> to <span className="tnum">{space.eastM}</span>{' '}
+        m east, <span className="tnum">{space.southM}</span> to{' '}
+        <span className="tnum">{space.northM}</span> m north. The same space the Scope draws.
+      </p>
 
       {!hasAnyGeometry ? (
         <div className="text-center" data-testid="mission-area-empty">
@@ -305,8 +378,8 @@ export function MissionAreaEditor({
             <input
               type="number"
               inputMode="decimal"
-              min={0}
-              max={GRID_SIZE_M}
+              min={space.westM}
+              max={space.eastM}
               step={0.5}
               value={eastDraft}
               onChange={(event) => setEastDraft(event.target.value)}
@@ -318,8 +391,8 @@ export function MissionAreaEditor({
             <input
               type="number"
               inputMode="decimal"
-              min={0}
-              max={GRID_SIZE_M}
+              min={space.southM}
+              max={space.northM}
               step={0.5}
               value={northDraft}
               onChange={(event) => setNorthDraft(event.target.value)}
@@ -349,7 +422,7 @@ export function MissionAreaEditor({
         </ul>
       ) : null}
 
-      <ZonesOutsideNotice zones={zones} window={scopeSpace} />
+      <ZonesOutsideNotice zones={zones} window={space} />
     </section>
   )
 }
@@ -357,14 +430,13 @@ export function MissionAreaEditor({
 /**
  * The zones that are real and invisible.
  *
- * This surface draws twenty metres square. The Scope draws a **window** chosen from where the
- * Drones actually are, and it can be eight metres across. A Teacher who types a corner at
- * fifteen has drawn something `breachesAt` will fire on and no view will ever show, and the
- * failure mode is not an ugly picture: a Teacher who cannot see a boundary stops believing
- * there is one, and watching it is the whole of what this feature is for.
+ * This surface now draws the same space the Scope does, so a tapped zone lands where it will
+ * be shown and this is the exception rather than every Teacher's normal state. It is still
+ * reachable: a corner typed past the edge is clamped to it, but a zone saved when the window
+ * was elsewhere keeps the metres it was given.
  *
- * Silent when there is nothing to say, and silent when no Drone is reporting a position,
- * because then there is no window yet and *outside* would be a guess.
+ * The failure mode is not an ugly picture. A Teacher who cannot see a boundary stops believing
+ * there is one, and watching it is the whole of what this feature is for.
  */
 function ZonesOutsideNotice({
   zones,

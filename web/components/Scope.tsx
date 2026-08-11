@@ -257,6 +257,8 @@ export function Scope({
   }
   const visibleZones = drawableZones.filter((zone) => zoneShowsInWindow(zone, view, windowM))
   const hasNoFlyZone = visibleZones.length > 0
+  /* Real, breaching, and on none of this view. Named under the key rather than left out. */
+  const hiddenZones = drawableZones.filter((zone) => !visibleZones.includes(zone))
   // Nothing has left the ground yet means nothing to key. An absent home is said by absence.
   const anyHomeDrawn =
     homeOf !== undefined && drawn.some((drone) => homeOf(drone.id) !== null)
@@ -552,7 +554,14 @@ export function Scope({
                 width={se.x - nw.x}
                 height={se.y - nw.y}
                 fill="none"
-                className="stroke-status-not-ready"
+                /*
+                 * Blue, not the amber it used to be (ADR-0033). The boundary is the one
+                 * coloured thing on this picture that never changes, and drawing it in the
+                 * colour an Alert arrives in taught a Teacher to read that colour as
+                 * furniture. Three colours, three meanings: blue is where the room is, red
+                 * is where nobody may fly, and amber means something needs you.
+                 */
+                className="stroke-info"
                 strokeWidth="2"
                 strokeDasharray="8 6"
                 vectorEffect="non-scaling-stroke"
@@ -751,7 +760,7 @@ export function Scope({
          */}
         {view === 'top-down' && (
           <span>
-            Dashed box = classroom boundary ({CLASSROOM_GEOFENCE.westM} to{' '}
+            Blue dashed box = classroom boundary ({CLASSROOM_GEOFENCE.westM} to{' '}
             {CLASSROOM_GEOFENCE.eastM} m east, {CLASSROOM_GEOFENCE.southM} to{' '}
             {CLASSROOM_GEOFENCE.northM} m north)
           </span>
@@ -763,7 +772,9 @@ export function Scope({
           */}
         {hasNoFlyZone && (
           <span>
-            {elevation ? 'Hatched band = No-fly Zone, floor to ceiling' : 'Hatched = No-fly Zone'}
+            {elevation
+              ? 'Red hatched band = No-fly Zone, floor to ceiling'
+              : 'Red hatched = No-fly Zone'}
           </span>
         )}
         {zonesUnsurveyed && visibleZones.length > 0 && (
@@ -794,6 +805,21 @@ export function Scope({
           <span>
             {namesOf(scope.beyond)} {scope.beyond.length === 1 ? 'is' : 'are'} further out than
             the scope draws, held on the edge
+          </span>
+        )}
+        {/*
+         * A zone that exists and is not on this picture, said out loud.
+         *
+         * The key names only what is drawn, which is right and is also silent: a Teacher who
+         * drew two zones and sees no hatch has no way to tell "there are none" from "yours are
+         * off the frame". A safety boundary that is invisible and unmentioned is a feature that
+         * looks present and is not.
+         */}
+        {hiddenZones.length > 0 && (
+          <span className="text-status-not-ready">
+            {hiddenZones.map((zone) => zone.name).join(', ')}{' '}
+            {hiddenZones.length === 1 ? 'is' : 'are'} outside this picture. The Alert still
+            fires. Redraw {hiddenZones.length === 1 ? 'it' : 'them'} nearer the Drones.
           </span>
         )}
       </figcaption>

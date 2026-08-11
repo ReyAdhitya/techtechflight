@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { enclosesAnything } from '@/lib/airspace'
 import { alertQueue } from '@/lib/vitals'
 import { readClearances } from '@/lib/clearance-store'
 import { awaitingClearance, type ClearanceCraftInput } from '@/lib/clearance'
@@ -388,7 +389,12 @@ function readMissionRun({
 
   const summary: MissionFlowSummary = {
     scenarioName: mission === null ? null : (scenarioById(mission.scenarioId)?.name ?? null),
-    noFlyZones: (mission?.zones ?? []).length,
+    /*
+     * Only the ones that enclose something. A shape with two corners is a zone a Teacher
+     * started and did not finish: `breachesAt` ignores it, the Scope draws no hatch for it,
+     * and the rail counting it said "2 no-fly zones" over a picture with nothing on it.
+     */
+    noFlyZones: (mission?.zones ?? []).filter(enclosesAnything).length,
     teams: teams.length,
     craft: craftIds.length,
     craftPastPreFlight: craftIds.filter((droneId) =>

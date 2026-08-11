@@ -9,6 +9,43 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-11 · The calls made inside the eleven.
+
+- **The emergency bar carries four things, not the two the plan drew.** The plan's diagram is
+  the Attention bar and the fleet-wide buttons. The Lesson strip and the one-line headcount
+  are up there too: the strip is where **End the lesson** lives, and leaving it on a step
+  would have stranded a Teacher who needed it — step 11 in particular never had it, so
+  closing a Lesson from the close-down step was already impossible. Four short rows, and the
+  tie-breaker of fewer words is beaten by not stranding anybody.
+- **`TaskApproval` sits on step 6 with the clearance queue.** Approve is the third answer a
+  Teacher gives a team, beside Grant and Hold, and the code already said so. The Teacher's
+  step 10 is Alerts, not "task done", which is the Student rail's wording.
+- **Three Teacher actions became step moves rather than scrolls.** *Approve takeoff*, *Add
+  no-fly zone* and *New target* were navigation dressed as commands, answered by scrolling a
+  page that no longer exists. They take the Teacher to the step instead. *Add no-fly zone*
+  goes to step 2, where zones are drawn, rather than to the Scope, which has never drawn one
+  and says so in its own caption; that was wrong before this change and is now visibly so.
+- **The way out of a classroom is on the grounded screens only.** A child holding a flying
+  aircraft must not be able to take their own screen away, so it is absent while the Drone is
+  up. That is also why it is not one of ADR-0025's two presses: those are Mission presses, and
+  this one is only ever offered when the Mission is not happening to you.
+- **Freeing a classroom is per device.** `leaveClassroom` forgets the local seat and the local
+  copy and touches nothing the Teacher owns. A tablet walking out of a room is not a Teacher
+  deleting a record.
+- **The stale-session sentence is triggered by the board's own silence.** A tablet cannot know
+  a lesson is over when nobody ever said so, which is exactly the case that stranded the
+  owner. A board that has not beaten for forty seconds is the honest evidence available, so
+  the empty Drone grid says the lesson looks finished rather than promising Drones.
+- **`--text-diagram: 0.35rem` is a token on a surface that refuses small print.** It is the
+  checkpoint numeral inside the printed brief's SVG map, which is measured in metres and a few
+  centimetres across on paper. A token rather than a literal so that this sentence has
+  somewhere to live.
+- **The colour check exempts canvas, print and the `themeColor` meta**, which are the three
+  places a CSS custom property genuinely cannot reach. The meta is pinned against
+  `--background` in both themes instead, because nothing else could catch it drifting.
+
+---
+
 ## 2026-08-10 · The calls made inside the twenty-one changes from a tablet.
 
 - **The Teacher PIN is a digest, and a weak one.** FNV-1a over four digits in `localStorage`.

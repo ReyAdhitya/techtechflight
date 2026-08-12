@@ -302,6 +302,7 @@ export function RequireRole({
    * and this is a static export, so reading it in the render body is the hydration mismatch
    * `CLAUDE.md` warns about — the export has no tab role and the browser does.
    */
+  const router = useRouter()
   const [tabRole, setTabRole] = useState<BoardRole | null>(null)
   const [settled, setSettled] = useState(false)
 
@@ -316,12 +317,27 @@ export function RequireRole({
      * The Student side has no secret of its own: the classroom code is asked for by the
      * tablet itself the moment it has no session, so nothing is skipped by adopting here.
      */
-    if (role === 'student' || readBoardRole() === 'teacher') {
+    const remembered = readBoardRole()
+    if (role === 'student' || remembered === 'teacher') {
       writeTabRole(role)
       setTabRole(role)
+      setSettled(true)
+      return
+    }
+    /*
+     * Nobody has ever said what this device is for, so ask, rather than demanding a PIN.
+     * The PIN is for a device already declared a Teacher's whose tab has not adopted it, and
+     * for a Student's tablet typing a Teacher address on purpose. A brand new browser opening
+     * the bare address is neither: it is somebody at the door, and the door is `/enter`.
+     * Without this a first visit to a new deployment reads as "prove you are the Teacher",
+     * which is the one question the door exists to avoid asking first.
+     */
+    if (remembered === null) {
+      router.replace('/enter')
+      return
     }
     setSettled(true)
-  }, [role])
+  }, [role, router])
 
   if (!settled) return <Opening />
 

@@ -159,27 +159,25 @@ describe('RequireRole', () => {
   })
 
   /*
-   * First morning, no PIN set. The door asks a Teacher to choose one rather than refusing
-   * every answer, and the gate on the route has to behave the same way or a fresh browser
-   * opened at `/mission` is a dead end.
+   * A brand new browser opening a Teacher address has never been told what it is for, and
+   * "prove you are the Teacher" is the one question the door exists to avoid asking first.
+   * It used to be shown the PIN, which read as a locked building with no reception, and it
+   * is what the owner met opening a fresh deployment on 2026-08-12.
+   *
+   * The PIN is still asked of the two devices that have declared themselves: a Teacher's
+   * laptop whose tab has not adopted the role yet, and a Student's tablet typing a Teacher
+   * address on purpose. Those are covered by the tests either side of this one.
    */
-  it('asks the first Teacher through to choose a PIN', () => {
+  it('sends a device with no remembered role to the door, not to the PIN', () => {
     render(
       <RequireRole role="teacher">
         <p>Teacher secret</p>
       </RequireRole>,
     )
 
-    expect(
-      screen.getByRole('heading', { name: 'Choose a four digit PIN' }),
-    ).toBeInTheDocument()
-
-    fireEvent.change(screen.getByLabelText('Choose a four digit PIN'), {
-      target: { value: '9042' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Enter' }))
-
-    expect(screen.getByText('Teacher secret')).toBeInTheDocument()
+    expect(replace).toHaveBeenCalledWith('/enter')
+    expect(screen.queryByLabelText('Choose a four digit PIN')).not.toBeInTheDocument()
+    expect(screen.queryByText('Teacher secret')).not.toBeInTheDocument()
   })
 
   /* Nothing on the route sends anybody anywhere any more. The address is the answer. */

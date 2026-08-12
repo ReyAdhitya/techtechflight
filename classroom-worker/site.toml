@@ -1,0 +1,25 @@
+# The whole board, served from Cloudflare.
+#
+# Not a preference. The owner's ISP blocks every address ending in `vercel.app`, so the
+# Vercel deploy cannot be opened in Indonesia without a VPN, and a demo where the audience
+# needs a VPN is not a demo. The proper fix is a custom domain, and that is blocked too:
+# techtechtechnology.com's DNS is served by Cloudflare from an account this login cannot
+# reach, proven by two tokens both reporting zero zones.
+#
+# So the app is served from here as well. `techtechflight.vercel.app` stays exactly as it is;
+# this is a second door into the same building.
+#
+# Build first, with the classroom store baked in:
+#   NEXT_PUBLIC_DEMO_ONLY=1 \
+#   NEXT_PUBLIC_CLASSROOM_SYNC_URL=https://techtechflight-classroom.classroom-worker.workers.dev \
+#   npm run build --workspace=web
+# then:
+#   wrangler deploy -c classroom-worker/site.toml
+
+name = "techtechflight"
+compatibility_date = "2026-08-12"
+workers_dev = true
+
+[assets]
+directory = "../web/out"
+not_found_handling = "404-page"

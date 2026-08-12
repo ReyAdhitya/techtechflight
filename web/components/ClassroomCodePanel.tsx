@@ -5,6 +5,7 @@ import {
   pushClassroomToCloud,
   readClassroomSession,
   subscribeClassroom,
+  type ClassroomSyncReport,
 } from '@/lib/classroom-session'
 
 /**
@@ -14,7 +15,7 @@ import {
  */
 export function ClassroomCodePanel() {
   const [code, setCode] = useState<string | null>(null)
-  const [sync, setSync] = useState<'unknown' | 'ok' | 'skipped' | 'error'>('unknown')
+  const [sync, setSync] = useState<ClassroomSyncReport | null>(null)
 
   useEffect(() => {
     const session = readClassroomSession()
@@ -37,14 +38,6 @@ export function ClassroomCodePanel() {
     )
   }
 
-  const syncWords =
-    sync === 'ok'
-      ? 'Synced for iPads on the school Wi‑Fi.'
-      : sync === 'skipped'
-        ? 'This laptop only for now. Cloud sync is not configured (need BLOB_READ_WRITE_TOKEN). A second tab here still works.'
-        : sync === 'error'
-          ? 'Could not reach the classroom cloud. Retry, or use a second tab on this laptop.'
-          : 'Checking sync…'
 
   return (
     <div
@@ -56,8 +49,9 @@ export function ClassroomCodePanel() {
         <p className="tnum m-0 font-display text-heading font-medium tracking-[0.2em]">{code}</p>
       </div>
       <p className="m-0 max-w-[40ch] text-value text-ink-subtle">
-        Students open Student on an iPad and join with this code. {syncWords}
+        Students open Student on an iPad and join with this code.
       </p>
+      <SyncWords report={sync} />
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -74,7 +68,7 @@ export function ClassroomCodePanel() {
           onClick={() => {
             const session = readClassroomSession()
             if (!session) return
-            setSync('unknown')
+            setSync(null)
             void pushClassroomToCloud(session).then(setSync)
           }}
         >
@@ -82,5 +76,56 @@ export function ClassroomCodePanel() {
         </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Which store, and what it said.
+ *
+ * "Could not reach the classroom cloud" was on this panel for three days while three Vercel
+ * Blob stores sat suspended for unpaid billing. Every word of it was true and none of it was
+ * actionable: it did not say which cloud, and it did not say that the cloud had answered — a
+ * 500 with a reason in it reads, to a Teacher, exactly like a school firewall.
+ *
+ * So: name the store, print the status, and quote what it said. A Teacher forwards that to
+ * whoever runs the account, and meanwhile the second tab on this laptop still works, which is
+ * the one line that was worth keeping.
+ */
+function SyncWords({ report }: { readonly report: ClassroomSyncReport | null }) {
+  if (report === null) {
+    return <p className="m-0 text-value text-ink-muted">Checking sync…</p>
+  }
+
+  if (report.state === 'ok') {
+    return (
+      <p className="m-0 text-value text-ink-subtle">Synced for iPads on the school Wi‑Fi.</p>
+    )
+  }
+
+  const storeName =
+    report.store === 'worker' ? 'the Cloudflare classroom store' : 'the Vercel classroom store'
+
+  if (report.state === 'unconfigured') {
+    return (
+      <p role="status" className="m-0 max-w-[46ch] text-value text-ink">
+        This laptop only. No classroom store is set up
+        {report.store === 'worker'
+          ? ' at the address the board was given'
+          : ' (NEXT_PUBLIC_CLASSROOM_SYNC_URL is unset and Vercel Blob has no token)'}
+        . A second tab here still works.
+      </p>
+    )
+  }
+
+  return (
+    <p
+      role="status"
+      className="m-0 max-w-[46ch] border-l-4 border-status-not-ready pl-3 text-value text-ink"
+    >
+      iPads cannot join. {storeName} answered{' '}
+      {report.status === null ? 'nothing at all' : <span className="tnum">{report.status}</span>}
+      {report.detail === '' ? '' : `: ${report.detail}`}. A second tab on this laptop still
+      works. Send this line to whoever runs the account.
+    </p>
   )
 }

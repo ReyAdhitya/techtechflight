@@ -217,12 +217,6 @@
   --chrome-duration: 620ms;
   --chrome-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /*
-   * Large format, for a projector or a board read across the room (ADR-0008). A
-   * multiplier on the root rather than a second set of larger values, so it magnifies
-   * whatever font size the Teacher already asked their browser for.
-   */
-  --display-scale: 1;
 }
 
 /* Dark — warm near-black, not the blue-black a stock dark theme ships with. */
@@ -307,25 +301,6 @@
   }
 }
 
-/*
- * Large format (ADR-0008), the half that was lost in the port.
- *
- * `display-scale.ts` has always stamped `data-display="large"` on the root and
- * `--display-scale` has always been consumed by `html` below, but the rule joining them
- * was left behind in the Vite board (`dashboard/src/styles/tokens.css`). The toggle
- * moved, remembered its choice across reloads, relabelled itself, and resized nothing.
- *
- * Unlayered, like the palette above, so it outranks the `@layer base` rule it feeds.
- *
- * 1.375 is the Vite board's value, kept so the two boards stay comparable while both are
- * runnable. It is not yet a defended number: `reference/glanceability.md` measures it as
- * buying roughly one metre of viewing distance, well short of the projector this exists
- * for. Raising it is a decision for its own ADR, not a quiet edit here.
- */
-:root[data-display='large'] {
-  --display-scale: 1.375;
-}
-
 @layer base {
   *,
   *::before,
@@ -350,8 +325,6 @@
   html {
     background: var(--background);
     color: var(--foreground);
-    /* Multiplied, never set: `100%` is whatever the Teacher's browser was already told. */
-    font-size: calc(100% * var(--display-scale));
   }
 
   body {
@@ -857,12 +830,6 @@
     }
   }
 
-  /* Large format needs the same escape hatch a phone gets, one size tier earlier. */
-  @media (max-width: 56rem) {
-    :root[data-display='large'] .brand-product {
-      display: none;
-    }
-  }
 
   /*
    * A broad Status rail replaces the hairline as the glance signal. Fault is solid;

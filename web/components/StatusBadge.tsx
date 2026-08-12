@@ -60,11 +60,11 @@ export function StatusBadge({ status }: { status: Status }) {
     >
       {/*
        * In rem, not px. 0.6875rem is exactly the 11px this was drawn at, but px made the
-       * shape the one element on the board that ignored large format: at 2× every size
-       * around it doubled and this stayed at 11px, falling from 46% of the tile name
-       * beside it to 23%. The shape is the signal that carries Status without colour, and
-       * the projector it exists for is precisely where large format is used — so it was
-       * shrinking, relatively, in the one condition it was designed for.
+       * shape the one element on the board that ignored the Teacher's own font size: turn
+       * the browser up and every size around it grew while this stayed at 11px, falling
+       * from 46% of the tile name beside it to 23%. The shape is the signal that carries
+       * Status without colour, and a Teacher who has asked for bigger type is exactly the
+       * one who needs it — so it was shrinking, relatively, for the reader who asked.
        */}
       <StatusGlyph shape={presentation.shape} />
       <span className="font-medium">{presentation.label}</span>

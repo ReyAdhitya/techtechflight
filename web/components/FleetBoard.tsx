@@ -149,8 +149,9 @@ export function FleetBoard({
 
       {/*
        * The tile minimum is in rem, so it scales with the type inside it. Left in px it
-       * would be the one measurement on the board that ignored large format, and tiles
-       * would tighten around their own text exactly when they were meant to open up.
+       * would be the one measurement on the board that ignored the Teacher's own font
+       * size, and tiles would tighten around their own text exactly when a Teacher had
+       * asked for bigger type (ADR-0008).
        */}
       <ul className="fleet-grid grid flex-1 list-none content-start gap-4 p-0">
         {shown.map((drone, index) => (

@@ -1138,14 +1138,34 @@ export function subscribeClassroom(
   }
 }
 
+/**
+ * Which store this board is talking to.
+ *
+ * `worker` is Cloudflare Workers + KV, configured by `NEXT_PUBLIC_CLASSROOM_SYNC_URL`, and is
+ * where the classroom lives now. `vercel` is `api/classroom.ts` on Vercel Blob, kept as the
+ * fallback so the old path still works if billing is ever restored. `none` is a build with
+ * neither, which is a real state: the board runs on a laptop with no classroom cloud at all
+ * and a second tab still works.
+ */
+export type ClassroomStore = 'worker' | 'vercel'
+
+function classroomStoreBase(): { readonly store: ClassroomStore; readonly base: string } {
+  const fromEnv = process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL
+  if (fromEnv && fromEnv.trim() !== '') {
+    return { store: 'worker', base: fromEnv.trim().replace(/\/$/, '') }
+  }
+  return { store: 'vercel', base: '/api/classroom' }
+}
+
+/** Which store is configured, for the sentence a Teacher reads when it does not answer. */
+export function classroomStore(): ClassroomStore {
+  return classroomStoreBase().store
+}
+
 export function classroomApiUrl(code: string): string {
   const normalized = normalizeClassroomCode(code)
   if (typeof window === 'undefined') return `/api/classroom?code=${normalized}`
-  const fromEnv = process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL
-  if (fromEnv && fromEnv.trim() !== '') {
-    return `${fromEnv.trim().replace(/\/$/, '')}?code=${normalized}`
-  }
-  return `/api/classroom?code=${normalized}`
+  return `${classroomStoreBase().base}?code=${normalized}`
 }
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null
@@ -1162,20 +1182,68 @@ export function scheduleClassroomCloudPush(session: ClassroomSession): void {
   }, 800)
 }
 
+/**
+ * What happened when the board last tried to reach the store.
+ *
+ * A verdict and the evidence for it. "Could not reach the classroom cloud" was true for three
+ * days while three Vercel Blob stores sat suspended for unpaid billing, and it told nobody
+ * which cloud, which code, or what the store actually said. A Teacher cannot act on that; they
+ * can act on a name and a status.
+ */
+export interface ClassroomSyncReport {
+  readonly state: 'ok' | 'unconfigured' | 'error'
+  readonly store: ClassroomStore
+  /** The HTTP status the store answered with, or null when nothing answered at all. */
+  readonly status: number | null
+  /** What the store said, trimmed. Empty when it said nothing or the request never landed. */
+  readonly detail: string
+}
+
+async function saidBy(response: Response): Promise<string> {
+  try {
+    const text = (await response.text()).slice(0, 300)
+    if (text.trim() === '') return ''
+    try {
+      const parsed = JSON.parse(text) as { error?: unknown }
+      return typeof parsed.error === 'string' ? parsed.error : text
+    } catch {
+      return text
+    }
+  } catch {
+    return ''
+  }
+}
+
 export async function pushClassroomToCloud(
   session: ClassroomSession,
   fetchImpl: typeof fetch = fetch,
-): Promise<'ok' | 'skipped' | 'error'> {
+): Promise<ClassroomSyncReport> {
+  const store = classroomStore()
   try {
     const response = await fetchImpl(classroomApiUrl(session.code), {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(session),
     })
-    if (response.status === 503 || response.status === 404) return 'skipped'
-    return response.ok ? 'ok' : 'error'
-  } catch {
-    return 'skipped'
+    if (response.ok) return { state: 'ok', store, status: response.status, detail: '' }
+    /*
+     * 503 is the one status that means "nobody set this up", which is a different sentence
+     * from "it is refusing me". Everything else is a store that answered and said no — and
+     * the 500 the Blob stores have been returning since 9 August belongs firmly in the
+     * second group, however much it looked like the first.
+     */
+    const detail = await saidBy(response)
+    if (response.status === 503) {
+      return { state: 'unconfigured', store, status: 503, detail }
+    }
+    return { state: 'error', store, status: response.status, detail }
+  } catch (error) {
+    return {
+      state: 'error',
+      store,
+      status: null,
+      detail: error instanceof Error ? error.message : '',
+    }
   }
 }
 

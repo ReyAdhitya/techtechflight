@@ -33,14 +33,14 @@ export const viewport: Viewport = {
 /*
  * Stamped before first paint rather than in an effect.
  *
- * A board that flashed the wrong theme, or the wrong size, on every reload would do it
- * in front of a class. The theme takes an explicit stored choice first and the machine's
- * preference otherwise (design.md §2); the size is the large-format multiplier of
- * ADR-0008. Both are re-applied by their controls on mount, so this script is an
- * optimisation against flashing and never the source of truth.
+ * A board that flashed the wrong theme on every reload would do it in front of a class.
+ * An explicit stored choice first, the machine's preference otherwise (design.md §2). The
+ * toggle re-applies it on mount, so this script is an optimisation against flashing and
+ * never the source of truth.
+ *
+ * It used to stamp a second attribute for large format. That is gone (ADR-0034).
  */
-const BOOT = `try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){}
-try{if(localStorage.getItem('techtechflight:display-scale')==='large'){document.documentElement.dataset.display='large'}}catch(e){}`
+const BOOT = `try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){}`
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

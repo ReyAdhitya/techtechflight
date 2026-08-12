@@ -183,9 +183,10 @@ For the same reason the logo is rendered in ink rather than in marigold.
 
 ### What it adds
 
-- **Large format.** A root-level multiplier for a board read across a classroom or
-  from a projector, on a fully relative type scale (ADR-0008). Every size on this
-  surface is in `rem` so that one control moves all of it.
+- **A fully relative type scale.** Every size on this surface is in `rem`, spacing
+  included, so the Teacher's own browser font size moves all of it (ADR-0008). A `px`
+  font-size here is a defect. There was also a Large format multiplier; it was removed by
+  ADR-0034, because browser zoom already does that job at any size a room needs.
 - **An anchored answer.** The Fleet summary stays below the room controls while the
   Drone grid scrolls. On a large Fleet, the number the Teacher opened the board to read
   no longer leaves the screen before the least important controls do.

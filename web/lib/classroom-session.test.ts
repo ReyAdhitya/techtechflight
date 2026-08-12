@@ -21,7 +21,10 @@ import {
   requestTakeoff,
   resetClassroomForTests,
   freeDroneSeat,
+  classroomApiUrl,
+  classroomStore,
   leaveClassroom,
+  pushClassroomToCloud,
   mayLeaveClassroom,
   roomAround,
   seatsWithoutADrone,
@@ -760,5 +763,110 @@ describe('whether a child may leave a classroom', () => {
   it('lets a child out when the board has gone quiet, whatever it last said', () => {
     expect(mayLeaveClassroom({ airborne: true, boardQuiet: true })).toBe(true)
     expect(mayLeaveClassroom({ airborne: false, boardQuiet: true })).toBe(true)
+  })
+})
+
+/**
+ * Which store, and what it said.
+ *
+ * The Vercel Blob stores have answered 500 since 9 August 2026, suspended for unpaid billing,
+ * and the board said "Could not reach the classroom cloud" the whole time. Every word true and
+ * none of it actionable: it named no store and did not say the store had answered at all,
+ * which reads exactly like a school firewall.
+ */
+describe('which store, and what it said', () => {
+  const withSyncUrl = (url: string | undefined, run: () => void) => {
+    const before = process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL
+    if (url === undefined) delete process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL
+    else process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL = url
+    try {
+      run()
+    } finally {
+      if (before === undefined) delete process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL
+      else process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL = before
+    }
+  }
+
+  it('uses the Worker when one is configured, and Vercel when none is', () => {
+    withSyncUrl('https://classroom.example.workers.dev', () => {
+      expect(classroomStore()).toBe('worker')
+      expect(classroomApiUrl('k7m2')).toBe('https://classroom.example.workers.dev?code=K7M2')
+    })
+
+    withSyncUrl(undefined, () => {
+      expect(classroomStore()).toBe('vercel')
+      expect(classroomApiUrl('k7m2')).toBe('/api/classroom?code=K7M2')
+    })
+  })
+
+  /* A trailing slash on an environment variable is not a different store. */
+  it('does not care whether the configured address ends in a slash', () => {
+    withSyncUrl('https://classroom.example.workers.dev/', () => {
+      expect(classroomApiUrl('K7M2')).toBe('https://classroom.example.workers.dev?code=K7M2')
+    })
+  })
+
+  const session = () =>
+    openClassroom({
+      lessonId: 'L-1',
+      lessonLabel: 'Year 8',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [],
+    })
+
+  const answering = (status: number, body: unknown) =>
+    (async () =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { 'content-type': 'application/json' },
+      })) as unknown as typeof fetch
+
+  it('says the store answered, with its status and its words', async () => {
+    const report = await pushClassroomToCloud(
+      session(),
+      answering(500, { error: 'Vercel Blob: 403 Forbidden' }),
+    )
+
+    expect(report.state).toBe('error')
+    expect(report.status).toBe(500)
+    expect(report.detail).toBe('Vercel Blob: 403 Forbidden')
+  })
+
+  /*
+   * "Nobody set this up" and "it is refusing me" are two different sentences to a Teacher, and
+   * for three days they were one sentence. 503 is the only status that means the first.
+   */
+  it('tells an unconfigured store apart from one that is refusing', async () => {
+    const missing = await pushClassroomToCloud(
+      session(),
+      answering(503, { error: 'Classroom store is not configured.' }),
+    )
+    expect(missing.state).toBe('unconfigured')
+
+    const refusing = await pushClassroomToCloud(session(), answering(500, { error: 'nope' }))
+    expect(refusing.state).toBe('error')
+  })
+
+  /* Nothing answered at all: no status to print, and the board must not invent one. */
+  it('reports a request that never landed as an error with no status', async () => {
+    const offline = (async () => {
+      throw new Error('Failed to fetch')
+    }) as unknown as typeof fetch
+
+    const report = await pushClassroomToCloud(session(), offline)
+    expect(report.state).toBe('error')
+    expect(report.status).toBeNull()
+    expect(report.detail).toBe('Failed to fetch')
+  })
+
+  it('says ok when the store took it', async () => {
+    const report = await pushClassroomToCloud(session(), answering(200, { ok: true }))
+    expect(report.state).toBe('ok')
+    expect(report.detail).toBe('')
   })
 })

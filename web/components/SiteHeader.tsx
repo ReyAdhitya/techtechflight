@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'motion/react'
-import { DisplayScaleToggle } from './DisplayScaleToggle'
 import { SimulationLabel } from './SimulationLabel'
 import { SiteNavButton, SiteNavPanel, useSiteNavDismiss } from './SiteNav'
 import { SwitchRoleButton } from './SwitchRoleButton'
@@ -58,7 +57,6 @@ export function SiteHeader() {
   const controls = (
     <>
       <ThemeToggle />
-      <DisplayScaleToggle />
       <SwitchRoleButton label="Switch role" />
       {/*
        * Not in the navigation: the room and the records, rather than a place to go. It is a

@@ -1,0 +1,11 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "techtechflight-classroom"
+main = "src/index.ts"
+compatibility_date = "2026-08-12"
+workers_dev = true
+
+# One JSON document per classroom code. The id is filled in by
+# `npm run classroom:namespace`, which prints it after creating the namespace.
+[[kv_namespaces]]
+binding = "CLASSROOMS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

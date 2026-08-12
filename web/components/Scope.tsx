@@ -279,8 +279,8 @@ export function Scope({
      * the scope answers "which one is that". A picture that costs a whole screen has the two
      * the wrong way round.
      *
-     * In rem, so the cap follows the display scale like everything else does — LARGE FORMAT
-     * grows the scope with the type rather than stranding it at a fixed size (ADR-0008).
+     * In rem, so the cap follows the Teacher's own font size like everything else does,
+     * rather than stranding the picture at a fixed size (ADR-0008).
      *
      * Full screen is a column: picture centred in the free space, optional selected-drone
      * dock pinned under it — the overlay hides Every Drone strips, so Commands live here.
@@ -837,9 +837,9 @@ export function Scope({
  *
  * HTML rather than SVG text. Inside the drawing these would be sized in user units, so
  * they would grow with a small window and shrink with a large one, and they would ignore
- * the Teacher's browser font size and the large format entirely — the one place on the
- * board where a size was not relative (ADR-0008). Six "On the ground" labels in a 7 m
- * strip overlapped into one unreadable line because of it.
+ * the Teacher's browser font size entirely — the one place on the board where a size was
+ * not relative (ADR-0008). Six "On the ground" labels in a 7 m strip overlapped into one
+ * unreadable line because of it.
  */
 function Mark({
   drone,

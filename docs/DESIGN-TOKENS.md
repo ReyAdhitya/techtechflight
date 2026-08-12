@@ -113,8 +113,9 @@ takes an extra line.
 `rem` throughout so the scale follows the Teacher's own browser font size rather than
 overriding it (WCAG 1.4.4, ADR-0008). **A `px` font-size on this surface is a defect.**
 
-`--display-scale` is a root multiplier for the large format, so one control moves every
-size. Set by a boot script on `<html data-display="large">` before first paint.
+There is no board-side size multiplier. There was one (`--display-scale`, stamped as
+`data-display="large"`) and it went with ADR-0034: the Teacher's own browser zoom does the
+same job at any size they need, and `rem` throughout is what makes that work.
 
 Helpers: `.tnum` for tabular figures — mandatory on any number that changes in place, or
 the row jitters.

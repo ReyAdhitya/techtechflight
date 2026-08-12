@@ -69,5 +69,11 @@ oversight:
 
 - **`--text-value` is deliberately the same size as `--text-body`.** Data is not small print
   on this surface. Every size is `rem`; a `px` font-size here is a defect (ADR-0008).
+- **There is no Large format control, and its absence is not the oversight it looks like.**
+  This document used to defend keeping one. It was removed on 2026-08-12 (ADR-0034): the
+  multiplier shipped at 1.375, which ADR-0008's own text measured as well short of the
+  projector it existed for, and the Teacher's browser zoom already does the same job at any
+  size they need. **The relative type scale stays** — `rem` throughout is what makes browser
+  zoom work at all, and it is a WCAG 1.4.4 obligation rather than a preference.
 - **A Not Ready Drone stays silent about its return** unless the ground station has watched
   the charge actually rise. Null is the resting value, not a missing feature — ADR-0007.

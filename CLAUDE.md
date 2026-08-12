@@ -93,6 +93,13 @@ and those still reach the simulated Fleet only.
 reorder, counts render at zero, elevation is lightness only, the amber/coral hue split.
 Argue with them in an ADR or leave them alone.
 
+**Large format is gone, and issue #623 is finally settled (2026-08-12).** The issue asked for
+icons only and for Large format removed; the icon-only half shipped, and the guidance given
+afterwards argued for keeping the toggle, so the other half sat unruled for weeks. The owner
+has now ruled: remove it. `DisplayScaleToggle`, the display-scale key, the `data-display`
+attribute and every style hanging off it all go, and `docs/DELIBERATE-POSITIONS.md` must stop
+defending it.
+
 **Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
 no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
 the Simulator; Settings **Classroom setup** can prefer Radio (MAVLink) for the next launch
@@ -107,10 +114,34 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 `TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
 `CommandableSource` — monitoring only (ADR-0011).
 
-**Lesson/Student Logbook is this browser first; optional Vercel copy.** Records live in
-`localStorage` on the machine running the board. With a sync secret (Settings /
-`LOGBOOK_SYNC_SECRET`), a debounced copy goes to Vercel Blob via `/api/logbook`
-(ADR-0015). Telemetry never carries Logbook rows. Do not invent a Postgres school DB.
+**Lesson/Student Logbook is this browser first, and now has a database behind it.** Records
+live in `localStorage` on the machine running the board, and that stays the record: a school
+hall with poor wifi still has to teach a lesson, and a Teacher who cannot mark attendance
+because a connection dropped is a real failure with children in the room. The database is the
+**copy**, synced when it can be. Telemetry never carries Logbook rows.
+
+**"Do not invent a Postgres school DB" was reversed on 2026-08-12 by the product owner.** It
+had stood since ADR-0015 because central records of children bring obligations a laptop-only
+product does not have: who may see them, how long they are kept, what happens when a parent
+asks for deletion. The sentence a school used to be told, *"the records are on your own laptop,
+we never hold them"*, is no longer true, and whatever replaces it must be written before the
+schema is. The schema itself is third normal form and lives in
+`docs/plans/2026-08-12-the-store-the-database-and-large-format.md`. **No live readings ever
+enter it:** no altitude, no battery, no position. It holds what happened, never what is
+happening.
+
+**The classroom store and the Logbook are different things, and confusing them wastes days.**
+The classroom session is one lesson and is thrown away; the Logbook is years. A database does
+not fix a tablet that cannot join, and a classroom store does not hold records.
+
+**Vercel Blob is suspended, and it is billing rather than a bug.** On 2026-08-12 all three of
+the account's stores read `Suspended`, `Billing State: Inactive`, which is why
+`/api/classroom` returned `500 Blob: 403 Forbidden` from about 9 August and no second device
+could join. The owner will not add a payment method, so the classroom store moves to
+**Cloudflare Workers and KV**: free, no card, on an account already held for the domain, and
+chosen over Supabase on one point, that Supabase pauses after about a week idle and waits for
+a human to click. The requirement in the owner's words was "I want runs every time". Keep
+`api/classroom.ts` as a fallback in case billing is ever restored.
 
 **Camera stream URLs are never Telemetry.** Map is build seed `NEXT_PUBLIC_CAMERA_STREAM_MAP`
 (JSON object) or localStorage `techtechflight:camera-stream-map` when already set — no

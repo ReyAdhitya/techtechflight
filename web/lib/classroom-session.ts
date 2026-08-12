@@ -1138,14 +1138,50 @@ export function subscribeClassroom(
   }
 }
 
+/**
+ * Where the classroom store lives, and it is not `/api/classroom` any more.
+ *
+ * That route is a Vercel function over Vercel Blob, and on 2026-08-12 every Blob store on the
+ * account read `Suspended`, `Billing State: Inactive`. It had been returning 500 for three
+ * days and no second device could join a lesson. The owner will not add a payment method.
+ *
+ * So the default is now the Cloudflare Worker, a **built-in** rather than an environment
+ * variable, because a build seed only reaches the deploy that was built with it: the laptop
+ * launcher, `npm run dev` and anyone else's checkout all fell back to `/api/classroom` and
+ * failed with "Could not reach the classroom cloud" no matter what the deployment was
+ * configured with. A store every build can find is the point.
+ *
+ * Order: an explicit override, then the built-in, then the old Vercel route for anyone who
+ * restores billing and wants it back.
+ */
+const CLASSROOM_STORE_URL = 'https://techtechflight-classroom.classroom-worker.workers.dev'
+
+/** Set to `local` to use `/api/classroom` again, or to a URL to point somewhere else. */
+export const CLASSROOM_SYNC_URL_KEY = 'techtechflight:classroom-sync-url'
+
 export function classroomApiUrl(code: string): string {
   const normalized = normalizeClassroomCode(code)
-  if (typeof window === 'undefined') return `/api/classroom?code=${normalized}`
+  if (typeof window === 'undefined') return `${CLASSROOM_STORE_URL}?code=${normalized}`
+
+  /*
+   * A Teacher-set override, the way `logbookSyncUrl` already has one. Without it a school
+   * that runs its own store had to rebuild the app to point at it.
+   */
+  try {
+    const saved = window.localStorage.getItem(CLASSROOM_SYNC_URL_KEY)
+    if (saved && saved.trim() === 'local') return `/api/classroom?code=${normalized}`
+    if (saved && /^https?:\/\//i.test(saved.trim())) {
+      return `${saved.trim().replace(/\/$/, '')}?code=${normalized}`
+    }
+  } catch {
+    /* ignore */
+  }
+
   const fromEnv = process.env.NEXT_PUBLIC_CLASSROOM_SYNC_URL
   if (fromEnv && fromEnv.trim() !== '') {
     return `${fromEnv.trim().replace(/\/$/, '')}?code=${normalized}`
   }
-  return `/api/classroom?code=${normalized}`
+  return `${CLASSROOM_STORE_URL}?code=${normalized}`
 }
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null

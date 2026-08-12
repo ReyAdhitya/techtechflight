@@ -11,14 +11,32 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace, prefetch: vi.fn() }),
 }))
 
+/*
+ * The classroom store is stubbed, and it has to be. Since the store became a built-in
+ * absolute URL rather than a same-origin route, an unknown code reaches for the real
+ * internet, and a suite that does that is slow, flaky and offline-hostile. The stub answers
+ * the way the Worker does for a code nobody has opened: 404, "no classroom with that code".
+ */
 beforeEach(() => {
   replace.mockClear()
   window.localStorage.removeItem(BOARD_ROLE_KEY)
   window.localStorage.removeItem(TEACHER_PIN_KEY)
   resetClassroomForTests()
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ error: 'No classroom with that code yet.' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    ),
+  )
 })
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   clearBoardRole()
   clearTeacherPin()
   resetClassroomForTests()

@@ -22,6 +22,7 @@ import {
   resetClassroomForTests,
   freeDroneSeat,
   classroomApiUrl,
+  mergeClassroomSessions,
   classroomStore,
   leaveClassroom,
   pushClassroomToCloud,
@@ -868,5 +869,112 @@ describe('which store, and what it said', () => {
     const report = await pushClassroomToCloud(session(), answering(200, { ok: true }))
     expect(report.state).toBe('ok')
     expect(report.detail).toBe('')
+  })
+})
+
+/**
+ * Two copies of one classroom, merged.
+ *
+ * The board owns the lesson and beats a heartbeat into the document every ten seconds; each
+ * tablet owns one seat. Both hold the whole document, so taking either whole erases the
+ * other's news — and the board, writing on a timer, is nearly always the last writer. Two
+ * separate failures came out of that and both are pinned here: the store dropped a child, and
+ * the board could not see one who was in the store.
+ */
+describe('two copies of one classroom', () => {
+  const room = (over: Partial<ClassroomSession> = {}): ClassroomSession => ({
+    ...openClassroom({
+      lessonId: 'L-1',
+      lessonLabel: 'Year 8',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [
+        { droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 },
+        { droneId: 'ttf-0002', droneName: 'Drone 2', number: 2 },
+      ],
+    }),
+    ...over,
+  })
+
+  const seat = (over: Partial<ClassroomSeat> & { studentId: string }): ClassroomSeat => ({
+    name: over.studentId,
+    droneId: null,
+    droneName: null,
+    phase: 'briefing',
+    takeoffRequestedAt: null,
+    clearedAt: null,
+    heldAt: null,
+    flownAt: null,
+    reachedCheckpointIds: [],
+    approvedAt: null,
+    score: null,
+    joinedAt: 1_000,
+    seenAt: 1_000,
+    ...over,
+  })
+
+  /* The store's failure: the board's next heartbeat used to erase the child. */
+  it('keeps a seat the newer copy has never heard of', () => {
+    const tablet = room({ updatedAt: 1_100, seats: [seat({ studentId: 'stu-priya' })] })
+    const boardHeartbeat = room({ updatedAt: 1_200, seats: [] })
+
+    const merged = mergeClassroomSessions(boardHeartbeat, tablet)
+
+    expect(merged.seats.map((row) => row.studentId)).toEqual(['stu-priya'])
+    expect(merged.updatedAt).toBe(1_200)
+  })
+
+  /* And the lesson still comes from whichever copy is newer. */
+  it('takes the lesson from the newer copy and the seats from both', () => {
+    const tablet = room({
+      updatedAt: 1_100,
+      objective: 'the old objective',
+      seats: [seat({ studentId: 'stu-priya' })],
+    })
+    const board = room({
+      updatedAt: 1_200,
+      objective: 'the new objective',
+      seats: [seat({ studentId: 'stu-sam', joinedAt: 1_150, seenAt: 1_150 })],
+    })
+
+    const merged = mergeClassroomSessions(board, tablet)
+
+    expect(merged.objective).toBe('the new objective')
+    expect(merged.seats.map((row) => row.studentId)).toEqual(['stu-priya', 'stu-sam'])
+  })
+
+  /* One seat, two copies: the fresher row wins, whichever document carried it. */
+  it('takes each seat from the copy that heard from it last', () => {
+    const stale = room({
+      updatedAt: 2_000,
+      seats: [seat({ studentId: 'stu-priya', droneId: null, seenAt: 1_000 })],
+    })
+    const fresh = room({
+      updatedAt: 1_000,
+      seats: [
+        seat({ studentId: 'stu-priya', droneId: 'ttf-0001', droneName: 'Drone 1', seenAt: 1_900 }),
+      ],
+    })
+
+    const merged = mergeClassroomSessions(stale, fresh)
+
+    expect(merged.seats[0]?.droneId).toBe('ttf-0001')
+  })
+
+  /*
+   * A seat the Teacher took off the roll must not come back. It only leaves when the board
+   * rewrites the seats *and* is the fresher copy, which is a decision rather than a race.
+   */
+  it('is stable when both copies already agree', () => {
+    const one = room({ updatedAt: 1_500, seats: [seat({ studentId: 'stu-priya' })] })
+
+    const merged = mergeClassroomSessions(one, one)
+
+    expect(merged.seats).toHaveLength(1)
+    expect(merged.updatedAt).toBe(1_500)
   })
 })

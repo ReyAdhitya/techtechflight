@@ -1,0 +1,8 @@
+name = "techtechflight-classroom"
+main = "worker.js"
+compatibility_date = "2026-08-12"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "CLASSROOM"
+id = "aa285abf86b742e885ef0b0200ef2e4c"

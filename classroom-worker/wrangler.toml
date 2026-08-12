@@ -3,6 +3,13 @@ main = "worker.js"
 compatibility_date = "2026-08-12"
 workers_dev = true
 
-[[kv_namespaces]]
-binding = "CLASSROOM"
-id = "aa285abf86b742e885ef0b0200ef2e4c"
+# A Durable Object per classroom code. KV's 1,000 writes a day per account was spent by a
+# single open board in ninety minutes on 2026-08-12; this store's allowance a classroom
+# cannot exhaust in a morning, and it is strongly consistent, which a live room wants.
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Classroom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Classroom"]

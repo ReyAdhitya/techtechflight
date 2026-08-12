@@ -485,10 +485,36 @@ export const HEARTBEAT_EVERY_MS = 10_000
  * Every classroom-session writer starts from the session it is handed; this one has to fetch
  * its own.
  */
+/**
+ * How often a heartbeat is allowed to reach the store.
+ *
+ * The beat itself stays at ten seconds, because a second tab on the same laptop should notice
+ * a dead board quickly and that costs nothing. The cloud copy is a minute behind, which still
+ * tells a tablet across the room within a minute and costs sixty times less. At ten seconds a
+ * single board open all night spends a day's free allowance before breakfast.
+ */
+export const HEARTBEAT_CLOUD_EVERY_MS = 60_000
+
+let lastBoardCloudBeat = 0
+let lastSeatCloudBeat = 0
+
+/** True at most once a minute, so a beat writes locally always and remotely rarely. */
+function beatReachesCloud(last: number, now: number): boolean {
+  return now - last >= HEARTBEAT_CLOUD_EVERY_MS
+}
+
 export function touchBoard(now = Date.now()): ClassroomSession | null {
   const session = readClassroomSession()
   if (session === null) return null
-  return writeClassroomSession({ ...session, boardSeenAt: now })
+  /*
+   * A board whose Lesson has ended stops claiming to be somewhere. The owner ruled this on
+   * 2026-08-12: a beat that carries on after the period is over is a board saying it is there
+   * when nobody is, and it is what kept writing all night.
+   */
+  if (!session.live) return null
+  const cloud = beatReachesCloud(lastBoardCloudBeat, now)
+  if (cloud) lastBoardCloudBeat = now
+  return writeClassroomSession({ ...session, boardSeenAt: now }, { cloud })
 }
 
 /** This seat's tablet says it is still there. Same freshness rule as {@link touchBoard}. */
@@ -496,12 +522,17 @@ export function touchSeat(studentId: string, now = Date.now()): ClassroomSession
   const session = readClassroomSession()
   if (session === null) return null
   if (!session.seats.some((seat) => seat.studentId === studentId)) return null
-  return writeClassroomSession({
-    ...session,
-    seats: session.seats.map((seat) =>
-      seat.studentId === studentId ? { ...seat, seenAt: now } : seat,
-    ),
-  })
+  const cloud = beatReachesCloud(lastSeatCloudBeat, now)
+  if (cloud) lastSeatCloudBeat = now
+  return writeClassroomSession(
+    {
+      ...session,
+      seats: session.seats.map((seat) =>
+        seat.studentId === studentId ? { ...seat, seenAt: now } : seat,
+      ),
+    },
+    { cloud },
+  )
 }
 
 /**
@@ -604,7 +635,14 @@ function withSeatDefaults(session: ClassroomSession): ClassroomSession {
   }
 }
 
-export function writeClassroomSession(session: ClassroomSession): ClassroomSession {
+export function writeClassroomSession(
+  session: ClassroomSession,
+  /**
+   * `cloud: false` writes to this device only. Used by the heartbeats, which need to be
+   * frequent locally and must not be frequent remotely.
+   */
+  options: { readonly cloud?: boolean } = {},
+): ClassroomSession {
   if (typeof window === 'undefined') return session
   const next = { ...session, updatedAt: Date.now() }
   try {
@@ -613,10 +651,20 @@ export function writeClassroomSession(session: ClassroomSession): ClassroomSessi
   } catch {
     /* ignore */
   }
-  // Immediate push so an iPad that joins within a second of the Teacher opening still
-  // finds the code; the debounced schedule covers rapid follow-up edits.
-  void pushClassroomToCloud(next)
-  scheduleClassroomCloudPush(next)
+  /*
+   * ONE cloud write, not two.
+   *
+   * This used to push immediately AND schedule a debounced push, so every local write cost
+   * two remote ones. With a ten second heartbeat that is 720 writes an hour, and on
+   * 2026-08-12 it exhausted a day's allowance in about ninety minutes: the store began
+   * answering `KV put() limit exceeded for the day`, reads kept working, and the board could
+   * no longer save the classroom. A Teacher saw "Could not reach the classroom cloud" while
+   * the page itself loaded perfectly.
+   *
+   * `openClassroom` pushes immediately itself, which is the case the old immediate push
+   * existed for: an iPad joining a second after the Teacher opened the room.
+   */
+  if (options.cloud !== false) scheduleClassroomCloudPush(next)
   return next
 }
 
@@ -666,7 +714,12 @@ export function openClassroom(input: {
     input.code ?? (carriesOn ? existing.code : mintClassroomCode(now)),
   )
   const base = carriesOn && existing.code === code ? existing : emptySession(code, now)
-  return writeClassroomSession({
+  /*
+   * Opening a room is the one write that cannot wait for the debounce: a Teacher reads the
+   * code out and an iPad types it seconds later. Every other write is debounced, because
+   * pushing on every change is what exhausted a day's store allowance in ninety minutes.
+   */
+  const opened = writeClassroomSession({
     ...base,
     code,
     // A classroom being opened is a classroom that has not ended, whatever the last one did.
@@ -689,6 +742,8 @@ export function openClassroom(input: {
     live: input.live ?? true,
     updatedAt: now,
   })
+  void pushClassroomToCloud(opened)
+  return opened
 }
 
 /**

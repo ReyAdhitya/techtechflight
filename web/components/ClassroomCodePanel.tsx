@@ -102,6 +102,28 @@ function SyncWords({ report }: { readonly report: ClassroomSyncReport | null }) 
     )
   }
 
+  /*
+   * The store took the write and is holding somebody else's Lesson under this code. Said
+   * loudly, because it is the one failure where every other screen looks fine: the board reads
+   * LESSON UNDER WAY, the code is on the wall, and every iPad that types it is refused.
+   */
+  if (report.state === 'stale') {
+    return (
+      <p
+        role="status"
+        className="m-0 max-w-[46ch] border-l-4 border-status-fault pl-3 text-value text-ink"
+      >
+        iPads cannot join. This code still holds{' '}
+        {report.storedLessonLabel?.trim() ? (
+          <span className="font-medium">{report.storedLessonLabel.trim()}</span>
+        ) : (
+          'an earlier lesson'
+        )}
+        , which has finished. End this lesson and start it again to mint a new code.
+      </p>
+    )
+  }
+
   const storeName =
     report.store === 'worker' ? 'the Cloudflare classroom store' : 'the Vercel classroom store'
 

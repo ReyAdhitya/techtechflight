@@ -32,8 +32,24 @@ export interface Env {
 /** Only the two fields the merge below needs. The rest of the document is opaque here. */
 interface ClassroomDoc {
   readonly updatedAt: number
+  /** Set once a Teacher has closed the classroom. A dead document, and it stays dead. */
+  readonly endedAt?: number | null
+  readonly live?: boolean
+  readonly lessonId?: string | null
+  readonly lessonLabel?: string
   readonly seats?: readonly { readonly studentId?: unknown; readonly seenAt?: unknown; readonly joinedAt?: unknown }[]
   readonly [key: string]: unknown
+}
+
+/**
+ * Whether two documents are the same Lesson, by id when there is one and by label when not.
+ *
+ * The same identity `openClassroom` uses to decide whether to mint a new code, so the store
+ * and the board cannot disagree about what counts as a new Lesson.
+ */
+function sameLesson(a: ClassroomDoc, b: ClassroomDoc): boolean {
+  if (a.lessonId != null || b.lessonId != null) return a.lessonId === b.lessonId
+  return (a.lessonLabel ?? '') === (b.lessonLabel ?? '')
 }
 
 /** How fresh one seat's row is. `seenAt` is its heartbeat; `joinedAt` is when it appeared. */
@@ -63,6 +79,31 @@ function seatAt(seat: { readonly seenAt?: unknown; readonly joinedAt?: unknown }
  */
 function merge(incoming: ClassroomDoc, stored: ClassroomDoc | null): ClassroomDoc {
   if (stored === null) return incoming
+
+  /*
+   * **An open classroom beats a closed one, whatever the timestamps say.**
+   *
+   * Closing a classroom writes `endedAt` and `live: false`, and that write carries a fresh
+   * `updatedAt` — so the corpse is the newest thing under that code, and a Teacher starting
+   * the next Lesson pushes a document the clock says is older. It is refused, or merged into
+   * a document still marked dead, and every other device reads the dead one and will not
+   * join. The board says LESSON UNDER WAY and a phone says there is no classroom with that
+   * code, and both are telling the truth about different documents. Seen in a real classroom
+   * on 2026-08-12: code 64UL, board on "techtech2", store holding "techtech1", ended.
+   *
+   * Last-write-wins is doing exactly what it was built to do. The bug is that a dead
+   * classroom was allowed to be the newest thing. A live document from **a different Lesson**
+   * is never older news than a closed one, so it wins outright — belt and braces beside the
+   * new code per Lesson, which is the fix that stops the collision happening at all.
+   *
+   * Different Lesson, and not merely live: a tablet holding a copy from a second before the
+   * Teacher pressed End the lesson would otherwise put the classroom back on its next
+   * heartbeat, and undo a Teacher's decision on a timer. Ending is a decision; a corpse under
+   * somebody else's code is an accident. Only the accident is overruled.
+   */
+  const storedIsDead = stored.endedAt != null
+  const incomingIsLive = incoming.endedAt == null && incoming.live === true
+  if (storedIsDead && incomingIsLive && !sameLesson(stored, incoming)) return incoming
 
   const newer = stored.updatedAt > incoming.updatedAt ? stored : incoming
   const older = newer === stored ? incoming : stored

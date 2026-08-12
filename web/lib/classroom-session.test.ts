@@ -22,7 +22,9 @@ import {
   resetClassroomForTests,
   freeDroneSeat,
   classroomApiUrl,
+  lookUpClassroomByCode,
   mergeClassroomSessions,
+  sameLessonAs,
   classroomStore,
   leaveClassroom,
   pushClassroomToCloud,
@@ -976,5 +978,168 @@ describe('two copies of one classroom', () => {
 
     expect(merged.seats).toHaveLength(1)
     expect(merged.updatedAt).toBe(1_500)
+  })
+})
+
+/**
+ * The corpse under the code.
+ *
+ * Found on 2026-08-12 by reading the store's own contents from a phone. A Teacher ended a
+ * Lesson and started another; the new classroom never reached the store, so every other device
+ * read the dead one and refused to join. The board said LESSON UNDER WAY and a phone said
+ * there was no classroom with that code, and both were telling the truth about different
+ * documents.
+ *
+ * `GET /?code=64UL` came back `{"lessonLabel":"techtech1", "live":false, ...}` while the board
+ * was running techtech2. Closing writes `endedAt` with a fresh `updatedAt`, so the corpse was
+ * the newest thing under that code and last-write-wins kept it there.
+ */
+describe('the corpse under the code', () => {
+  const open = (lessonId: string | null, lessonLabel: string) =>
+    openClassroom({
+      lessonId,
+      lessonLabel,
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [],
+    })
+
+  /* Decided 2026-08-10, and half built: the rule keyed on lessonId alone. */
+  it('mints a new code for the next Lesson', () => {
+    const first = open('L-1', 'techtech1')
+    closeClassroom()
+    const second = open('L-2', 'techtech2')
+
+    expect(second.code).not.toBe(first.code)
+    expect(second.endedAt).toBeNull()
+  })
+
+  /*
+   * The half that was missing, and the half the owner hit. Two runs with no Logbook Lesson
+   * behind them both have `lessonId: null`, so "same id" was true and the code carried across
+   * a closed classroom into a new one.
+   */
+  it('mints a new code even when neither Lesson has an id', () => {
+    const first = open(null, 'techtech1')
+    closeClassroom()
+    const second = open(null, 'techtech2')
+
+    expect(second.code).not.toBe(first.code)
+  })
+
+  /* And a reopen of a classroom that was closed is a new room, whatever it is called. */
+  it('mints a new code when the same Lesson is reopened after closing', () => {
+    const first = open('L-1', 'techtech1')
+    closeClassroom()
+    const again = open('L-1', 'techtech1')
+
+    expect(again.code).not.toBe(first.code)
+    expect(again.endedAt).toBeNull()
+  })
+
+  /* A Teacher reloading the board mid-lesson must not find the code changed under them. */
+  it('keeps the code while the Lesson is still running', () => {
+    const first = open('L-1', 'techtech1')
+    const same = open('L-1', 'techtech1')
+
+    expect(same.code).toBe(first.code)
+  })
+
+  it('keeps the code across a reload with no Lesson id, while the label holds', () => {
+    const first = open(null, 'techtech1')
+    const same = open(null, 'techtech1')
+
+    expect(same.code).toBe(first.code)
+  })
+})
+
+/**
+ * A finished lesson is a different answer from a code nobody minted.
+ *
+ * "No classroom with that code" reads as *you typed it wrong*, and sends a class of thirty
+ * checking their spelling against a board that is telling them the truth.
+ */
+describe('what a typed code opened', () => {
+  const openRoom = () =>
+    openClassroom({
+      lessonId: 'L-1',
+      lessonLabel: 'techtech1',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [],
+    })
+
+  it('says a lesson has ended rather than pretending the code is unknown', async () => {
+    const room = openRoom()
+    closeClassroom()
+
+    const result = await lookUpClassroomByCode(room.code)
+
+    expect(result.found).toBe('ended')
+    expect(result.found === 'ended' && result.session.lessonLabel).toBe('techtech1')
+  })
+
+  it('still says nothing at all for a code nobody minted', async () => {
+    openRoom()
+
+    const result = await lookUpClassroomByCode('ZZZZ')
+
+    expect(result.found).toBe('none')
+  })
+
+  it('opens a live classroom', async () => {
+    const room = openRoom()
+
+    const result = await lookUpClassroomByCode(room.code)
+
+    expect(result.found).toBe('open')
+  })
+})
+
+/**
+ * The board must not print "Synced" over somebody else's Lesson.
+ *
+ * A 200 says the store took the request, not that the room a child will find is the room on
+ * this screen.
+ */
+describe('whether the store is holding this Lesson', () => {
+  const room = (lessonId: string | null, lessonLabel: string, endedAt: number | null = null) => ({
+    ...openClassroom({
+      lessonId,
+      lessonLabel,
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [],
+    }),
+    endedAt,
+  })
+
+  it('refuses a stored document from an earlier Lesson', () => {
+    expect(sameLessonAs(room('L-1', 'techtech1'), room('L-2', 'techtech2'))).toBe(false)
+  })
+
+  it('refuses a stored document that has ended, whatever it is called', () => {
+    expect(sameLessonAs(room('L-1', 'techtech1', 9_000), room('L-1', 'techtech1'))).toBe(false)
+  })
+
+  it('accepts the Lesson on screen', () => {
+    expect(sameLessonAs(room('L-1', 'techtech1'), room('L-1', 'techtech1'))).toBe(true)
+  })
+
+  it('falls back to the label when neither has an id', () => {
+    expect(sameLessonAs(room(null, 'techtech1'), room(null, 'techtech1'))).toBe(true)
+    expect(sameLessonAs(room(null, 'techtech1'), room(null, 'techtech2'))).toBe(false)
   })
 })

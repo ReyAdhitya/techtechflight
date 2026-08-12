@@ -7,6 +7,19 @@ would notice.
 
 ### Fixed
 
+- **A finished classroom sat under the code the next Lesson was reading out, and no second
+  device could join.** Found by reading the store's own contents from a phone: `GET /?code=64UL`
+  returned `"lessonLabel":"techtech1","live":false` while the board was running techtech2. The
+  board said LESSON UNDER WAY and the phone said there was no classroom with that code, and
+  both were right about different documents. Closing writes `endedAt` with a fresh `updatedAt`,
+  so the corpse was the newest thing under that code and last-write-wins kept it there. Three
+  parts: **a new Lesson mints a new code** (decided 2026-08-10 and only half built — the rule
+  keyed on `lessonId` alone, so two runs with no Logbook Lesson behind them shared the code,
+  and a reopen after closing kept it too); **a live document from another Lesson beats a closed
+  one** in the store whatever the clocks say; and **both screens say it** — a dead code now
+  reads *That lesson has finished (techtech1)* instead of *no classroom with that code*, and
+  the board refuses to print "Synced" when the store is holding a different Lesson.
+
 - **The classroom store answered 500 for three days and the board would not say why.** All
   three Vercel Blob stores are suspended for inactive billing. The store has moved to
   Cloudflare Workers + KV, which has no idle state to be woken from; `api/classroom.ts` is

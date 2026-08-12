@@ -9,6 +9,26 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-12 · The calls made fixing the corpse under the code.
+
+- **A live document only beats a closed one when it is a *different* Lesson.** The instruction
+  was "accept any incoming document with `live:true` over a stored one with `endedAt` set", and
+  taken literally that lets a tablet holding a copy from a second before *End the lesson* put
+  the classroom back on its next heartbeat — undoing a Teacher's decision on a timer. Ending is
+  a decision; a corpse under somebody else's code is an accident. Only the accident is
+  overruled.
+- **Same-Lesson identity is `lessonId` when there is one and `lessonLabel` when there is not**,
+  and the rule is written the same way in three places: `openClassroom` deciding whether to
+  mint, the Worker deciding whether live beats dead, and `sameLessonAs` deciding whether the
+  board may say "Synced". Three copies of one sentence, because the browser and the Worker
+  cannot import from each other and a board that disagrees with the store about what a new
+  Lesson is would put this defect straight back.
+- **The board reads back after every successful push.** One extra GET per push, to catch the
+  case a 200 does not cover: the store took the request and what is under that code is still
+  somebody else's Lesson. That is what "Synced" was asserting and could not know.
+
+---
+
 ## 2026-08-12 · The calls made inside the three groups.
 
 - **The Worker merges on PUT rather than refusing a stale write.** The old 409 is right for a

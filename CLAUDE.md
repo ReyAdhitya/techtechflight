@@ -445,9 +445,17 @@ for three days while the Blob stores returned 500 for unpaid billing: true, and 
 `pushClassroomToCloud` returns a `ClassroomSyncReport` — store, status, and what it said — and
 503 alone means "nobody configured this", which is a different sentence from "it is refusing".
 
-**A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
-`lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board
-ever minted, forever. Ending a Lesson calls `closeClassroom`, which is the only thing that
+**A classroom code belongs to one Lesson (2026-08-10), and the rule is three clauses not one.**
+`openClassroom` keeps the code only while the existing session **has not ended**, and is the
+same Lesson — by `lessonId` when there is one, by `lessonLabel` when there is not. Keying on
+`lessonId` alone was the half that shipped, and it fails in exactly the case a real classroom
+hit: two runs with no Logbook Lesson behind them both have `lessonId: null`, so the code
+carried across a closed classroom into a new one. The store then held the *finished* Lesson
+under the code the new one was reading out — closing writes `endedAt` with a fresh `updatedAt`,
+so the corpse is the newest thing and last-write-wins keeps it — and every second device was
+refused while the board said LESSON UNDER WAY. The Worker's `merge` is the belt to that
+braces: a live document from a **different** Lesson beats a closed one whatever the clocks say,
+and *only* a different one, or a tablet's stale heartbeat would undo *End the lesson*. Ending a Lesson calls `closeClassroom`, which is the only thing that
 makes an old session *provably* dead: a tablet on another device polls the cloud by the code it
 already holds, so the truth has to be written into the document it is reading. `leaveClassroom`
 is per device and touches nothing the Teacher owns.

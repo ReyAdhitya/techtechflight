@@ -20,7 +20,7 @@ import {
   joinClassroomAsStudent,
   changeClassroom,
   leaveClassroom,
-  loadClassroomByCode,
+  lookUpClassroomByCode,
   normalizeClassroomCode,
   readClassroomSession,
   readStudentSeatLocal,
@@ -913,15 +913,27 @@ function JoinClassroomDoor({
         onClick={() => {
           setBusy(true)
           setError(null)
-          void loadClassroomByCode(code).then((session) => {
+          void lookUpClassroomByCode(code).then((result) => {
             setBusy(false)
-            if (session === null) {
-              setError(
-                'No classroom with that code yet. On the Teacher board, open Lesson so the code is live, then tap Retry sync. Same laptop: switch role after the Teacher plans the Mission. You skip this screen.',
-              )
+            if (result.found === 'open') {
+              onJoined(result.session)
               return
             }
-            onJoined(session)
+            /*
+             * A finished Lesson is a different answer from a code nobody minted, and saying
+             * the second when the first is true sends a class of thirty checking their
+             * spelling. The store said plainly that the lesson had ended; this screen used to
+             * throw that away and print "no classroom with that code".
+             */
+            setError(
+              result.found === 'ended'
+                ? `That lesson has finished${
+                    result.session.lessonLabel.trim() === ''
+                      ? ''
+                      : ` (${result.session.lessonLabel.trim()})`
+                  }. Ask your Teacher for today's code.`
+                : 'No classroom with that code yet. Check the four characters on your Teacher’s board. Same laptop: open Student in a second tab and you skip this screen.',
+            )
           })
         }}
       >

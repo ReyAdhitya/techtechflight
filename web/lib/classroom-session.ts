@@ -555,6 +555,24 @@ export function mayLeaveClassroom(input: {
   return !input.airborne || input.boardQuiet
 }
 
+/**
+ * Whether a document from the store is the Lesson this board is running.
+ *
+ * By `lessonId` when there is one and by label when there is not, which is the same identity
+ * `openClassroom` uses to decide whether to mint a new code. A document marked ended is never
+ * this Lesson, whatever it is labelled: the Lesson on screen is open by definition.
+ */
+export function sameLessonAs(
+  stored: ClassroomSession,
+  running: ClassroomSession,
+): boolean {
+  if (classroomHasEnded(stored) && !classroomHasEnded(running)) return false
+  if (stored.lessonId !== null || running.lessonId !== null) {
+    return stored.lessonId === running.lessonId
+  }
+  return stored.lessonLabel === running.lessonLabel
+}
+
 /** Four-character classroom code — short enough to shout across a room. */
 export function mintClassroomCode(now = Date.now()): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -651,17 +669,29 @@ export function openClassroom(input: {
   /*
    * **A new Lesson mints a new code, and the old one stops working.**
    *
-   * This read `input.code ?? existing?.code ?? mint(now)`, so the first code a board ever
-   * minted was reused for every lesson after it, forever. Last week's code opened today's
-   * class, which is how an iPhone came to be sitting in a finished lesson called "bleble"
-   * with nothing able to tell it otherwise: a tablet could not distinguish today from last
-   * month, because the two were the same document under the same code.
+   * Decided 2026-08-10 (`docs/plans/2026-08-10-classrooms-and-the-air.md`) and half built.
+   * The half that shipped keyed on `lessonId` alone, and that is not the same rule: it
+   * carries a code forward whenever two runs share an id, **including when both ids are
+   * null**, which is every board that has not started a Lesson through the Logbook. A code
+   * survived two Lessons in a real classroom because of it, and the store still held the
+   * first one, ended, under the code the second one was reading out.
    *
-   * A dead code is what makes a dead session *provable* rather than merely quiet. Keyed on
-   * the Lesson rather than on time, because a Teacher who reloads the board mid-lesson must
-   * not find the code they read out has changed under thirty children.
+   * Three ways to be the same Lesson as the one already open, and all three must hold:
+   *
+   *  - it must not have **ended** — a classroom that was closed is over, and reopening under
+   *    its code puts a Teacher back in a room whose corpse is the newest thing in the store;
+   *  - the ids must match when there is one;
+   *  - the labels must match when there is not, because a Teacher who types a new Lesson name
+   *    has started a new Lesson whatever the Logbook knows about it.
+   *
+   * The code stays put while all three hold, because a Teacher who reloads the board
+   * mid-lesson must not find the code they read out has changed under thirty children.
    */
-  const carriesOn = existing !== null && existing.lessonId === input.lessonId
+  const sameLesson =
+    input.lessonId !== null || existing?.lessonId != null
+      ? existing?.lessonId === input.lessonId
+      : (existing?.lessonLabel ?? '') === input.lessonLabel
+  const carriesOn = existing !== null && !classroomHasEnded(existing) && sameLesson
   const code = normalizeClassroomCode(
     input.code ?? (carriesOn ? existing.code : mintClassroomCode(now)),
   )
@@ -1263,12 +1293,20 @@ export function scheduleClassroomCloudPush(session: ClassroomSession): void {
  * can act on a name and a status.
  */
 export interface ClassroomSyncReport {
-  readonly state: 'ok' | 'unconfigured' | 'error'
+  /**
+   * `stale` is the one that had to be added. The store took the write, or appeared to, and
+   * what is under that code afterwards is **a different Lesson** — the previous one, closed,
+   * with a fresher `updatedAt` than the Lesson on screen. Reporting that as "Synced" is the
+   * board telling a Teacher iPads can join while every iPad reads a corpse.
+   */
+  readonly state: 'ok' | 'unconfigured' | 'error' | 'stale'
   readonly store: ClassroomStore
   /** The HTTP status the store answered with, or null when nothing answered at all. */
   readonly status: number | null
   /** What the store said, trimmed. Empty when it said nothing or the request never landed. */
   readonly detail: string
+  /** The Lesson the store is holding under this code, when it is not the one on screen. */
+  readonly storedLessonLabel?: string
 }
 
 async function saidBy(response: Response): Promise<string> {
@@ -1297,7 +1335,29 @@ export async function pushClassroomToCloud(
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(session),
     })
-    if (response.ok) return { state: 'ok', store, status: response.status, detail: '' }
+    if (response.ok) {
+      /*
+       * Took the write, and now read back what is actually under that code.
+       *
+       * A 200 says the store accepted the request, not that the room a child will find is the
+       * room on this screen. On 2026-08-12 it was not: closing a Lesson writes `endedAt` with
+       * a fresh `updatedAt`, so the corpse was the newest thing under code 64UL and the next
+       * Lesson's push merged into a document still marked dead. The board said Synced, the
+       * phones said no classroom with that code, and both were right about different
+       * documents. One extra GET per push is worth never printing that again.
+       */
+      const stored = await pullClassroomFromCloud(session.code, fetchImpl)
+      if (stored !== null && !sameLessonAs(stored, session)) {
+        return {
+          state: 'stale',
+          store,
+          status: response.status,
+          detail: '',
+          storedLessonLabel: stored.lessonLabel,
+        }
+      }
+      return { state: 'ok', store, status: response.status, detail: '' }
+    }
     /*
      * 503 is the one status that means "nobody set this up", which is a different sentence
      * from "it is refusing me". Everything else is a store that answered and said no — and
@@ -1338,28 +1398,53 @@ export async function pullClassroomFromCloud(
 }
 
 /** Load a classroom by code into this browser (Student join). */
-export async function loadClassroomByCode(code: string): Promise<ClassroomSession | null> {
+/**
+ * What a typed code opened, and when it opened nothing, why.
+ *
+ * `'ended'` is the answer that was missing. A code for a finished Lesson used to come back as
+ * null, indistinguishable from four characters nobody had ever minted, so a child holding a
+ * code their Teacher read out an hour ago was told **there is no classroom with that code** —
+ * which reads as *you typed it wrong* and sends a class of thirty checking their spelling.
+ * The document said perfectly clearly that the lesson had ended.
+ */
+export type ClassroomLookup =
+  | { readonly found: 'open'; readonly session: ClassroomSession }
+  | { readonly found: 'ended'; readonly session: ClassroomSession }
+  | { readonly found: 'none' }
+
+export async function lookUpClassroomByCode(code: string): Promise<ClassroomLookup> {
   const normalized = normalizeClassroomCode(code)
-  if (!normalized) return null
+  if (!normalized) return { found: 'none' }
+
   // Local first — same laptop / second tab never needs the cloud round trip.
   const local = readClassroomSession()
-  if (local && local.code === normalized) return classroomHasEnded(local) ? null : local
-  const remote = await pullClassroomFromCloud(normalized)
-  /*
-   * A code for a finished lesson is not a code. Refused here rather than at each caller, so
-   * the door and the tablet cannot disagree about whether last week's four letters still open
-   * the room.
-   */
-  if (remote && classroomHasEnded(remote)) return null
-  if (remote) {
-    try {
-      window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(remote))
-    } catch {
-      /* ignore */
-    }
-    return remote
+  if (local && local.code === normalized) {
+    return classroomHasEnded(local)
+      ? { found: 'ended', session: local }
+      : { found: 'open', session: local }
   }
-  return null
+
+  const remote = await pullClassroomFromCloud(normalized)
+  if (!remote) return { found: 'none' }
+  /*
+   * A code for a finished lesson still does not open a room, and it is not silence either.
+   * Refused here rather than at each caller, so the door and the tablet cannot disagree about
+   * whether last week's four letters still open it.
+   */
+  if (classroomHasEnded(remote)) return { found: 'ended', session: remote }
+
+  try {
+    window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(remote))
+  } catch {
+    /* ignore */
+  }
+  return { found: 'open', session: remote }
+}
+
+/** The old shape, for callers that only need the room or nothing. */
+export async function loadClassroomByCode(code: string): Promise<ClassroomSession | null> {
+  const result = await lookUpClassroomByCode(code)
+  return result.found === 'open' ? result.session : null
 }
 
 export function resetClassroomForTests(): void {

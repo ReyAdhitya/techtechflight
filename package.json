@@ -35,6 +35,7 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@vercel/blob": "^2.6.1"
   }
 }

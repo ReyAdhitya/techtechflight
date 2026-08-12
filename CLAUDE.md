@@ -107,10 +107,16 @@ must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground sta
 `TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
 `CommandableSource` — monitoring only (ADR-0011).
 
-**Lesson/Student Logbook is this browser first; optional Vercel copy.** Records live in
-`localStorage` on the machine running the board. With a sync secret (Settings /
-`LOGBOOK_SYNC_SECRET`), a debounced copy goes to Vercel Blob via `/api/logbook`
-(ADR-0015). Telemetry never carries Logbook rows. Do not invent a Postgres school DB.
+**Lesson/Student Logbook is this browser first, and there is now a Postgres copy
+(ADR-0035).** Records live in `localStorage` on the machine running the board and **that is
+the record** — every screen writes it first and works with the wifi off, because a Teacher who
+cannot mark attendance with children in the room is a real failure. With a sync secret
+(Settings / `LOGBOOK_SYNC_SECRET`), a debounced copy goes to **Neon** via `/api/records`;
+`/api/logbook` on Vercel Blob is the old path and is dead until billing is restored. Telemetry
+never carries Logbook rows, and **no live reading ever goes in the database** — no altitude, no
+battery, no position. `db/schema.sql` is the schema, in third normal form. "Do not invent a
+Postgres school DB" was the rule here until 2026-08-12; the owner reversed it and ADR-0035
+records what that takes on.
 
 **Camera stream URLs are never Telemetry.** Map is build seed `NEXT_PUBLIC_CAMERA_STREAM_MAP`
 (JSON object) or localStorage `techtechflight:camera-stream-map` when already set — no
@@ -420,6 +426,24 @@ without it; jsdom can see neither the layout nor the cascade, so it is a source 
 calls `flyRoute` on an aircraft it picked *because* it is airborne. Unguarded, the scripted
 incident moved a Drone's home to wherever it had drifted and a Recall landed 8.5 m from the
 launch point while the Scope's dotted line still pointed at the bench.
+
+**The classroom store is a Cloudflare Worker over KV, and it merges.** `workers/classroom`
+holds it; `api/classroom.ts` is the fallback and `classroomApiUrl()` picks whichever is
+configured by `NEXT_PUBLIC_CLASSROOM_SYNC_URL`. It moved because all three Vercel Blob stores
+are suspended for inactive billing and no card is being added; Workers rather than Supabase
+because a free Supabase project pauses after a week idle and waits for a dashboard click,
+which on a Tuesday morning is the same as down. **A PUT merges rather than replaces**, at both
+ends: one document has two kinds of writer — the board owning the lesson and beating every ten
+seconds, each tablet owning one seat — so whole-document last-write-wins drops a child every
+time they overlap. The board's poll merges for the mirror-image reason: it used to accept a
+remote copy only when `updatedAt` was newer, which its own heartbeat guaranteed it never was.
+`mergeClassroomSessions` and the Worker's `merge` are the same rule written twice, because the
+two runtimes cannot import from each other.
+
+**When a store does not answer, name it.** The panel said "Could not reach the classroom cloud"
+for three days while the Blob stores returned 500 for unpaid billing: true, and unactionable.
+`pushClassroomToCloud` returns a `ClassroomSyncReport` — store, status, and what it said — and
+503 alone means "nobody configured this", which is a different sentence from "it is refusing".
 
 **A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
 `lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board

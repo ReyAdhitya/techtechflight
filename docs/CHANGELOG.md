@@ -7,6 +7,18 @@ would notice.
 
 ### Fixed
 
+- **The classroom store answered 500 for three days and the board would not say why.** All
+  three Vercel Blob stores are suspended for inactive billing. The store has moved to
+  Cloudflare Workers + KV, which has no idle state to be woken from; `api/classroom.ts` is
+  still there as the fallback. The board now names the store, prints the status it got, quotes
+  what it said, and tells "nobody set this up" apart from "it is refusing me".
+- **The classroom document lost a child whenever two writers overlapped.** One document, two
+  kinds of writer: the board owns the lesson and beats a heartbeat into it every ten seconds,
+  each tablet owns one seat, and both PUT the whole thing. A tablet's seat was erased by the
+  board's next heartbeat, and separately the board could never *see* a seat, because its poll
+  accepted a remote copy only when `updatedAt` was newer and its own heartbeat guaranteed it
+  never was. Both ends merge now: the newer copy wins the lesson, the seats are unioned.
+
 - **Every No-fly Zone a Teacher drew landed outside the picture.** The rail read "2 no-fly
   zones" while the Scope's key named no hatch, and both were telling the truth: the drawing
   surface was a fixed twenty metres square running north-east from the origin, and the Scope
@@ -53,6 +65,23 @@ would notice.
   were reported in each of two waves. The showcase gains its own `--sc-text-*` scale.
 
 ### Added
+
+- **Records: a class list, and one child's history.** Two questions and no more. Present,
+  absent, time flown and the Teacher's own note; tap a name for the lessons behind it. A
+  lesson nobody sealed reads *Not marked* rather than guessing at a mark.
+- **The records get a database (ADR-0035), and the browser stays the record.** Postgres on
+  Neon, holding a copy so the same records open on another machine and survive a lost laptop.
+  Every screen still writes this browser first and works with the wifi off. `db/schema.sql` is
+  the schema in third normal form; `api/records.ts` is the endpoint. The ADR writes down what
+  a central record of children takes on, and the new sentence a school is told.
+
+### Removed
+
+- **Large format (ADR-0034).** The toggle, the storage key, the `data-display` attribute, the
+  multiplier and the styles that hung off it. It shipped at 1.375, which ADR-0008's own text
+  measured as well short of the projector it existed for, and browser zoom already does the
+  job at any size a room needs. **The relative type scale stays** — `rem` throughout, and a
+  `px` font-size here is still a defect.
 
 - **Change classroom, beside Leave.** Leaving and moving rooms are different intentions and
   only the destructive one was on offer: the sole route to the code screen forgot the name as

@@ -9,6 +9,35 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-12 · The calls made inside the three groups.
+
+- **The Worker merges on PUT rather than refusing a stale write.** The old 409 is right for a
+  lock and wrong here: a tablet writing its own seat on a base a few seconds old is the
+  ordinary case, and refusing it drops the child. The merge rule is small and stated in one
+  place — newer document wins the lesson, seats unioned by whichever copy heard from each last
+  — and it is implemented twice on purpose, once in the Worker and once in the browser,
+  because the two cannot import from each other and the rule has to hold at both ends.
+- **A classroom document expires after two days without a write.** Long enough that a lesson
+  spanning a lunch break is safe, short enough that last term is not sitting in KV. Nothing in
+  the product reads a classroom that old: `classroomHasEnded` already refuses it.
+- **The Worker answers `/health` without touching KV.** It is what lets the board tell an
+  unconfigured store from a refusing one without spending a read on the question.
+- **Large format went rather than being fixed at a bigger number.** Raising 1.375 was always
+  available and ADR-0008 asked for an ADR to do it. Nobody measured a room, and a control that
+  duplicates browser zoom badly is worse than no control.
+- **The records copy is a snapshot row, not the normalised graph, for now.** `db/schema.sql`
+  is what the records *are*; `api/records.ts` writes one JSONB document per school. Projecting
+  the browser's records into the graph is separate work, deliberately: a sync that half-writes
+  a normalised graph over a school connection that drops is worse than one that writes a
+  document or does not.
+- **Records is a separate screen from Reports.** Reports answers what happened in a Lesson and
+  which Drone shows recurring defects; Records answers how a class and a child are doing. A
+  Teacher asking about a child should not read past a Fleet digest to find them.
+- **An unsealed lesson prints "Not marked", not "Absent".** Attendance is a Teacher's mark. A
+  record that fills in an answer nobody gave is worse than one with a gap in it.
+
+---
+
 ## 2026-08-11 · The calls made inside the eight.
 
 - **The drawing surface follows the Scope's window, and falls back to the classroom

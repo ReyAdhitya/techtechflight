@@ -7,6 +7,36 @@ would notice.
 
 ### Fixed
 
+- **A Student tapped a Drone and bounced straight back to the Drone picker, and the Teacher's
+  board said "Nobody is waiting" about the same child.** One bug with two faces. The classroom
+  document has two kinds of writer: the board owns the lesson and beats a heartbeat into it
+  every ten seconds, each tablet owns one seat, and both write the whole document. So the store
+  refused a tablet's seat as a stale write, and the board's poll could not see a seat that did
+  land, because it asked "is the remote copy newer than mine" and its own heartbeat guaranteed
+  the answer was no. Both ends merge now: the newer copy wins the lesson, the seats are unioned,
+  each taken from whichever copy heard from it last.
+- **Two tabs disagreed about the Lesson.** Roles stay per tab, which is what lets a Teacher hold
+  the board and a Student view open at once; the Lesson underneath them is not per tab, and the
+  BroadcastChannel receiver took each message whole. Same merge, third writer.
+- **A skipped warm-up came back.** Skip was React state on the component that draws the
+  countdown, so going back to step 1 replayed the full-screen minute over a class already
+  flying. It is a fact about the Lesson now, not about a mounted component.
+
+- **A Student tapped a Drone and bounced straight back to the Drone picker, and the Teacher's
+  board said "Nobody is waiting" about the same child.** One bug with two faces. The classroom
+  document has two kinds of writer: the board owns the lesson and beats a heartbeat into it
+  every ten seconds, each tablet owns one seat, and both write the whole document. So the store
+  refused a tablet's seat as a stale write, and the board's poll could not see a seat that did
+  land, because it asked "is the remote copy newer than mine" and its own heartbeat guaranteed
+  the answer was no. Both ends merge now: the newer copy wins the lesson, the seats are unioned,
+  each taken from whichever copy heard from it last.
+- **Two tabs disagreed about the Lesson.** Roles stay per tab, which is what lets a Teacher hold
+  the board and a Student view open at once; the Lesson underneath them is not per tab, and the
+  BroadcastChannel receiver took each message whole. Same merge, third writer.
+- **A skipped warm-up came back.** Skip was React state on the component that draws the
+  countdown, so going back to step 1 replayed the full-screen minute over a class already
+  flying. It is a fact about the Lesson now, not about a mounted component.
+
 - **A new class inherited the finished class's code, and every tablet read a room that was
   over.** A board with no Logbook Lesson started carries `lessonId: null`, and `openClassroom`
   decided whether to keep the old code by comparing that id with the last one: `null === null`

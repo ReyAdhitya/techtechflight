@@ -9,6 +9,26 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · The calls made fixing the seat that was never read back.
+
+- **The merge rule is written three times on purpose.** `classroom-worker/worker.js` for the
+  store, `mergeClassroomSessions` for the poll, and the BroadcastChannel receiver for the tab
+  next door. The two runtimes cannot import from each other, and the third writer is the same
+  code path as the second, so the duplication is one function and two call sites rather than
+  three implementations. A store that disagreed with the board about this would put the glitch
+  straight back, so the rule is stated in full in both places rather than summarised.
+- **The Worker's stale-write 409 is gone rather than relaxed.** A tablet writing its own seat
+  on a base a second old is the ordinary case in a classroom, not a conflict. Refusing it was
+  the direct cause of the seat never reaching the store.
+- **Skipping the warm-up is stored as one Lesson id, not a list.** Two Lessons are never warming
+  up at once, and a growing record of every Lesson a laptop has ever run is a record nobody
+  asked for and one more thing to delete on request.
+- **The warm-up skip is `localStorage`, not `sessionStorage`.** The countdown is already
+  computed from `lesson.startedAt` precisely because a tab flag is a fact about a tab; the skip
+  had to move the same way, or a second tab would replay a minute the Teacher had dismissed.
+
+---
+
 ## 2026-08-14 · A classroom that has ended never carries on.
 
 - **`endedAt`, not the Lesson id, is what decides a room is over.** Two other fixes were on

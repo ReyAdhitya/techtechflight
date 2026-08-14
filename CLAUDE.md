@@ -452,6 +452,23 @@ calls `flyRoute` on an aircraft it picked *because* it is airborne. Unguarded, t
 incident moved a Drone's home to wherever it had drifted and a Recall landed 8.5 m from the
 launch point while the Scope's dotted line still pointed at the bench.
 
+**One classroom document, three writers, and all three merge.** The board owns the lesson and
+beats a heartbeat into the document every ten seconds; each tablet owns exactly one seat; and a
+second tab on the same laptop holds a third copy. All of them write the *whole* document, so
+whole-document last-write-wins loses a child every time two of them overlap — which is
+constantly. It showed up as a Student tapping a Drone and bouncing back to the picker, and as
+the board reading "Nobody is waiting" about a child who had joined: **one bug, two faces.** The
+rule is now the same in all three places: the newer copy wins the lesson, the seats are unioned,
+each taken from whichever copy heard from it last (`seenAt`, then `joinedAt`). The Worker's
+stale-write 409 is gone — a tablet writing its own seat on a base a second old is the ordinary
+case. Do not "simplify" any of the three back to taking a document whole.
+
+**A skipped warm-up is a fact about the Lesson.** `web/lib/warm-up.ts`, keyed on `lesson.id` in
+`localStorage`. It was React state on `LessonWarmUp`'s parent, so going back to step 1 replayed
+the sixty second overlay over a class already flying. Not `sessionStorage`: the countdown is
+computed from `lesson.startedAt` for exactly the same reason, that a tab flag is a fact about a
+tab rather than about the morning.
+
 **A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
 `lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board
 ever minted, forever. Ending a Lesson calls `closeClassroom`, which is the only thing that

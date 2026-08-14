@@ -475,6 +475,13 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
    * Lost links, faults and a flat pack going on charge stay. Those are the world misbehaving,
    * which is what this method is for; an aircraft deciding to fly is not the world, it is a
    * child, and there is no child in a demo.
+   *
+   * **A fault arrives in the air, never on the bench.** Pre-flight reads Sensors and Altitude
+   * hold straight off `fault`, so a craft that faulted while sitting on a table failed its own
+   * pre-flight: "Motion sensor needs recalibrating" on an airframe that does not exist, step 4
+   * unable to complete, step 5 locked behind it, and the demonstration stopped before anything
+   * flew. Faults are still here and still unannounced, which is what the Attention bar is for
+   * — they happen to a Drone that is flying, which is also when they happen in a classroom.
    */
   #wander(drone: SimulatedDrone): void {
     const roll = this.#random()
@@ -483,7 +490,7 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       return
     }
     if (roll < 0.002) drone.linkUp = false
-    else if (roll < 0.004 && drone.fault === null) drone.fault = DEFAULT_FAULT
+    else if (roll < 0.004 && drone.airborne && drone.fault === null) drone.fault = DEFAULT_FAULT
 
     /*
      * A flat Drone on the bench is the one a Teacher plugs in, so the simulated Fleet

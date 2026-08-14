@@ -11,6 +11,8 @@ import { describeProximity } from './telemetry-presentation'
  */
 
 export const PRE_FLIGHT_SEVEN_KEY = 'techtechflight:preflight-seven'
+/** Same-tab signal — `storage` only fires in the other tabs. */
+export const PRE_FLIGHT_SEVEN_EVENT = 'techtechflight:preflight-seven'
 
 /** Weak link — below this the Teacher should move before takeoff. */
 export const LINK_QUALITY_WEAK = 0.25
@@ -75,6 +77,28 @@ export function readPreFlightSeven(lessonId: string | null): PreFlightSevenState
 function writePreFlightSeven(state: PreFlightSevenState): void {
   if (typeof window === 'undefined') return
   window.localStorage.setItem(PRE_FLIGHT_SEVEN_KEY, JSON.stringify(state))
+  window.dispatchEvent(new Event(PRE_FLIGHT_SEVEN_EVENT))
+}
+
+/**
+ * The ticks, as they change.
+ *
+ * One panel per craft reads this key, and one press now writes for all of them. Without this
+ * the tick-all button vanished, having done its job, while every panel under it went on saying
+ * *Visually confirm propellers are secure*: a Teacher who had just said the bench was checked
+ * was looking at six panels disagreeing with them.
+ */
+export function subscribePreFlightSeven(onChange: () => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === PRE_FLIGHT_SEVEN_KEY || event.key === null) onChange()
+  }
+  window.addEventListener('storage', onStorage)
+  window.addEventListener(PRE_FLIGHT_SEVEN_EVENT, onChange)
+  return () => {
+    window.removeEventListener('storage', onStorage)
+    window.removeEventListener(PRE_FLIGHT_SEVEN_EVENT, onChange)
+  }
 }
 
 export function propellersTicked(
@@ -94,6 +118,29 @@ export function togglePropellersTick(
   if (nextPropellers[droneId]) delete nextPropellers[droneId]
   else nextPropellers[droneId] = true
   const next: PreFlightSevenState = { lessonId, propellers: nextPropellers }
+  writePreFlightSeven(next)
+  return next
+}
+
+/**
+ * Tick Propellers on every craft in the Lesson, in one press.
+ *
+ * Six of the seven items read themselves from Telemetry. Propellers is the only human tick,
+ * because the board cannot see a chipped blade — and the tedium was never looking at a
+ * propeller, it was doing the same tick six times on six panels. A Teacher walks the bench with
+ * their eyes and then says so once, which is the shape of the actual job.
+ *
+ * All or nothing rather than a toggle. "Untick all" would be a Teacher unsaying something they
+ * saw, and there is a per craft tick a step away for the one blade that is wrong.
+ */
+export function tickAllPropellers(
+  lessonId: string | null,
+  droneIds: readonly DroneId[],
+): PreFlightSevenState {
+  const current = readPreFlightSeven(lessonId)
+  const propellers = { ...current.propellers }
+  for (const droneId of droneIds) propellers[droneId] = true
+  const next: PreFlightSevenState = { lessonId, propellers }
   writePreFlightSeven(next)
   return next
 }

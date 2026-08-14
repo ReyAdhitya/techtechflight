@@ -9,6 +9,45 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · Both halves of "pre-flight passes in simulation" landed.
+
+- **Two fixes for one item, and they are not arguing.** The check learned that a *craft* is
+  simulated, from a marker the simulator puts on the Telemetry, which is true down a socket as
+  well; and the simulator stopped faulting a Drone that is sitting on a table. Neither is a
+  screen branching on `demo`, so the seam holds either way. Together, a Teacher cannot be sent
+  to a bench that is not there, and a demonstration still faults an aircraft in the air. The
+  two entries below were written in separate sessions and are both kept.
+
+## 2026-08-14 · The calls made across the twenty.
+
+- **Pre-flight passes in simulation because the simulator stopped breaking it, not because the
+  check learned to lie.** `FleetProvider` is the one place that knows a Fleet is simulated and
+  no screen may branch on it, so teaching pre-flight to pass would have broken that seam. A
+  fault now arrives in the air instead, which keeps the Attention bar demonstration and is when
+  faults happen in a room.
+- **Tick-all is all or nothing, on both lists.** Untick-all would be a Teacher unsaying
+  something they saw or said. The per craft tick is still there for the one blade that is wrong.
+  Each button leaves the screen when there is nothing left to do rather than greying out, so it
+  is not read on every visit.
+- **The grid's scale is at the ends of each axis, not on every line.** Two numbers an axis is a
+  scale; a number on every gridline is a ruler nobody asked to read, and at 390 they collide.
+  HTML rather than SVG text so they follow the Teacher's own font size (ADR-0008).
+- **The records copy is one JSONB row per school, not the normalised graph.** `db/schema.sql` is
+  what the records *are*; projecting the browser's records into it is separate work, because a
+  sync that half-writes a graph over a school connection that drops is worse than one that
+  writes a document or does not.
+- **Records is a separate screen from Reports.** Reports answers what happened in a Lesson and
+  which Drone shows recurring defects. A Teacher asking about a child should not read past a
+  Fleet digest to find them.
+- **`db/schema.sql` has eighteen `create table` statements, not seventeen.** The plan calls it
+  seventeen tables and lists eighteen. Built as listed rather than dropping one to match the
+  count.
+- **Items 16, 17 and half of 19 were already on main** and were verified rather than rebuilt.
+  The theme survives hydration and no React error fires on a role-gated route; both were fixed
+  by the per-tab role work that reads storage in an effect. Evidence in the PR.
+
+---
+
 ## 2026-08-14 · A simulated craft says so on its Telemetry.
 
 - **The marker is on the reading, not on the screen.** The obvious place was the one flag that
@@ -27,6 +66,7 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 - **The simulator keeps its faults.** They are the demonstration's incident and they still
   raise Alerts. What changed is that a fault on an aircraft nobody can walk over to no longer
   blocks a check that means walking over to it.
+
 
 ## 2026-08-14 · One classroom across every tab, and the board owns it.
 

@@ -173,3 +173,68 @@ describe('the Drone count has no ceiling', () => {
     expect(core).not.toMatch(/MAX_CLASSROOM_FLEET_SIZE/)
   })
 })
+
+/**
+ * The classroom merge lives in two runtimes, and they must not drift apart.
+ *
+ * `web/lib/classroom-session.ts` runs in the browser and `classroom-worker/worker.js` runs in
+ * Cloudflare. They cannot import from each other, so the rule that settles a classroom is
+ * written twice, and **if the two copies disagree the glitch comes straight back**: a Student
+ * taps a Drone, the store keeps a different answer from the board, and the seat is erased on
+ * the next write by whichever side lost.
+ *
+ * It has already happened once. The browser learned to settle seats on `ClassroomSeat.rev`
+ * while the store was still comparing `updatedAt` and answering 409 to the loser, and a board
+ * and a tablet do not share a clock: a laptop a minute fast was answered 200 while a correct
+ * tablet was refused forever, silently.
+ *
+ * A source scan, because there is no runtime that can see both. It cannot prove the two
+ * implementations agree; it refuses the two ways they went wrong before.
+ */
+describe('the classroom merge agrees across both runtimes', () => {
+  const BROWSER = readFileSync(join(WEB, 'lib/classroom-session.ts'), 'utf8')
+  const WORKER = readFileSync(
+    resolve(process.cwd(), 'classroom-worker/worker.js'),
+    'utf8',
+  )
+
+  it('settles seats on rev in the browser and in the store', () => {
+    /*
+     * The winner line itself, not merely the word `rev` somewhere in the file. Both sides also
+     * compare the *room* on rev, so a looser scan passes while the seats settle on a clock,
+     * which is exactly the drift this is here to refuse.
+     */
+    const seatWinner = /const winner =.*\.rev \?\? 0.*\.rev \?\? 0/
+    for (const [where, source] of [
+      ['the browser', BROWSER],
+      ['the store', WORKER],
+    ] as const) {
+      expect(seatWinner.test(source), `${where} does not settle a seat on rev`).toBe(true)
+    }
+  })
+
+  /*
+   * The store must not refuse a write for being behind. A tablet writing its own seat on a base
+   * a second old is the ordinary case in a classroom, not a conflict, and refusing it is how
+   * the seat never reached the board.
+   */
+  it('leaves no 409 in the store', () => {
+    /* Comments stripped: this file explains the 409 that was removed, in prose. */
+    const code = WORKER.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+    expect(code).not.toContain('409')
+  })
+
+  /*
+   * Neither side may pick a *seat* by clock. The room may still use `updatedAt` — it is a
+   * document-level tiebreak that both sides carry — but a seat settled on a clock is the bug.
+   */
+  it('never picks a seat by comparing updatedAt', () => {
+    for (const [where, source] of [
+      ['the browser', BROWSER],
+      ['the store', WORKER],
+    ] as const) {
+      const seatByClock = /seat[A-Za-z]*\.updatedAt|updatedAt.*seat[A-Za-z]*\.updatedAt/i
+      expect(seatByClock.test(source), `${where} settles a seat on a clock`).toBe(false)
+    }
+  })
+})

@@ -152,3 +152,34 @@ describe('a team getting a craft, without a reload', () => {
     expect(readMission(null)?.droneIds ?? []).toContain('ttf-0001')
   })
 })
+
+/**
+ * The tick has to reach the panels it is about.
+ *
+ * The button wrote the tick for every craft and then left the screen, having done its job,
+ * while every seven-item panel under it went on saying *Visually confirm propellers are
+ * secure*: a Teacher who had just walked the bench was looking at six panels disagreeing with
+ * them, on the step whose whole content is those panels.
+ */
+describe('the tick-all reaching the panels below it', () => {
+  const twoCraftOnTeams = () => {
+    createTeam('Red Team')
+    createTeam('Blue Team')
+    const [red, blue] = readTeams()
+    assignDroneToTeam(red!.id, 'ttf-0001')
+    assignDroneToTeam(blue!.id, 'ttf-0002')
+  }
+
+  it('shows every craft as checked after one press', () => {
+    twoCraftOnTeams()
+    lesson()
+    settle()
+
+    fireEvent.click(screen.getByRole('button', { name: /Propellers checked on all/ }))
+    settle()
+
+    expect(screen.getAllByText('Propellers checked by hand.')).toHaveLength(2)
+    expect(screen.queryByRole('button', { name: /Propellers checked on all/ })).not
+      .toBeInTheDocument()
+  })
+})

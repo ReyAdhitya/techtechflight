@@ -7,6 +7,15 @@ would notice.
 
 ### Fixed
 
+- **The store settled a classroom on a clock, and the browser settled it on `rev`.** Two
+  runtimes disagreeing about one rule puts the seat glitch straight back: a board and a tablet
+  do not share a clock, so a laptop a minute fast was answered 200 while a correct tablet got
+  409 forever and silently. The Worker runs the browser's rule now, seat by seat on `rev`, and
+  refuses nothing.
+- **A simulated fault arrived on the bench and failed the craft's own pre-flight.** "Motion
+  sensor needs recalibrating" on an airframe that does not exist, step 4 unable to complete,
+  step 5 locked behind it, and the demonstration stopped before anything flew. Faults now
+  happen to a Drone that is flying, which is when they happen in a classroom.
 - **Pre-flight asked a Teacher to fix Drones that do not exist.** A simulated craft reported
   *Motion sensor needs recalibrating*, and every third one reported no rangefinder fitted, so
   step 4 could not be finished on it at any point in the lesson. A pre-flight check is a
@@ -99,6 +108,48 @@ would notice.
   were reported in each of two waves. The showcase gains its own `--sc-text-*` scale.
 
 ### Added
+
+- **One press ticks the propellers on every craft, and one ticks the whole brief.** Six of the
+  seven pre-flight items read themselves from Telemetry; Propellers is the only human tick, and
+  the tedium was doing it once per aircraft down a column of identical panels.
+- **Records: a class list, and one child's history.** Two questions and no more. Flights, time
+  flown, present, absent and the Teacher's own note; tap a name for the Lessons behind it. A
+  Lesson nobody sealed reads *Not marked* rather than inventing a mark.
+- **The records get a database (ADR-0034).** Seventeen tables on Neon, in third normal form, as
+  set out in the plan. The browser stays the record and works with the wifi off; the database is
+  the copy. The records sync moved off the suspended Vercel Blob at the same time.
+
+### Removed
+
+- **Bookmark and Note incident leave step 1**, where nothing has flown so there is no moment to
+  bookmark and no incident to note. Both already sit above every in-the-air step.
+- **"Change the set-up" is gone.** The rail carries steps 1 to 5, always visible and always
+  tappable; a second door into a room with one is a door a Teacher decides about every time.
+- **The classroom boundary box is gone from the Scope.** A Teacher in a netted cage should not
+  be handed a rectangle nobody measured. It was also the only thing giving the grid a scale, so
+  the metres are written on the picture now: without one, a Drone at the netting looks exactly
+  like one in the middle.
+
+- **One press ticks the propellers on every craft, and one ticks the whole brief.** Six of the
+  seven pre-flight items read themselves from Telemetry; Propellers is the only human tick, and
+  the tedium was doing it once per aircraft down a column of identical panels.
+- **Records: a class list, and one child's history.** Two questions and no more. Flights, time
+  flown, present, absent and the Teacher's own note; tap a name for the Lessons behind it. A
+  Lesson nobody sealed reads *Not marked* rather than inventing a mark.
+- **The records get a database (ADR-0034).** Seventeen tables on Neon, in third normal form, as
+  set out in the plan. The browser stays the record and works with the wifi off; the database is
+  the copy. The records sync moved off the suspended Vercel Blob at the same time.
+
+### Removed
+
+- **Bookmark and Note incident leave step 1**, where nothing has flown so there is no moment to
+  bookmark and no incident to note. Both already sit above every in-the-air step.
+- **"Change the set-up" is gone.** The rail carries steps 1 to 5, always visible and always
+  tappable; a second door into a room with one is a door a Teacher decides about every time.
+- **The classroom boundary box is gone from the Scope.** A Teacher in a netted cage should not
+  be handed a rectangle nobody measured. It was also the only thing giving the grid a scale, so
+  the metres are written on the picture now: without one, a Drone at the netting looks exactly
+  like one in the middle.
 
 - **Change classroom, beside Leave.** Leaving and moving rooms are different intentions and
   only the destructive one was on offer: the sole route to the code screen forgot the name as

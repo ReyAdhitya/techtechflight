@@ -43,7 +43,12 @@ describe('debounced cloud push', () => {
     await vi.advanceTimersByTimeAsync(1_300)
     expect(fetchImpl).toHaveBeenCalledTimes(1)
     expect(fetchImpl).toHaveBeenCalledWith(
-      expect.stringContaining('/api/logbook'),
+      /*
+       * `/api/records` on Neon, not `/api/logbook` on Vercel Blob. The Blob stores have been
+       * suspended for unpaid billing since 9 August 2026; the copy moved with ADR-0034, and the
+       * old endpoint is still reachable through the stored override.
+       */
+      expect.stringContaining('/api/records'),
       expect.objectContaining({
         method: 'PUT',
         headers: expect.objectContaining({

@@ -1232,14 +1232,27 @@ export function subscribeClassroom(
   if (typeof BroadcastChannel !== 'undefined') {
     channel = new BroadcastChannel(CLASSROOM_CHANNEL)
     channel.onmessage = (event: MessageEvent<ClassroomSession>) => {
-      if (event.data && typeof event.data.code === 'string') {
-        try {
-          window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(event.data))
-        } catch {
-          /* ignore */
-        }
-        onChange(event.data)
+      if (!event.data || typeof event.data.code !== 'string') return
+      /*
+       * Merged, like the poll and like the store. **One classroom across every tab.**
+       *
+       * Roles are per tab on purpose, so a Teacher can hold `/mission` and `/student` open at
+       * once and test both sides of a lesson from one laptop. The Lesson underneath them is
+       * not per tab, and this used to take the broadcast whole — so the Teacher tab's next
+       * heartbeat arrived in the Student tab and replaced its copy, seat and all, which is the
+       * two-tab face of the same lost update.
+       */
+      const local = readClassroomSession()
+      const next =
+        local === null || local.code !== event.data.code
+          ? event.data
+          : mergeClassroomSessions(local, event.data)
+      try {
+        window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
       }
+      onChange(next)
     }
   }
 

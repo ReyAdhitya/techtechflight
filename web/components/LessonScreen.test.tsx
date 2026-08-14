@@ -70,24 +70,36 @@ describe('starting a lesson with nothing filled in', () => {
   })
 
   /*
-   * The way back. Starting a Lesson used to take the plan panel off the screen with it, so a
-   * Teacher who put the wrong Student on a Drone at 08:55 had nowhere to go and nothing on
-   * screen saying anything had gone.
+   * The way back is the rail, and it is the only one.
+   *
+   * "Change the set-up" was a disclosure on this panel holding the plan, added when starting a
+   * Lesson took the plan off the screen with it. The rail carries steps 1 to 5 now, always
+   * visible and always tappable, so the disclosure was a second door into a room with one --
+   * and a second door is a thing a Teacher has to decide about every time they pass it.
    */
-  it('keeps the set-up reachable once the Lesson is under way', () => {
+  it('offers no second door back to the set-up', () => {
     screenUnderTest()
     settle()
 
     fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
     settle()
 
-    const back = screen.getByText('Change the set-up')
-    expect(back).toBeInTheDocument()
-    // Shut by default: a class in the air is not the moment for a Fleet list.
-    expect(back.closest('details')).not.toHaveAttribute('open')
+    expect(screen.queryByText('Change the set-up')).not.toBeInTheDocument()
+  })
 
-    fireEvent.click(back)
-    expect(screen.getByRole('button', { name: /^Save plan$/ })).toBeInTheDocument()
+  /*
+   * Nothing has flown yet, so there is no moment to bookmark and no incident to note. Both
+   * live on the strip above every in-the-air step, which is where the moments are.
+   */
+  it('offers no Bookmark or Note incident on the way in', () => {
+    screenUnderTest()
+    settle()
+
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
+    settle()
+
+    expect(screen.queryByRole('button', { name: /Bookmark moment/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Note incident/i })).not.toBeInTheDocument()
   })
 
   it('hands over to the clearance queue once it is running', () => {

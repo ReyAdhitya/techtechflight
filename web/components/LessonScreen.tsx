@@ -303,30 +303,18 @@ function LessonUnderWay({
 
       <WaitingList book={book} />
 
-      <LessonBookmarkControl
-        lessonId={lesson.id}
-        startedAt={lesson.startedAt}
-        now={now}
-        bookmarks={lesson.bookmarks ?? []}
-      />
-
-      <LessonIncidentNoteControl
-        lessonId={lesson.id}
-        startedAt={lesson.startedAt}
-        now={now}
-        incidents={lesson.incidents}
-      />
-
       {/*
-       * The way back. Starting a Lesson used to take the plan panel off the screen with it,
-       * so a Teacher who put the wrong Student on a Drone at 08:55 had nowhere to go and no
-       * indication that anything had gone. Shut by default, because a class in the air is not
-       * the moment for a Fleet list, and it is one line when it is shut.
+       * Bookmark and Note incident are not here, and that is the point of step 1.
+       *
+       * They sat on this panel, which is the first thing a Teacher sees when a Lesson starts:
+       * before anything has flown there is no moment to bookmark and no incident to note. They
+       * live on `LessonStrip`, which is above every in-the-air step, so they are where the
+       * moments are. Do not put them back on the way in.
+       *
+       * "Change the set-up" is gone with them. It was a disclosure holding the plan panel, and
+       * the rail already carries steps 1 to 5, always visible and always tappable. A second
+       * door into a room that has one is a door a Teacher has to decide about.
        */}
-      <ControlDisclosure summary="Change the set-up">
-        <LessonPrepPanel drones={drones} book={book} />
-      </ControlDisclosure>
-
       <Link
         href="/mission?step=6"
         prefetch={false}

@@ -708,8 +708,20 @@ export function openClassroom(input: {
    * A dead code is what makes a dead session *provable* rather than merely quiet. Keyed on
    * the Lesson rather than on time, because a Teacher who reloads the board mid-lesson must
    * not find the code they read out has changed under thirty children.
+   *
+   * **A classroom that has ended never carries on, whatever its Lesson id says.** Comparing
+   * the ids alone was right for a Logbook Lesson and wrong for every run without one: a board
+   * with no Lesson started carries `lessonId: null`, `null === null` is true, and so the run
+   * after a Lesson ended inherited the finished one's code. Every device then read a classroom
+   * stamped `endedAt`, which the tablets correctly refuse, and the Teacher read out four
+   * letters that could not work. `endedAt` is the one fact both cases share: closing a Lesson
+   * is the Teacher saying this room is over, and a room that is over cannot be walked back
+   * into under the same code.
    */
-  const carriesOn = existing !== null && existing.lessonId === input.lessonId
+  const carriesOn =
+    existing !== null &&
+    (existing.endedAt ?? null) === null &&
+    existing.lessonId === input.lessonId
   const code = normalizeClassroomCode(
     input.code ?? (carriesOn ? existing.code : mintClassroomCode(now)),
   )

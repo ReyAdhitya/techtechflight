@@ -1,219 +1,211 @@
-# Handoff, 2026-08-06
+# Handoff, 2026-08-14
 
-Written so a fresh agent can pick this up without re-deriving it. Read this, then
-`CLAUDE.md`, then the issue tracker.
+Written so a fresh agent can pick this up without re-deriving it. Read this, then `CLAUDE.md`,
+then the plans in `docs/plans/`.
 
-Everything in the "Where it stands" and "What is actually left" sections was checked
-against the repository on 2026-08-06, not remembered. Where something is a judgement
-rather than a fact it says so, so it can be overturned deliberately rather than by
-accident.
-
-This file replaces the 2026-07-28 handoff, which described a stack of branches that has
-since merged. The rules from it that are still true are carried forward below.
+Replaces the 2026-08-06 handoff. What follows was verified against the code and against the
+live deployments, not remembered.
 
 ## The product in one paragraph
 
-A ground station for a school teacher running a class of drones. The Teacher drives a
-laptop; the Students fly by hand with controllers and read a tablet. The customer supplied
-two twelve-step workflow posters, one per side, and they mirror each other: the Teacher
-grants a takeoff at their step 6 while the Student asks for it at their step 5. The product
-is those two posters made real.
+A ground station for a school teacher running a class of drones. The Teacher drives a laptop;
+the Students fly by hand with controllers and read a tablet. The customer supplied two
+twelve-step workflow posters, one per side, and they mirror each other: the Teacher grants a
+takeoff at their step 6 while the Student asks for it at their step 5. The product is those
+two posters made real.
 
-Owner's goal, in their words: easy, tidy, few words, straight to the point, and guided
-without being confusing.
+Owner's goal, in their words: easy, tidy, few words, straight to the point, guided without
+being confusing.
 
-## Where it stands
+## Where it runs, and this changed twice this week
 
-`main` is at `c4a56ba`. Merged today:
-
-| PR | What |
+| | |
 |---|---|
-| #650 | the Student app on one machine (ADR-0025) |
-| #651 | one-page Lesson, live Control ATC, iPad classroom join |
-| #647 | the Lesson screen answers one question |
-| #646 | the Lesson screen stops offering two of everything |
-| #652 | OPEN, not merged: stop rebuilding the whole board on every page load |
+| **Vercel** | `techtechflight.vercel.app`. **Blocked by the owner's ISP in Indonesia.** Unusable here without a VPN |
+| **Cloudflare** | `techtechflight.classroom-worker.workers.dev`. **Reachable without a VPN.** The one the owner tests on |
+| **Classroom store** | `techtechflight-classroom.classroom-worker.workers.dev`, a Durable Object per room. Deployed with an API token, not `wrangler login` |
 
-Live and verified in production: the Teacher's twelve steps end to end, and the Student app
-as far as "Ask to take off" and the waiting copy.
+**Deploying the Cloudflare copy**, from `classroom-worker/`:
 
-## What is actually left
+```
+NEXT_PUBLIC_DEMO_ONLY=1 npm run build --workspace=web
+printf '_next/static/media/ort-wasm*.wasm\nort/*.wasm\nmodels/*.onnx\n' > web/out/.assetsignore
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=0da85c3d839736debe1fb98791b190c8 \
+  wrangler deploy -c site.toml
+```
 
-Audited against the code on 2026-08-06, not against the older plan.
+The `.assetsignore` is required: the ONNX runtime is 26 MB and Cloudflare caps assets at 25 MB.
+Vision does not work on the Cloudflare copy as a result, and that is accepted.
 
-| Item | State on 2026-08-06 | Evidence |
-|---|---|---|
-| Sealed Mission reaches Reports (#635) | done | `putMissionOnLesson` in `web/lib/logbook.ts`, called at `ControlScreen.tsx:619`, covered by `web/lib/sealed-mission-reaches-reports.test.tsx` |
-| The classroom session seam (#638) | done | `web/lib/classroom-session.ts` plus its test |
-| A door for each of the two people (#637) | done | `web/lib/role.ts`, `web/app/enter/page.tsx`, `web/components/RoleGate.tsx` |
-| Student steps 1 to 12 (#639 to #643) | done on one screen | `web/components/StudentMissionScreen.tsx`, 1092 lines |
-| Record the two-audience app (#645) | done | `docs/adr/0025-the-student-screen-is-a-second-audience-not-a-second-board.md` |
-| Em dashes in on-screen copy (#621) | done for copy, not for comments | one em dash left outside a comment in the whole of `web/components` and `web/app`, and it is inside a JSX comment in `showcase/DroneModel.tsx`. 134 non-test component files still carry em dashes in JSDoc |
-| Large format is icon only (#623, half of it) | already shipped | `DisplayScaleToggle.tsx` is icon only with a `title` tooltip |
-| `/api/classroom` reachable from the ground station (#644) | **not done, and it is the blocker** | `api/classroom.ts` is a Vercel function at the repo root. `ground-station/src/server.ts` serves `/api/classroom-setup` only. `web` builds `output: 'export'`, so it has no route handlers at all |
-| Ground station prints its LAN address | not done | `ground-station/src/main.ts:122` prints `http://localhost:${port}` only |
-| "Classroom ready" screen for the Teacher | not done | no component answers "what do I read out to the class" |
-| Windows Firewall rule in the launcher | not done | `Start TechTech Flight.bat` does not add one |
-| Hold a takeoff, not only grant it (#636) | done | `holdClearance` in `web/lib/clearance.ts`, Hold beside Grant on `ClearanceQueue` |
-| Fleet headcount check removed (#624) | done | component, lib and tests deleted 2026-08-09 |
-| `?step=` still read on Lesson (#648) | done | `/lesson` forwards; `?step=` is read on `/mission` alone |
-| `text-caption` has no token (#649) | done | `--text-caption: 1rem` in `globals.css`, pinned by `web/type-scale.test.ts` |
-| `StepRail` is orphaned | judgement, no issue yet | `web/components/StepRail.tsx` exists and nothing imports it but its own test |
-| Vision moved out of the main nav | not done | `web/app/(app)/vision` is still a route |
-| One Room menu for Lit room, Large format, Walls | not done | still separate header controls |
-| Prose budget test | not done | nothing asserts a word count on screen copy |
+## What broke this week, and why each one mattered
 
-Issues #635 to #645 are largely delivered by PRs #650 and #651. Walk that list and close what
-shipped, or every plan written on top of the backlog will be wrong.
+Every one of these was found by **using** the product. None was caught by 1,701 passing tests.
 
-### The one that decides a demo
-
-`/api/classroom` exists only as a Vercel function. A classroom running off the laptop
-launcher serves the board from the ground station on `:4321`, and that server has no
-`/api/classroom` route. `classroomApiUrl()` in `web/lib/classroom-session.ts` can be pointed
-elsewhere, but only through `NEXT_PUBLIC_CLASSROOM_SYNC_URL`, which is a build seed and so
-is not set in the launcher build. `logbookSyncUrl()` has a `localStorage` override for
-exactly this reason and the classroom one does not.
-
-Consequence: iPads joining across the room work against the Vercel deploy and do not work
-against the classroom laptop. On one machine, `localStorage` plus `BroadcastChannel` still
-works, which is why this reads as fine in a single-browser test.
+1. **Vercel Blob suspended for inactive billing.** All three stores at once. `/api/classroom`
+   returned 500 for three days. Not a bug, and no code change could fix it.
+2. **The store address was a build seed.** `NEXT_PUBLIC_CLASSROOM_SYNC_URL` only reached the
+   deploy built with it, so every other build fell back to the dead Vercel route. It is now a
+   built-in constant in `classroom-session.ts`, with a `localStorage` override.
+3. **The heartbeat spent a day's store allowance in ninety minutes.** Every write pushed to
+   the cloud twice, every ten seconds, forever, including after a Lesson ended. Now: one
+   debounced write, cloud at most once a minute, and no beat at all once `live` is false.
+4. **KV's 1,000 writes a day is per account.** Even fixed, the ceiling was too low, so the
+   store is now a Durable Object per classroom code.
+5. **A finished classroom outlived its Lesson.** `openClassroom` compared
+   `existing.lessonId === input.lessonId`, and two runs with no Logbook Lesson both carry
+   `null`. `null === null` is true, so a new Lesson inherited the dead one's code and every
+   device read a classroom marked `endedAt`. **The engineer has fixed this and NOT PUSHED IT.**
+6. **A new browser met a PIN prompt instead of the door.** Fixed: no remembered role now means
+   `/enter`.
 
 ## Decisions that should not be re-litigated
 
-**Students never get a Command.** Land, Hover, Recall and Stop belong to the Teacher, always
-(ADR-0011, ADR-0021). Students fly by hand; the Student tablet has exactly two pressable
-things, Ask to take off and Understood. This is also the safety story to a school: no child
-can press anything that moves an aircraft.
+**Students never get a Command.** Land, Hover, Recall, Auto-land and Stop belong to the
+Teacher, always (ADR-0011, ADR-0021). Exactly two pressable things in the Student app: Ask to
+take off, and Understood.
 
-**No invented readings.** An absent reading is said in words, never a zero or a dash dressed
-as live. The first Student screen printed `value="On craft"` where a figure belonged, and
-that is part of why the owner reverted it eight minutes after merging.
+**Phases derive from records and Telemetry, never from a button.**
 
-**Phases derive from records and Telemetry, never from a button.** A Student cannot mark
-themselves airborne; `flownAt` is the first sighting off the ground.
+**No GPS, no map tile.** Metres from the Fleet's own origin (ADR-0019).
 
-**No GPS.** There is none in this product, deliberately. Position is metres from the Fleet's
-own origin (ADR-0019). No map tile, no GPS icon, even though the customer poster shows one.
+**No invented readings.** Absent is said in words, never a zero and never a dash.
 
-**The Attention bar stays pinned above every Control step**, rather than living only on step
-10. An alert arriving while a Teacher reads the Scope has to be visible where they are
-looking, and children are flying. This is a deliberate deviation and the owner has not ruled
-on it.
+**Roles are two secrets, not a preference.** The classroom code is public and read out loud;
+the Teacher PIN is private. The address decides the role for a tab: `/mission` is the Teacher,
+`/student` is the Student.
 
-**Large format is not deleted, and the room controls keep their text.** Judgement, and it is
-in live conflict with issue #623, which asks for icons only and for Large format to go. Half
-of #623 has shipped already: `DisplayScaleToggle` is icon only today. Settle the other half
-with the owner before touching it.
+**Recall is for trouble, never for ending a normal flight.** The Teacher approves, the tablet
+says come home, the child flies it home.
+
+**A new Lesson mints a new code.** Decided 2026-08-10. See failure 5 above for what happens
+when it does not.
+
+## The ten fixes, in this order
+
+The order is what stops it collapsing.
+
+| # | What |
+|---|---|
+| 1 | **Push the engineer's classroom-code fix.** Nothing below works on top of a Lesson with an inherited code |
+| 2 | **The glitch.** Tap a Drone, the seat is written, the screen bounces back to the picker. Same cause: the Teacher's board never reads seats back, so a Student who joined as "kntl" never appears. One bug, two symptoms |
+| 3 | **One classroom across every tab.** Roles stay per tab |
+| 4 | **Skip remembers.** The Warm-up returns on every visit to step 1 |
+| 5 | **Pre-flight always passes in simulation.** No faults on Drones that do not exist |
+| 6 | **Tick-all clears Propellers on every Drone in one tap.** Six of seven items read themselves; the tedium is doing the one human tick per aircraft |
+| 7 | **Bookmark and Note incident move to step 10.** They sit on step 1 today, where there is no moment to bookmark |
+| 8 | **Delete "Change the set-up".** The rail already holds steps 1 to 5 |
+| 9 | **No-fly zones optional, blue boundary box deleted.** CRITICAL: with the box gone the map has no scale, so label the grid in metres or a Drone at the netting looks like one in the middle |
+| 10 | **The database.** Last, because it fixes none of the above |
+
+## The database
+
+The owner's boss requires one, in third normal form. **This reverses `CLAUDE.md`'s "do not
+invent a Postgres school DB"**, and the reversal is already recorded there with what it takes
+on: the sentence a school used to be told, *"the records are on your own laptop, we never hold
+them"*, stops being true and something must replace it.
+
+**The schema, the reasoning and the `CREATE TABLE` statements are already written** in
+`docs/plans/2026-08-12-the-store-the-database-and-large-format.md`. Seventeen tables. Show that
+file to the boss; it answers the design question today without any code.
+
+**Host on Neon.** Free, no card, and it wakes itself on the next request rather than waiting
+for a human to click, which is why it and not Supabase. Free plan checked 2026-08-12: 0.5 GB
+per project, 100 compute-hours a month.
+
+**The browser stays the record; the database is the copy.** A school hall with poor wifi still
+has to teach a lesson.
+
+**No live readings in it.** No altitude, no battery, no position.
 
 ## Hazards
 
-**Two terminals share one working directory.** This is the biggest operational risk and it
-cost real time: six commits landed on the wrong branch, a branch was switched mid-push, and
-two agents wrote the same file within minutes of each other. Use separate git worktrees.
+**Two terminals in one working directory** cost six commits on the wrong branch. Use worktrees.
 
-**The em dash sweep broke a build once.** `898af04` swept dashes and middots from on-screen
-copy, `541c9be` repaired `DroneScreen` afterwards, and `dfebeb3` records a deploy blocker.
-Read all three before continuing. Rewrite sentences; do not delete characters.
+**jsdom cannot see layout.** Every visual defect this week was found in a screenshot or on a
+phone, never by a test. Shoot at 390 first, not 1280.
 
-**`ControlCameraSlide.test.tsx` "dismisses the popup on Escape" is flaky.** Passes alone,
-fails in the suite, and nobody has touched that file recently. It did not reproduce on
-2026-08-06, when the full suite ran green at 1421 tests across 232 files in 110 seconds, so
-it is intermittent rather than broken. Needs its own ticket, not a ride-along fix.
+**`github.com` is intermittently unreachable** from the owner's laptop while `api.github.com`
+works. A push can fail silently; `gh` keeps working, which disguises it.
 
-**Three things no commit can settle, and they are the owner's:**
+**Both Cloudflare tokens are in the 2026-08-12 conversation and should be rotated.** Nothing
+breaks: everything is already deployed and does not need them to run.
 
-1. **Which drone the school buys.** Pixhawk or ArduPilot works with the MAVLink adapter that
-   exists. DJI, including Tello, does not speak MAVLink and needs its own adapter. This also
-   decides the network: a Wi-Fi drone and a Wi-Fi tablet may not share one card.
-2. **A tablet on the school network.** School networks block devices from seeing each other.
-   Fifteen minutes of testing now, or a failed demo. Not fixable in code.
-3. **One real lesson.** Nothing here has been used by a teacher with a class. Every "done"
-   so far means the screens look right.
+**`64UL` is a dead classroom code** still sitting in the store. It expires on its own.
 
-## How the code is arranged
+## Still open, and only the owner can close them
 
-The twelve-step model, still present:
+- **The DNS record** for `flight.techtechtechnology.com`. The domain's zone is in a Cloudflare
+  account the owner's tokens cannot reach; two tokens both reported zero zones
+- **Which drone the school buys.** Decides the adapter, the network, and whether detection is
+  ever possible
+- **One real lesson.** Nothing here has been in front of a class
+
+## The prompt
 
 ```
-web/lib/mission-flow.ts        done / current / live / locked
-web/lib/mission-flow-*.ts      the marks
-web/components/StepRail.tsx    the rail, now imported by nothing but its own test
-web/app/globals.css            the base and the slide
+You are the engineer on TechTech Flight. Repo: D:\techtechflight.
+
+Read first: HANDOFF.md, CLAUDE.md, CONTEXT.md, docs/DELIBERATE-POSITIONS.md.
+
+Ten items, one branch, in the order below. Every decision is made; do not stop
+to ask. If you meet an ambiguity genuinely not covered, choose whichever option
+puts FEWER WORDS on a screen, record it in docs/DECISIONS.md, and continue.
+
+1. PUSH THE CLASSROOM-CODE FIX FIRST. It is fixed on a machine and not on
+   origin/main. openClassroom compared existing.lessonId === input.lessonId,
+   and two runs with no Logbook Lesson both carry null, so a new Lesson
+   inherited a finished one's code and every device read a classroom marked
+   endedAt. Everything below builds on it.
+
+2. THE GLITCH, and it is one bug with two faces. A Student taps a Drone, the
+   seat is written to the store, and the screen bounces back to the Drone
+   picker. The Teacher's board never shows that Student either: joining as
+   "kntl" left the board reading "Nobody is waiting". The seat is written and
+   never read back. Fix the read, on both sides.
+
+3. ONE CLASSROOM ACROSS EVERY TAB. Roles stay per tab, so /mission and /student
+   can be open at once. What must be shared is the Lesson and its code, which
+   two tabs disagree about today.
+
+4. SKIP REMEMBERS. The Warm-up returns every time a Teacher goes back to step
+   1, even after Skip. Skipped once is skipped for that Lesson.
+
+5. PRE-FLIGHT ALWAYS PASSES IN SIMULATION. No "Motion sensor needs
+   recalibrating" on a Drone that does not exist.
+
+6. TICK-ALL CLEARS PROPELLERS ON EVERY DRONE IN ONE TAP. Six of the seven items
+   read themselves; Propellers is the only human tick and doing it per Drone is
+   the tedium. A Teacher walks the bench with their eyes, then taps once.
+
+7. BOOKMARK AND NOTE INCIDENT MOVE TO STEP 10. They are on step 1 today, where
+   there is no moment to bookmark and no incident to note.
+
+8. DELETE "CHANGE THE SET-UP". The rail already holds steps 1 to 5 and is
+   always visible. It is a second door into a room that has one.
+
+9. NO-FLY ZONES ARE OPTIONAL, and the blue boundary box goes.
+   CRITICAL: with the box gone the map has no scale, so a Drone at the netting
+   looks like one in the middle. Label the grid in metres instead.
+
+10. THE DATABASE, last, because it fixes none of the above. Schema, reasoning
+    and CREATE TABLE statements are already written in
+    docs/plans/2026-08-12-the-store-the-database-and-large-format.md. Host on
+    Neon. The browser stays the record and the database is the copy, because a
+    hall with poor wifi still has to teach a Lesson. No live readings in it.
+
+RULES THAT DO NOT BEND
+- Students never get a Command (ADR-0011, ADR-0021).
+- Exactly two pressable things in the Student app during a Mission.
+- Phases from records and Telemetry, never a press.
+- No GPS, no map tile. Metres from the Fleet's own origin (ADR-0019).
+- No invented readings. Absent is said in words.
+- No em dashes and no middots in on-screen copy.
+- Semantic tokens only. A px font-size is a defect (ADR-0008).
+
+PROVE IT ON TWO DEVICES, NOT IN A TEST. Join from a phone, tap a Drone, stay in
+it, and see that name on the Teacher's board. Every defect this week survived a
+green suite of 1,701 tests and was found by using the product. Shoot every
+screen at 390 before 1280.
+
+Gate is npm test and npm run typecheck. There is no lint.
 ```
-
-The screens:
-
-```
-LessonScreen.tsx           Mission set-up: Scenario picker, MissionAreaEditor,
-                           TeamsPanel, MissionBriefing
-ControlScreen.tsx          steps 6 to 11: ClearanceQueue, Scope, FlightStrip,
-                           Attention, ConfirmMissionComplete
-ReportsScreen.tsx          the report
-StudentMissionScreen.tsx   all twelve Student steps on one screen
-```
-
-Where state lives:
-
-```
-web/lib/mission.ts             the Mission type
-web/lib/mission-draft.ts       techtechflight:mission-draft, the working copy
-web/lib/logbook.ts             the Lesson record and the roster
-web/lib/clearance.ts           the clearance shape
-web/lib/clearance-store.ts     where clearances are kept
-web/lib/classroom-session.ts   seats, phases, instructions
-web/lib/incident-playbook.ts   what to do, by safety priority
-api/classroom.ts               the Vercel function, Blob backed
-api/logbook.ts                 the Vercel function, Blob backed
-ground-station/src/server.ts   :4321, serves /api/classroom-setup and the board
-```
-
-Read `CLAUDE.md` before changing anything. Its Gotchas section is the accumulated list of
-what is not obvious from the code, and it is kept current.
-
-## Working rules in this repository
-
-- `npm test` and `npm run typecheck` are the whole CI gate. There is no lint. Run them at
-  every commit.
-- Semantic colour tokens (`bg-canvas`, `text-ink-subtle`, `border-hairline`), never the
-  shadcn base layer. A `px` font-size is a defect (ADR-0008).
-- No em dashes in copy a Teacher reads. The owner reads them as machine-written.
-- jsdom has no layout. Assert on `globals.css`, and look at a screenshot before believing a
-  visual claim. `scripts/shot.mjs <label> <route> <width>` serves `web/out`, so build first,
-  and pass routes from PowerShell.
-- Conventional commits. Rebase rather than squash so every commit lands on `main`; the owner
-  wants the history dense.
-- After a merge, fetch and read the strings actually shipped. A green deploy is not evidence.
-- Windows: `next build` fails with `EBUSY` if a shell sits in `web/out`.
-- **Five words are contract, not copy.** `'Offline' | 'Ready' | 'Not Ready' | 'Flying' |
-  'Fault'` are the TypeScript type, the wire format and the display text at once, across four
-  workspaces and inside stored lesson records.
-- **`ServiceState`'s `'watch'` key is serialized** in the browser logbook. Renaming the key
-  silently invalidates every stored service decision.
-- **The product is English.** The team speaks Indonesian; it never reaches the product.
-- **Six personal documents were removed from the entire history** on 2026-07-28 before the
-  repository went public: `NOTES.md`, `MISSION.md`, `RESOURCES.md`, `lessons/`,
-  `learning-records/`, `reference/`. They exist in the working copy and are gitignored. Do
-  not restore any of them to the repository.
-
-## How the terminals work
-
-Three roles, coordinated through GitHub issues (`docs/agents/issue-tracker.md`):
-
-- **Planner** reads code, writes specs, files issues, never writes production code
-- **Engineer** claims one issue, one branch, implements, commits small
-- **Review** runs `/code-review`, comments only, never commits
-
-One issue, one branch, one terminal, and from now on one worktree. A spec disagreement goes
-in the issue as a comment, never quietly into the diff.
-
-## Companion documents
-
-- `docs/DELIBERATE-POSITIONS.md`, six board decisions that look like defects and are not
-- `docs/adr/`, why each decision was made
-- `docs/POSTER-WORKFLOW-PLAN.md`, the two posters as a plan
-
-## If you do only one thing
-
-Walk issues #635 to #645, close what shipped, and reissue the remainder as a short honest
-list. The backlog currently overstates what is left.

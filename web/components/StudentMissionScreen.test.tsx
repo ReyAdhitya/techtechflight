@@ -715,12 +715,29 @@ describe('leaving the classroom', () => {
 
   it('forgets the classroom and goes back to the door, saying why', () => {
     joinAsPriya()
+    // An iPad, not the laptop running the board: no board on this device opened this room.
+    window.localStorage.removeItem('techtechflight:classroom-board')
     fireEvent.click(screen.getByRole('button', { name: 'Leave this classroom' }))
     settle()
 
     expect(window.localStorage.getItem(CLASSROOM_SESSION_KEY)).toBeNull()
     expect(screen.getByRole('status')).toHaveTextContent('You left the classroom')
     expect(screen.getByLabelText('Classroom code')).toBeInTheDocument()
+  })
+
+  /*
+   * The same press on the second tab of the Teacher's own laptop. The child goes back to the
+   * door, and the Teacher's classroom stays open: it used to be deleted from under the board,
+   * which then minted a new code and stopped the four letters the class had been given.
+   */
+  it('leaves the Teacher classroom standing on the laptop running the board', () => {
+    joinAsPriya()
+    const code = readClassroomSession()?.code
+    fireEvent.click(screen.getByRole('button', { name: 'Leave this classroom' }))
+    settle()
+
+    expect(screen.getByLabelText('Classroom code')).toBeInTheDocument()
+    expect(readClassroomSession()?.code).toBe(code)
   })
 
   /*

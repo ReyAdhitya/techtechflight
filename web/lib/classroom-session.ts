@@ -1001,8 +1001,43 @@ export function openClassroom(input: {
     live: input.live ?? true,
     updatedAt: now,
   })
+  rememberBoardClassroom(opened.code)
   void pushClassroomToCloud(opened)
   return opened
+}
+
+/**
+ * Which classroom the board on **this device** opened, if any.
+ *
+ * One laptop can hold a Teacher board and a Student tablet at once, on purpose: the address
+ * decides the role for a tab, so `/mission` and `/student` sit side by side. They share one
+ * `localStorage`, and therefore one classroom, which is the point of it.
+ *
+ * What they must not share is the power to throw it away. A child pressing Leave on the second
+ * tab removed the whole document, and the board, finding nothing there, minted a **new code**:
+ * the four letters the Teacher had read out to thirty children stopped working, from a button
+ * two tabs away. So the board says which room is its own here, and a tablet on the same device
+ * forgets its seat rather than the room.
+ */
+const CLASSROOM_BOARD_KEY = 'techtechflight:classroom-board'
+
+function rememberBoardClassroom(code: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(CLASSROOM_BOARD_KEY, code)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Whether the board on this device is the one that opened the classroom in front of us. */
+export function boardOwnsClassroom(session: ClassroomSession | null = readClassroomSession()) {
+  if (typeof window === 'undefined' || session === null) return false
+  try {
+    return window.localStorage.getItem(CLASSROOM_BOARD_KEY) === session.code
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -1045,7 +1080,8 @@ export function leaveClassroom(): void {
   if (typeof window === 'undefined') return
   try {
     window.localStorage.removeItem(STUDENT_SEAT_KEY)
-    window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
+    // Not the Teacher's own room, on the Teacher's own laptop. See `boardOwnsClassroom`.
+    if (!boardOwnsClassroom()) window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
   } catch {
     /* ignore */
   }
@@ -1065,7 +1101,8 @@ export function leaveClassroom(): void {
 export function changeClassroom(): void {
   if (typeof window === 'undefined') return
   try {
-    window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
+    // Same rule as leaving: a tablet moves rooms, it does not close the Teacher's.
+    if (!boardOwnsClassroom()) window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
   } catch {
     /* ignore */
   }
@@ -1644,4 +1681,7 @@ export function resetClassroomForTests(): void {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(CLASSROOM_SESSION_KEY)
   window.localStorage.removeItem(STUDENT_SEAT_KEY)
+  window.localStorage.removeItem(CLASSROOM_BOARD_KEY)
+  lastBoardCloudBeat = 0
+  lastSeatCloudBeat = 0
 }

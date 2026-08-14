@@ -40,3 +40,7 @@ web/public/ort/
 ground-station/classroom-source.json
 
 .env*
+
+# Wrangler local dev state and cache
+.wrangler/
+workers/**/.wrangler/

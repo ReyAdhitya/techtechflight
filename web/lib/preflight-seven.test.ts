@@ -170,3 +170,53 @@ describe('propeller ticks', () => {
     expect(readPreFlightSeven('lesson-1')).toEqual(emptyPreFlightSeven('lesson-1'))
   })
 })
+
+/**
+ * A pre-flight check on a craft that is not in the room.
+ *
+ * The check is a Teacher walking a bench with the aircraft in their hands. In a simulation
+ * there is no bench: "Motion sensor needs recalibrating" on Drone 4 was a job that could not
+ * be done, and every third simulated craft reported no rangefinder, so step 4 could never be
+ * finished on it at all. The simulator says on the Telemetry that it is a simulation, which is
+ * true down a socket as well — the ordinary classroom launch runs it in the ground station.
+ */
+describe('pre-flight on a simulated craft', () => {
+  const simulated = (over: Parameters<typeof aTelemetry>[0] = {}) =>
+    aTelemetry({ ...over, extra: { ...(over.extra ?? {}), simulated: true } })
+
+  it('passes every reading it takes itself, and says why', () => {
+    const readings = evaluatePreFlightSeven(
+      simulated({ fault: { code: 'IMU', description: 'Motion sensor needs recalibrating' } }),
+      true,
+    )
+
+    expect(isPreFlightSevenDone(readings)).toBe(true)
+    expect(readings.find((item) => item.id === 'sensors')?.detail)
+      .toBe('Simulated craft, nothing on a bench to check.')
+  })
+
+  /* Every row stays. Six of seven with the seventh missing sends a Teacher hunting. */
+  it('keeps all seven rows in the same order', () => {
+    const readings = evaluatePreFlightSeven(simulated(), false)
+
+    expect(readings.map((item) => item.id)).toEqual(PRE_FLIGHT_SEVEN_ITEMS.map((i) => i.id))
+  })
+
+  /* Propellers is the Teacher's own eyes, and it is the one the tick-all exists for. */
+  it('still waits for the propeller tick', () => {
+    const readings = evaluatePreFlightSeven(simulated(), false)
+
+    expect(readings.find((item) => item.id === 'propellers')?.status).toBe('pending')
+    expect(isPreFlightSevenDone(readings)).toBe(false)
+  })
+
+  /* A real aircraft with a real fault is still a real fault. */
+  it('changes nothing about a craft that is actually there', () => {
+    const readings = evaluatePreFlightSeven(
+      aTelemetry({ fault: { code: 'IMU', description: 'Motion sensor needs recalibrating' } }),
+      true,
+    )
+
+    expect(readings.find((item) => item.id === 'sensors')?.status).toBe('fail')
+  })
+})

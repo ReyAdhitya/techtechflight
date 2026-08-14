@@ -507,6 +507,14 @@ whichever Lesson it names (2026-08-14):** a board with no Logbook Lesson carries
 finished room's code, so every device typing the code the Teacher read out found a session
 stamped `endedAt`. `carriesOn` checks `endedAt` first.
 
+**A simulated craft stamps `extra.simulated` on its Telemetry, and pre-flight reads it
+(2026-08-14).** The six self-reading items pass on a simulated craft and say
+*Simulated craft, nothing on a bench to check*; **Propellers is still ticked by hand**. Do not
+reach for `demo` on the Fleet view for this: the ordinary classroom launch runs the simulator
+inside the *ground station*, so the browser's own answer is no while the Fleet is entirely
+simulated, and FleetProvider's rule is that no screen branches on `demo` anyway. The simulator
+still raises its faults and Alerts.
+
 **Skip on the warm-up is a side key, not component state (2026-08-14).**
 `techtechflight:warm-up-skipped` holds the Lesson whose minute was skipped
 (`web/lib/warm-up-skip.ts`). It was `useState` on the panel that draws the overlay, so every

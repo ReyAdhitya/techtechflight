@@ -10,6 +10,7 @@ import {
   PRE_FLIGHT_SEVEN_ITEMS,
   propellersTicked,
   readPreFlightSeven,
+  subscribePreFlightSeven,
   togglePropellersTick,
   type PreFlightSevenReading,
   type PreFlightSevenState,
@@ -35,8 +36,14 @@ export function PreFlightSeven({
 }) {
   const [state, setState] = useState<PreFlightSevenState>(() => readPreFlightSeven(lessonId))
 
+  /*
+   * Subscribed, not read once. The tick-all above these panels writes for every craft at
+   * once, and a panel that only read on mount kept saying the propellers were unchecked after
+   * the Teacher had said they were.
+   */
   useEffect(() => {
     setState(readPreFlightSeven(lessonId))
+    return subscribePreFlightSeven(() => setState(readPreFlightSeven(lessonId)))
   }, [lessonId])
 
   const readings = evaluatePreFlightSeven(

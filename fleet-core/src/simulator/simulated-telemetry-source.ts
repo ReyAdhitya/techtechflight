@@ -721,6 +721,20 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
       linkQuality: this.#linkQuality(drone),
 
       extra: {
+        /*
+         * This craft is not on a bench anywhere.
+         *
+         * Said on the Telemetry rather than worked out by a screen, because the ordinary
+         * classroom launch runs the simulator inside the *ground station* and the board talks
+         * to it down a socket: a browser asking itself "am I the demonstration?" answers no
+         * and is wrong. It travels with the reading, so anything that has the reading knows.
+         *
+         * What turns on it today is the pre-flight check, which is a Teacher walking a bench
+         * with the aircraft in front of them. There is no bench and no aircraft here, so
+         * "Motion sensor needs recalibrating" was asking a Teacher to go and fix a Drone that
+         * does not exist. Hardware omits this, so nothing about a real Fleet changes.
+         */
+        simulated: true,
         satellitesVisible: Math.round(6 + this.#random() * 6),
         firmware: '1.4.2',
         /*

@@ -16,17 +16,15 @@ would notice.
   sensor needs recalibrating" on an airframe that does not exist, step 4 unable to complete,
   step 5 locked behind it, and the demonstration stopped before anything flew. Faults now
   happen to a Drone that is flying, which is when they happen in a classroom.
-
-- **The store settled a classroom on a clock, and the browser settled it on `rev`.** Two
-  runtimes disagreeing about one rule puts the seat glitch straight back: a board and a tablet
-  do not share a clock, so a laptop a minute fast was answered 200 while a correct tablet got
-  409 forever and silently. The Worker runs the browser's rule now, seat by seat on `rev`, and
-  refuses nothing.
-- **A simulated fault arrived on the bench and failed the craft's own pre-flight.** "Motion
-  sensor needs recalibrating" on an airframe that does not exist, step 4 unable to complete,
-  step 5 locked behind it, and the demonstration stopped before anything flew. Faults now
-  happen to a Drone that is flying, which is when they happen in a classroom.
-
+- **Pre-flight asked a Teacher to fix Drones that do not exist.** A simulated craft reported
+  *Motion sensor needs recalibrating*, and every third one reported no rangefinder fitted, so
+  step 4 could not be finished on it at any point in the lesson. A pre-flight check is a
+  Teacher walking a bench with the aircraft in their hands, and in a simulation there is no
+  bench. The six readings that take themselves pass on a simulated craft and each says why;
+  Propellers is still ticked by hand, because that is the item a Teacher's own eyes do. The
+  simulator says on the Telemetry that it is a simulation, so this is also true of the ordinary
+  classroom launch, where the Fleet runs inside the ground station and the board is down a
+  socket. Nothing about a real Fleet changes.
 - **Skip on the warm-up lasted until the Teacher looked away.** The full-screen minute over
   the start of a Lesson came back on every visit to step 1 inside that minute, because Skip was
   the state of the panel that draws it rather than a fact about the morning. A rail is made to

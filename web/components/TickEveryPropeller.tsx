@@ -5,6 +5,7 @@ import type { DroneId } from '@techtechflight/contract'
 import {
   propellersTicked,
   readPreFlightSeven,
+  subscribePreFlightSeven,
   tickAllPropellers,
   type PreFlightSevenState,
 } from '@/lib/preflight-seven'
@@ -32,6 +33,7 @@ export function TickEveryPropeller({
 
   useEffect(() => {
     setState(readPreFlightSeven(lessonId))
+    return subscribePreFlightSeven(() => setState(readPreFlightSeven(lessonId)))
   }, [lessonId])
 
   const left = droneIds.filter((droneId) => !propellersTicked(state, droneId))

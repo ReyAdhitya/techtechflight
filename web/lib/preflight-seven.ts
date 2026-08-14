@@ -317,12 +317,58 @@ function obstacleReading(telemetry: Telemetry | null): PreFlightSevenReading {
   )
 }
 
+/**
+ * Whether this reading came from a craft that is not in the room.
+ *
+ * The simulator stamps it on the Telemetry, so it is true whether the Fleet is running in
+ * this browser or inside the ground station down a socket — which is the ordinary classroom
+ * launch, and the case a screen asking "am I the demonstration?" gets wrong.
+ */
+export function isSimulatedCraft(telemetry: Telemetry | null): boolean {
+  return telemetry?.extra?.simulated === true
+}
+
+/**
+ * The six readings on a craft that does not exist.
+ *
+ * A pre-flight check is a Teacher walking a bench with the aircraft in their hands: propellers
+ * spun by finger, a battery seen on a charger. There is no bench in a simulation, so a
+ * simulated Fleet was handing a Teacher jobs that could not be done — *Motion sensor needs
+ * recalibrating* on Drone 4, *Sensor not fitted* on every third craft, forever — and step 4
+ * could never be finished on some craft at all.
+ *
+ * Passing rather than hiding, and each row says why. A row that vanished would leave a
+ * Teacher counting six of seven and hunting the seventh. **Propellers is still ticked by
+ * hand**, because that is the item a Teacher's own eyes do and it is the one the tick-all
+ * exists for.
+ *
+ * Nothing about a real Fleet changes: hardware does not stamp `simulated`, and a fault on an
+ * aircraft that is really there still fails its item and still raises its Alert.
+ */
+const SIMULATED_DETAIL = 'Simulated craft, nothing on a bench to check.'
+
+function simulatedReading(index: number): PreFlightSevenReading {
+  const meta = PRE_FLIGHT_SEVEN_ITEMS[index]!
+  return reading(meta.id, meta.label, meta.manual, 'pass', SIMULATED_DETAIL)
+}
+
 /** Evaluate all seven items for one craft. Order is fixed (DELIBERATE-POSITIONS 1). */
 export function evaluatePreFlightSeven(
   telemetry: Telemetry | null,
   propellersChecked: boolean,
   thresholds: FleetThresholds = DEFAULT_THRESHOLDS,
 ): readonly PreFlightSevenReading[] {
+  if (isSimulatedCraft(telemetry)) {
+    return [
+      simulatedReading(0),
+      propellersReading(propellersChecked),
+      simulatedReading(2),
+      simulatedReading(3),
+      simulatedReading(4),
+      simulatedReading(5),
+      simulatedReading(6),
+    ]
+  }
   return [
     batteryReading(telemetry, thresholds),
     propellersReading(propellersChecked),

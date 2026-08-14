@@ -17,7 +17,7 @@
  * Blob billing. Same normalisation, same last-write-wins, same CORS, same status codes.
  *
  * GET  /?code=XXXX   read the session
- * PUT  /?code=XXXX   write it, last-write-wins on `updatedAt`
+ * PUT  /?code=XXXX   merge it with what is stored, seat by seat, settled on `rev`
  *
  * Public read and write, no secret. The classroom code IS the shared secret, shouted across
  * the room by the Teacher.
@@ -75,29 +75,94 @@ export class Classroom {
       }
 
       /*
-       * Last-write-wins, and the older writer is told rather than silently dropped. A board
-       * and a tablet can both push within the same second.
+       * Merged, seat by seat, and never refused.
+       *
+       * This was last-write-wins on `updatedAt` with a 409 for the loser, and both halves of
+       * that were wrong. A board and a tablet do not share a clock: a laptop a minute fast was
+       * answered 200 while a correct tablet got 409 forever, silently, and the child never
+       * reached the board. And a whole-document write erases the other writer's half even when
+       * it does land, which is how a Student tapped a Drone and bounced back to the picker.
+       *
+       * `mergeClassroomSessions` in `web/lib/classroom-session.ts` is the same rule for the
+       * browser. **The two must agree or the glitch comes straight back**, so this is a
+       * deliberate second copy rather than a summary: the room goes with the higher document
+       * `rev`, seats are settled one at a time on their own `rev`, and a tie goes to the copy
+       * already stored, because the store is where writes are put in an order.
        */
       const prior = await this.state.storage.get('doc')
+      let stored = null
       if (prior !== undefined) {
         try {
-          const before = JSON.parse(prior)
-          if (typeof before.updatedAt === 'number' && before.updatedAt > body.updatedAt) {
-            return json(
-              { error: 'Cloud copy is newer (last-write-wins).', updatedAt: before.updatedAt },
-              409,
-            )
-          }
+          stored = JSON.parse(prior)
         } catch {
           /* replace corrupt */
         }
       }
 
-      await this.state.storage.put('doc', JSON.stringify(body))
-      return json({ ok: true, updatedAt: body.updatedAt })
+      const next = merge(body, stored)
+      await this.state.storage.put('doc', JSON.stringify(next))
+      return json({ ok: true, rev: next.rev ?? 0, seats: (next.seats ?? []).length })
     }
 
     return json({ error: 'Method not allowed' }, 405)
+  }
+}
+
+/** The later of two heartbeats, either of which may never have happened. */
+function laterOf(a, b) {
+  if (a == null) return b ?? null
+  if (b == null) return a
+  return Math.max(a, b)
+}
+
+/**
+ * Two copies of one classroom, merged. The store's half of the rule.
+ *
+ * `incoming` is the device that just wrote; `stored` is what this room already held. Ties go to
+ * `stored`, which is the same choice the browser makes when it hands ties to the store's copy:
+ * somebody has to be the order of record, and it is the thing all the devices are talking to.
+ *
+ * Settled on `rev`, never on `updatedAt`. Two devices do not share a clock, and a classroom
+ * that believed one was ninety seconds of a lost lesson.
+ */
+function merge(incoming, stored) {
+  if (stored === null || stored === undefined) return incoming
+  if (incoming.code !== stored.code) return incoming
+
+  const room = (incoming.rev ?? 0) > (stored.rev ?? 0) ? incoming : stored
+  const freed = new Set([
+    ...(incoming.removedSeatIds ?? []),
+    ...(stored.removedSeatIds ?? []),
+  ])
+
+  const seats = []
+  const ids = new Set([
+    ...(incoming.seats ?? []).map((seat) => seat.studentId),
+    ...(stored.seats ?? []).map((seat) => seat.studentId),
+  ])
+  for (const studentId of ids) {
+    if (freed.has(studentId)) continue
+    const theirs = (incoming.seats ?? []).find((seat) => seat.studentId === studentId) ?? null
+    const ours = (stored.seats ?? []).find((seat) => seat.studentId === studentId) ?? null
+    if (theirs === null) {
+      seats.push(ours)
+      continue
+    }
+    if (ours === null) {
+      seats.push(theirs)
+      continue
+    }
+    const winner = (theirs.rev ?? 0) > (ours.rev ?? 0) ? theirs : ours
+    seats.push({ ...winner, seenAt: laterOf(theirs.seenAt, ours.seenAt) })
+  }
+
+  return {
+    ...room,
+    seats: seats.sort((a, b) => a.joinedAt - b.joinedAt),
+    removedSeatIds: [...freed],
+    rev: Math.max(incoming.rev ?? 0, stored.rev ?? 0),
+    updatedAt: Math.max(incoming.updatedAt ?? 0, stored.updatedAt ?? 0),
+    boardSeenAt: laterOf(incoming.boardSeenAt, stored.boardSeenAt),
   }
 }
 

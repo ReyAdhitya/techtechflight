@@ -16,6 +16,7 @@ import {
   markSeatFlown,
   mintClassroomCode,
   normalizeClassroomCode,
+  mergeClassroomSessions,
   openClassroom,
   readClassroomSession,
   requestTakeoff,
@@ -790,5 +791,105 @@ describe('whether a child may leave a classroom', () => {
   it('lets a child out when the board has gone quiet, whatever it last said', () => {
     expect(mayLeaveClassroom({ airborne: true, boardQuiet: true })).toBe(true)
     expect(mayLeaveClassroom({ airborne: false, boardQuiet: true })).toBe(true)
+  })
+})
+
+/**
+ * One bug with two faces: the seat that is written and never read back.
+ *
+ * A Student taps a Drone and the screen bounces straight back to the Drone picker. The
+ * Teacher's board says "Nobody is waiting" about the same child. Both are the same lost
+ * update: one document, two kinds of writer, and whole-document last-write-wins between them.
+ *
+ * The board owns the lesson and beats a heartbeat into the document every ten seconds; each
+ * tablet owns one seat. The tablet's write was refused by the store as stale, and the board's
+ * poll could not see a seat that did reach it, because the poll asked "is the remote newer
+ * than mine" and the heartbeat guaranteed it never was.
+ */
+describe('one bug with two faces', () => {
+  const room = (over: Partial<ClassroomSession> = {}): ClassroomSession => ({
+    ...openClassroom({
+      lessonId: 'L-1',
+      lessonLabel: 'Year 8',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [
+        { droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 },
+        { droneId: 'ttf-0002', droneName: 'Drone 2', number: 2 },
+      ],
+    }),
+    ...over,
+  })
+
+  const seat = (over: Partial<ClassroomSeat> & { studentId: string }): ClassroomSeat => ({
+    name: over.studentId,
+    droneId: null,
+    droneName: null,
+    phase: 'briefing',
+    takeoffRequestedAt: null,
+    clearedAt: null,
+    heldAt: null,
+    flownAt: null,
+    reachedCheckpointIds: [],
+    approvedAt: null,
+    score: null,
+    joinedAt: 1_000,
+    seenAt: 1_000,
+    ...over,
+  })
+
+  /* The Teacher's face of it: the board must see a child it has never heard of. */
+  it('keeps a seat the newer copy has never heard of', () => {
+    const tablet = room({ updatedAt: 1_100, seats: [seat({ studentId: 'stu-kntl' })] })
+    const boardHeartbeat = room({ updatedAt: 1_200, seats: [] })
+
+    const merged = mergeClassroomSessions(boardHeartbeat, tablet)
+
+    expect(merged.seats.map((row) => row.studentId)).toEqual(['stu-kntl'])
+  })
+
+  /*
+   * The Student's face of it: a tablet that has just taken Drone 1 must not be handed a copy
+   * that has it back on the picker. This is the bounce, exactly.
+   */
+  it('does not take a Drone back off a child who has just tapped it', () => {
+    const tookADrone = room({
+      updatedAt: 1_100,
+      seats: [
+        seat({ studentId: 'stu-kntl', droneId: 'ttf-0001', droneName: 'Drone 1', seenAt: 1_100 }),
+      ],
+    })
+    const boardCopy = room({
+      updatedAt: 1_300,
+      seats: [seat({ studentId: 'stu-kntl', droneId: null, seenAt: 1_000 })],
+    })
+
+    const merged = mergeClassroomSessions(boardCopy, tookADrone)
+
+    expect(merged.seats[0]?.droneId).toBe('ttf-0001')
+  })
+
+  it('takes the lesson from the newer copy while keeping both seats', () => {
+    const tablet = room({ updatedAt: 1_100, seats: [seat({ studentId: 'stu-kntl' })] })
+    const board = room({
+      updatedAt: 1_200,
+      objective: 'the new objective',
+      seats: [seat({ studentId: 'stu-sam', joinedAt: 1_150, seenAt: 1_150 })],
+    })
+
+    const merged = mergeClassroomSessions(board, tablet)
+
+    expect(merged.objective).toBe('the new objective')
+    expect(merged.seats.map((row) => row.studentId)).toEqual(['stu-kntl', 'stu-sam'])
+  })
+
+  it('is stable when both copies already agree', () => {
+    const one = room({ updatedAt: 1_500, seats: [seat({ studentId: 'stu-kntl' })] })
+
+    expect(mergeClassroomSessions(one, one).seats).toHaveLength(1)
   })
 })

@@ -1157,6 +1157,66 @@ function broadcastClassroom(session: ClassroomSession): void {
   }
 }
 
+/** How fresh one seat's row is. `seenAt` is its heartbeat; `joinedAt` is when it appeared. */
+function seatFreshness(seat: ClassroomSeat): number {
+  return Math.max(seat.seenAt ?? 0, seat.joinedAt)
+}
+
+/**
+ * Two copies of one classroom, merged. The mirror of the merge the Worker does on write.
+ *
+ * One document, two kinds of writer: the board owns the lesson and beats a heartbeat into it
+ * every ten seconds, and each tablet owns one seat. Both hold the whole document, so taking
+ * either whole erases the other's news — and the board, writing on a timer, is nearly always
+ * the last writer.
+ *
+ * That is the glitch, seen from the Teacher's end. A child joined, took a Drone, and the board
+ * went on reading "Nobody is waiting", because the poll below asked *is the remote copy newer
+ * than mine* and the board's own heartbeat had just made the answer no. The tablet's end of the
+ * same bug is in `classroom-worker/worker.js`.
+ *
+ * So the document clock decides the lesson and the seats are unioned, each taken from whichever
+ * copy has the fresher row. A seat leaves only when the board rewrites the roll, which is a
+ * decision rather than a race.
+ */
+export function mergeClassroomSessions(
+  local: ClassroomSession,
+  remote: ClassroomSession,
+): ClassroomSession {
+  const newer = local.updatedAt >= remote.updatedAt ? local : remote
+  const older = newer === local ? remote : local
+
+  const seats = new Map<string, ClassroomSeat>()
+  for (const seat of [...older.seats, ...newer.seats]) {
+    const held = seats.get(seat.studentId)
+    if (held === undefined || seatFreshness(seat) >= seatFreshness(held)) {
+      seats.set(seat.studentId, seat)
+    }
+  }
+
+  return {
+    ...newer,
+    seats: [...seats.values()].sort((a, b) => a.joinedAt - b.joinedAt),
+    updatedAt: Math.max(local.updatedAt, remote.updatedAt),
+  }
+}
+
+/** Whether two copies say the same thing about who is in the room and when it last changed. */
+function sameClassroom(a: ClassroomSession, b: ClassroomSession): boolean {
+  if (a.updatedAt !== b.updatedAt) return false
+  if (a.seats.length !== b.seats.length) return false
+  return a.seats.every((seat, index) => {
+    const other = b.seats[index]
+    return (
+      other !== undefined &&
+      other.studentId === seat.studentId &&
+      other.droneId === seat.droneId &&
+      other.phase === seat.phase &&
+      seatFreshness(other) === seatFreshness(seat)
+    )
+  })
+}
+
 export function subscribeClassroom(
   onChange: (session: ClassroomSession | null) => void,
 ): () => void {
@@ -1187,14 +1247,31 @@ export function subscribeClassroom(
     void pullClassroomFromCloud().then((remote) => {
       if (!remote) return
       const local = readClassroomSession()
-      if (!local || remote.updatedAt > local.updatedAt) {
+      if (!local) {
         try {
           window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(remote))
         } catch {
           /* ignore */
         }
         onChange(remote)
+        return
       }
+      /*
+       * Merged, not compared. This accepted the remote copy only when its `updatedAt` was
+       * newer, which the board's own ten-second heartbeat guaranteed it never was: a child
+       * could join, take a Drone, be in the store, and be invisible on the Teacher's board
+       * indefinitely. The tablet suffered the same rule in reverse — a remote copy that *was*
+       * newer replaced its seat wholesale and bounced the child back to the Drone picker.
+       */
+      if (local.code !== remote.code) return
+      const merged = mergeClassroomSessions(local, remote)
+      if (sameClassroom(merged, local)) return
+      try {
+        window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(merged))
+      } catch {
+        /* ignore */
+      }
+      onChange(merged)
     })
   }, 2_500)
 

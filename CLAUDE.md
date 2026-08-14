@@ -428,6 +428,20 @@ takes the seat a child took on their tablet, then the Logbook assignment. Both t
 queue and the rail's count of it read that one function; two rules for who counts as a
 Student is two numbers disagreeing in front of a class.
 
+**The classroom document is merged a seat at a time, and the counts are what settle it
+(2026-08-14).** One JSON blob is written by the board and every tablet, and pushing it whole
+meant the last writer erased everything the others had written since: a child tapped a Drone
+and bounced back to the picker, and the board went on reading *Nobody is waiting*. One bug,
+two faces. `mergeClassroomSessions` unions the seats and settles each by `ClassroomSeat.rev`,
+a count of writes; the room goes with the higher document `rev`; **ties go to the store's
+copy**, because the store is where writes are ordered and that is what makes two devices
+converge. **Never settle any of this on `updatedAt`** — a board and a tablet do not share a
+clock, and a laptop a minute fast was answered 200 while a correct tablet was answered 409
+forever, silently. Heartbeats deliberately do not bump a count (they would make it meaningless
+by break and restore the write storm); they merge as the later of the two. A freed seat is
+named in `removedSeatIds` or the merge hands it straight back. The merge belongs in the Worker
+and is not there because deploying it needs a token; see `docs/DECISIONS.md`.
+
 **Both sides of the classroom session beat every ten seconds** (`touchBoard`, `touchSeat`,
 `QUIET_AFTER_MS`). Both re-read the session at the moment they beat rather than using the one
 React handed them: they fire on a timer and the other side writes the same document. A seat

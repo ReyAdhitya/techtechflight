@@ -7,6 +7,24 @@ would notice.
 
 ### Fixed
 
+- **A child tapped a Drone and the screen bounced back to the Drone picker, and the same bug
+  kept them off the Teacher's board.** One classroom document was pushed and pulled whole by
+  every device in the room, so whoever wrote last erased everything the others had written
+  since: the tablet's tap was overwritten by the board's copy of the seats a second later, and
+  the board never saw the child because a tablet's document was hardly ever the later one. Two
+  faces, one cause. Copies are merged a seat at a time now, settled by a count of writes rather
+  than by a clock, because a board and a tablet do not share a clock. A Teacher granting a
+  takeoff and a child taking a Drone in the same second both survive.
+- **A tablet whose clock ran behind the board's could not write to the classroom store at
+  all.** The store answers 409 to a document older than the one it holds, and that answer was
+  the end of it: a child could join, take a Drone and ask to take off while appearing on no
+  screen but their own, with nothing anywhere saying so. Checked against the live store, where
+  a board one minute fast silenced a correct tablet permanently. A 409 is treated as news
+  now — pull, merge, send once more.
+- **A Teacher saving anything could delete a child who had just joined.** Every writer starts
+  from the session it was handed, and a screen drawn before the child at the back typed their
+  name still held a seat list without them. A write keeps seats it has never heard of; Free
+  stays the one way a row leaves the board.
 - **A new class inherited the finished class's code, and every tablet read a room that was
   over.** A board with no Logbook Lesson started carries `lessonId: null`, and `openClassroom`
   decided whether to keep the old code by comparing that id with the last one: `null === null`

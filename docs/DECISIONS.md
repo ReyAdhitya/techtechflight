@@ -9,6 +9,31 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · The classroom document is merged, not swapped.
+
+- **Counts of writes, not the clock.** Every other option was some form of trusting a
+  timestamp, and there is no shared clock in this room: a laptop three minutes fast would win
+  every argument it took part in, which is exactly how a tablet came to be unable to write to
+  the store at all. A count per seat and a count for the room are exact, cost two numbers, and
+  say what actually happened, which is that somebody wrote.
+- **Ties go to the store's copy.** Two devices that each keep their own version never agree.
+  The store is the one place writes are put in an order, so agreeing to take its answer is what
+  makes two devices converge rather than push at each other all lesson.
+- **The merge is on the devices, not in the Worker.** The Worker would be the better place for
+  it and it is written down here as the debt it is: one merge, server side, would settle every
+  device at once. It is not there because deploying it needs a Cloudflare token nobody in this
+  session holds, and a fix that cannot be deployed is not a fix. The client merge works against
+  the Worker exactly as it is deployed today, which was checked against the live store rather
+  than assumed.
+- **A freed seat is named, not just dropped.** A merge that unions two lists can only ever add,
+  so Free needed somewhere to say a seat had gone. `removedSeatIds` travels with the document
+  and a child taking their seat again takes their id off it, which keeps Free meaning "this
+  child is not here" rather than "this child may not fly today".
+- **Heartbeats do not count as writes.** Both sides beat every ten seconds, so counting them
+  would have made the counts meaningless by break and pushed a document nobody had edited back
+  to the store every two and a half seconds. That write rate is what emptied the last store's
+  allowance in ninety minutes. They merge as the later of the two instead.
+
 ## 2026-08-14 · A classroom that has ended never carries on.
 
 - **`endedAt`, not the Lesson id, is what decides a room is over.** Two other fixes were on

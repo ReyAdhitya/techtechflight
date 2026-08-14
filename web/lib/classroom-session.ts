@@ -79,6 +79,23 @@ export interface ClassroomSeat {
    * quiet is the case worth saying out loud.
    */
   readonly seenAt?: number | null
+  /**
+   * How many times this seat has been written, by anybody.
+   *
+   * The classroom document is one JSON blob that a board and several tablets all write, and
+   * whole-document last-write-wins loses whichever change did not go last: a child tapped a
+   * Drone, the board pushed its own copy of the seats a second later, and the tap was gone.
+   * The tablet then pulled that copy back and bounced to the Drone picker, and the Teacher's
+   * board never saw the child at all. One cause, both symptoms.
+   *
+   * So the merge happens a seat at a time, and this counts the writes rather than the clock:
+   * two devices in one classroom do not share a clock, and a laptop three minutes fast would
+   * otherwise win every argument it took part in. Higher wins; equal means the store's copy
+   * wins, because the store is the one place every device's writes are put in an order.
+   *
+   * Absent on a session written before this existed, which reads as zero.
+   */
+  readonly rev?: number
 }
 
 /** Names the Student tablet can pick without reading the Teacher's Logbook. */
@@ -250,6 +267,11 @@ export function takeDroneSeat(
 
   return writeClassroomSession({
     ...session,
+    // Named as gone as well as dropped, or the seat comes back: a row this device removes is
+    // still on every other copy of the document until they are told it went.
+    removedSeatIds: reclaiming
+      ? [...(session.removedSeatIds ?? []), held.studentId]
+      : (session.removedSeatIds ?? []),
     seats: session.seats
       // Reclaiming: the old seat was this child on a device that died. Dropping it rather
       // than leaving a nameless twin is what makes the row on the Teacher's board read as
@@ -357,6 +379,12 @@ export function freeDroneSeat(session: ClassroomSession, droneId: DroneId): Clas
   return writeClassroomSession({
     ...session,
     seats: session.seats.filter((seat) => seat.studentId !== held.studentId),
+    /*
+     * Named as freed, or the merge puts it straight back. Seats are unioned across two copies
+     * of the document, so a row this device has dropped is a row the tablet's copy still has,
+     * and the next poll would hand the Teacher back the seat they just cleared.
+     */
+    removedSeatIds: [...(session.removedSeatIds ?? []), held.studentId],
   })
 }
 
@@ -429,6 +457,23 @@ export interface ClassroomSession {
    * nothing could ever have said so.
    */
   readonly endedAt?: number | null
+  /**
+   * How many times the room itself has been written. The document's half of {@link
+   * ClassroomSeat.rev}, and it decides everything that is not a seat: the Scenario, the rules,
+   * the zones, the craft, the clock. The board writes all of those and a tablet writes none of
+   * them, so this is nearly always the board's own count.
+   */
+  readonly rev?: number
+  /**
+   * Seats the Teacher has freed, by id.
+   *
+   * A merge that unions two lists of seats can only ever add, so without this a Teacher
+   * pressing Free would watch the seat come straight back from a tablet's copy on the next
+   * poll. Named rather than counted, because the tablet is allowed to rejoin: a child taking
+   * their seat again takes its id off this list, which is what makes Free "the child is not
+   * here" rather than "this child may never fly".
+   */
+  readonly removedSeatIds?: readonly string[]
 }
 
 export interface StudentSeatLocal {
@@ -462,6 +507,8 @@ function emptySession(code: string, now: number): ClassroomSession {
     live: false,
     boardSeenAt: null,
     endedAt: null,
+    rev: 0,
+    removedSeatIds: [],
   }
 }
 
@@ -626,13 +673,213 @@ export function readClassroomSession(): ClassroomSession | null {
 function withSeatDefaults(session: ClassroomSession): ClassroomSession {
   return {
     ...session,
-    seats: session.seats.map((seat) => ({
+    rev: session.rev ?? 0,
+    removedSeatIds: session.removedSeatIds ?? [],
+    seats: (session.seats ?? []).map((seat) => ({
       ...seat,
       reachedCheckpointIds: seat.reachedCheckpointIds ?? [],
       approvedAt: seat.approvedAt ?? null,
       seenAt: seat.seenAt ?? null,
+      rev: seat.rev ?? 0,
     })),
   }
+}
+
+/**
+ * Stamp a write with what changed in it, so a merge can tell two copies apart.
+ *
+ * The clock is not usable for this. A classroom is a board and several tablets, none of which
+ * share a clock, and the document is written by all of them: the last-write-wins the store
+ * does on `updatedAt` therefore hands the argument to whichever device is set fastest, not to
+ * whoever knew most. Counting writes instead is exact, and it is per seat, so a board saving
+ * the Scenario cannot undo a child taking a Drone in the same second.
+ *
+ * `seenAt` is deliberately not a change. It is the heartbeat, it fires every ten seconds on
+ * both sides, and a beat that bumped the count would make the count meaningless within a
+ * minute. It merges as the later of the two instead.
+ *
+ * `updatedAt` climbs past whatever this device has already seen rather than simply reading
+ * the clock, because a tablet a minute slow than the board would otherwise write a document
+ * the store answers 409 to, forever, and the child would never appear on the board.
+ */
+function stampRevisions(
+  prior: ClassroomSession | null,
+  session: ClassroomSession,
+  now = Date.now(),
+): ClassroomSession {
+  const priorSeat = (studentId: string) =>
+    prior?.seats.find((row) => row.studentId === studentId) ?? null
+  const highestRoom = Math.max(session.rev ?? 0, prior?.rev ?? 0)
+  const roomChanged = prior === null || roomContent(prior) !== roomContent(session)
+
+  /*
+   * A seat this write has never heard of is kept, not dropped.
+   *
+   * Every writer starts from the session it was handed, and a Teacher's screen can be holding
+   * one from before the child at the back joined: saving a Scenario would then delete them.
+   * Only a seat the write names as freed goes, which is what makes Free the one way a row
+   * leaves the board. Not across a code, because a new classroom starts with nobody in it.
+   */
+  const freed = new Set(session.removedSeatIds ?? [])
+  const carriedOver =
+    prior === null || prior.code !== session.code
+      ? []
+      : prior.seats.filter(
+          (seat) =>
+            !freed.has(seat.studentId) &&
+            !session.seats.some((row) => row.studentId === seat.studentId),
+        )
+
+  return {
+    ...session,
+    updatedAt: Math.max(now, (session.updatedAt ?? 0) + 1, (prior?.updatedAt ?? 0) + 1),
+    rev: roomChanged ? highestRoom + 1 : highestRoom,
+    seats: [...session.seats, ...carriedOver]
+      .map((seat) => {
+        const before = priorSeat(seat.studentId)
+        const highest = Math.max(seat.rev ?? 0, before?.rev ?? 0)
+        const changed = before === null || seatContent(before) !== seatContent(seat)
+        return { ...seat, rev: changed ? highest + 1 : highest }
+      })
+      .sort((a, b) => a.joinedAt - b.joinedAt),
+  }
+}
+
+/** Everything about a seat except how many times it has been written and when it last beat. */
+function seatContent(seat: ClassroomSeat): string {
+  const { rev: _rev, seenAt: _seenAt, ...rest } = seat
+  return JSON.stringify(rest)
+}
+
+/**
+ * The room without the people in it, and without either heartbeat.
+ *
+ * A beat is not a change to the room. Both sides beat every ten seconds all lesson, so a
+ * count that rose with them would say the room had been rewritten three hundred times by
+ * break, and every poll would push a document nobody had edited back to the store. That is
+ * the write rate that emptied the last store's allowance in ninety minutes.
+ */
+function roomContent(session: ClassroomSession): string {
+  const {
+    seats: _seats,
+    updatedAt: _updatedAt,
+    rev: _rev,
+    boardSeenAt: _boardSeenAt,
+    ...rest
+  } = session
+  return JSON.stringify(rest)
+}
+
+/**
+ * Two copies of one classroom, reconciled into the copy that knows most.
+ *
+ * Neither side is right about everything, which is why this exists. The board owns the room:
+ * the Scenario, the rules, the zones, the craft, whether the Lesson is over. A tablet owns its
+ * own seat, and learns about everybody else's from whatever it last pulled. Before this, both
+ * pushed the whole document and the later push simply erased the earlier one's half.
+ *
+ * Seats are unioned and settled one at a time by {@link ClassroomSeat.rev}, so a Teacher
+ * granting a takeoff and a child taking a Drone in the same second both survive. The room
+ * itself goes with the higher document `rev`. Equal counts hand it to `theirs`, which on every
+ * caller is the store's copy: the store is where writes are put in an order, so agreeing to
+ * take its answer is what makes two devices converge instead of pushing at each other.
+ */
+export function mergeClassroomSessions(
+  mine: ClassroomSession | null,
+  theirs: ClassroomSession | null,
+): ClassroomSession | null {
+  if (mine === null) return theirs
+  if (theirs === null) return mine
+  // Two different rooms do not merge. A tablet that has moved on holds the room it moved to.
+  if (mine.code !== theirs.code) return mine
+
+  const roomIsMine = (mine.rev ?? 0) > (theirs.rev ?? 0)
+  const room = roomIsMine ? mine : theirs
+  const freed = new Set([...(mine.removedSeatIds ?? []), ...(theirs.removedSeatIds ?? [])])
+
+  const seats: ClassroomSeat[] = []
+  const ids = new Set([
+    ...mine.seats.map((seat) => seat.studentId),
+    ...theirs.seats.map((seat) => seat.studentId),
+  ])
+  for (const studentId of ids) {
+    if (freed.has(studentId)) continue
+    const ours = mine.seats.find((seat) => seat.studentId === studentId) ?? null
+    const theirSeat = theirs.seats.find((seat) => seat.studentId === studentId) ?? null
+    if (ours === null) {
+      seats.push(theirSeat!)
+      continue
+    }
+    if (theirSeat === null) {
+      seats.push(ours)
+      continue
+    }
+    const winner = (ours.rev ?? 0) > (theirSeat.rev ?? 0) ? ours : theirSeat
+    seats.push({ ...winner, seenAt: laterOf(ours.seenAt, theirSeat.seenAt) })
+  }
+
+  return {
+    ...room,
+    seats: seats.sort((a, b) => a.joinedAt - b.joinedAt),
+    removedSeatIds: [...freed],
+    // The room's own count, kept above both, so the merged copy reads as the newer one.
+    rev: Math.max(mine.rev ?? 0, theirs.rev ?? 0),
+    updatedAt: Math.max(mine.updatedAt, theirs.updatedAt),
+    /*
+     * The board's beat is the later of the two, whichever copy of the room won. It is how a
+     * tablet knows the board is still there, and losing it with the room would make a board
+     * that is plainly alive read as quiet on the screen beside it.
+     */
+    boardSeenAt: laterOf(mine.boardSeenAt, theirs.boardSeenAt),
+  }
+}
+
+/** The later of two heartbeats, either of which may never have happened. */
+function laterOf(a: number | null | undefined, b: number | null | undefined): number | null {
+  if (a == null) return b ?? null
+  if (b == null) return a
+  return Math.max(a, b)
+}
+
+/**
+ * Whether one copy holds a write the other has not seen.
+ *
+ * By the counts rather than by the contents, because that is what the counts are for: two
+ * copies at the same revision everywhere are the same document, whatever order their keys
+ * came out of the store in.
+ */
+export function classroomsDiffer(a: ClassroomSession | null, b: ClassroomSession | null): boolean {
+  if (a === null || b === null) return a !== b
+  if ((a.rev ?? 0) !== (b.rev ?? 0)) return true
+  /*
+   * The heartbeats count here and nowhere else. They are the whole of how each side knows the
+   * other has not gone quiet, so a poll that learned a newer beat and did not save it would
+   * leave a board that is plainly there reading as silent on a tablet across the room. They
+   * are still not worth a write to the store, which is what the seats-only question is for.
+   */
+  if ((a.boardSeenAt ?? 0) !== (b.boardSeenAt ?? 0)) return true
+  const beatsDiffer = a.seats.some((seat) => {
+    const other = b.seats.find((row) => row.studentId === seat.studentId)
+    return other !== undefined && (seat.seenAt ?? 0) !== (other.seenAt ?? 0)
+  })
+  return beatsDiffer || classroomSeatsDiffer(a, b)
+}
+
+/**
+ * The same question about the people only.
+ *
+ * What decides whether a merge is worth sending back to the store. The room is not asked
+ * about, because the board pushes its own room changes when it makes them and a poll that
+ * pushed on the room as well would send a document back every two and a half seconds for as
+ * long as a Teacher had the board open.
+ */
+export function classroomSeatsDiffer(a: ClassroomSession, b: ClassroomSession): boolean {
+  if (a.seats.length !== b.seats.length) return true
+  if ((a.removedSeatIds ?? []).length !== (b.removedSeatIds ?? []).length) return true
+  return a.seats.some((seat) => {
+    const other = b.seats.find((row) => row.studentId === seat.studentId)
+    return other === undefined || (seat.rev ?? 0) !== (other.rev ?? 0)
+  })
 }
 
 export function writeClassroomSession(
@@ -644,7 +891,7 @@ export function writeClassroomSession(
   options: { readonly cloud?: boolean } = {},
 ): ClassroomSession {
   if (typeof window === 'undefined') return session
-  const next = { ...session, updatedAt: Date.now() }
+  const next = stampRevisions(readClassroomSession(), session)
   try {
     window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(next))
     broadcastClassroom(next)
@@ -865,7 +1112,11 @@ export function joinClassroomAsStudent(
   if (existing) {
     const seat = { ...existing, name: trimmed }
     const seats = session.seats.map((row) => (row.studentId === seat.studentId ? seat : row))
-    const next = writeClassroomSession({ ...session, seats })
+    const next = writeClassroomSession({
+      ...session,
+      seats,
+      removedSeatIds: (session.removedSeatIds ?? []).filter((id) => id !== seat.studentId),
+    })
     writeStudentSeatLocal({ code: session.code, studentId: seat.studentId, name: trimmed })
     return { session: next, seat }
   }
@@ -893,7 +1144,17 @@ export function joinClassroomAsStudent(
    * onto the next free craft was tried here and is exactly the mistap the join flow exists to
    * prevent: a child who is handed Drone 4 by the software goes and picks up Drone 4.
    */
-  const next = writeClassroomSession({ ...session, seats: [...session.seats, seat] })
+  const next = writeClassroomSession({
+    ...session,
+    seats: [...session.seats, seat],
+    /*
+     * A child the Teacher freed may come back. Free means "this child is not here", and the
+     * tablet answering for itself is the best evidence there is that they are, so taking the
+     * seat again takes its id off the freed list rather than being quietly dropped by the
+     * merge on the next poll.
+     */
+    removedSeatIds: (session.removedSeatIds ?? []).filter((id) => id !== seat.studentId),
+  })
   writeStudentSeatLocal({ code: session.code, studentId: seat.studentId, name: trimmed })
   return { session: next, seat }
 }
@@ -1183,18 +1444,35 @@ export function subscribeClassroom(
     }
   }
 
+  /*
+   * The store's copy is merged in, not swapped in.
+   *
+   * This used to take the remote document whole whenever its `updatedAt` was the later of the
+   * two, and drop everything this device had written since. On the tablet that was the glitch:
+   * a child tapped Drone 3, the seat was written, the next poll pulled the board's copy of the
+   * seats a heartbeat later, and the screen bounced back to the Drone picker. On the board it
+   * was the other face of it, a Student who joined as "kntl" leaving the board still reading
+   * "Nobody is waiting", because the board's own frequent writes meant a tablet's document was
+   * hardly ever the later one.
+   *
+   * A merge that learned something the store does not hold is pushed straight back, which is
+   * what carries a seat the last few metres to the Teacher's board.
+   */
   const poll = window.setInterval(() => {
     void pullClassroomFromCloud().then((remote) => {
       if (!remote) return
       const local = readClassroomSession()
-      if (!local || remote.updatedAt > local.updatedAt) {
+      const merged = mergeClassroomSessions(local, remote)
+      if (merged === null) return
+      if (classroomsDiffer(merged, local)) {
         try {
-          window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(remote))
+          window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(merged))
         } catch {
           /* ignore */
         }
-        onChange(remote)
+        onChange(merged)
       }
+      if (classroomSeatsDiffer(merged, remote)) scheduleClassroomCloudPush(merged)
     })
   }, 2_500)
 
@@ -1265,9 +1543,23 @@ export function scheduleClassroomCloudPush(session: ClassroomSession): void {
   }, 800)
 }
 
+/**
+ * Send this device's copy to the store, and reconcile if the store says it is behind.
+ *
+ * The store answers 409 to a document whose `updatedAt` is older than the one it holds, and
+ * that answer used to be the end of it: a tablet whose clock ran a minute behind the board's
+ * could never write at all, so a child could join, take a Drone, ask to take off, and appear
+ * on nobody's screen but their own. Nothing said so. Both sides looked like they were working.
+ *
+ * A 409 is not a failure, it is news: somebody wrote while this write was in flight. Pull what
+ * they wrote, merge it under the same rules the poll uses, and send the result once. Once and
+ * not in a loop, because the next poll is two and a half seconds away and a retry storm on a
+ * classroom store is how the last allowance went.
+ */
 export async function pushClassroomToCloud(
   session: ClassroomSession,
   fetchImpl: typeof fetch = fetch,
+  retry = true,
 ): Promise<'ok' | 'skipped' | 'error'> {
   try {
     const response = await fetchImpl(classroomApiUrl(session.code), {
@@ -1276,6 +1568,24 @@ export async function pushClassroomToCloud(
       body: JSON.stringify(session),
     })
     if (response.status === 503 || response.status === 404) return 'skipped'
+    if (response.status === 409 && retry) {
+      const remote = await pullClassroomFromCloud(session.code, fetchImpl)
+      const merged = mergeClassroomSessions(session, remote)
+      if (merged === null) return 'error'
+      const ahead = {
+        ...merged,
+        updatedAt: Math.max(merged.updatedAt, remote?.updatedAt ?? 0) + 1,
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(ahead))
+          broadcastClassroom(ahead)
+        } catch {
+          /* ignore */
+        }
+      }
+      return pushClassroomToCloud(ahead, fetchImpl, false)
+    }
     return response.ok ? 'ok' : 'error'
   } catch {
     return 'skipped'
@@ -1294,7 +1604,9 @@ export async function pullClassroomFromCloud(
     if (!response.ok) return null
     const body = (await response.json()) as ClassroomSession
     if (!body || typeof body.code !== 'string') return null
-    return body
+    // Through the same defaults a local read gets: a room opened before revisions existed is
+    // the ordinary case for a day or two, and a merge cannot compare counts that are absent.
+    return withSeatDefaults(body)
   } catch {
     return null
   }

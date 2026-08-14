@@ -22,6 +22,7 @@ import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { BeforeAfterScores } from './BeforeAfterScores'
 import { LessonWarmUp } from './LessonWarmUp'
+import { skipWarmUp, warmUpSkipped } from '@/lib/warm-up-skip'
 import { readyBoardLabel, readyBoardSummary } from './walls/ready-mapping'
 import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
@@ -260,13 +261,26 @@ function LessonUnderWay({
    * first one left it rather than starting the minute again.
    */
   const remaining = WARM_UP_SECONDS - Math.floor(Math.max(0, now - lesson.startedAt) / 1000)
+  /*
+   * Skip is remembered for the Lesson, not for this mounting of this panel.
+   *
+   * It was `useState(false)`, so walking up the rail and back inside the first minute drew the
+   * full-screen minute over the Teacher again, and again. A rail is made to be walked.
+   */
   const [skipped, setSkipped] = useState(false)
+  useEffect(() => setSkipped(warmUpSkipped(lesson.id)), [lesson.id])
   const warming = !skipped && remaining > 0
 
   return (
     <section className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5">
       {warming ? (
-        <LessonWarmUp seconds={remaining} onDone={() => setSkipped(true)} />
+        <LessonWarmUp
+          seconds={remaining}
+          onDone={() => {
+            skipWarmUp(lesson.id)
+            setSkipped(true)
+          }}
+        />
       ) : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>

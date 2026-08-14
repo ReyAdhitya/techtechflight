@@ -71,7 +71,15 @@ describe('nothing leaves the ground on its own', () => {
     expect(seen.every((o) => o.telemetry.altitudeM === 0)).toBe(true)
   })
 
-  it('still lets the world misbehave in the ways that are not flying', () => {
+  /*
+   * A fault arrives in the air, never on the bench.
+   *
+   * Pre-flight reads Sensors and Altitude hold straight off `fault`, so a craft that faulted
+   * while sitting on a table failed its own pre-flight check: "Motion sensor needs
+   * recalibrating" on an airframe that does not exist, step 4 unable to complete, step 5
+   * locked behind it, and the demonstration stopped before anything flew.
+   */
+  it('raises a fault on a Drone that is flying', () => {
     const wandering = new SimulatedTelemetrySource({
       registrations: CLASSROOM_FLEET,
       clock,
@@ -83,10 +91,31 @@ describe('nothing leaves the ground on its own', () => {
     const seen: TelemetryObservation[] = []
     wandering.onObservation((observation) => seen.push(observation))
     wandering.connect()
+    wandering.flyRoute(DRONE, [{ eastM: 3, northM: 2 }])
 
-    tick(2)
+    tick(4)
 
     expect(seen.some((o) => o.telemetry.fault !== null)).toBe(true)
+  })
+
+  it('leaves a Drone on the bench alone, so it can pass its own pre-flight', () => {
+    const wandering = new SimulatedTelemetrySource({
+      registrations: CLASSROOM_FLEET,
+      clock,
+      reportIntervalMs: REPORT_INTERVAL,
+      random: () => 0.003,
+      spontaneous: true,
+    })
+    const seen: TelemetryObservation[] = []
+    wandering.onObservation((observation) => seen.push(observation))
+    wandering.connect()
+
+    tick(4)
+
+    expect(seen.length).toBeGreaterThan(0)
+    expect(seen.every((o) => o.telemetry.fault === null)).toBe(true)
+    /* Altitude hold reads off the same fault, and it is the other half a Teacher sees. */
+    expect(seen.every((o) => o.telemetry.extra?.altitudeHold === true)).toBe(true)
   })
 })
 

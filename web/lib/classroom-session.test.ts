@@ -33,6 +33,7 @@ import {
   studentOnDrone,
   CLASSROOM_SESSION_KEY,
   takeDroneSeat,
+  changeClassroom,
   writeClassroomSession,
   pushClassroomToCloud,
   mergeClassroomSessions,
@@ -667,10 +668,17 @@ describe('leaving a classroom', () => {
     expect(await loadClassroomByCode(code)).toBeNull()
   })
 
-  /* There was no `leaveClassroom` anywhere. Once joined, joined forever. */
+  /*
+   * There was no `leaveClassroom` anywhere. Once joined, joined forever.
+   *
+   * A tablet, which is what this is about: the room goes with the seat, so the iPad is back at
+   * the code screen and stays there across a reload. The laptop running the board is the one
+   * exception and it is pinned under "two tabs on one laptop".
+   */
   it('forgets the seat and the session on this device only', () => {
     joinClassroomAsStudent(openFor('lesson-1'), 'Amira', 1_000, 'stu-amira')
     expect(window.localStorage.getItem(STUDENT_SEAT_KEY)).not.toBeNull()
+    window.localStorage.removeItem('techtechflight:classroom-board')
 
     leaveClassroom()
 
@@ -993,5 +1001,58 @@ describe('a write that has to survive the other device', () => {
     expect(second.seats.map((seat) => seat.name)).toEqual(['Amira'])
     expect(second.objective).toBe('Written by the board')
     expect(second.updatedAt).toBeGreaterThan(theirs.updatedAt)
+  })
+})
+
+/**
+ * One laptop, two tabs, one classroom.
+ *
+ * The address decides the role for a tab, so a Teacher can hold `/mission` and `/student` open
+ * at once and see both sides of their own lesson. They share one `localStorage` and therefore
+ * one classroom, which is the point. What they must not share is the power to throw it away:
+ * Leave on the second tab removed the whole document, the board found nothing there and minted
+ * a new code, and the four letters the Teacher had read out to thirty children stopped working.
+ */
+describe('two tabs on one laptop', () => {
+  const openBoard = () =>
+    openClassroom({
+      lessonId: null,
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+    })
+
+  it('keeps the code when a Student tab leaves on the laptop running the board', () => {
+    const first = openBoard().code
+
+    leaveClassroom()
+
+    expect(readClassroomSession()?.code).toBe(first)
+    expect(openBoard().code).toBe(first)
+    // The seat still goes. Leaving is about this child, and it was never about the room.
+    expect(window.localStorage.getItem(STUDENT_SEAT_KEY)).toBeNull()
+  })
+
+  it('keeps the code when a Student tab changes classroom on that same laptop', () => {
+    const first = openBoard().code
+
+    changeClassroom()
+
+    expect(openBoard().code).toBe(first)
+  })
+
+  /* An iPad is not a board. Leaving there is still the way out of a room it joined. */
+  it('still lets a tablet with no board of its own leave the room', () => {
+    const room = openBoard()
+    window.localStorage.removeItem('techtechflight:classroom-board')
+    joinClassroomAsStudent(room, 'Amira', 1_000, 'stu-amira')
+
+    leaveClassroom()
+
+    expect(readClassroomSession()).toBeNull()
   })
 })

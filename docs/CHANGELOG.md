@@ -7,6 +7,13 @@ would notice.
 
 ### Fixed
 
+- **Leave, on the second tab of the Teacher's own laptop, changed the code the whole class was
+  using.** One laptop can hold `/mission` and `/student` at once, which is the point of roles
+  being per tab, and both tabs share one classroom. Leaving deleted the whole document, so the
+  board found nothing there and minted a new code: the four letters the Teacher had read out
+  stopped working on every iPad in the room, from a button two tabs away. The board now says
+  which room is its own, and a tablet on that device forgets its seat rather than the room. An
+  iPad, which has no board of its own, still leaves exactly as it did.
 - **A child tapped a Drone and the screen bounced back to the Drone picker, and the same bug
   kept them off the Teacher's board.** One classroom document was pushed and pulled whole by
   every device in the room, so whoever wrote last erased everything the others had written

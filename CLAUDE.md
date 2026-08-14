@@ -428,6 +428,16 @@ takes the seat a child took on their tablet, then the Logbook assignment. Both t
 queue and the rail's count of it read that one function; two rules for who counts as a
 Student is two numbers disagreeing in front of a class.
 
+**One laptop, two tabs, one classroom, and only the board may close it (2026-08-14).**
+`/mission` and `/student` share one `localStorage` and therefore one classroom session, which
+is the point. What they must not share is the power to throw it away: **Leave** on the Student
+tab used to remove the document, so the board found nothing, minted a new code, and the four
+letters the Teacher had read out stopped working on every iPad in the room. `openClassroom`
+records its code under `techtechflight:classroom-board`, and `leaveClassroom` /
+`changeClassroom` keep the room when `boardOwnsClassroom()` is true, forgetting only the seat.
+An iPad has no board of its own, so nothing there changes. Still open knowingly: a *foreign*
+code typed on that laptop's Student tab does replace the room, see `docs/DECISIONS.md`.
+
 **The classroom document is merged a seat at a time, and the counts are what settle it
 (2026-08-14).** One JSON blob is written by the board and every tablet, and pushing it whole
 meant the last writer erased everything the others had written since: a child tapped a Drone

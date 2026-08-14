@@ -9,6 +9,23 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · One classroom across every tab, and the board owns it.
+
+- **The board names its own room rather than the tab guessing from a role.** The alternative
+  was to read the remembered device role, which is what a laptop is *for* rather than what it
+  is *doing*, and it is wrong on the machine a Teacher hands to a child at break.
+  `openClassroom` is the board's function and nothing else calls it, so the code it opened is
+  the honest record of which room belongs to this device.
+- **Leave still returns the child to the door, it just stops taking the room with it.** The
+  screen behaviour a child sees is unchanged on every device; what changed is what a press two
+  tabs away may destroy.
+- **A foreign code typed on the board's own laptop is still allowed to replace the room, and
+  that is left open knowingly.** Closing it means either an error message on the door, which is
+  more words on a screen for a case that needs a code somebody had to be told, or a second key
+  holding two rooms at once. Neither is worth it today; the failure that was actually reported
+  is fixed. If it does bite, the fix is `loadClassroomByCode` refusing a code that is not the
+  board's while the board's room is live.
+
 ## 2026-08-14 · The classroom document is merged, not swapped.
 
 - **Counts of writes, not the clock.** Every other option was some form of trusting a

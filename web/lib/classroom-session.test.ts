@@ -33,6 +33,9 @@ import {
   studentOnDrone,
   CLASSROOM_SESSION_KEY,
   takeDroneSeat,
+  writeClassroomSession,
+  pushClassroomToCloud,
+  mergeClassroomSessions,
   touchBoard,
   touchSeat,
   type ClassroomSeat,
@@ -790,5 +793,205 @@ describe('whether a child may leave a classroom', () => {
   it('lets a child out when the board has gone quiet, whatever it last said', () => {
     expect(mayLeaveClassroom({ airborne: true, boardQuiet: true })).toBe(true)
     expect(mayLeaveClassroom({ airborne: false, boardQuiet: true })).toBe(true)
+  })
+})
+
+/**
+ * Two devices, one document, and neither of them erasing the other.
+ *
+ * The glitch, and it was one bug with two faces. A child tapped Drone 3, the seat was written,
+ * and the screen bounced straight back to the Drone picker. The Teacher's board never saw that
+ * child either: joining as "kntl" left the board reading *Nobody is waiting*. Both were the
+ * classroom document being pushed and pulled whole, so whichever device wrote last erased
+ * everything the other had written since.
+ *
+ * The seat is the unit now, and the counts are what settle it. Not the clock: a board and a
+ * tablet do not share one, and a laptop three minutes fast would otherwise win every argument
+ * it took part in.
+ */
+describe('merging two copies of one classroom', () => {
+  const room = (over: Partial<ClassroomSession> = {}): ClassroomSession => ({
+    code: 'ABCD',
+    openedAt: 1_000,
+    updatedAt: 1_000,
+    lessonId: 'lesson-1',
+    lessonLabel: 'Year 6',
+    scenarioId: null,
+    scenarioName: 'Search and Rescue',
+    objective: '',
+    rules: [],
+    limitMinutes: 20,
+    checkpointCount: 0,
+    zones: [],
+    seats: [],
+    instructions: [],
+    live: true,
+    rev: 1,
+    removedSeatIds: [],
+    ...over,
+  })
+
+  const seat = (over: Partial<ClassroomSeat> = {}): ClassroomSeat => ({
+    studentId: 'stu-kntl',
+    name: 'kntl',
+    droneId: null,
+    droneName: null,
+    phase: 'briefing',
+    takeoffRequestedAt: null,
+    clearedAt: null,
+    heldAt: null,
+    flownAt: null,
+    reachedCheckpointIds: [],
+    approvedAt: null,
+    score: null,
+    joinedAt: 2_000,
+    seenAt: null,
+    rev: 1,
+    ...over,
+  })
+
+  /* The Teacher's face of it: a child joins, and the board goes on saying nobody is there. */
+  it('keeps a seat the store has never heard of', () => {
+    const board = room({ rev: 9, updatedAt: 9_000 })
+    const fromTablet = room({ rev: 2, seats: [seat()] })
+
+    const merged = mergeClassroomSessions(board, fromTablet)!
+
+    expect(merged.seats.map((row) => row.name)).toEqual(['kntl'])
+    // The room is still the board's: a tablet does not know the Scenario or the zones.
+    expect(merged.rev).toBe(9)
+  })
+
+  /* The child's face of it: tap a Drone, and the screen bounces back to the picker. */
+  it('keeps a Drone this device has just taken, over an older copy from the store', () => {
+    const tablet = room({ seats: [seat({ droneId: 'ttf-0003', droneName: 'Drone 3', rev: 4 })] })
+    const store = room({ rev: 7, seats: [seat({ rev: 3 })] })
+
+    const merged = mergeClassroomSessions(tablet, store)!
+
+    expect(merged.seats[0]?.droneId).toBe('ttf-0003')
+  })
+
+  /* And the Teacher's answer reaches the child, which is the same rule pointing the other way. */
+  it('takes a clearance the store holds, over an older copy on this device', () => {
+    const tablet = room({ seats: [seat({ rev: 2 })] })
+    const store = room({ seats: [seat({ phase: 'cleared', clearedAt: 5_000, rev: 6 })] })
+
+    expect(mergeClassroomSessions(tablet, store)!.seats[0]?.phase).toBe('cleared')
+  })
+
+  /* Equal counts go to the store, because that is where writes are put in an order. */
+  it('settles a tie on the copy the store holds', () => {
+    const tablet = room({ seats: [seat({ name: 'here', rev: 3 })] })
+    const store = room({ seats: [seat({ name: 'there', rev: 3 })] })
+
+    expect(mergeClassroomSessions(tablet, store)!.seats[0]?.name).toBe('there')
+  })
+
+  /* Free means the child is not here. A merge that only ever adds would hand the seat back. */
+  it('does not resurrect a seat the Teacher freed', () => {
+    const board = room({ rev: 4, removedSeatIds: ['stu-kntl'] })
+    const stale = room({ seats: [seat({ rev: 9 })] })
+
+    expect(mergeClassroomSessions(board, stale)!.seats).toHaveLength(0)
+  })
+
+  /* Both heartbeats survive the merge, whichever copy of the room won it. */
+  it('keeps the later of the two heartbeats', () => {
+    const board = room({ rev: 5, boardSeenAt: 8_000, seats: [seat({ seenAt: 1_000 })] })
+    const tablet = room({ rev: 2, boardSeenAt: 2_000, seats: [seat({ seenAt: 7_000 })] })
+
+    const merged = mergeClassroomSessions(board, tablet)!
+
+    expect(merged.boardSeenAt).toBe(8_000)
+    expect(merged.seats[0]?.seenAt).toBe(7_000)
+  })
+
+  /* Two different rooms are two different rooms. A tablet that moved on stays where it went. */
+  it('refuses to merge a different classroom', () => {
+    const here = room({ code: 'ABCD' })
+    const elsewhere = room({ code: 'WXYZ', rev: 99 })
+
+    expect(mergeClassroomSessions(here, elsewhere)!.code).toBe('ABCD')
+  })
+})
+
+/**
+ * The two ways a write reached nobody.
+ *
+ * Both were silent. A tablet whose clock ran behind the board was answered 409 by the store
+ * and gave up, so a child could join, take a Drone and ask to take off while appearing on no
+ * screen but their own. And every writer starts from the session it was handed, so a Teacher
+ * saving anything from a screen rendered before the child at the back joined deleted them.
+ */
+describe('a write that has to survive the other device', () => {
+  const openRoom = () =>
+    openClassroom({
+      lessonId: 'lesson-1',
+      lessonLabel: 'Year 6',
+      scenarioId: null,
+      scenarioName: '',
+      objective: '',
+      rules: [],
+      limitMinutes: 20,
+      zones: [],
+      drones: [{ droneId: 'ttf-0001', droneName: 'Drone 1', number: 1 }],
+    })
+
+  it('keeps a child who joined after the screen doing the writing was drawn', () => {
+    const stale = openRoom()
+    joinClassroomAsStudent(readClassroomSession()!, 'Amira', 1_000, 'stu-amira')
+
+    // The Teacher's screen still holds the session from before Amira typed her name.
+    writeClassroomSession({ ...stale, objective: 'Find the marker' })
+
+    const after = readClassroomSession()!
+    expect(after.seats.map((seat) => seat.name)).toEqual(['Amira'])
+    expect(after.objective).toBe('Find the marker')
+  })
+
+  /* Free is still the one way a row leaves the board. */
+  it('does not carry a freed seat back into the next write', () => {
+    const room = openRoom()
+    const joined = joinClassroomAsStudent(room, 'Amira', 1_000, 'stu-amira').session
+    const seated = takeDroneSeat(joined, 'stu-amira', 'ttf-0001')
+    freeDroneSeat(seated, 'ttf-0001')
+
+    writeClassroomSession({ ...readClassroomSession()!, objective: 'Anything' })
+
+    expect(readClassroomSession()!.seats).toHaveLength(0)
+  })
+
+  /* A 409 is news, not a failure: somebody wrote while this write was in flight. */
+  it('merges and sends again when the store says it is behind', async () => {
+    const room = openRoom()
+    const mine = joinClassroomAsStudent(room, 'Amira', 1_000, 'stu-amira').session
+    const theirs: ClassroomSession = {
+      ...room,
+      updatedAt: room.updatedAt + 60_000,
+      rev: (room.rev ?? 0) + 1,
+      objective: 'Written by the board',
+    }
+
+    const sent: ClassroomSession[] = []
+    let answered = false
+    const fetchImpl = (async (_url: string, init?: RequestInit) => {
+      if (init?.method === 'PUT') {
+        sent.push(JSON.parse(String(init.body)) as ClassroomSession)
+        if (!answered) {
+          answered = true
+          return new Response(JSON.stringify({ error: 'Cloud copy is newer' }), { status: 409 })
+        }
+        return new Response(JSON.stringify({ ok: true }), { status: 200 })
+      }
+      return new Response(JSON.stringify(theirs), { status: 200 })
+    }) as unknown as typeof fetch
+
+    expect(await pushClassroomToCloud(mine, fetchImpl)).toBe('ok')
+
+    const second = sent[1]!
+    expect(second.seats.map((seat) => seat.name)).toEqual(['Amira'])
+    expect(second.objective).toBe('Written by the board')
+    expect(second.updatedAt).toBeGreaterThan(theirs.updatedAt)
   })
 })

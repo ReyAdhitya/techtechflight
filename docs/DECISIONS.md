@@ -9,6 +9,17 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · A classroom that has ended never carries on.
+
+- **`endedAt`, not the Lesson id, is what decides a room is over.** Two other fixes were on
+  offer. One was to give a Lesson-less run an id of its own so the ids could never both be
+  `null`, which invents a Lesson where a Teacher made none and puts a second identity beside
+  the Logbook's. The other was to mint a code on every open, which is correct exactly once and
+  wrong on every reload after it: a Teacher who refreshes mid-lesson would find the four
+  letters they read to thirty children had changed. Closing a Lesson is the Teacher saying the
+  room is over, and that stamp is the one fact a run with a Lesson and a run without one both
+  carry.
+
 ## 2026-08-11 · The calls made inside the eight.
 
 - **The drawing surface follows the Scope's window, and falls back to the classroom

@@ -597,6 +597,36 @@ describe('leaving a classroom', () => {
     expect(openFor('lesson-1').code).toBe(first)
   })
 
+  /*
+   * The failure this fixes: two runs with no Logbook Lesson both carry `lessonId: null`, and
+   * `null === null` handed the second one the first one's code. The first had ended, so every
+   * tablet typing the code the Teacher read out found a classroom stamped `endedAt`.
+   */
+  it('mints a new code after a classroom with no Lesson has ended', () => {
+    const first = openFor(null).code
+    closeClassroom(9_000)
+
+    const second = openFor(null).code
+
+    expect(second).not.toBe(first)
+    expect(second).toHaveLength(4)
+    expect(classroomHasEnded(readClassroomSession())).toBe(false)
+  })
+
+  /* Same rule for a Lesson that is named: ending it is the Teacher saying the room is over. */
+  it('mints a new code after a named Lesson has ended', () => {
+    const first = openFor('lesson-1').code
+    closeClassroom(9_000)
+
+    expect(openFor('lesson-1').code).not.toBe(first)
+  })
+
+  /* And a run with no Lesson still survives a reload, which is why the ids are still read. */
+  it('keeps the code across a reload when there is no Lesson', () => {
+    const first = openFor(null).code
+    expect(openFor(null).code).toBe(first)
+  })
+
   it('starts a new Lesson with nobody seated', () => {
     joinClassroomAsStudent(openFor('lesson-1'), 'Amira', 1_000, 'stu-amira')
     expect(readClassroomSession()?.seats).toHaveLength(1)

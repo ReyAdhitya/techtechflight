@@ -7,6 +7,13 @@ would notice.
 
 ### Fixed
 
+- **A new class inherited the finished class's code, and every tablet read a room that was
+  over.** A board with no Logbook Lesson started carries `lessonId: null`, and `openClassroom`
+  decided whether to keep the old code by comparing that id with the last one: `null === null`
+  is true, so the run after a Lesson ended carried on the dead session, `endedAt` and all. The
+  Teacher read four letters out and every device that typed them was told the classroom had
+  finished. A classroom that has ended never carries on now, whatever its Lesson id says; a
+  reload mid-lesson still keeps the code, which is why the ids are still read.
 - **Every No-fly Zone a Teacher drew landed outside the picture.** The rail read "2 no-fly
   zones" while the Scope's key named no hatch, and both were telling the truth: the drawing
   surface was a fixed twenty metres square running north-east from the origin, and the Scope

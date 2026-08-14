@@ -457,7 +457,11 @@ launch point while the Scope's dotted line still pointed at the bench.
 ever minted, forever. Ending a Lesson calls `closeClassroom`, which is the only thing that
 makes an old session *provably* dead: a tablet on another device polls the cloud by the code it
 already holds, so the truth has to be written into the document it is reading. `leaveClassroom`
-is per device and touches nothing the Teacher owns.
+is per device and touches nothing the Teacher owns. **And an ended classroom never carries on,
+whichever Lesson it names (2026-08-14):** a board with no Logbook Lesson carries
+`lessonId: null`, `null === null` is true, and comparing ids alone handed the next run the
+finished room's code, so every device typing the code the Teacher read out found a session
+stamped `endedAt`. `carriesOn` checks `endedAt` first.
 
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare

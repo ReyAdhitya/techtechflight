@@ -22,6 +22,7 @@ import { useFleet } from './FleetProvider'
 import { formatElapsed } from './LessonStrip'
 import { BeforeAfterScores } from './BeforeAfterScores'
 import { LessonWarmUp } from './LessonWarmUp'
+import { skipWarmUp, warmUpSkipped } from '@/lib/warm-up'
 import { readyBoardLabel, readyBoardSummary } from './walls/ready-mapping'
 import { READING_FRAME } from '@/lib/frame'
 import type { DroneVitals } from '@/lib/vitals'
@@ -260,13 +261,32 @@ function LessonUnderWay({
    * first one left it rather than starting the minute again.
    */
   const remaining = WARM_UP_SECONDS - Math.floor(Math.max(0, now - lesson.startedAt) / 1000)
-  const [skipped, setSkipped] = useState(false)
+
+  /*
+   * **Skipped once is skipped for this Lesson.**
+   *
+   * This was `useState(false)`, so Skip lasted exactly as long as this component stayed
+   * mounted. A Teacher who went back to step 1 to change the Scenario got the full-screen
+   * countdown again, over a class already flying, and again every time after that. Read from
+   * the record rather than from the render, keyed on the Lesson, so it survives the remount
+   * that caused the complaint.
+   *
+   * Read once into state rather than on every render: the value cannot change under this
+   * component except through the button below, which sets both.
+   */
+  const [skipped, setSkipped] = useState(() => warmUpSkipped(lesson.id))
   const warming = !skipped && remaining > 0
 
   return (
     <section className="flex flex-col gap-4 rounded-surface border border-hairline bg-surface-1 p-5">
       {warming ? (
-        <LessonWarmUp seconds={remaining} onDone={() => setSkipped(true)} />
+        <LessonWarmUp
+          seconds={remaining}
+          onDone={() => {
+            skipWarmUp(lesson.id)
+            setSkipped(true)
+          }}
+        />
       ) : null}
       <div className="flex flex-col gap-1">
         <span className="label">Lesson under way</span>

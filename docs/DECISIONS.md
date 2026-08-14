@@ -9,6 +9,25 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · A simulated craft says so on its Telemetry.
+
+- **The marker is on the reading, not on the screen.** The obvious place was the one flag that
+  already exists, `demo` on the Fleet view, and it is wrong for the case that matters: the
+  ordinary classroom launch runs the simulator inside the *ground station* and the board talks
+  to it down a socket, so a browser asking "am I the demonstration?" answers no about a Fleet
+  that is entirely simulated. It also keeps FleetProvider's rule intact, that no screen branches
+  on `demo` to behave differently. `extra` is the contract's own escape hatch for a fact the
+  type has not learned yet.
+- **The rows pass rather than disappear.** Six of seven with the seventh missing is a Teacher
+  counting rows and hunting the one that went. Each row says *Simulated craft, nothing on a
+  bench to check*, which is the honest sentence.
+- **Propellers is still ticked by hand in a simulation.** It is the one item a Teacher's own
+  eyes do, and making it automatic would have quietly deleted the check the tick-all exists to
+  make quick.
+- **The simulator keeps its faults.** They are the demonstration's incident and they still
+  raise Alerts. What changed is that a fault on an aircraft nobody can walk over to no longer
+  blocks a check that means walking over to it.
+
 ## 2026-08-14 · One classroom across every tab, and the board owns it.
 
 - **The board names its own room rather than the tab guessing from a role.** The alternative

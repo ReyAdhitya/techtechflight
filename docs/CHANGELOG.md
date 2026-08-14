@@ -7,6 +7,15 @@ would notice.
 
 ### Fixed
 
+- **Pre-flight asked a Teacher to fix Drones that do not exist.** A simulated craft reported
+  *Motion sensor needs recalibrating*, and every third one reported no rangefinder fitted, so
+  step 4 could not be finished on it at any point in the lesson. A pre-flight check is a
+  Teacher walking a bench with the aircraft in their hands, and in a simulation there is no
+  bench. The six readings that take themselves pass on a simulated craft and each says why;
+  Propellers is still ticked by hand, because that is the item a Teacher's own eyes do. The
+  simulator says on the Telemetry that it is a simulation, so this is also true of the ordinary
+  classroom launch, where the Fleet runs inside the ground station and the board is down a
+  socket. Nothing about a real Fleet changes.
 - **Skip on the warm-up lasted until the Teacher looked away.** The full-screen minute over
   the start of a Lesson came back on every visit to step 1 inside that minute, because Skip was
   the state of the panel that draws it rather than a fact about the morning. A rail is made to

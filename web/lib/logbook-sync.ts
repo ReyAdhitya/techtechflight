@@ -4,7 +4,16 @@ import type { Logbook } from '@/lib/logbook'
  * Client dual-write / hydrate for the Logbook cloud copy (#93).
  *
  * Local save always wins first. When a sync secret is set and the network answers,
- * a debounced PUT mirrors the snapshot to `/api/logbook` on the Vercel origin.
+ * a debounced PUT mirrors the snapshot to the records endpoint.
+ *
+ * **The local save always wins, and it wins first.** A hall with poor wifi still has to teach a
+ * Lesson: a Teacher who cannot mark attendance because a connection dropped is a real failure
+ * with children in the room. Everything here runs after the record is already safe in this
+ * browser, and every failure below is a shrug.
+ *
+ * That endpoint is `/api/records` on Neon (ADR-0034). It was `/api/logbook` on Vercel Blob,
+ * which has been suspended for unpaid billing since 9 August 2026; the old path still works if
+ * billing is ever restored, through the override below.
  */
 
 export const LOGBOOK_SYNC_SECRET_KEY = 'techtechflight:logbook-sync-secret'
@@ -48,8 +57,10 @@ export function writeLogbookSyncSecret(secret: string): void {
 }
 
 /** Sync endpoint — same origin on Vercel, or an absolute override for classroom → cloud. */
+export const RECORDS_ENDPOINT = '/api/records'
+
 export function logbookSyncUrl(): string {
-  if (typeof window === 'undefined') return '/api/logbook'
+  if (typeof window === 'undefined') return RECORDS_ENDPOINT
   try {
     const override = window.localStorage.getItem(LOGBOOK_SYNC_URL_KEY)
     if (override && /^https?:\/\//i.test(override)) return override.replace(/\/$/, '')
@@ -58,7 +69,7 @@ export function logbookSyncUrl(): string {
   }
   const fromEnv = process.env.NEXT_PUBLIC_LOGBOOK_SYNC_URL
   if (fromEnv && fromEnv.trim() !== '') return fromEnv.trim().replace(/\/$/, '')
-  return '/api/logbook'
+  return RECORDS_ENDPOINT
 }
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null

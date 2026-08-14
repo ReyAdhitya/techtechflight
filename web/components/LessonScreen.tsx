@@ -34,6 +34,7 @@ import { scopeWindow } from './Scope'
 import type { ZoneWindow } from '@/lib/zone-visibility'
 import { TeamsPanel } from './TeamsPanel'
 import { PreFlightSeven } from './PreFlightSeven'
+import { TickEveryPropeller } from './TickEveryPropeller'
 import { MissionBriefing } from './MissionBriefing'
 import { TeamBriefPrint } from './TeamBriefPrint'
 import { ClassroomCodePanel } from './ClassroomCodePanel'
@@ -473,6 +474,7 @@ function MissionPrep({
           </p>
         ) : (
           <div className="flex flex-col gap-4">
+            <TickEveryPropeller lessonId={lessonId} droneIds={craftIds} />
             {craftIds.map((droneId) => (
               <PreFlightSeven
                 key={droneId}

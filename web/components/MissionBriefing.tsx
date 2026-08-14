@@ -179,6 +179,22 @@ export function toggleMissionBriefRule(
   return next
 }
 
+/**
+ * Tick every rule, in one press.
+ *
+ * The same argument as the propeller tick beside it: the list is eighteen lines a Teacher says
+ * out loud to a class, and a Teacher who has just said all of them should not then press
+ * eighteen times to record it. All or nothing, for the same reason — unsaying a brief you gave
+ * is not a thing this button should offer.
+ */
+export function tickAllMissionBriefRules(lessonId: string | null): MissionBriefingState {
+  const checked: Partial<Record<MissionBriefingRuleId, boolean>> = {}
+  for (const rule of MISSION_BRIEFING_RULES) checked[rule.id] = true
+  const next: MissionBriefingState = { lessonId, checked }
+  writeMissionBriefing(next)
+  return next
+}
+
 export function resetMissionBriefing(lessonId: string | null): MissionBriefingState {
   const next = emptyMissionBriefing(lessonId)
   writeMissionBriefing(next)
@@ -247,6 +263,22 @@ export function MissionBriefing({
           {' done'}
         </p>
       </div>
+
+      {/*
+       * Said them all, in one press. Eighteen lines a Teacher reads out to a class, and
+       * eighteen presses afterwards to record that they did is the tedium the propeller tick
+       * beside this one removes. Gone once there is nothing left to tick, rather than greyed
+       * out: a button that cannot do anything is one a Teacher reads on every visit.
+       */}
+      {done < total ? (
+        <button
+          type="button"
+          onClick={() => setState(tickAllMissionBriefRules(lessonId))}
+          className="min-h-11 w-fit cursor-pointer rounded-pill border-0 bg-ink px-4 py-1.5 text-value font-medium text-canvas"
+        >
+          I said all <span className="tnum">{total}</span>
+        </button>
+      ) : null}
 
       {scenario ? (
         <div className="flex flex-col gap-2 rounded-sm border border-hairline bg-canvas p-3">

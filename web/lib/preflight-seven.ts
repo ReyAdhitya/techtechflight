@@ -98,6 +98,29 @@ export function togglePropellersTick(
   return next
 }
 
+/**
+ * Tick Propellers on every craft in the Lesson, in one press.
+ *
+ * Six of the seven items read themselves from Telemetry. Propellers is the only human tick,
+ * because the board cannot see a chipped blade — and the tedium was never looking at a
+ * propeller, it was doing the same tick six times on six panels. A Teacher walks the bench with
+ * their eyes and then says so once, which is the shape of the actual job.
+ *
+ * All or nothing rather than a toggle. "Untick all" would be a Teacher unsaying something they
+ * saw, and there is a per craft tick a step away for the one blade that is wrong.
+ */
+export function tickAllPropellers(
+  lessonId: string | null,
+  droneIds: readonly DroneId[],
+): PreFlightSevenState {
+  const current = readPreFlightSeven(lessonId)
+  const propellers = { ...current.propellers }
+  for (const droneId of droneIds) propellers[droneId] = true
+  const next: PreFlightSevenState = { lessonId, propellers }
+  writePreFlightSeven(next)
+  return next
+}
+
 export function resetPreFlightSeven(lessonId: string | null): PreFlightSevenState {
   const next = emptyPreFlightSeven(lessonId)
   writePreFlightSeven(next)

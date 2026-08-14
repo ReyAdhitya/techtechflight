@@ -9,6 +9,36 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-14 · The calls made across the twenty.
+
+- **Pre-flight passes in simulation because the simulator stopped breaking it, not because the
+  check learned to lie.** `FleetProvider` is the one place that knows a Fleet is simulated and
+  no screen may branch on it, so teaching pre-flight to pass would have broken that seam. A
+  fault now arrives in the air instead, which keeps the Attention bar demonstration and is when
+  faults happen in a room.
+- **Tick-all is all or nothing, on both lists.** Untick-all would be a Teacher unsaying
+  something they saw or said. The per craft tick is still there for the one blade that is wrong.
+  Each button leaves the screen when there is nothing left to do rather than greying out, so it
+  is not read on every visit.
+- **The grid's scale is at the ends of each axis, not on every line.** Two numbers an axis is a
+  scale; a number on every gridline is a ruler nobody asked to read, and at 390 they collide.
+  HTML rather than SVG text so they follow the Teacher's own font size (ADR-0008).
+- **The records copy is one JSONB row per school, not the normalised graph.** `db/schema.sql` is
+  what the records *are*; projecting the browser's records into it is separate work, because a
+  sync that half-writes a graph over a school connection that drops is worse than one that
+  writes a document or does not.
+- **Records is a separate screen from Reports.** Reports answers what happened in a Lesson and
+  which Drone shows recurring defects. A Teacher asking about a child should not read past a
+  Fleet digest to find them.
+- **`db/schema.sql` has eighteen `create table` statements, not seventeen.** The plan calls it
+  seventeen tables and lists eighteen. Built as listed rather than dropping one to match the
+  count.
+- **Items 16, 17 and half of 19 were already on main** and were verified rather than rebuilt.
+  The theme survives hydration and no React error fires on a role-gated route; both were fixed
+  by the per-tab role work that reads storage in an effect. Evidence in the PR.
+
+---
+
 ## 2026-08-14 · One classroom across every tab, and the board owns it.
 
 - **The board names its own room rather than the tab guessing from a role.** The alternative

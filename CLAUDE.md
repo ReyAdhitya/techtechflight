@@ -476,6 +476,26 @@ calls `flyRoute` on an aircraft it picked *because* it is airborne. Unguarded, t
 incident moved a Drone's home to wherever it had drifted and a Recall landed 8.5 m from the
 launch point while the Scope's dotted line still pointed at the bench.
 
+**The classroom merge is written twice and must never drift.** `web/lib/classroom-session.ts`
+and `classroom-worker/worker.js` cannot import from each other, so the rule that settles a
+classroom lives in both. **Settle on `ClassroomSeat.rev`, never on `updatedAt`**: a board and a
+tablet do not share a clock, and a laptop a minute fast was answered 200 while a correct tablet
+got 409 forever, silently. The store refuses nothing — a tablet writing its own seat on a base a
+second old is the ordinary case. `web/standards.test.ts` scans both files and fails with the
+runtime named if either drifts.
+
+**A simulated fault arrives in the air, never on the bench.** Pre-flight reads Sensors and
+Altitude hold straight off `fault`, so a craft that faulted on a table failed its own pre-flight
+and locked step 5 behind step 4. Fixed in `#wander` rather than in the check, because
+`FleetProvider` is the one place that knows a Fleet is simulated and **no screen may branch on
+it**.
+
+**The Scope has no boundary box, and the grid carries the scale instead.** The box asserted
+where the room ends, which this product has never known, at numbers nobody measured. It was
+also the only thing giving the picture a scale, and without one a Drone at the netting looks
+exactly like one in the middle — so the metres are written at the ends of each axis, in HTML so
+they follow the Teacher's font size. Do not put a box back to get a ruler.
+
 **A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
 `lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board
 ever minted, forever. Ending a Lesson calls `closeClassroom`, which is the only thing that

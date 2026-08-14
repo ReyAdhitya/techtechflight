@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { clearLogbook, readLogbook, runningLesson } from '@/lib/logbook'
+import { clearWarmUpSkip } from '@/lib/warm-up-skip'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import { FleetProvider } from './FleetProvider'
 import { LessonScreen } from './LessonScreen'
@@ -37,6 +38,7 @@ const screenUnderTest = () =>
 
 beforeEach(() => {
   clearLogbook()
+  clearWarmUpSkip()
   pathname.current = '/demo'
   vi.useFakeTimers()
 })
@@ -144,5 +146,40 @@ describe('Fleet health before the period', () => {
     expect(runningLesson(readLogbook())?.readyAtStart).toBe(0)
 
     summary.mockRestore()
+  })
+})
+
+/**
+ * The full-screen minute over the start of a Lesson, and the press that dismisses it.
+ *
+ * Skip lived in the state of the panel that draws it, so every walk back to step 1 inside that
+ * first minute put it over the Teacher again. A rail is made to be walked up and down.
+ */
+describe('the warm-up minute', () => {
+  const startALesson = () => {
+    screenUnderTest()
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: /Start the lesson/i }))
+    settle()
+  }
+
+  it('covers the screen when a Lesson has just started', () => {
+    startALesson()
+
+    expect(screen.getByRole('dialog', { name: 'Lesson warm-up' })).toBeInTheDocument()
+  })
+
+  it('stays skipped when the Teacher comes back to step 1', () => {
+    startALesson()
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    settle()
+    expect(screen.queryByRole('dialog', { name: 'Lesson warm-up' })).not.toBeInTheDocument()
+
+    // Away up the rail and back, well inside the minute.
+    cleanup()
+    screenUnderTest()
+    settle()
+
+    expect(screen.queryByRole('dialog', { name: 'Lesson warm-up' })).not.toBeInTheDocument()
   })
 })

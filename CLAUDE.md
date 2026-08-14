@@ -487,6 +487,11 @@ whichever Lesson it names (2026-08-14):** a board with no Logbook Lesson carries
 finished room's code, so every device typing the code the Teacher read out found a session
 stamped `endedAt`. `carriesOn` checks `endedAt` first.
 
+**Skip on the warm-up is a side key, not component state (2026-08-14).**
+`techtechflight:warm-up-skipped` holds the Lesson whose minute was skipped
+(`web/lib/warm-up-skip.ts`). It was `useState` on the panel that draws the overlay, so every
+walk back to step 1 inside the first minute redrew a full-screen minute over the Teacher.
+
 **Batch 1A side keys are not the Logbook.** Attendance seals, pupil notes, pupil flight-hour
 seals, safety-brief ticks, camera orientation, separation threshold, altitude floor, spare
 nomination, and ceiling-breach counts each live in their own `localStorage`

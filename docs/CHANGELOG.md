@@ -7,6 +7,11 @@ would notice.
 
 ### Fixed
 
+- **Skip on the warm-up lasted until the Teacher looked away.** The full-screen minute over
+  the start of a Lesson came back on every visit to step 1 inside that minute, because Skip was
+  the state of the panel that draws it rather than a fact about the morning. A rail is made to
+  be walked up and down. Skipped once is skipped for that Lesson now; tomorrow's class still
+  gets its warm-up.
 - **Leave, on the second tab of the Teacher's own laptop, changed the code the whole class was
   using.** One laptop can hold `/mission` and `/student` at once, which is the point of roles
   being per tab, and both tabs share one classroom. Leaving deleted the whole document, so the

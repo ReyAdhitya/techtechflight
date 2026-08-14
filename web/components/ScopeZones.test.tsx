@@ -355,23 +355,29 @@ describe('a No-fly Zone that is real and not on this picture', () => {
  * every screen of every lesson learns to read it as furniture, which is the opposite of what
  * an Alert needs from it.
  */
-describe('three colours, three meanings', () => {
-  it('draws the classroom boundary in blue, not the Alert amber', () => {
+/**
+ * Two colours now, and the blue one has gone with the box it drew.
+ *
+ * ADR-0033 gave the classroom boundary its own blue so a Teacher would stop reading the Alert
+ * amber as furniture. The boundary itself is gone: a Teacher in a netted cage should not be
+ * handed a rectangle nobody measured. Red still means nobody may fly here, amber still means
+ * something needs you, and that is the whole of the rule that remains.
+ */
+describe('the colours that are left', () => {
+  it('draws no classroom boundary at all', () => {
     const { container } = render(<Scope drones={[at('Drone 1', 3, 3)]} />)
 
-    const box = container.querySelector('[data-classroom-geofence]')
-    expect(box?.classList.contains('stroke-info')).toBe(true)
-    expect(box?.classList.contains('stroke-status-not-ready')).toBe(false)
+    expect(container.querySelector('[data-classroom-geofence]')).toBeNull()
   })
 
-  it('keeps No-fly red, and says which colour is which in the key', () => {
+  it('keeps No-fly red, and says so in the key', () => {
     const { container } = render(
       <Scope drones={[at('Drone 1', 3, 3)]} zones={[hallZone]} />,
     )
 
     const zone = container.querySelector('[data-zone-kind="no-fly"]')
     expect(zone?.classList.contains('stroke-status-fault')).toBe(true)
-    expect(screen.getByText(/Blue dashed box = classroom boundary/)).toBeInTheDocument()
+    expect(screen.queryByText(/classroom boundary/)).not.toBeInTheDocument()
     expect(screen.getByText('Red hatched = No-fly Zone')).toBeInTheDocument()
   })
 })

@@ -6,7 +6,6 @@ import {
   type ScopeLabelPlacement,
 } from '@/lib/scope-label-placement'
 import { SEPARATION_WARNING_M, type DroneVitals } from '@/lib/vitals'
-import { CLASSROOM_GEOFENCE } from '@/lib/classroom-geofence'
 import type { GhostPathStore } from '@/lib/scope-ghost-paths'
 import { ghostPathsAvailable } from '@/lib/scope-ghost-paths'
 import { enclosesAnything, zoneShowsInWindow, type Zone } from '@/lib/airspace'
@@ -541,34 +540,14 @@ export function Scope({
            * by a line here is the one thing on this map that means act now.
            */}
           {/*
-           * Classroom geofence — a fixed box in metres, not a claim that the room ends
-           * here (ADR-0012). Top-down only; elevation views carry no horizontal boundary.
+           * There is no classroom boundary box, and that is deliberate.
+           *
+           * It was a fixed rectangle in metres, drawn on every top-down. A Teacher flying in a
+           * netted cage should not have to draw a box, and this one was drawn *for* them, at
+           * numbers nobody measured: it asserted where the room ends, which the product has
+           * never known. The scale it accidentally provided is now provided on purpose, by the
+           * metre labels on the grid. Do not put a box back to get a ruler.
            */}
-          {view === 'top-down' && (() => {
-            const nw = scope.project(CLASSROOM_GEOFENCE.westM, CLASSROOM_GEOFENCE.northM)
-            const se = scope.project(CLASSROOM_GEOFENCE.eastM, CLASSROOM_GEOFENCE.southM)
-            return (
-              <rect
-                x={nw.x}
-                y={nw.y}
-                width={se.x - nw.x}
-                height={se.y - nw.y}
-                fill="none"
-                /*
-                 * Blue, not the amber it used to be (ADR-0033). The boundary is the one
-                 * coloured thing on this picture that never changes, and drawing it in the
-                 * colour an Alert arrives in taught a Teacher to read that colour as
-                 * furniture. Three colours, three meanings: blue is where the room is, red
-                 * is where nobody may fly, and amber means something needs you.
-                 */
-                className="stroke-info"
-                strokeWidth="2"
-                strokeDasharray="8 6"
-                vectorEffect="non-scaling-stroke"
-                data-classroom-geofence=""
-              />
-            )
-          })()}
 
           <ScopeZones
             zones={visibleZones}
@@ -720,6 +699,16 @@ export function Scope({
             })}
         </svg>
 
+        <GridScale
+          view={view}
+          stepM={stepM}
+          westM={scope.westM}
+          eastM={scope.eastM}
+          southM={scope.southM}
+          northM={scope.northM}
+          ceilingM={ceilingM}
+        />
+
         {drawn.map((drone) => (
           <Mark
             key={drone.id}
@@ -758,13 +747,6 @@ export function Scope({
          * conflict lines, so offering a key to them would send a Teacher looking for something
          * that is not there.
          */}
-        {view === 'top-down' && (
-          <span>
-            Blue dashed box = classroom boundary ({CLASSROOM_GEOFENCE.westM} to{' '}
-            {CLASSROOM_GEOFENCE.eastM} m east, {CLASSROOM_GEOFENCE.southM} to{' '}
-            {CLASSROOM_GEOFENCE.northM} m north)
-          </span>
-        )}
         {/*
           * On every view now, because the zone is on every view (ADR-0029). The band on Side
           * and Front is the same object as the polygon on Top-down, so it wants the same key
@@ -829,6 +811,66 @@ export function Scope({
         <div className="mt-auto w-full max-w-[min(100%,42rem)] shrink-0 pt-2">{selectedPanel}</div>
       )}
     </figure>
+  )
+}
+
+/**
+ * The metres, written on the grid.
+ *
+ * The picture used to carry a classroom boundary box, and the box was doing two jobs: saying
+ * where the room ends, which the product has never known, and giving the grid a scale, which
+ * it genuinely needs. The box is gone (a Teacher in a netted cage should not be handed a
+ * rectangle nobody measured) and this is the half worth keeping: **without a scale a Drone at
+ * the netting looks exactly like one in the middle.**
+ *
+ * HTML rather than SVG text, for the reason written on `Mark` below: inside the drawing these
+ * would be sized in user units, so they would grow with a small window and shrink with a large
+ * one and ignore the Teacher's own font size entirely (ADR-0008).
+ *
+ * Ends only, not every line. Two numbers an axis is the scale; a number on every gridline is a
+ * ruler nobody asked to read, and on a phone they would collide.
+ */
+function GridScale({
+  view,
+  stepM,
+  westM,
+  eastM,
+  southM,
+  northM,
+  ceilingM,
+}: {
+  readonly view: ScopeView
+  readonly stepM: number
+  readonly westM: number
+  readonly eastM: number
+  readonly southM: number
+  readonly northM: number
+  readonly ceilingM: number
+}) {
+  const across =
+    view === 'side'
+      ? { low: southM, high: northM, unit: 'm north' }
+      : { low: westM, high: eastM, unit: 'm east' }
+  const up = isElevation(view)
+    ? { low: 0, high: ceilingM, unit: 'm up' }
+    : { low: southM, high: northM, unit: 'm north' }
+
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+      <span className="absolute bottom-1 left-1 tnum text-label text-ink-muted">
+        {across.low}
+      </span>
+      <span className="absolute bottom-1 right-1 tnum text-label text-ink-muted">
+        {across.high} {across.unit}
+      </span>
+      <span className="absolute left-1 top-1 tnum text-label text-ink-muted">
+        {up.high} {up.unit}
+      </span>
+      {/* One cell, named, so the spacing between lines is readable and not inferred. */}
+      <span className="absolute bottom-1 left-1/2 -translate-x-1/2 tnum text-label text-ink-muted">
+        grid {stepM} m
+      </span>
+    </div>
   )
 }
 

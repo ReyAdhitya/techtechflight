@@ -792,12 +792,24 @@ describe('full screen on the scope', () => {
     expect(screen.getByText('Land Hover Stop for selected')).toBeInTheDocument()
   })
 
-  it('draws the classroom geofence on the top-down view', () => {
+  /*
+   * No boundary box, and a scale instead.
+   *
+   * The box asserted where the room ends, which the product has never known, at numbers
+   * nobody measured. It was also the only thing giving the grid a scale, and without one a
+   * Drone at the netting looks exactly like one in the middle, so the metres are written on
+   * the picture now instead.
+   */
+  it('draws no classroom boundary, and says what the grid measures instead', () => {
     const { container } = render(
       <Scope drones={[at('Drone 1', 0, 0), at('Drone 2', 1, 1)]} onSelect={() => {}} />,
     )
-    expect(container.querySelector('[data-classroom-geofence]')).not.toBeNull()
-    expect(screen.getByText(/classroom boundary/)).toBeInTheDocument()
+
+    expect(container.querySelector('[data-classroom-geofence]')).toBeNull()
+    expect(screen.queryByText(/classroom boundary/)).not.toBeInTheDocument()
+    expect(screen.getByText(/grid \d+(\.\d+)? m/)).toBeInTheDocument()
+    expect(screen.getByText(/m east/)).toBeInTheDocument()
+    expect(screen.getByText(/m north/)).toBeInTheDocument()
   })
 })
 

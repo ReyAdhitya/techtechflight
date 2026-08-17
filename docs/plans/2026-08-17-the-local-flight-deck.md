@@ -227,7 +227,48 @@ to choose.
 
 ---
 
-## 9. Still the owner's to decide
+## 9. Before any of it: the tracker is wrong
+
+**389 issues are open. Three were sampled and all three are already shipped:** #628 the
+classroom code syncing board to phones, #640 the Student's request-takeoff step, #636 holding a
+takeoff rather than only granting it. Work has been shipping without anybody closing anything.
+
+This is not tidiness. It is the reason a wave of work in this repo rebuilt four items that were
+already on `main`: nobody could tell finished from outstanding, so it was guessed. A backlog
+that lies costs more than an empty one.
+
+**The sweep, and it comes first because everything else is planned from its output.**
+
+- Take the open issues in batches. For each, look at the code, not at the issue's own claims.
+- Already shipped: close it, with one line naming where it lives now. Do not reopen the design
+  argument — a shipped thing that is wrong is a *new* issue, not an old one left open.
+- Genuinely outstanding: keep it, and add one line saying what is missing today.
+- Cannot tell in two minutes: label `needs-info` and move on. Do not stall the sweep on one
+  issue.
+- Anything the sweep contradicts in the docs (a gotcha that describes a fixed bug, a plan that
+  describes shipped work) gets corrected in the same pass.
+
+Output is a table: closed, kept, unclear. **That table is the real backlog**, and the first
+honest answer to "what is left before this app is complete".
+
+`HANDOFF.md` is part of the same problem. It still reads as a to-do list for the ten fixes,
+every one of which is merged. The next person to read it is misled on their first page.
+
+---
+
+## 10. The deploy nobody should have to do by hand
+
+The Cloudflare board is a manual `wrangler deploy`. It sat on the 12 August build for three days
+while `main` moved on, because a manual step only happens when a human with a token remembers
+it, and the OAuth login on this machine has never once completed.
+
+Store one API token as a GitHub secret, add a workflow that deploys both Workers on every push
+to `main`, and the Cloudflare copy updates itself exactly as the Vercel copy already does.
+About twenty lines. It removes a class of failure that cost most of a working day.
+
+---
+
+## 11. Still the owner's to decide
 
 | Decision | Blocks |
 |---|---|

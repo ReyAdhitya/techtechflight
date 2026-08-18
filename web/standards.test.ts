@@ -175,10 +175,10 @@ describe('the Drone count has no ceiling', () => {
 })
 
 /**
- * The classroom merge lives in two runtimes, and they must not drift apart.
+ * The classroom merge lives in three runtimes, and they must not drift apart.
  *
- * `web/lib/classroom-session.ts` runs in the browser and `classroom-worker/worker.js` runs in
- * Cloudflare. They cannot import from each other, so the rule that settles a classroom is
+ * `web/lib/classroom-session.ts` runs in the browser, `classroom-worker/worker.js` runs in
+ * Cloudflare, and `ground-station/src/classroom-store.ts` runs on the classroom laptop. They cannot import from each other, so the rule that settles a classroom is
  * written twice, and **if the two copies disagree the glitch comes straight back**: a Student
  * taps a Drone, the store keeps a different answer from the board, and the seat is erased on
  * the next write by whichever side lost.
@@ -191,12 +191,18 @@ describe('the Drone count has no ceiling', () => {
  * A source scan, because there is no runtime that can see both. It cannot prove the two
  * implementations agree; it refuses the two ways they went wrong before.
  */
-describe('the classroom merge agrees across both runtimes', () => {
+describe('the classroom merge agrees across every runtime', () => {
   const BROWSER = readFileSync(join(WEB, 'lib/classroom-session.ts'), 'utf8')
-  const WORKER = readFileSync(
-    resolve(process.cwd(), 'classroom-worker/worker.js'),
+  const WORKER = readFileSync(resolve(process.cwd(), 'classroom-worker/worker.js'), 'utf8')
+  const GROUND = readFileSync(
+    resolve(process.cwd(), 'ground-station/src/classroom-store.ts'),
     'utf8',
   )
+  const EVERY = [
+    ['the browser', BROWSER],
+    ['the Cloudflare store', WORKER],
+    ['the ground station', GROUND],
+  ] as const
 
   it('settles seats on rev in the browser and in the store', () => {
     /*
@@ -205,10 +211,7 @@ describe('the classroom merge agrees across both runtimes', () => {
      * which is exactly the drift this is here to refuse.
      */
     const seatWinner = /const winner =.*\.rev \?\? 0.*\.rev \?\? 0/
-    for (const [where, source] of [
-      ['the browser', BROWSER],
-      ['the store', WORKER],
-    ] as const) {
+    for (const [where, source] of EVERY) {
       expect(seatWinner.test(source), `${where} does not settle a seat on rev`).toBe(true)
     }
   })
@@ -218,10 +221,18 @@ describe('the classroom merge agrees across both runtimes', () => {
    * a second old is the ordinary case in a classroom, not a conflict, and refusing it is how
    * the seat never reached the board.
    */
-  it('leaves no 409 in the store', () => {
-    /* Comments stripped: this file explains the 409 that was removed, in prose. */
-    const code = WORKER.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
-    expect(code).not.toContain('409')
+  it('leaves no 409 in either store', () => {
+    /* Comments stripped: both files explain the 409 that was removed, in prose. */
+    const strip = (source: string) =>
+      source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+    for (const [where, source] of [
+      ['the Cloudflare store', WORKER],
+      ['the ground station', GROUND],
+    ] as const) {
+      expect(strip(source), `${where} still refuses a writer for being behind`).not.toContain(
+        '409',
+      )
+    }
   })
 
   /*
@@ -229,10 +240,7 @@ describe('the classroom merge agrees across both runtimes', () => {
    * document-level tiebreak that both sides carry — but a seat settled on a clock is the bug.
    */
   it('never picks a seat by comparing updatedAt', () => {
-    for (const [where, source] of [
-      ['the browser', BROWSER],
-      ['the store', WORKER],
-    ] as const) {
+    for (const [where, source] of EVERY) {
       const seatByClock = /seat[A-Za-z]*\.updatedAt|updatedAt.*seat[A-Za-z]*\.updatedAt/i
       expect(seatByClock.test(source), `${where} settles a seat on a clock`).toBe(false)
     }

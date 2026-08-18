@@ -342,6 +342,35 @@ About twenty lines. It removes a class of failure that cost most of a working da
 
 ---
 
+## 10b. Getting it onto a laptop, and keeping it up to date
+
+"Ready to plug in, in one setup" has a hole in it that no amount of app work closes: **somebody
+has to get the app onto the machine first.** Today that means installing Node.js and copying a
+folder, and the launcher's own first line is a check that Node exists with instructions to go
+and fetch it. That is fine for the owner and wrong for a school technician who was handed a
+trolley.
+
+Nothing here is hard. It is unglamorous and it is the difference between a product and a
+project.
+
+- **One folder, copied.** No repository clone, no `git`, no build tools assumed. A zip a
+  technician unzips to `C:\TechTech Flight` and nothing else.
+- **Node, decided.** Either the zip carries a Node runtime beside the app so nothing is
+  installed at all, or the setup notes name one version and one download. Carrying it is
+  friendlier and larger; naming it is smaller and leans on somebody following instructions.
+  **Recommendation: carry it.** A school technician should never see a version number.
+- **First run does everything.** Installs what it needs, builds the board, creates the records
+  file, starts, opens. The launcher already does most of this; it must not fail differently on
+  a machine that has never seen it.
+- **Updates are a replaced folder, and the records survive it.** This is the part that must be
+  designed rather than discovered: `records.db` lives in Documents precisely so that replacing
+  the app folder cannot touch it. Say so in the setup notes, and never put data in the app
+  folder.
+- **A page of setup notes a technician can follow**, with the router, the static address, the
+  iPads and Guided Access on it. §7 is most of that text already.
+
+---
+
 ## 11. What "done" looks like
 
 The owner has asked "is it complete yet" repeatedly and the plan never answered, because it

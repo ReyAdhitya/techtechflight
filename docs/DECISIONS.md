@@ -9,6 +9,35 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-18 · The calls made building the local flight deck.
+
+- **The tracker sweep is partial, and says so on its own front page.** 19 closed with evidence,
+  2 kept, 368 not judged. The automated pass was thrown away because polarity is the whole
+  problem: an issue asking for a thing to *go* is proved by an absence, and nothing in a title
+  says which direction proves it. #623 flipped from shipped to open when read by hand.
+- **The records file translates the Postgres schema rather than keeping a second one.** Two
+  schemas drift, and those eighteen tables are the thing both ends have to agree about.
+- **The records writer has nowhere to put a live reading.** Not a rule written in a comment:
+  `LessonSnapshot` has no field for one, so a future writer cannot quietly start logging
+  telemetry into a school's disk by adding a line.
+- **The demonstration seats children by hand rather than joining them.** `joinClassroomAsStudent`
+  finds this device's own seat and renames it, so three joins from one browser became one child.
+  Seating by hand is also the honest path: a demonstration has no tablets in the room.
+- **The seed takes the brief tick as an argument.** The rules live in a component module and
+  `web/import-boundaries.test.ts` refuses the logic layer reaching back into the screens, which
+  it duly caught. Injecting it was cheaper and truer than an exemption.
+- **The packaged folder carries no state at all.** `classrooms.json` and `classroom-source.json`
+  are refused outright, because shipping either puts a developer's afternoon into a school's
+  morning.
+- **The Node runtime is staged, never downloaded by the packager.** A build script that reaches
+  the internet fails on the day the internet is the problem, and that day is why this plan
+  exists.
+- **The cable-out proof aborts every request that is not the laptop**, which is stricter than
+  unplugging a router: a real cable leaves DNS caches and retries behind. It counts what tried
+  to leave the room and prints the number, so "nothing reaches outside" is a measurement.
+
+---
+
 ## 2026-08-14 · Both halves of "pre-flight passes in simulation" landed.
 
 - **Two fixes for one item, and they are not arguing.** The check learned that a *craft* is

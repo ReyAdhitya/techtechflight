@@ -39,6 +39,10 @@ web/public/ort/
 # Boss Classroom setup preference (Settings Sim vs Radio) — local laptop only
 ground-station/classroom-source.json
 
+# The classroom store on this laptop. One room, live, belonging to whoever ran the board
+# last; committing it would hand a school somebody else's afternoon.
+ground-station/classrooms.json
+
 .env*
 
 # Wrangler local dev state and cache

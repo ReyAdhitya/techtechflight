@@ -5,7 +5,36 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **The classroom lives on the laptop.** `GET/PUT /api/classroom` on the ground station, backed
+  by a JSON file, with the Worker's merge ported rather than rewritten. No account, no token and
+  no request cap, and it keeps working with the network cable out.
+- **The records live on the laptop (ADR-0035).** The eighteen tables in a SQLite file at
+  `Documents\TechTech Flight\records.db`, written at Lesson boundaries and never per telemetry
+  tick. Two buttons on Settings save a dated copy to the Desktop and export a register as CSV,
+  and neither shows a Teacher a file path. The off-site copy is off until somebody ticks a box.
+- **One switch.** The launcher prints the address for the iPads and draws it as a QR code,
+  carries a Node runtime so nobody is shown a version number, and opens the Teacher's board on
+  `localhost` because a camera is refused anywhere else.
+- **A door the school's own drones can knock on.** UDP on 14555 accepting small JSON. Absent
+  means cannot report rather than zero, an unknown id is never invented into a Drone, malformed
+  packets are dropped quietly and the sender's address is remembered per id.
+- **One button fills a Lesson for a demonstration**, pressing what a Teacher presses so every
+  step opens because its condition genuinely holds. It refuses to run on a class with real
+  children on the roll.
+- **`npm run package:school`** writes the folder a technician unzips, with a page they can
+  follow in `docs/SETUP-FOR-A-TECHNICIAN.md`.
+- **Both Cloudflare Workers deploy on every push to main.**
+
 ### Fixed
+
+- **The poll asked every 2.5 seconds whether or not anything had changed**, which is what
+  emptied a Cloudflare allowance account wide in a day. It backs off to twenty seconds in a
+  quiet room, does not poll at all before there is a classroom, and any write wakes it at once.
+- **The classroom code panel named a dead environment variable, and could not tell "nobody set
+  this up" from "the store refused me".** It names the store it is actually talking to, prints
+  the status and quotes what came back.
 
 - **The store settled a classroom on a clock, and the browser settled it on `rev`.** Two
   runtimes disagreeing about one rule puts the seat glitch straight back: a board and a tablet

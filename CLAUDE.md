@@ -496,6 +496,25 @@ also the only thing giving the picture a scale, and without one a Drone at the n
 exactly like one in the middle — so the metres are written at the ends of each axis, in HTML so
 they follow the Teacher's font size. Do not put a box back to get a ruler.
 
+**The classroom store lives in three runtimes now, and the laptop is the one that matters.**
+`ground-station/src/classroom-store.ts` holds it for a school: a JSON file beside
+`classroom-source.json`, served as `/api/classroom` on `:4321`, with no account and no request
+cap. `classroom-worker/worker.js` is the hosted copy and `web/lib/classroom-session.ts` is the
+browser. **All three run the same merge**, settled seat by seat on `rev` and never on
+`updatedAt`, and `web/standards.test.ts` fails with the runtime named if one of them drifts. A
+board served from port 4321 talks to its own origin and needs no configuration at all.
+
+**The records are a file, not the browser (ADR-0035).** `Documents\TechTech Flight\records.db`,
+the eighteen tables, written by the ground station **at Lesson boundaries and never per
+telemetry tick**. Outside the app folder because an update is a replaced folder. **No live
+readings ever** — `LessonSnapshot` has nowhere to put one. Nothing leaves the premises until
+somebody ticks the Settings box; a sync secret alone no longer switches it on.
+
+**The demonstration seed presses what a Teacher presses.** `web/lib/demonstration-seed.ts` opens
+every step by making its condition true, never by touching a lock. Step 12 stays shut, because
+sealing is a judgement. It refuses to run when the roll holds a name that is not its own cast,
+and the Lesson is labelled a demonstration in the record itself.
+
 **A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
 `lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board
 ever minted, forever. Ending a Lesson calls `closeClassroom`, which is the only thing that

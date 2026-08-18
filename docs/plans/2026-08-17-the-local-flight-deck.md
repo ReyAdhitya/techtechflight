@@ -342,7 +342,56 @@ About twenty lines. It removes a class of failure that cost most of a working da
 
 ---
 
-## 11. Still the owner's to decide
+## 11. What "done" looks like
+
+The owner has asked "is it complete yet" repeatedly and the plan never answered, because it
+listed work rather than a finish line. Two finish lines, and the first one is reachable without
+the drone team, without hardware, and without anybody else's permission.
+
+### Done A — the demonstration. Nothing outside this project is needed.
+
+- [ ] Double-click the launcher on a laptop that has never run it. It installs, builds, starts,
+      and opens the board without a single typed command.
+- [ ] Settings shows **Simulator**, and the board flies a class of simulated Drones.
+- [ ] The demonstration seed fills a Lesson, and **all twelve steps open** and show real content.
+- [ ] A phone or iPad on the same network joins with the code and sits on the Student screen.
+- [ ] The network cable comes out and the whole thing carries on working.
+- [ ] Step 11 seals a Mission; step 12 shows the logs and the debrief.
+- [ ] Records shows the class list; a name opens that child's history.
+- [ ] *Save a copy of my records* produces a file on the Desktop.
+
+That is a product a Teacher can be shown, and a boss can be walked through, on one laptop in a
+room with no internet.
+
+### Done B — a real lesson. Needs the drone team.
+
+- [ ] Settings shows **real drones**, and the board reads at least one real aircraft.
+- [ ] Every live reading is either a real number or the words that say it is absent. No zeros
+      standing in for readings nobody sent.
+- [ ] A child takes off, flies points, and the board ticks them off from what the aircraft says.
+- [ ] The Lesson ends, the records are written, and the file holds it the next morning.
+
+**Land and Stop reaching an aircraft are not on either list**, deliberately. Children fly by
+hand and a Teacher calls out, which is what a room does today.
+
+---
+
+## 12. Who does what
+
+| | |
+|---|---|
+| **The coder** | Everything in §2 to §5c, §9 and §10. Nothing on that list is blocked by anybody |
+| **The owner** | Run Phase 0 on an iPad. Send §8 to the drone team. Read ADR-0035 and overrule it if it is wrong |
+| **The drone team** | Answer §8. Nothing else, and nothing waits on them |
+| **Operational, today** | Rotate the Cloudflare API token that was pasted into a chat window on 2026-08-14 |
+
+**The hosted copies stay.** Vercel deploys itself and the Cloudflare board deploys itself once
+§10 is done. They are for showing somebody the product without carrying a laptop, and they cost
+nothing to keep once neither needs a human to remember a command.
+
+---
+
+## 13. Still the owner's to decide
 
 | Decision | Blocks |
 |---|---|

@@ -80,22 +80,27 @@ says come home, the child flies it home.
 **A new Lesson mints a new code.** Decided 2026-08-10. See failure 5 above for what happens
 when it does not.
 
-## The ten fixes, in this order
+## The ten fixes: all shipped, 2026-08-14 to 2026-08-16
 
-The order is what stops it collapsing.
+**This was a to-do list and it is now a record.** It stayed a to-do list for two days after the
+last of it merged, which is the same failure the tracker had: work shipping and nothing being
+marked. Nine reached main through PRs #659 to #665; the tenth is below.
 
-| # | What |
-|---|---|
-| 1 | **Push the engineer's classroom-code fix.** Nothing below works on top of a Lesson with an inherited code |
-| 2 | **The glitch.** Tap a Drone, the seat is written, the screen bounces back to the picker. Same cause: the Teacher's board never reads seats back, so a Student who joined as "kntl" never appears. One bug, two symptoms |
-| 3 | **One classroom across every tab.** Roles stay per tab |
-| 4 | **Skip remembers.** The Warm-up returns on every visit to step 1 |
-| 5 | **Pre-flight always passes in simulation.** No faults on Drones that do not exist |
-| 6 | **Tick-all clears Propellers on every Drone in one tap.** Six of seven items read themselves; the tedium is doing the one human tick per aircraft |
-| 7 | **Bookmark and Note incident move to step 10.** They sit on step 1 today, where there is no moment to bookmark |
-| 8 | **Delete "Change the set-up".** The rail already holds steps 1 to 5 |
-| 9 | **No-fly zones optional, blue boundary box deleted.** CRITICAL: with the box gone the map has no scale, so label the grid in metres or a Drone at the netting looks like one in the middle |
-| 10 | **The database.** Last, because it fixes none of the above |
+| # | What | Where it lives now |
+|---|---|---|
+| 1 | The classroom-code fix | `openClassroom` in `web/lib/classroom-session.ts`, keyed on `endedAt` before the Lesson id |
+| 2 | The glitch, one bug and two symptoms | `mergeClassroomSessions`, settled seat by seat on `rev` |
+| 3 | One classroom across every tab | the BroadcastChannel receiver merges rather than replacing |
+| 4 | Skip remembers | `web/lib/warm-up-skip.ts`, keyed on the Lesson |
+| 5 | Pre-flight passes in simulation | `#wander` raises a fault only on a Drone that is flying |
+| 6 | Tick-all | `web/components/TickEveryPropeller.tsx`, and *I said all 18* on the brief |
+| 7 | Bookmark and Note incident off step 1 | deleted there; they live on `LessonStrip` above every in-the-air step |
+| 8 | "Change the set-up" deleted | the rail is the only way back |
+| 9 | Boundary box gone, grid labelled in metres | `GridScale` in `web/components/Scope.tsx` |
+| 10 | The database | `db/schema.sql` and ADR-0034. **Moving onto the laptop**, see `docs/plans/2026-08-17-the-local-flight-deck.md` section 5b |
+
+**Do not rebuild any of these.** A wave in this repo rebuilt four items that were already on
+main because nothing said they had landed.
 
 ## The database
 

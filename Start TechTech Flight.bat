@@ -44,15 +44,20 @@ echo Starting the ground station on http://localhost:4321 ...
 start "TechTech Ground Station" cmd /k "cd /d ""%~dp0"" && npm run start --workspace=ground-station"
 
 timeout /t 3 /nobreak >nul
+
+REM The board opens on localhost and never on the LAN address. getUserMedia is refused on a
+REM plain http:// address that is not localhost, so opening the board at 10.0.0.2 breaks the
+REM camera in a way that reads to a Teacher as a permissions problem.
 start "" "http://localhost:4321/"
+
+REM The address for the iPads, printed once and drawn as a QR. Nobody types an IP in front
+REM of a class.
+node "scripts\classroom-address.mjs" 4321
 
 echo.
 echo Ground station window stays open while you teach.
 echo Close that window when the lesson is finished.
 echo.
-echo Default Fleet is the classroom Simulator.
-echo Settings can switch next launch to Radio ^(MAVLink^) — monitoring only.
-echo Close this ground-station window and run the launcher again after changing path.
 echo AI detection: http://127.0.0.1:8090 when the AI Service window is running.
 echo.
 pause

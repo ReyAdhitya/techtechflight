@@ -1,0 +1,59 @@
+# Deploy both Cloudflare Workers on every push to main.
+#
+# The board sat three days behind main because a manual deploy only happens when a human with
+# a token remembers, and the one person with the token was debugging the thing that was three
+# days stale. A push is the only signal that reliably exists.
+#
+# Two Workers, and they are different things: `site.toml` serves the board, `wrangler.toml` is
+# the classroom store. Deploying one and not the other is how a board and its store disagree.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # So a failed deploy can be re-run without an empty commit.
+  workflow_dispatch:
+
+concurrency:
+  # A newer main is always the one to ship. Cancelling an in-flight older deploy is safe
+  # because each deploy is a whole artefact rather than a step in a sequence.
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  cloudflare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the board
+        run: npm run build --workspace=web
+        env:
+          NEXT_PUBLIC_DEMO_ONLY: '1'
+
+      # The ONNX runtime is 26 MB and Cloudflare caps a single asset at 25 MB. Without this
+      # the upload is rejected outright, so Vision does not work on the Cloudflare copy and
+      # that is accepted (HANDOFF.md says so too).
+      - name: Keep the oversized assets out of the upload
+        run: printf '_next/static/media/ort-wasm*.wasm\nort/*.wasm\nmodels/*.onnx\n' > web/out/.assetsignore
+
+      - name: Deploy the board
+        run: npx wrangler deploy -c site.toml
+        working-directory: classroom-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy the classroom store
+        run: npx wrangler deploy
+        working-directory: classroom-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

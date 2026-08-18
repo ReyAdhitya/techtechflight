@@ -3,6 +3,7 @@
 import { useFleet } from './FleetProvider'
 import { ClassroomFleetSizePanel } from './ClassroomFleetSizePanel'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
+import { DemonstrationSeedPanel } from './DemonstrationSeedPanel'
 import { MyRecordsPanel } from './MyRecordsPanel'
 import { DemoMissionPanel } from './DemoMissionPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
@@ -43,6 +44,8 @@ export function SettingsScreen() {
       <LogbookLocationNote />
 
       <MyRecordsPanel />
+
+      <DemonstrationSeedPanel />
 
       <ClassroomSetupPanel />
 

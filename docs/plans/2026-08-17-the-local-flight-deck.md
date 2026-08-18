@@ -131,6 +131,13 @@ The Logbook. It stays in the browser and the Neon copy stays the copy (ADR-0034)
 Not MAVLink. **A door on the laptop that accepts small Wi-Fi messages**, so that whatever the
 drone team builds can reach the board without this project depending on their decisions.
 
+**Build it now rather than waiting for the drone team.** An earlier draft held this back until
+they answered whether the aircraft transmits anything at all. That was the wrong call: the door
+makes no assumption about their radio, their handset or their naming, so their answer cannot
+waste it. If the aircraft turns out to say nothing, the door sits there harmlessly and the board
+honestly reads *not reporting* — which is what it would do anyway. The question is still worth
+asking (§8), it simply no longer blocks anybody.
+
 ```mermaid
 flowchart LR
   drone["Drone ESP32<br/>own firmware"] -- "UDP :14555<br/>small JSON" --> src["EspTelemetrySource<br/>fleet-adapters<br/>node:dgram"]
@@ -174,6 +181,73 @@ It assumes nothing about the drone team's radio, handset, or naming. If they inv
 format, somebody writes a thirty-line translator. If they surprise everyone and use MAVLink,
 that adapter is already in the tree. It is testable with no aircraft in the room: send packets
 from the laptop itself and watch the board.
+
+---
+
+## 5b. Phase 3½ — the records move onto the laptop, and the cloud goes off
+
+Decided 2026-08-18 with the owner, after asking why a cloud appeared in a plan whose whole
+point is that nothing leaves the room. It should not have. **The database is a file on the
+laptop and the cloud is switched off.**
+
+```mermaid
+flowchart LR
+  board["Teacher's board<br/>localhost"] -- "writes, instant, no internet" --> gs["Ground station"]
+  gs -- "writes" --> db["Documents\\TechTech Flight\\records.db<br/>the eighteen tables"]
+  db -. "one button, when a human asks" .-> usb["A copy on a USB stick"]
+  db -. "off by default, a box in Settings" .-> neon["Neon, off-site"]
+```
+
+### Why this changes a written rule, and the rule it changes
+
+ADR-0034 says the browser is the record and the database is the copy. That was right when the
+database was in the cloud: a lesson must never wait on a network. It is wrong once the database
+is a file on the same machine, because there is no network to wait on, and because browser
+storage has a failure the file does not: **clearing browsing data destroys the records, silently
+and completely.** A file can also be copied to a USB stick, which is what a school actually does
+with anything it cares about.
+
+**Write ADR-0035 before the code.** State what changes, and what a school is now told about
+where their children's records live.
+
+### Work
+
+1. The eighteen tables of `db/schema.sql`, created in a SQLite file at
+   `Documents\TechTech Flight\records.db`. `node:sqlite` is built into Node 24 — no dependency,
+   no install, no server, verified on the owner's machine.
+2. **The ground station writes it, at lesson boundaries.** Never per telemetry tick. **No live
+   readings ever:** no altitude, no battery, no position. Coordinates only on `zone_point` and
+   `checkpoint`, because those are what a Teacher *set*.
+3. The browser keeps its copy so the board still works with the ground station closed, and the
+   file wins when they disagree. A board opened on a *hosted* copy has no ground station behind
+   it, falls back to the browser, and syncs when it is next opened on the laptop.
+4. **The Neon push stays in the codebase and defaults off.** No account, no connection, no
+   credential. A box in Settings turns it on for a school that wants off-site backup.
+5. Two buttons on Settings, so no Teacher is told a file path: *Save a copy of my records* — a
+   dated file on the Desktop — and *Export for a spreadsheet*.
+
+**The cost, stated plainly:** local-only makes backup a human habit. If the laptop is lost and
+nobody pressed the button, the records are gone. That is the honest price of no cloud, no
+account and no bill, and the switch is there when a school decides the price is too high.
+
+---
+
+## 5c. The demonstration seed — how a Teacher sees all twelve steps
+
+The rail locks a step until its condition holds: *Choose a Scenario first*, *Grant a takeoff
+first*, *Nothing has flown yet*. That is the product guiding somebody, and it must not be
+removed to make a demo easier.
+
+What is missing is a way to **fill** a lesson rather than unlock an empty one. One button in
+Settings, or a flag on the launcher: seed a Scenario, zones, teams on craft, pre-flight ticked,
+a Lesson started, children joined, flights flown and points reached. Every step then opens
+because its condition genuinely holds, and every panel shows real content.
+
+- It writes the same records any lesson writes. Nothing is faked and no screen is special-cased.
+- **It must be impossible to seed into a real class.** A seeded Lesson is labelled as a
+  demonstration in the record, and the button refuses to run when the roll holds real children.
+- It is how the owner shows a boss the whole product on a laptop, and how anybody reviews a
+  screen that is otherwise three lessons deep.
 
 ---
 

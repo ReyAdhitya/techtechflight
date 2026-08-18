@@ -44,3 +44,7 @@ ground-station/classroom-source.json
 # Wrangler local dev state and cache
 .wrangler/
 **/.wrangler/
+
+# The packaged folder for a school laptop, and any staged Node runtime
+dist/
+runtime/

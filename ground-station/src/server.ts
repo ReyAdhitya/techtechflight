@@ -10,6 +10,8 @@ import {
   type ClassroomTelemetrySource,
 } from './classroom-source.ts'
 import { normalizeCode, readClassroom, writeClassroom } from './classroom-store.ts'
+import { exportRecordsCsv, saveRecordsCopy } from './records-export.ts'
+import { writeLesson, type LessonSnapshot } from './records-writer.ts'
 
 export interface FleetServerOptions {
   readonly station: GroundStation
@@ -54,6 +56,7 @@ export async function startFleetServer(options: FleetServerOptions): Promise<Fle
   const http = createServer((request, response) => {
     if (tryClassroomSetup(request, response, activeSource)) return
     if (tryClassroom(request, response)) return
+    if (tryRecords(request, response)) return
     void serveStatic(request, response, boardDir)
   })
   const sockets = new WebSocketServer({ server: http, path: '/fleet' })
@@ -123,6 +126,89 @@ function send(socket: { readyState: number; send(data: string): void }, message:
   const OPEN = 1
   if (socket.readyState !== OPEN) return
   socket.send(JSON.stringify(message))
+}
+
+/**
+ * The records, on this laptop (ADR-0035).
+ *
+ * `PUT /api/records` writes one Lesson at its boundary. `POST /api/records/copy` and
+ * `/api/records/csv` are the two Settings buttons, and neither tells a Teacher a file path:
+ * they press it and a dated file appears on the Desktop.
+ *
+ * **Never per telemetry tick**, and there is nowhere in `LessonSnapshot` to put a live reading.
+ */
+function tryRecords(request: IncomingMessage, response: ServerResponse): boolean {
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  if (!url.pathname.startsWith('/api/records')) return false
+
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, PUT, POST, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+  }
+  const reply = (status: number, body: unknown) => {
+    response.writeHead(status, { 'content-type': 'application/json', ...cors })
+    response.end(JSON.stringify(body))
+  }
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, cors)
+    response.end()
+    return true
+  }
+
+  if (url.pathname === '/api/records/copy' && request.method === 'POST') {
+    try {
+      reply(200, { ok: true, savedTo: saveRecordsCopy() })
+    } catch (error) {
+      reply(500, { error: error instanceof Error ? error.message : 'Could not save a copy.' })
+    }
+    return true
+  }
+
+  if (url.pathname === '/api/records/csv' && request.method === 'POST') {
+    try {
+      reply(200, { ok: true, savedTo: exportRecordsCsv() })
+    } catch (error) {
+      reply(500, { error: error instanceof Error ? error.message : 'Could not export.' })
+    }
+    return true
+  }
+
+  if (url.pathname === '/api/records' && request.method === 'PUT') {
+    const LIMIT = 4 * 1024 * 1024
+    let raw = ''
+    let tooBig = false
+    request.on('data', (chunk: Buffer) => {
+      if (tooBig) return
+      raw += chunk.toString()
+      if (raw.length > LIMIT) {
+        tooBig = true
+        reply(413, { error: 'Lesson record too large.' })
+        request.destroy()
+      }
+    })
+    request.on('end', () => {
+      if (tooBig) return
+      try {
+        const snapshot = JSON.parse(raw) as LessonSnapshot
+        if (!snapshot || typeof snapshot.lessonId !== 'string') {
+          reply(400, { error: 'Body must be a Lesson snapshot with a lessonId.' })
+          return
+        }
+        writeLesson(snapshot)
+        reply(200, { ok: true, lessonId: snapshot.lessonId })
+      } catch (error) {
+        reply(500, {
+          error: error instanceof Error ? error.message : 'Could not write the Lesson.',
+        })
+      }
+    })
+    return true
+  }
+
+  reply(405, { error: 'Method not allowed' })
+  return true
 }
 
 /**

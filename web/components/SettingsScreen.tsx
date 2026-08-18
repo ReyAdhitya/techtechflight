@@ -3,6 +3,7 @@
 import { useFleet } from './FleetProvider'
 import { ClassroomFleetSizePanel } from './ClassroomFleetSizePanel'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
+import { MyRecordsPanel } from './MyRecordsPanel'
 import { DemoMissionPanel } from './DemoMissionPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
@@ -40,6 +41,8 @@ export function SettingsScreen() {
       <TeacherPinPanel />
 
       <LogbookLocationNote />
+
+      <MyRecordsPanel />
 
       <ClassroomSetupPanel />
 

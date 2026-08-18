@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   authorizeLogbookSync,
+  offsiteBackupOn,
   resetLogbookSyncForTests,
+  setOffsiteBackup,
   scheduleLogbookCloudPush,
   writeLogbookSyncSecret,
   LOGBOOK_SYNC_SECRET_KEY,
@@ -22,12 +24,14 @@ describe('debounced cloud push', () => {
     resetLogbookSyncForTests()
     clearLogbook()
     window.localStorage.removeItem(LOGBOOK_SYNC_SECRET_KEY)
+    setOffsiteBackup(false)
     vi.useRealTimers()
     vi.unstubAllGlobals()
   })
 
-  it('PUTs the Logbook snapshot after a short debounce when a secret is set', async () => {
+  it('PUTs the Logbook snapshot after a short debounce when a school has asked for it', async () => {
     vi.useFakeTimers()
+    setOffsiteBackup(true)
     writeLogbookSyncSecret('school-secret')
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }))
 
@@ -65,5 +69,39 @@ describe('debounced cloud push', () => {
     scheduleLogbookCloudPush(readLogbook(), fetchImpl)
     await vi.advanceTimersByTimeAsync(2_000)
     expect(fetchImpl).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * The cloud is off until somebody ticks a box (ADR-0035).
+ *
+ * The records are a file on the laptop, and a school is told we do not hold a copy. A secret
+ * left in a browser from a previous plan must not quietly make that untrue.
+ */
+describe('the off-site backup switch', () => {
+  afterEach(() => {
+    setOffsiteBackup(false)
+    window.localStorage.removeItem(LOGBOOK_SYNC_SECRET_KEY)
+    resetLogbookSyncForTests()
+  })
+
+  it('sends nothing when a secret is set but nobody ticked the box', async () => {
+    vi.useFakeTimers()
+    writeLogbookSyncSecret('school-secret')
+    const fetchImpl = vi.fn(async () => new Response('{}', { status: 200 }))
+
+    scheduleLogbookCloudPush({ ...readLogbook(), revisedAt: 1_000 }, fetchImpl)
+    await vi.advanceTimersByTimeAsync(2_000)
+
+    expect(fetchImpl).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('is off unless it was turned on', () => {
+    expect(offsiteBackupOn()).toBe(false)
+    setOffsiteBackup(true)
+    expect(offsiteBackupOn()).toBe(true)
+    setOffsiteBackup(false)
+    expect(offsiteBackupOn()).toBe(false)
   })
 })

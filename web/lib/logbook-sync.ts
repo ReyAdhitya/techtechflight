@@ -34,7 +34,39 @@ export function authorizeLogbookSync(
   return match?.[1] === secret
 }
 
+/**
+ * Whether a school has asked for an off-site copy at all (ADR-0035).
+ *
+ * **Off until somebody ticks it**, and until then nothing has ever been sent: no account, no
+ * connection, no credential. The records are a file on the laptop and that is the whole of what
+ * a school is told. The push below stays in the tree for the school that wants a backup off the
+ * premises, and a secret alone no longer switches it on -- a secret left in a browser from a
+ * previous plan would otherwise start uploading a register nobody offered to upload.
+ */
+export const OFFSITE_BACKUP_KEY = 'techtechflight:offsite-backup'
+
+export function offsiteBackupOn(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(OFFSITE_BACKUP_KEY) === 'on'
+  } catch {
+    return false
+  }
+}
+
+export function setOffsiteBackup(on: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (on) window.localStorage.setItem(OFFSITE_BACKUP_KEY, 'on')
+    else window.localStorage.removeItem(OFFSITE_BACKUP_KEY)
+  } catch {
+    /* A locked-down browser refusing storage means it stays off, which is the safe answer. */
+  }
+}
+
 export function readLogbookSyncSecret(): string | null {
+  /* Ticked first, secret second. Neither alone sends anything anywhere. */
+  if (!offsiteBackupOn()) return null
   if (typeof window === 'undefined') return null
   try {
     const stored = window.localStorage.getItem(LOGBOOK_SYNC_SECRET_KEY)

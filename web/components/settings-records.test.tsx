@@ -7,18 +7,22 @@ import { LessonStrip } from './LessonStrip'
 import { SettingsScreen } from './SettingsScreen'
 
 /**
- * What Settings no longer offers, and the prompt that had to go with it.
+ * What Settings offers about records, and what it must never grow back.
  *
- * Export, Import and Clear everything are withdrawn, with the consequence accepted: a
- * Teacher's records stay in one browser profile with no route out and no way to clear them
- * short of clearing site data.
+ * Export, Import and Clear everything were withdrawn when a Teacher's records lived in one
+ * browser profile with no route out. **ADR-0035 reversed the premise:** the records are a file
+ * on the laptop now, so there is a route out, and it is the two buttons the plan asks for --
+ * Save a copy, and Export for a spreadsheet -- neither of which shows anybody a file path.
  *
- * The half of this that is easy to get wrong is not the deletion — it is the **orphan**. The
- * lesson strip used to warn, at the end of a lesson with a heavy logbook, that the records
- * were getting large, and offer a button to export them there and then. Deleting the Settings
- * panel and leaving that in place would tell a Teacher about a problem while removing every
- * remedy for it, which is worse than never mentioning it. This asserts the warning is gone
- * under the very condition that used to raise it.
+ * What stays refused is **Clear everything**. A button that wipes a term of attendance from a
+ * shared laptop is a button somebody presses by accident, and the file exists precisely so that
+ * clearing browsing data cannot do it either.
+ *
+ * The half that is easy to get wrong is still the **orphan**. The lesson strip used to warn, at
+ * the end of a heavy lesson, that the records were getting large, and offered an export there
+ * and then. Telling a Teacher about a problem on a screen with no remedy on it is worse than
+ * never mentioning it, so the warning stays gone: the remedy lives on Settings, where a Teacher
+ * goes to deal with records rather than mid-lesson.
  */
 
 const pathname = vi.hoisted(() => ({ current: '/demo' }))
@@ -49,14 +53,35 @@ afterEach(() => {
 })
 
 describe('Settings, with the records and keyboard panels gone', () => {
-  it('offers no route out of the browser and no way to wipe it', () => {
+  it('offers the two ways out and no way to wipe it', () => {
     show(<SettingsScreen />)
     settle()
 
-    expect(screen.queryByRole('button', { name: /Export/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Import/ })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Save a copy of my records/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Export for a spreadsheet/ })).toBeInTheDocument()
+
+    /* Still refused: a term of attendance is not one press from gone on a shared laptop. */
     expect(screen.queryByRole('button', { name: /Clear everything/ })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Your records/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Import/ })).not.toBeInTheDocument()
+  })
+
+  /* No Teacher is ever told a file path. They press a button and a file appears. */
+  it('names no file path', () => {
+    show(<SettingsScreen />)
+    settle()
+
+    expect(screen.queryByText(/records\.db/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Documents\\/)).not.toBeInTheDocument()
+  })
+
+  /* Off until somebody ticks it, so the sentence a school is told is true on a fresh laptop. */
+  it('leaves the off-site backup unticked', () => {
+    show(<SettingsScreen />)
+    settle()
+
+    expect(screen.getByRole('checkbox', { name: /backup off the premises/ })).not.toBeChecked()
   })
 
   it('says nothing about a keyboard it no longer documents', () => {

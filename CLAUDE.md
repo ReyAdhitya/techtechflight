@@ -102,8 +102,15 @@ defending it.
 
 **Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
 no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
-the Simulator; Settings **Classroom setup** can prefer Radio (MAVLink) for the next launch
-(monitoring only, ADR-0011) — still no hardware `CommandableSource`.
+the Simulator; Settings **Classroom setup** can prefer **School drones (Wi-Fi)** or Radio
+(MAVLink) for the next launch (monitoring only, ADR-0011) — still no hardware
+`CommandableSource`. School drones is this school's path (`TELEMETRY_SOURCE=esp`, UDP 14555);
+Radio stays in the tree and is not the default.
+
+**The iPad URL is `/student`.** The launcher QR and the Copy line on Settings Classroom setup
+both name `http://<lan>:4321/student`. The Teacher board stays on `localhost` (camera). A room
+with no internet cannot fetch a QR, so the square is generated in `scripts/classroom-address.mjs`.
+Skip Docker/WSL/Hyper-V when choosing `<lan>` — those are private too and a phone cannot use them.
 
 **Windows:** `next build` fails with `EBUSY: rmdir 'web/out'` if any shell has that
 directory as its working directory. Git Bash rewrites a bare `/route` argument into a
@@ -111,8 +118,9 @@ Windows path — pass routes to `scripts/shot.mjs` from PowerShell.
 
 **MAVLink is Node-only.** `@techtechflight/fleet-adapters` speaks UDP via `node:dgram` and
 must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground station in with
-`TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
-`CommandableSource` — monitoring only (ADR-0011).
+`TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). School drones use
+`TELEMETRY_SOURCE=esp` (optional `ESP_PORT`, default 14555). Neither implements
+`CommandableSource` — monitoring only (ADR-0011). Land/Stop to hardware is Phase 4, own ADR.
 
 **Lesson/Student Logbook is this browser first, and now has a database behind it.** Records
 live in `localStorage` on the machine running the board, and that stays the record: a school
@@ -372,15 +380,16 @@ axis, so a zone away to the east still bands on Side and is still named there; a
 the edge keeps its key, because the Scope holds a shape on the frame rather than dropping it
 and the boundary line is drawn.
 
-**The drawing surface draws the Scope's window, and that is why zones are visible at all.**
-`MissionAreaEditor` used to be a fixed twenty metres square running north-east from the
-origin. The classroom sits *astride* its origin — roughly -4 to 4 m east, -3 to 3 m north —
-so **every** zone a Teacher drew landed outside the picture: real, breaching, hatched
-nowhere. The rail said "2 no-fly zones" and the Scope's key named no hatch, and neither was
-lying. The surface now takes `scopeSpace` (the Scope's own `scopeWindow`) and falls back to
-`CLASSROOM_GEOFENCE`, clamps a typed corner into it, and reports the metres it covers in
-`data-space`. It draws the blue boundary box too, because a Teacher places a zone against the
-room. Do not put a fixed grid back.
+**The drawing surface draws the classroom, and the simulated Fleet sits in it.**
+`MissionAreaEditor` used to be a twenty-metre square north-east of the origin, then the
+Scope's fleet-centred window. The classroom sits *astride* its origin (about −4 to 4 m east,
+−3 to 3 m north). A row of craft parked at 0, 1, 2, 3, 4, 5 m east pulled the Scope east and
+left the west of the room off the picture: the rail said "1 no-fly zone", Top-down had no
+hatch and no leftover sentence, and both were telling a half-truth — the zone existed, the
+polygon was a line on the west edge. The grid is `CLASSROOM_GEOFENCE`; `scopeSpace` is only
+the leftover notice. The simulator parks the bench centred on the origin and wanders inside
+those same metres. Control re-reads the Mission draft when it is written, so a zone drawn on
+step 2 is on step 7. Do not put a 0–20 grid back, and do not park the set east of the room.
 
 **Count zones that enclose something.** `noFlyZones` in `MissionRunScreen` filters by
 `enclosesAnything`. A shape with two corners is a zone a Teacher started: `breachesAt` ignores
@@ -418,10 +427,13 @@ longer flies or lands anything; lost links, faults and charging stay. A grant ca
 the simulated aircraft playing the child's part, not Commands, and null on hardware.
 `fleet-core/src/simulator/flies-the-route.test.ts` pins both halves.
 
-**`mission.checkpoints` is empty unless something writes it, and two things depend on it.**
-`flyRoute` gets an empty route and `allPointsReached` returns false forever, so Approve never
-appears. `web/lib/demo-mission.ts` is currently the only writer. A Mission with no points is a
-Mission nobody can finish.
+**A built-in Scenario carries the route a class flies.** `chooseScenario` copies
+`defaultCheckpoints` and `defaultLimitMinutes` from `web/lib/mission-scenarios.ts`. Search and
+Rescue, Delivery and Building Inspection each have points inside `CLASSROOM_GEOFENCE` (about
+−4 to 4 m east, −3 to 3 m north), not on the netting. `emptyMission` and an unknown Scenario
+still have `checkpoints: []`, and `allPointsReached([])` stays false — a Mission with no
+points is a Mission nobody can finish. The seed and `demo-mission.ts` still write their own
+points; that is the show path. Do not add a points-drawing screen.
 
 **No Student, no takeoff, and the Student is the classroom seat first.** `studentOnDrone`
 takes the seat a child took on their tablet, then the Logbook assignment. Both the clearance
@@ -463,12 +475,25 @@ it for `components` and `app`. Anything a screen needs from there is re-exported
 `web/lib` (see `classroom-fleet-size.ts`), and display facts like `COMFORTABLE_BOARD_SIZE`
 belong in `web/lib` outright.
 
+**A Student tab on `:3000` is not a second classroom.** `DEMO_ONLY` used to start a Simulator
+in both `FleetProvider`s. The Teacher had Telemetry; the tablet said Drone 1 was not reporting.
+Do not invent a shared sim across two origins. That tab is `connection: 'unreachable'`, names
+the ground-station URL (`:4321`), and Ask to take off still writes a classroom record. The
+school path is one ground station.
+
+**The classroom Fleet size must not rebuild a ground-station connection.** That number is how
+many Drones the *browser* Simulator runs. Subscribing it on the socket path dropped the link
+when it hydrated and read as six Offline on Fleet and Walls mid-lesson. One `FleetProvider` in
+the Teacher layout is the same Fleet as step 7.
+
 **A scroll container must be a positioning context, or it clips nothing.** `.sr-only` and
 `.visually-hidden` are `position: absolute`, and an `overflow-x: auto` element that is
 `position: static` is not a containing block, so the screen-reader text lays out against a
 further ancestor and escapes the clip. The Student rail shipped that way and a phone scrolled
-856 pixels sideways at 390. Add `relative`. `web/scroll-containers.test.ts` refuses a scroller
-without it; jsdom can see neither the layout nor the cascade, so it is a source scan.
+856 pixels sideways at 390. Add `relative`. The rail now **wraps** at phone width rather than
+scrolling, so "Connect" is not "Co…". `web/scroll-containers.test.ts` refuses a scroller
+without a positioning context; jsdom can see neither the layout nor the cascade, so it is a
+source scan.
 
 **`takeOff` only takes off from the ground.** Home and the hover height are stamped inside a
 `if (drone.airborne) return` guard, because `flyRoute` calls `takeOff` and the demonstration
@@ -495,6 +520,37 @@ where the room ends, which this product has never known, at numbers nobody measu
 also the only thing giving the picture a scale, and without one a Drone at the netting looks
 exactly like one in the middle — so the metres are written at the ends of each axis, in HTML so
 they follow the Teacher's font size. Do not put a box back to get a ruler.
+
+**The classroom store lives in three runtimes now, and the laptop is the one that matters.**
+`ground-station/src/classroom-store.ts` holds it for a school: a JSON file beside
+`classroom-source.json`, served as `/api/classroom` on `:4321`, with no account and no request
+cap. `classroom-worker/worker.js` is the hosted copy and `web/lib/classroom-session.ts` is the
+browser. **All three run the same merge**, settled seat by seat on `rev` and never on
+`updatedAt`, and `web/standards.test.ts` fails with the runtime named if one of them drifts. A
+board served from port 4321 talks to its own origin and needs no configuration at all.
+
+**The records are a file, not the browser (ADR-0035).** `Documents\TechTech Flight\records.db`,
+the eighteen tables, written by the ground station **at Lesson boundaries and never per
+telemetry tick** — start, end, seal, and the demonstration seed. The browser keeps a copy so
+the board works with the ground station closed; **the file wins when they disagree**, via
+`logbook.json` beside the database (ties go to the file). Outside the app folder because an
+update is a replaced folder. **No live readings ever** — `LessonSnapshot` has nowhere to put
+one. Nothing leaves the premises until somebody ticks the Settings box; a sync secret alone no
+longer switches it on. No Teacher is told a file path except by **Save a copy of my records**
+and **Export for a spreadsheet**. The suite must not PUT into a live ground station: persist
+and hydrate no-op under Vitest unless a test hands its own `fetch`.
+
+**The demonstration seed presses what a Teacher presses.** `web/lib/demonstration-seed.ts` opens
+every step by making its condition true, never by touching a lock. It writes the points a class
+flies to, or Approve never appears. Step 12 stays shut, because sealing is a judgement. It
+refuses to run when the roll holds a name that is not its own cast, and the Lesson is labelled
+a demonstration in the record itself.
+
+**The school zip carries Node beside the app.** `npm run package:school` writes
+`dist/TechTech Flight` with the built board, a Node folder (from `runtime/node` or the Node
+that ran the packager), and `Setup notes for a technician.md`. First run may `npm install`;
+it must not fail differently because Node is missing from PATH. `records.db` stays in
+Documents, never in the zip, so replacing the folder cannot destroy a term of attendance.
 
 **A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
 `lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board

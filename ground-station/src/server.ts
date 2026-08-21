@@ -5,11 +5,16 @@ import { WebSocketServer } from 'ws'
 import type { ClientMessage, ServerMessage } from '@techtechflight/contract'
 import type { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 import {
+  isClassroomTelemetrySource,
   readPreferredClassroomSource,
   writePreferredClassroomSource,
   type ClassroomTelemetrySource,
 } from './classroom-source.ts'
 import { normalizeCode, readClassroom, writeClassroom } from './classroom-store.ts'
+import { ipadUrl } from './lan-address.ts'
+import { exportRecordsCsv, saveRecordsCopy } from './records-export.ts'
+import { readLogbookFile, writeLogbookFile } from './records-logbook.ts'
+import { writeLesson, type LessonSnapshot } from './records-writer.ts'
 
 export interface FleetServerOptions {
   readonly station: GroundStation
@@ -53,7 +58,9 @@ export async function startFleetServer(options: FleetServerOptions): Promise<Fle
 
   const http = createServer((request, response) => {
     if (tryClassroomSetup(request, response, activeSource)) return
+    if (tryClassroomAddress(request, response, portForAddress(http, requestedPort))) return
     if (tryClassroom(request, response)) return
+    if (tryRecords(request, response)) return
     void serveStatic(request, response, boardDir)
   })
   const sockets = new WebSocketServer({ server: http, path: '/fleet' })
@@ -123,6 +130,123 @@ function send(socket: { readyState: number; send(data: string): void }, message:
   const OPEN = 1
   if (socket.readyState !== OPEN) return
   socket.send(JSON.stringify(message))
+}
+
+/**
+ * The records, on this laptop (ADR-0035).
+ *
+ * `PUT /api/records` writes one Lesson at its boundary. `POST /api/records/copy` and
+ * `/api/records/csv` are the two Settings buttons, and neither tells a Teacher a file path:
+ * they press it and a dated file appears on the Desktop.
+ *
+ * **Never per telemetry tick**, and there is nowhere in `LessonSnapshot` to put a live reading.
+ */
+function tryRecords(request: IncomingMessage, response: ServerResponse): boolean {
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  if (!url.pathname.startsWith('/api/records')) return false
+
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, PUT, POST, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+  }
+  const reply = (status: number, body: unknown) => {
+    response.writeHead(status, { 'content-type': 'application/json', ...cors })
+    response.end(JSON.stringify(body))
+  }
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, cors)
+    response.end()
+    return true
+  }
+
+  if (url.pathname === '/api/records/copy' && request.method === 'POST') {
+    try {
+      reply(200, { ok: true, savedTo: saveRecordsCopy() })
+    } catch (error) {
+      reply(500, { error: error instanceof Error ? error.message : 'Could not save a copy.' })
+    }
+    return true
+  }
+
+  if (url.pathname === '/api/records/csv' && request.method === 'POST') {
+    try {
+      reply(200, { ok: true, savedTo: exportRecordsCsv() })
+    } catch (error) {
+      reply(500, { error: error instanceof Error ? error.message : 'Could not export.' })
+    }
+    return true
+  }
+
+  if (url.pathname === '/api/records/logbook' && request.method === 'GET') {
+    const stored = readLogbookFile()
+    if (stored === null) {
+      reply(404, { error: 'No records file yet.' })
+      return true
+    }
+    reply(200, stored)
+    return true
+  }
+
+  if (url.pathname === '/api/records/logbook' && request.method === 'PUT') {
+    void readRequestBody(request).then((raw) => {
+      try {
+        const parsed: unknown = JSON.parse(raw)
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          reply(400, { error: 'Body must be a Logbook snapshot with updatedAt.' })
+          return
+        }
+        const body = parsed as { updatedAt?: unknown; book?: unknown }
+        if (typeof body.updatedAt !== 'number' || body.book === undefined) {
+          reply(400, { error: 'Body must be a Logbook snapshot with updatedAt.' })
+          return
+        }
+        writeLogbookFile({ updatedAt: body.updatedAt, book: body.book })
+        reply(200, { ok: true, updatedAt: body.updatedAt })
+      } catch (error) {
+        reply(500, {
+          error: error instanceof Error ? error.message : 'Could not write the Logbook.',
+        })
+      }
+    })
+    return true
+  }
+
+  if (url.pathname === '/api/records' && request.method === 'PUT') {
+    const LIMIT = 4 * 1024 * 1024
+    let raw = ''
+    let tooBig = false
+    request.on('data', (chunk: Buffer) => {
+      if (tooBig) return
+      raw += chunk.toString()
+      if (raw.length > LIMIT) {
+        tooBig = true
+        reply(413, { error: 'Lesson record too large.' })
+        request.destroy()
+      }
+    })
+    request.on('end', () => {
+      if (tooBig) return
+      try {
+        const snapshot = JSON.parse(raw) as LessonSnapshot
+        if (!snapshot || typeof snapshot.lessonId !== 'string') {
+          reply(400, { error: 'Body must be a Lesson snapshot with a lessonId.' })
+          return
+        }
+        writeLesson(snapshot)
+        reply(200, { ok: true, lessonId: snapshot.lessonId })
+      } catch (error) {
+        reply(500, {
+          error: error instanceof Error ? error.message : 'Could not write the Lesson.',
+        })
+      }
+    })
+    return true
+  }
+
+  reply(405, { error: 'Method not allowed' })
+  return true
 }
 
 /**
@@ -224,7 +348,7 @@ function tryClassroom(request: IncomingMessage, response: ServerResponse): boole
 }
 
 /**
- * Classroom setup for Settings — Sim vs Radio without editing `.env`.
+ * Classroom setup for Settings — Simulator, School drones, or Radio without editing `.env`.
  *
  * GET reports active + preferred source. PUT writes the preference file; the running
  * process does not hot-swap (restart required). CORS open so Next on :3000 can call :4321.
@@ -267,14 +391,14 @@ function tryClassroomSetup(
       let source: ClassroomTelemetrySource | null = null
       try {
         const parsed = JSON.parse(raw) as { source?: unknown }
-        if (parsed.source === 'simulator' || parsed.source === 'mavlink') source = parsed.source
+        if (isClassroomTelemetrySource(parsed.source)) source = parsed.source
       } catch {
         /* fall through */
       }
       if (!source) {
         response
           .writeHead(400, { ...cors, 'content-type': 'application/json; charset=utf-8' })
-          .end(JSON.stringify({ error: 'source must be simulator or mavlink' }))
+          .end(JSON.stringify({ error: 'source must be simulator, esp or mavlink' }))
         return
       }
       writePreferredClassroomSource(source)
@@ -294,6 +418,50 @@ function tryClassroomSetup(
 
   response.writeHead(405, cors).end('Method not allowed')
   return true
+}
+
+/**
+ * The URL an iPad types, so a Teacher can copy it from Settings without reading a terminal.
+ *
+ * Same address the launcher prints and draws as a QR. `/student` is the door; the Teacher
+ * board stays on localhost, which is what keeps the camera working.
+ */
+function tryClassroomAddress(
+  request: IncomingMessage,
+  response: ServerResponse,
+  port: number,
+): boolean {
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  if (url.pathname !== '/api/classroom-address') return false
+
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+  }
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, cors).end()
+    return true
+  }
+
+  if (request.method === 'GET') {
+    response
+      .writeHead(200, { ...cors, 'content-type': 'application/json; charset=utf-8' })
+      .end(JSON.stringify({ url: ipadUrl(port) }))
+    return true
+  }
+
+  response.writeHead(405, cors).end('Method not allowed')
+  return true
+}
+
+function portForAddress(
+  http: { address(): string | { port: number } | null },
+  fallback: number,
+): number {
+  const address = http.address()
+  return typeof address === 'object' && address !== null ? address.port : fallback
 }
 
 function readRequestBody(request: IncomingMessage): Promise<string> {

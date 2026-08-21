@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
+import { writeClassroomFleetSize } from '@/lib/classroom-fleet-size'
+import { FleetConnection } from '@/lib/fleet-connection'
 import { FleetProvider, useFleet } from './FleetProvider'
 import { SimulationLabel } from './SimulationLabel'
 
@@ -157,5 +159,91 @@ describe('what the board remembers between screens', () => {
 
     // Available immediately, rather than absent until several more readings arrive.
     expect(read('rate')).toBe(before)
+  })
+})
+
+/**
+ * A Student tab on a DEMO_ONLY preview is not a second classroom.
+ *
+ * Two FleetProviders used to start two Simulators. The Teacher had Telemetry; the tablet
+ * said Drone 1 was not reporting. The classroom is the ground station on :4321. Tests that
+ * pass `demonstration` still get a Fleet, because they are asserting what the screen says
+ * when one is there.
+ */
+describe('a Student tab on a developer preview', () => {
+  beforeEach(() => {
+    pathname.current = '/student'
+    process.env.NEXT_PUBLIC_DEMO_ONLY = '1'
+  })
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_DEMO_ONLY
+    pathname.current = '/demo'
+  })
+
+  it('does not start a second Simulator', () => {
+    render(
+      <FleetProvider>
+        <Probe />
+      </FleetProvider>,
+    )
+
+    act(() => {
+      vi.advanceTimersByTime(50)
+    })
+
+    expect(read('connection')).toBe('unreachable')
+    expect(read('drones')).toBe('0')
+  })
+
+  it('still gives a test a Fleet when it asks for one', () => {
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <Probe />
+      </FleetProvider>,
+    )
+
+    act(() => {
+      vi.advanceTimersByTime(50)
+    })
+
+    expect(read('connection')).toBe('live')
+    expect(read('drones')).toBe('6')
+  })
+})
+
+/**
+ * Opening Fleet or Walls mid-lesson must be the same connection as step 7.
+ *
+ * The classroom Fleet size hydrates from a default. Putting that number on the ground-station
+ * link rebuilt it and read as six Offline / lost link.
+ */
+describe('the ground-station connection through a lesson', () => {
+  beforeEach(() => {
+    pathname.current = '/'
+    delete process.env.NEXT_PUBLIC_DEMO_ONLY
+  })
+
+  afterEach(() => {
+    pathname.current = '/demo'
+  })
+
+  it('does not reconnect when the classroom Fleet size hydrates', () => {
+    const start = vi.spyOn(FleetConnection.prototype, 'start')
+    render(
+      <FleetProvider>
+        <Probe />
+      </FleetProvider>,
+    )
+
+    const opened = start.mock.calls.length
+    expect(opened).toBeGreaterThan(0)
+
+    act(() => {
+      writeClassroomFleetSize(12)
+    })
+
+    expect(start.mock.calls.length).toBe(opened)
+    start.mockRestore()
   })
 })

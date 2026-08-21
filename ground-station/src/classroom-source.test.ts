@@ -20,6 +20,12 @@ describe('classroom telemetry source preference', () => {
     expect(readPreferredClassroomSource(path)).toBe('mavlink')
   })
 
+  it('round-trips School drones (Wi-Fi) for the next launch', () => {
+    const path = join(mkdtempSync(join(tmpdir(), 'ttf-src-')), 'classroom-source.json')
+    writePreferredClassroomSource('esp', path)
+    expect(readPreferredClassroomSource(path)).toBe('esp')
+  })
+
   it('lets TELEMETRY_SOURCE override the preference file', () => {
     const path = join(mkdtempSync(join(tmpdir(), 'ttf-src-')), 'classroom-source.json')
     writePreferredClassroomSource('mavlink', path)
@@ -27,6 +33,7 @@ describe('classroom telemetry source preference', () => {
       'simulator',
     )
     expect(resolveActiveClassroomSource({}, readPreferredClassroomSource(path))).toBe('mavlink')
+    expect(resolveActiveClassroomSource({ TELEMETRY_SOURCE: 'esp' }, 'simulator')).toBe('esp')
   })
 
   it('treats a corrupt preference file as Simulator', () => {

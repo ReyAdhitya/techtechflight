@@ -154,6 +154,7 @@ function StudentMission() {
     changeClassroom()
     setSession(null)
     setStudentId(null)
+    setRemembered(readStudentSeatLocal())
     setDoor('change')
   }, [])
 
@@ -192,7 +193,7 @@ function StudentMission() {
         <JoinClassroomDoor
           onJoined={onJoinedClassroom}
           door={door}
-          name={remembered?.name ?? null}
+          name={remembered?.name?.trim() || readStudentSeatLocal()?.name?.trim() || null}
         />
       )
     }
@@ -881,7 +882,7 @@ function JoinClassroomDoor({
           You left the classroom. Ask your Teacher for today&apos;s code to join again.
         </p>
       ) : null}
-      {door === 'change' && name !== null ? (
+      {door === 'change' && name ? (
         <p role="status" className="m-0 max-w-[50ch] text-body text-ink">
           Still {name}&apos;s tablet. Type the code for the room you want.
         </p>
@@ -1581,6 +1582,8 @@ function AmIConnected({ seat }: { readonly seat: ClassroomSeat }) {
   const telemetry =
     snapshot.state?.drones.find((drone) => drone.id === seat.droneId)?.telemetry ?? null
   const reporting = mine !== null && telemetry !== null
+  const noFleetHere = snapshot.connection === 'unreachable'
+  const classroomUrl = studentClassroomUrl()
 
   const link = telemetry?.linkQuality
   const battery = mine?.batteryFraction ?? null
@@ -1596,23 +1599,27 @@ function AmIConnected({ seat }: { readonly seat: ClassroomSeat }) {
      */
     <div className="grid grid-cols-1 gap-3 min-[34rem]:grid-cols-2">
       <StatusLine
-        ok={boardAgeMs !== null}
+        ok={!noFleetHere && boardAgeMs !== null}
         label="The Teacher's board"
         says={
-          boardAgeMs === null
-            ? 'Not reaching it yet.'
-            : `Joined. Last heard ${formatAge(boardAgeMs)}.`
+          noFleetHere
+            ? `This tab has no Fleet. Open ${classroomUrl}`
+            : boardAgeMs === null
+              ? 'Not reaching it yet.'
+              : `Joined. Last heard ${formatAge(boardAgeMs)}.`
         }
       />
       <StatusLine
-        ok={reporting}
+        ok={!noFleetHere && reporting}
         label={seat.droneName ?? 'Your Drone'}
         says={
-          seat.droneId === null
-            ? 'You do not have a Drone yet.'
-            : !reporting
-              ? 'Not reporting. Tell your Teacher.'
-              : null
+          noFleetHere
+            ? 'Telemetry is on the ground-station board.'
+            : seat.droneId === null
+              ? 'You do not have a Drone yet.'
+              : !reporting
+                ? 'Not reporting. Tell your Teacher.'
+                : null
         }
       >
         {reporting ? (
@@ -1797,6 +1804,7 @@ function PreFlightForMyCraft({ seat }: { readonly seat: ClassroomSeat }) {
   const book = useSyncExternalStore(subscribeLogbook, readLogbook, readServerLogbook)
 
   if (seat.droneId === null) return null
+  if (snapshot.connection === 'unreachable') return null
 
   const telemetry =
     snapshot.state?.drones.find((drone) => drone.id === seat.droneId)?.telemetry ?? null
@@ -1975,4 +1983,10 @@ function studentClock(session: ClassroomSession, now: number) {
     },
     now,
   )
+}
+
+/** Where a phone should open the class. :3000 is a developer preview, not the classroom. */
+function studentClassroomUrl(): string {
+  if (typeof location === 'undefined') return 'http://localhost:4321/student'
+  return `${location.protocol}//${location.hostname}:4321/student`
 }

@@ -69,20 +69,14 @@ export function StudentStepRail({
       </div>
 
       {/*
-       * `relative` is load-bearing, and it is one word standing in for a whole defect class.
-       *
-       * `.sr-only` computes to `position: absolute`. A scroller that is `position: static`
-       * is not a containing block, so the screen-reader text below positioned itself against
-       * a further ancestor and escaped this element's `overflow-x` clip: at 390 the page's
-       * `scrollWidth` was 1246, and a child could swipe the whole Student screen 856 pixels
-       * into blank space. Proven both ways in the live page — hiding the spans, or setting
-       * this, each dropped it back to 390.
-       *
-       * The accessibility text ADR-0004 requires is what broke the phone layout. Both rules
-       * are right; their interaction was the bug, and jsdom cannot see either half of it.
-       * `web/scroll-containers.test.ts` refuses a scroller with no positioning context.
+       * Phone width wraps. It does not scroll sideways, and a chip is as wide as its label,
+       * so Connect is never clipped to Co. A horizontal scroller plus full-width chips was
+       * the truncation; a scroller that is not a positioning context was the 856px swipe
+       * (sr-only is position absolute). relative stays so a future overflow cannot
+       * reintroduce it. web/scroll-containers.test.ts refuses a scroller with no
+       * positioning context.
        */}
-      <ol className="relative m-0 flex list-none flex-col gap-0.5 p-0 max-[46rem]:flex-row max-[46rem]:overflow-x-auto">
+      <ol className="relative m-0 flex list-none flex-col gap-0.5 p-0 max-[46rem]:flex-row max-[46rem]:flex-wrap">
         {STUDENT_STEPS.map((label, index) => {
           const step = index + 1
           const state = studentStepState(step, current)
@@ -105,7 +99,7 @@ export function StudentStepRail({
           )
 
           const shape = cn(
-            'flex w-full shrink-0 items-baseline gap-2 rounded-surface px-2 py-1.5 text-left text-value',
+            'flex shrink-0 items-baseline gap-2 rounded-surface px-2 py-1.5 text-left text-value min-[46rem]:w-full',
             state === 'now' &&
               'bg-brand-wash font-semibold text-ink shadow-[inset_2px_0_0_var(--color-brand)]',
             state === 'done' && 'text-ink-subtle',

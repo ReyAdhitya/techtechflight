@@ -406,9 +406,8 @@ function MissionPrep({
           onChange={(next) => onMissionChange(setMissionZones(lessonId, next))}
           bare
           /*
-           * The square the Scope is actually drawing, worked out the same way the Scope
-           * works it out. A zone beyond it is real, raises Alerts, and appears on no view;
-           * saying so here is what stops a Teacher drawing a boundary they will never see.
+           * The window the Scope is drawing, so the editor can name a zone that will not
+           * appear on it. The grid itself is the classroom; this is only the leftover notice.
            */
           scopeSpace={scopeSpaceFor(drones)}
         />

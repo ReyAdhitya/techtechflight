@@ -13,8 +13,35 @@ import { PRE_FLIGHT_SEVEN_KEY, togglePropellersTick } from '@/lib/preflight-seve
 import { TEAMS_KEY, addStudentToTeam, assignDroneToTeam, createTeam, readTeams } from '@/lib/teams'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import type { Zone } from '@/lib/airspace'
+import { resetClassroomForTests } from '@/lib/classroom-session'
+import { SimulatedTelemetrySource } from '@techtechflight/fleet-core/simulator'
 import { ControlScreen } from './ControlScreen'
+import { ClassroomOpen } from './ClassroomOpen'
 import { FleetProvider } from './FleetProvider'
+
+const desks: Zone = {
+  id: 'desks',
+  kind: 'no-fly',
+  name: 'Over the desks',
+  points: [
+    { eastM: -3.5, northM: -1 },
+    { eastM: -1.5, northM: -1 },
+    { eastM: -1.5, northM: 1 },
+    { eastM: -3.5, northM: 1 },
+  ],
+}
+
+const onTheGrid: Zone = {
+  id: 'on-the-grid',
+  kind: 'no-fly',
+  name: 'On the grid',
+  points: [
+    { eastM: -1, northM: -1 },
+    { eastM: 1, northM: -1 },
+    { eastM: 1, northM: 1 },
+    { eastM: -1, northM: 1 },
+  ],
+}
 
 /**
  * Clearance and Mission seal on the always-on Control board (no step rail).
@@ -46,9 +73,10 @@ const wipe = () => {
   for (const key of [MISSION_DRAFT_KEY, CLEARANCES_KEY, TEAMS_KEY, PRE_FLIGHT_SEVEN_KEY]) {
     window.localStorage.removeItem(key)
   }
+  resetClassroomForTests()
 }
 
-function classReadyToFly(): string {
+function classReadyToFly(zones: readonly Zone[] = [triangle]): string {
   startLesson('Year 8', 6, 6, Date.now(), [])
   const lessonId = runningLesson(readLogbook())!.id
 
@@ -60,7 +88,7 @@ function classReadyToFly(): string {
   if (typeof studentId === 'string') addStudentToTeam(teamId, studentId)
 
   chooseScenario(lessonId, 'search-rescue')
-  setMissionZones(lessonId, [triangle])
+  if (zones.length > 0) setMissionZones(lessonId, zones)
   setMissionDrones(lessonId, ['ttf-0001'])
   togglePropellersTick(lessonId, 'ttf-0001')
 
@@ -127,6 +155,30 @@ describe('approving takeoff on the live board', () => {
     expect(readClearances(lessonId).records.some((r) => r.grantedAt !== null)).toBe(true)
   })
 
+  it('hands flyRoute the Search and Rescue points, not an empty list', () => {
+    const flyRoute = vi.spyOn(SimulatedTelemetrySource.prototype, 'flyRoute')
+    const lessonId = classReadyToFly()
+    const points = readMission(lessonId)!.checkpoints.map((point) => point.at)
+    expect(points.length).toBeGreaterThan(0)
+
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ClassroomOpen />
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+
+    const grant = screen.queryByRole('button', { name: /Grant takeoff/i })
+    expect(grant, 'nobody reached the queue').not.toBeNull()
+    fireEvent.click(grant!)
+
+    expect(flyRoute).toHaveBeenCalled()
+    const waypoints = flyRoute.mock.calls[0]?.[1]
+    expect(waypoints).toEqual(points)
+    flyRoute.mockRestore()
+  })
+
   it('treats opening Control as the Mission being under way', () => {
     const lessonId = classReadyToFly()
     expect(readMission(lessonId)?.startedAt).toBeNull()
@@ -184,5 +236,56 @@ describe('the live Control board', () => {
 
     expect(screen.getByRole('region', { name: /Teacher ATC actions/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Approve takeoff' })).toBeInTheDocument()
+  })
+})
+
+/**
+ * A zone drawn on step 2 must hatch on step 7, or be named as outside this picture.
+ *
+ * QA 2026-08-21: rail said 1 no-fly; Top-down had no hatch and no leftover sentence. The
+ * drawing surface and the Scope were not the same metres, and Control held a Mission from
+ * mount that never saw the zone. jsdom will not catch a missing hatch on a photograph;
+ * it will catch the zone never reaching the SVG.
+ */
+describe('a No-fly Zone on step 7', () => {
+  const step7 = () =>
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ControlScreen step={7} />
+      </FleetProvider>,
+    )
+
+  it('hatches a zone drawn in the west of the classroom', () => {
+    classReadyToFly([desks])
+    step7()
+    settle()
+
+    const hatch = document.querySelector('[data-zone-kind="no-fly"]')
+    expect(hatch).toBeInTheDocument()
+    const easts = (hatch?.getAttribute('points') ?? '')
+      .split(' ')
+      .map((pair) => Number(pair.split(',')[0]))
+      .filter((value) => Number.isFinite(value))
+    expect(Math.max(...easts) - Math.min(...easts)).toBeGreaterThan(0)
+    expect(screen.queryByText(/outside this picture/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(document.querySelector('[data-zone-kind="no-fly"][data-zone-hatched]')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Front' }))
+    expect(document.querySelector('[data-zone-kind="no-fly"][data-zone-hatched]')).toBeInTheDocument()
+  })
+
+  it('shows a zone drawn after the flying board has already mounted', () => {
+    const lessonId = classReadyToFly([])
+    step7()
+    settle()
+
+    expect(document.querySelector('[data-zone-kind="no-fly"]')).not.toBeInTheDocument()
+
+    act(() => {
+      setMissionZones(lessonId, [onTheGrid])
+    })
+
+    expect(document.querySelector('[data-zone-kind="no-fly"]')).toBeInTheDocument()
   })
 })

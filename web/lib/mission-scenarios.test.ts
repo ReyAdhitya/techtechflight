@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { CLASSROOM_GEOFENCE } from './classroom-geofence.ts'
 import { MISSION_SCENARIOS, scenarioById, scenarioOrUnknown } from './mission-scenarios.ts'
 import { CRITERION_WORDS, FAILURE_WORDS, SUCCESS_CRITERIA } from './mission.ts'
 
@@ -48,6 +49,24 @@ describe('the shipped Scenarios', () => {
     }
   })
 
+  /**
+   * A Teacher tapping Search and Rescue is the product. The seed and the two-minute demo
+   * already write points; that is a bypass. Each built-in Scenario carries the route a
+   * class flies, inside the Scope's window, or `flyRoute` is handed nothing and Approve
+   * never appears.
+   */
+  it('gives every Scenario a route a class can finish, inside the classroom', () => {
+    for (const scenario of MISSION_SCENARIOS) {
+      expect(scenario.defaultCheckpoints.length, scenario.id).toBeGreaterThan(0)
+      for (const point of scenario.defaultCheckpoints) {
+        expect(point.at.eastM, point.id).toBeGreaterThan(CLASSROOM_GEOFENCE.westM)
+        expect(point.at.eastM, point.id).toBeLessThan(CLASSROOM_GEOFENCE.eastM)
+        expect(point.at.northM, point.id).toBeGreaterThan(CLASSROOM_GEOFENCE.southM)
+        expect(point.at.northM, point.id).toBeLessThan(CLASSROOM_GEOFENCE.northM)
+      }
+    }
+  })
+
   it('judges only criteria that exist', () => {
     for (const scenario of MISSION_SCENARIOS) {
       for (const criterion of scenario.judges) {
@@ -92,6 +111,7 @@ describe('a Scenario that is no longer on file', () => {
     expect(stand_in.name).toMatch(/no longer on file/i)
     expect(stand_in.objective).not.toHaveLength(0)
     expect(stand_in.judges).toEqual([])
+    expect(stand_in.defaultCheckpoints).toEqual([])
   })
 })
 

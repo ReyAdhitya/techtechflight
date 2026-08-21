@@ -36,8 +36,9 @@ import { playbookFor } from '@/lib/incident-playbook'
  */
 
 // FleetProvider reads the pathname to decide whether the Fleet is simulated.
+const pathname = vi.hoisted(() => ({ current: '/demo' }))
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/demo',
+  usePathname: () => pathname.current,
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
 }))
@@ -81,6 +82,7 @@ function classroomWithBrief(
 }
 
 beforeEach(() => {
+  pathname.current = '/demo'
   vi.useFakeTimers()
   clearLogbook()
   resetClassroomForTests()
@@ -1023,5 +1025,42 @@ describe('changing classroom, which is not leaving', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('You left the classroom')
     expect(readStudentSeatLocal()).toBeNull()
+  })
+})
+
+/**
+ * :3000 is a developer preview, not the classroom. A second Simulator here read as
+ * "Drone 1 not reporting" next to a Teacher board that had Telemetry. Ask to take off is
+ * a classroom record and does not need a Fleet of its own.
+ */
+describe('a Student tab that has no Fleet', () => {
+  beforeEach(() => {
+    pathname.current = '/student'
+    process.env.NEXT_PUBLIC_DEMO_ONLY = '1'
+  })
+
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_DEMO_ONLY
+    pathname.current = '/demo'
+  })
+
+  it('names the ground-station address and still records Ask to take off', () => {
+    classroomWithBrief(['Priya'])
+    render(
+      <FleetProvider>
+        <StudentMissionScreen />
+      </FleetProvider>,
+    )
+    settle()
+    sayIAm('Priya')
+    settle()
+    fireEvent.click(screen.getByRole('button', { name: 'Drone 1' }))
+    settle()
+
+    expect(screen.getByText(/This tab has no Fleet/)).toBeInTheDocument()
+    expect(screen.getByText(/Telemetry is on the ground-station board/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Ask to take off' }))
+    settle()
+    expect(readClassroomSession()?.seats[0]?.phase).toBe('awaiting-clearance')
   })
 })

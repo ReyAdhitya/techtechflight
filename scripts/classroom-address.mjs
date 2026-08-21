@@ -8,29 +8,43 @@
  * to show a square, and the alternative was a network round trip to a chart service on a
  * network that by design has no internet.
  */
+import { pathToFileURL } from 'node:url'
+import { resolve } from 'node:path'
 import { networkInterfaces } from 'node:os'
 
 const PORT = Number(process.argv[2] ?? 4321)
 
 /**
+ * Adapters an iPad on the classroom router cannot use.
+ *
+ * Docker, WSL and Hyper-V all hand out RFC1918 addresses, so a "prefer private" rule
+ * prints them first on a developer laptop. Same skip list as `ground-station/src/lan-address.ts`.
+ */
+const VIRTUAL = /vethernet|wsl|hyper-v|docker|vbox|vmware|virtualbox|loopback|bluetooth|virtual/i
+
+/**
  * The address a device on the same router can reach, or null.
  *
- * IPv4, not internal, and preferring a private range because that is what a travel router
- * hands out. A laptop with a VPN up can carry several; the private one is the one the room
- * is on.
+ * IPv4, not internal, not a virtual adapter, preferring 192.168 then 10. then other private.
+ * A laptop with Docker up must not print 172.17 for iPads that cannot reach it.
  */
 export function classroomAddress() {
   const candidates = []
   for (const [name, addresses] of Object.entries(networkInterfaces())) {
+    if (VIRTUAL.test(name)) continue
     for (const entry of addresses ?? []) {
-      if (entry.family !== 'IPv4' || entry.internal) continue
+      if ((entry.family !== 'IPv4' && entry.family !== 4) || entry.internal) continue
       candidates.push({ name, address: entry.address })
     }
   }
-  const privateFirst = candidates.filter((entry) =>
-    /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(entry.address),
-  )
-  return (privateFirst[0] ?? candidates[0])?.address ?? null
+  const rank = (address) => {
+    if (address.startsWith('192.168.')) return 0
+    if (address.startsWith('10.')) return 1
+    if (/^172\.(1[6-9]|2\d|3[01])\./.test(address)) return 2
+    return 3
+  }
+  candidates.sort((left, right) => rank(left.address) - rank(right.address))
+  return candidates[0]?.address ?? null
 }
 
 // ---------------------------------------------------------------- the QR code
@@ -223,13 +237,16 @@ export function qrLines(text) {
 }
 
 // ------------------------------------------------------------------ the print
-if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, '/')}`) {
+if (
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+) {
   const address = classroomAddress()
   if (address === null) {
     console.log('  No network address yet. Plug into the classroom router, then run again.')
     console.log('  The board still works on this laptop: http://localhost:%d', PORT)
   } else {
-    const url = `http://${address}:${PORT}`
+    const url = `http://${address}:${PORT}/student`
     console.log('')
     console.log('  The iPads open this address:')
     console.log('')
@@ -238,7 +255,7 @@ if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, '/')}`) {
     for (const line of qrLines(url)) console.log(`  ${line}`)
     console.log('')
     console.log('  Point an iPad camera at the square, or type the address.')
-    console.log('  This laptop uses http://localhost:%d, which is what keeps the camera working.', PORT)
+    console.log('  Students open that address. This laptop uses http://localhost:%d.', PORT)
     console.log('')
   }
 }

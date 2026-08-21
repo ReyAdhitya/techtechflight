@@ -20,8 +20,21 @@ describe('the Student step rail', () => {
     const rows = screen.getAllByRole('listitem')
     expect(rows).toHaveLength(12)
     expect(within(rows[0]!).getByText('Briefing')).toBeInTheDocument()
+    expect(within(rows[3]!).getByText('Connect')).toBeInTheDocument()
     expect(within(rows[6]!).getByText('Fly the points')).toBeInTheDocument()
     expect(within(rows[11]!).getByText('Score')).toBeInTheDocument()
+  })
+
+  /* Phone width wraps. A sideways scroller plus full-width chips clipped "Connect" to "Co…". */
+  it('wraps on a phone rather than scrolling the names away', () => {
+    const { container } = render(
+      <StudentStepRail current={4} name="Amira" droneName="Drone 1" />,
+    )
+
+    const list = container.querySelector('ol')
+    expect(list?.className).toMatch(/flex-wrap/)
+    expect(list?.className).not.toMatch(/overflow-x-auto/)
+    expect(list?.className).toMatch(/\brelative\b/)
   })
 
   /* Handed no way to look back, it is the look-only rail ADR-0028 shipped. */

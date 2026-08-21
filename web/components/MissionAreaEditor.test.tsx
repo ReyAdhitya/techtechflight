@@ -227,13 +227,12 @@ describe('a zone outside the picture the Scope draws', () => {
 })
 
 /**
- * The surface draws the space the Scope draws, and that is the whole of defect 5.
+ * The surface draws the classroom, which is the space a Teacher places a zone against.
  *
- * It used to be a fixed twenty metres square running north-east from the origin, while the
- * Scope draws a window around where the Drones are: about eight metres by six, astride the
- * origin, half of it in negative metres this grid could not express. Every zone a Teacher drew
- * landed outside the picture. The rail said "2 no-fly zones" and the Scope's key named no
- * hatch, and neither was lying.
+ * It used to be a twenty metres square running north-east from the origin, then the Scope's
+ * fleet-centred window. Both put the grid in different metres from step 7: the first because
+ * the classroom sits astride its origin, the second because a row of craft parked east of
+ * zero pulled the picture off the west of the room.
  */
 describe('the space the surface draws', () => {
   const spaceOf = (container: HTMLElement) =>
@@ -246,7 +245,7 @@ describe('the space the surface draws', () => {
     expect(container.querySelector('[data-classroom-geofence]')).toBeInTheDocument()
   })
 
-  it('follows the Scope window once there is one', () => {
+  it('keeps drawing the classroom even when the Scope window is larger', () => {
     const { container } = render(
       <MissionAreaEditor
         zones={[]}
@@ -255,7 +254,7 @@ describe('the space the surface draws', () => {
       />,
     )
 
-    expect(spaceOf(container)).toBe('-8,8,-8,8')
+    expect(spaceOf(container)).toBe('-4,4,-3,3')
   })
 
   /* A Teacher typing a corner past the edge gets the edge, not a zone nobody will see. */

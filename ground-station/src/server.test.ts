@@ -275,4 +275,34 @@ describe('Classroom setup HTTP', () => {
       await setup.close()
     }
   })
+
+  it('reports School drones as monitoring-only', async () => {
+    const setup = await startFleetServer({ station, port: 0, activeSource: 'esp' })
+    try {
+      const body = (await (
+        await fetch(`http://localhost:${setup.port}/api/classroom-setup`)
+      ).json()) as { active: string; commands: string }
+      expect(body.active).toBe('esp')
+      expect(body.commands).toBe('monitoring-only')
+    } finally {
+      await setup.close()
+    }
+  })
+})
+
+describe('the iPad address HTTP', () => {
+  it('returns a Student URL on this laptop, never localhost', async () => {
+    const setup = await startFleetServer({ station, port: 0 })
+    try {
+      const response = await fetch(`http://localhost:${setup.port}/api/classroom-address`)
+      expect(response.status).toBe(200)
+      const body = (await response.json()) as { url: string | null }
+      if (body.url === null) return
+      expect(body.url).toMatch(/\/student$/)
+      expect(body.url).not.toContain('localhost')
+      expect(body.url).not.toContain('127.0.0.1')
+    } finally {
+      await setup.close()
+    }
+  })
 })

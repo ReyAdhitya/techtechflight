@@ -70,10 +70,17 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
           hasCamera: true,
           canAutoLand: index % 4 !== 3,
 
-          // Parked in a row on the bench, a metre apart, the way a set is laid out.
-          homeEastM: index * 1,
+          /*
+           * Parked in a row on the bench, a metre apart, inside the classroom the Teacher
+           * draws on. A row at 0, 1, 2, 3, 4, 5 m east pulled the Scope east to hold the
+           * last craft and left the west of the room off the picture: a zone drawn on
+           * step 2 hatched on the grid and vanished on step 7.
+           *
+           * Same metres as `web/lib/classroom-geofence.ts`. This package cannot import `web/`.
+           */
+          homeEastM: benchEastM(index, options.registrations.length),
           homeNorthM: 0,
-          eastM: index * 1,
+          eastM: benchEastM(index, options.registrations.length),
           northM: 0,
           altitudeM: 0,
           targetAltitudeM: 0,
@@ -755,8 +762,16 @@ export class SimulatedTelemetrySource implements TelemetrySource, CommandableSou
  * The room the simulated Fleet flies in, in metres from where it was set up. Bounds are
  * what give the rangefinder something to find, so obstacle warnings on the board are
  * driven by a Drone genuinely approaching a wall rather than by a timer.
+ *
+ * Same extents as `web/lib/classroom-geofence.ts` (`CLASSROOM_GEOFENCE`). A wider room
+ * shifted east was why a zone drawn on the classroom grid never hatched on step 7.
  */
-const ROOM = { westM: -2, eastM: 8, southM: -3, northM: 3 } as const
+const ROOM = { westM: -4, eastM: 4, southM: -3, northM: 3 } as const
+
+/** Bench row, centred on the setup point, one metre between craft. */
+function benchEastM(index: number, count: number): number {
+  return -((count - 1) / 2) + index
+}
 
 /**
  * How fast a recalled Drone crosses the room, and how near home counts as arrived.

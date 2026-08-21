@@ -32,15 +32,19 @@ afterEach(() => {
 })
 
 describe('Classroom setup on Settings', () => {
-  it('explains Simulator vs Radio on the demonstration Fleet without pretending Radio is live', () => {
+  it('explains Simulator, School drones and Radio without pretending hardware is live', () => {
     show(<ClassroomSetupPanel />)
     settle()
 
     expect(screen.getByText('Classroom setup')).toBeInTheDocument()
+    expect(screen.getByText(/School drones listen on this Wi-Fi/)).toBeInTheDocument()
     expect(screen.getByText(/MAVLink/)).toBeInTheDocument()
     expect(screen.getByText(/watch-only/)).toBeInTheDocument()
     expect(screen.getByText(/Demonstration Fleet/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Simulator' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'School drones (Wi-Fi)' }),
+    ).not.toBeInTheDocument()
   })
 
   it('sits on Settings above the ground-station panel', () => {
@@ -71,6 +75,13 @@ describe('saving a Classroom path preference', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it('records School drones as next launch and asks for a restart', async () => {
+    const result = await putClassroomSetup('http://localhost:4321', 'esp')
+    expect(result?.preferred).toBe('esp')
+    expect(result?.restartRequired).toBe(true)
+    expect(result?.active).toBe('simulator')
   })
 
   it('records Radio as next launch and asks for a restart', async () => {

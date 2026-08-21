@@ -214,8 +214,8 @@ describe('where Recall goes after a route change mid-flight', () => {
     tick(20)
 
     const home = recallLandsAt()
-    // Drone 1 is laid out at the origin, and that is where it left the ground.
-    expect(Math.hypot(home.eastM, home.northM)).toBeLessThanOrEqual(0.5)
+    // Drone 1 left the ground from the west end of the bench, and that is still home.
+    expect(Math.hypot(home.eastM - -2.5, home.northM)).toBeLessThanOrEqual(0.5)
   })
 
   /* Re-rolling the hover height mid-flight makes an aircraft climb for no visible reason. */
@@ -261,8 +261,8 @@ describe('how a normal flight ends', () => {
     tick(40)
     expect(latest()?.airborne).toBe(false)
     expect(latest()?.altitudeM).toBe(0)
-    // Home is where it left the ground, which is where the class laid the aircraft out.
-    expect(latest()!.position!.eastM).toBeCloseTo(0, 1)
+    // Home is where it left the ground, which is the west end of the bench.
+    expect(latest()!.position!.eastM).toBeCloseTo(-2.5, 1)
   })
 
   it('does nothing to a Drone on the bench', () => {

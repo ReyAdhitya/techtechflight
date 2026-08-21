@@ -9,6 +9,97 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-21 · The lesson path after Done A.
+
+- **A Student tab on a developer preview has no Fleet.** Two origins cannot share a Simulator.
+  `connection === 'unreachable'` is what the screen reads; it does not branch on `demo`. The
+  classroom is `:4321`. Ask to take off is a record and does not need Telemetry on that tab.
+- **The ground-station socket does not depend on the browser Fleet size.** That number is for
+  the in-browser Simulator. Hydrating it used to remount the link and look like six Offline
+  when a Teacher opened Fleet mid-lesson.
+- **Change classroom reads the seat key on the door.** The rule already kept
+  `techtechflight:student-seat`. An empty field was the screen not reading it back.
+- **The Student rail wraps.** A sideways scroller plus full-width chips clipped step names at
+  390. No horizontal overflow; `relative` stays so a future overflow cannot reintroduce the
+  screen-reader swipe.
+
+## 2026-08-21 · A zone on the grid is on step 7.
+
+- **The editor draws the classroom, not the Scope's current window.** Following the Fleet
+  pulled the grid east with the parked row. A Teacher placing a zone against the room was
+  drawing metres the picture on step 7 did not show, and a polygon on the west edge of the
+  frame has no hatch and no leftover sentence. `scopeSpace` still drives the leftover notice.
+- **The simulated bench is centred on the setup point.** Six craft at 0..5 m east was why
+  the 8 m window started at −1.5 m. Same extents as `CLASSROOM_GEOFENCE`; fleet-core cannot
+  import `web/`.
+- **Control re-reads the Mission draft.** The rail already did. A copy from mount left the
+  Scope a zone behind.
+
+## 2026-08-21 · A Teacher tapping Search and Rescue is the product.
+
+- **The catalogue is the route until a Teacher can draw points.** There is no points-drawing
+  screen. Each built-in Scenario carries `defaultCheckpoints` inside `CLASSROOM_GEOFENCE`.
+  Changing Scenario replaces the points and the clock, and keeps the zones. An unknown
+  Scenario still has none, so `allPointsReached([])` stays false.
+
+## 2026-08-21 · Finishing Done A after #672.
+
+- **School, class and teacher have no form.** A Lesson snapshot needs names the schema asks
+  for. Inventing a Settings form would put more words on a screen that already has two buttons
+  for records. Written as `School` / the Lesson label / `Teacher`.
+- **The iPad URL is `/student`, on Settings as well as the launcher.** #672 printed it only in
+  the terminal. A Teacher writing the trolley card should not have to read a console. No second
+  QR library in the board: the square stays in the launcher, the words sit on Classroom setup.
+- **Skip Docker/WSL/Hyper-V when choosing the LAN address.** Those adapters are RFC1918, so
+  "prefer private" printed `172.17` on this laptop. A phone on the classroom Wi-Fi cannot open
+  that. Prefer 192.168, then 10, then other private, and skip the virtual names. If only
+  virtual addresses exist, print nothing rather than a QR nobody can use.
+- **School drones (Wi-Fi) is the third Classroom setup path, not a replacement for Radio.**
+  Radio stays for anyone with a bought controller. Default stays Simulator. Restart still
+  required; nothing hot-swaps.
+- **A vacant browser loses to the file even if it stamped `revisedAt` just now.** Clearing
+  browsing data, then opening the board, writes an empty Logbook with today's time. Comparing
+  clocks would keep the empty copy and throw a term of attendance away. Empty roll and no
+  Lesson means vacant; anything a Teacher has actually typed keeps the timestamp rule.
+- **Persist and hydrate no-op under Vitest** unless a test hands its own `fetch`. Otherwise
+  `npm test` with a ground station already open would write the developer's real records file.
+- **The packager copies the running Node if `runtime/node` is missing.** The 18 August note
+  said staged-never-downloaded, which still holds: nothing is fetched at package time. Copying
+  `dirname(process.execPath)` is how a developer machine produces a zip a technician can
+  double-click without a system Node.
+- **Step 12 stays shut after a demonstration seed.** Opening it would be seeding a judgement.
+
+---
+
+## 2026-08-18 · The calls made building the local flight deck.
+
+- **The tracker sweep is partial, and says so on its own front page.** 19 closed with evidence,
+  2 kept, 368 not judged. The automated pass was thrown away because polarity is the whole
+  problem: an issue asking for a thing to *go* is proved by an absence, and nothing in a title
+  says which direction proves it. #623 flipped from shipped to open when read by hand.
+- **The records file translates the Postgres schema rather than keeping a second one.** Two
+  schemas drift, and those eighteen tables are the thing both ends have to agree about.
+- **The records writer has nowhere to put a live reading.** Not a rule written in a comment:
+  `LessonSnapshot` has no field for one, so a future writer cannot quietly start logging
+  telemetry into a school's disk by adding a line.
+- **The demonstration seats children by hand rather than joining them.** `joinClassroomAsStudent`
+  finds this device's own seat and renames it, so three joins from one browser became one child.
+  Seating by hand is also the honest path: a demonstration has no tablets in the room.
+- **The seed takes the brief tick as an argument.** The rules live in a component module and
+  `web/import-boundaries.test.ts` refuses the logic layer reaching back into the screens, which
+  it duly caught. Injecting it was cheaper and truer than an exemption.
+- **The packaged folder carries no state at all.** `classrooms.json` and `classroom-source.json`
+  are refused outright, because shipping either puts a developer's afternoon into a school's
+  morning.
+- **The Node runtime is staged, never downloaded by the packager.** A build script that reaches
+  the internet fails on the day the internet is the problem, and that day is why this plan
+  exists.
+- **The cable-out proof aborts every request that is not the laptop**, which is stricter than
+  unplugging a router: a real cable leaves DNS caches and retries behind. It counts what tried
+  to leave the room and prints the number, so "nothing reaches outside" is a measurement.
+
+---
+
 ## 2026-08-14 · Both halves of "pre-flight passes in simulation" landed.
 
 - **Two fixes for one item, and they are not arguing.** The check learned that a *craft* is

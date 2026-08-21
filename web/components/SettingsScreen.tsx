@@ -3,6 +3,8 @@
 import { useFleet } from './FleetProvider'
 import { ClassroomFleetSizePanel } from './ClassroomFleetSizePanel'
 import { ClassroomSetupPanel } from './ClassroomSetupPanel'
+import { DemonstrationSeedPanel } from './DemonstrationSeedPanel'
+import { MyRecordsPanel } from './MyRecordsPanel'
 import { DemoMissionPanel } from './DemoMissionPanel'
 import { LogbookLocationNote } from './LogbookLocationNote'
 import { ScenarioPanel } from './ScenarioPanel'
@@ -21,10 +23,9 @@ import { READING_FRAME } from '@/lib/frame'
  * — they are properties of the room and the radio, and a second copy of them in the
  * browser would drift the moment either changed.
  *
- * There is no records panel any more, and so no Export, Import or Clear everything. Notes,
- * service decisions and lesson records still live in this one browser profile; what has gone
- * is every route to moving or clearing them. That was decided with its consequences stated —
- * see `docs/CHANGELOG.md`.
+ * There is no Clear everything any more. Notes, service decisions and lesson records live
+ * in the file on this laptop (ADR-0035); Settings can copy them out. What stays refused is
+ * wiping a term of attendance in one press.
  */
 export function SettingsScreen() {
   const { snapshot, demo } = useFleet()
@@ -40,6 +41,10 @@ export function SettingsScreen() {
       <TeacherPinPanel />
 
       <LogbookLocationNote />
+
+      <MyRecordsPanel />
+
+      <DemonstrationSeedPanel />
 
       <ClassroomSetupPanel />
 

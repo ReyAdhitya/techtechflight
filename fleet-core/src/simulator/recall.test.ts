@@ -76,7 +76,7 @@ describe('recalling a Drone', () => {
     const distance = (p?: { eastM: number; northM: number }) =>
       p ? Math.hypot(p.eastM, p.northM) : Number.NaN
 
-    // Drone 1's home is the origin — first in the row, so `index * 1` is zero.
+    // Drone 1's home is the west end of the bench, centred on the classroom origin.
     expect(distance(second)).toBeLessThan(distance(first))
     expect(distance(second)).toBeGreaterThan(0)
   })
@@ -167,8 +167,8 @@ describe('recalling a Drone', () => {
     tick(2)
 
     const east = [...seen].reverse().find((o) => o.droneId === DRONE)?.telemetry.position?.eastM
-    // Drifting away on the dice, not being steered back to the bench.
-    expect(east).toBeGreaterThan(4)
+    // Drifting on the dice, not being steered back to the bench (west of origin).
+    expect(east).toBeGreaterThan(2)
   })
 
   it('is dropped for a Drone this Fleet does not have', () => {

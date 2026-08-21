@@ -138,6 +138,7 @@ export function FleetProvider({
   readonly demonstration?: DemonstrationOptions
 }) {
   const pathname = usePathname()
+  const studentTab = pathname.startsWith('/student')
   const demo = builtForDemoOnly() || pathname.startsWith('/demo')
   const clock = useMemo(() => new SystemClock(), [])
   /*
@@ -153,26 +154,40 @@ export function FleetProvider({
   // Pulled apart rather than held whole, so the link below is rebuilt when the Fleet is
   // actually meant to behave differently and not every time a caller writes a fresh object.
   const { random, spontaneous } = demonstration ?? {}
+  /*
+   * How many Drones the *browser* Fleet runs. A ground-station connection must not
+   * rebuild when this hydrates: that dropped the socket and read as six Offline.
+   */
+  const browserFleetSize =
+    demo && !(studentTab && demonstration === undefined) ? fleetSize : 0
 
   /*
    * Built lazily rather than at module scope. `browserSocket` closes over `WebSocket`,
    * which does not exist while these pages are being prerendered into static HTML — and
    * a local Fleet must not start ticking during a build either. Neither does anything
    * until `start`, below, which only ever runs on a client.
+   *
+   * A Student tab on a DEMO_ONLY preview does not get a second Simulator. That Fleet is
+   * not the Teacher's, so it reads as "Drone 1 not reporting" next to a board that has
+   * Telemetry. The classroom is the ground station on :4321; this tab says so and does
+   * not invent a shared sim across two origins. Tests that pass `demonstration` still
+   * get a Fleet, because they are asserting what the screen says when one is there.
+   *
+   * `fleetSize` rebuilds only the browser Fleet. A ground-station connection that
+   * restarted every time that number hydrated looked like six Offline / lost link when
+   * a Teacher opened Fleet mid-lesson.
    */
-  const link = useMemo<FleetLink>(
-    () =>
-      demo
-        ? new LocalFleetLink({
-            clock,
-            // Spread conditionally rather than passed as undefined: `exactOptionalPropertyTypes`
-            // is on, so an absent option and one explicitly set to nothing are different things.
-            ...(random === undefined ? {} : { random }),
-            ...(spontaneous === undefined ? {} : { spontaneous }),
-          })
-        : new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket }),
-    [clock, demo, random, spontaneous, fleetSize],
-  )
+  const link = useMemo<FleetLink>(() => {
+    if (studentTab && demo && demonstration === undefined) return new QuietFleetLink()
+    if (demo) {
+      return new LocalFleetLink({
+        clock,
+        ...(random === undefined ? {} : { random }),
+        ...(spontaneous === undefined ? {} : { spontaneous }),
+      })
+    }
+    return new FleetConnection({ url: fleetUrl(), clock, createSocket: browserSocket })
+  }, [clock, demo, studentTab, demonstration, random, spontaneous, browserFleetSize])
 
   const snapshot = useSyncExternalStore(
     (onChange) => link.subscribe(onChange),
@@ -366,6 +381,32 @@ function fleetUrl(): string {
   if (typeof location === 'undefined') return ''
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
   return `${protocol}://${location.hostname}:4321/fleet`
+}
+
+/**
+ * A Student tab on a developer preview, with no ground station behind it.
+ *
+ * Starting a Simulator here was a second Fleet: the Teacher had Telemetry and the tablet
+ * said Drone 1 was not reporting. Ask to take off is a classroom record and does not need
+ * one. The screen names the ground-station address instead of inventing readings.
+ */
+class QuietFleetLink implements FleetLink {
+  readonly snapshot: FleetSnapshot = {
+    connection: 'unreachable',
+    state: null,
+    receivedAt: null,
+  }
+  readonly scenarios = null
+
+  subscribe(): () => void {
+    return () => {}
+  }
+  start(): void {}
+  stop(): void {}
+  send(): void {}
+  onCommandOutcome(): () => void {
+    return () => {}
+  }
 }
 
 /**

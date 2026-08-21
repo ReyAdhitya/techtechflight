@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path'
 import type { FleetThresholds, TelemetrySource } from '@techtechflight/contract'
 import { DEFAULT_THRESHOLDS } from '@techtechflight/contract'
 import { SystemClock } from '@techtechflight/contract/testing'
-import { MavlinkTelemetrySource } from '@techtechflight/fleet-adapters'
+import { EspTelemetrySource, MavlinkTelemetrySource } from '@techtechflight/fleet-adapters'
 import { FleetHistoryRecorder, GroundStation } from '@techtechflight/fleet-core'
 import {
   CLASSROOM_FLEET,
@@ -22,30 +22,15 @@ const boardDir = resolve(here, '../../web/out')
 const clock = new SystemClock()
 
 /*
- * Simulator stays the default. Settings can prefer Radio (MAVLink) via
- * classroom-source.json; TELEMETRY_SOURCE still overrides for developers.
- * MAVLink is monitoring only — no CommandableSource (ADR-0011).
+ * Simulator stays the default. Settings can prefer School drones (Wi-Fi) or Radio
+ * (MAVLink) via classroom-source.json; TELEMETRY_SOURCE still overrides for developers.
+ * Hardware paths are monitoring only — no CommandableSource (ADR-0011).
  */
 const activeSource: ClassroomTelemetrySource = resolveActiveClassroomSource()
 
-const simulator =
-  activeSource === 'mavlink'
-    ? null
-    : new SimulatedTelemetrySource({
-        registrations: CLASSROOM_FLEET,
-        clock,
-        reportIntervalMs: 1_000,
-      })
-
-const source: TelemetrySource =
-  simulator ??
-  new MavlinkTelemetrySource({
-    clock,
-    host: process.env['MAVLINK_HOST'] ?? '127.0.0.1',
-    port: numberFrom('MAVLINK_PORT', 14_550),
-    idForSystem: (systemId) =>
-      CLASSROOM_FLEET.find((drone) => drone.boardOrder === systemId)?.id ?? `mav-${systemId}`,
-  })
+const opened = openTelemetrySource(activeSource)
+const simulator = opened.simulator
+const source: TelemetrySource = opened.source
 
 const station = new GroundStation({
   registrations: CLASSROOM_FLEET,
@@ -93,10 +78,48 @@ function numberFrom(variable: string, fallback: number): number {
 
 station.start()
 
-if (!simulator) {
+if (activeSource === 'esp') {
+  console.log(
+    `Listening for school drones on udp://0.0.0.0:${numberFrom('ESP_PORT', 14_555)} (monitoring only)`,
+  )
+} else if (activeSource === 'mavlink') {
   console.log(
     `Reading MAVLink on udp://${process.env['MAVLINK_HOST'] ?? '127.0.0.1'}:${numberFrom('MAVLINK_PORT', 14_550)} (monitoring only)`,
   )
+}
+
+function openTelemetrySource(active: ClassroomTelemetrySource): {
+  readonly source: TelemetrySource
+  readonly simulator: SimulatedTelemetrySource | null
+} {
+  if (active === 'esp') {
+    return {
+      source: new EspTelemetrySource({
+        clock,
+        registrations: CLASSROOM_FLEET,
+        port: numberFrom('ESP_PORT', 14_555),
+      }),
+      simulator: null,
+    }
+  }
+  if (active === 'mavlink') {
+    return {
+      source: new MavlinkTelemetrySource({
+        clock,
+        host: process.env['MAVLINK_HOST'] ?? '127.0.0.1',
+        port: numberFrom('MAVLINK_PORT', 14_550),
+        idForSystem: (systemId) =>
+          CLASSROOM_FLEET.find((drone) => drone.boardOrder === systemId)?.id ?? `mav-${systemId}`,
+      }),
+      simulator: null,
+    }
+  }
+  const simulated = new SimulatedTelemetrySource({
+    registrations: CLASSROOM_FLEET,
+    clock,
+    reportIntervalMs: 1_000,
+  })
+  return { source: simulated, simulator: simulated }
 }
 
 /*

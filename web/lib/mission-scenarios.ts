@@ -1,4 +1,4 @@
-import type { FailureCondition, ScenarioId, SuccessCriterion } from './mission.ts'
+import type { FailureCondition, MissionCheckpoint, ScenarioId, SuccessCriterion } from './mission.ts'
 
 /**
  * The Mission Scenarios a class runs, as data.
@@ -34,6 +34,17 @@ export interface MissionScenario {
   /** Minutes. A default the Teacher can change, never a rule. */
   readonly defaultLimitMinutes: number
   /**
+   * The route a class flies, in the Fleet's own metres.
+   *
+   * A Teacher tapping a Scenario is the product. There is no points-drawing screen, so the
+   * catalogue is the route until there is one. Empty here means `flyRoute` is handed nothing
+   * and Approve never appears. Built-in Scenarios are never empty; an unknown Scenario is.
+   *
+   * Inside the Scope's window (`CLASSROOM_GEOFENCE`), not on the netting: a point the
+   * picture cannot show is a point nobody can fly to.
+   */
+  readonly defaultCheckpoints: readonly MissionCheckpoint[]
+  /**
    * Which of the five criteria this Scenario actually judges.
    *
    * Not every Scenario judges all five, and pretending otherwise would score a Mission on
@@ -46,6 +57,21 @@ export interface MissionScenario {
   /** True where the camera can answer part of the objective (Search and Rescue). */
   readonly usesDetection: boolean
 }
+
+const REACH = 0.6
+
+const point = (
+  id: string,
+  name: string,
+  eastM: number,
+  northM: number,
+): MissionCheckpoint => ({
+  id,
+  name,
+  at: { eastM, northM },
+  radiusM: REACH,
+  required: true,
+})
 
 const SEARCH_RESCUE: MissionScenario = {
   id: 'search-rescue',
@@ -68,6 +94,11 @@ const SEARCH_RESCUE: MissionScenario = {
   teacherWatches: ['Search progress', 'Route coverage', 'Alerts'],
   teamFocus: ['Navigation', 'Situational awareness', 'Safe flight'],
   defaultLimitMinutes: 8,
+  defaultCheckpoints: [
+    point('search-rescue-1', 'Point 1', -2, 1.5),
+    point('search-rescue-2', 'Point 2', 2, 1.5),
+    point('search-rescue-3', 'Point 3', 0, -1.5),
+  ],
   judges: ['tasks-completed', 'safe-route', 'no-collisions', 'no-no-fly-violations'],
   watchFor: ['mission-timeout', 'missed-required-target', 'battery-exhausted'],
   // The one Scenario where the camera genuinely answers part of the objective.
@@ -91,6 +122,10 @@ const DELIVERY: MissionScenario = {
   teacherWatches: ['Route', 'Timing', 'Payload status', 'Airspace safety'],
   teamFocus: ['Route accuracy', 'Delivery precision', 'Control'],
   defaultLimitMinutes: 6,
+  defaultCheckpoints: [
+    point('delivery-1', 'Point 1', -2.5, 0),
+    point('delivery-2', 'Point 2', 2.5, 0),
+  ],
   judges: ['tasks-completed', 'safe-route', 'no-no-fly-violations', 'procedures-followed'],
   watchFor: ['mission-timeout', 'missed-required-target', 'crash'],
   usesDetection: false,
@@ -122,6 +157,11 @@ const BUILDING_INSPECTION: MissionScenario = {
   teacherWatches: ['Distance to the structure', 'Inspection completion', 'Alerts'],
   teamFocus: ['Stable hovering', 'Camera positioning', 'Obstacle awareness'],
   defaultLimitMinutes: 10,
+  defaultCheckpoints: [
+    point('building-inspection-1', 'Point 1', -2, 1.5),
+    point('building-inspection-2', 'Point 2', 2, 1.5),
+    point('building-inspection-3', 'Point 3', 0, -1),
+  ],
   judges: ['tasks-completed', 'no-collisions', 'no-no-fly-violations', 'procedures-followed'],
   watchFor: ['crash', 'missed-required-target', 'mission-timeout'],
   usesDetection: false,
@@ -158,6 +198,7 @@ const UNKNOWN_SCENARIO: MissionScenario = {
   teacherWatches: [],
   teamFocus: [],
   defaultLimitMinutes: 0,
+  defaultCheckpoints: [],
   judges: [],
   watchFor: [],
   usesDetection: false,

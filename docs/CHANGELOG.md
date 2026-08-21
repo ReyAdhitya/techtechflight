@@ -5,7 +5,62 @@ would notice.
 
 ## Unreleased
 
+### Added
+
+- **The classroom lives on the laptop.** `GET/PUT /api/classroom` on the ground station, backed
+  by a JSON file, with the Worker's merge ported rather than rewritten. No account, no token and
+  no request cap, and it keeps working with the network cable out.
+- **The records live on the laptop (ADR-0035).** The eighteen tables in a SQLite file at
+  `Documents\TechTech Flight\records.db`, written at Lesson start, end and seal, and never per
+  telemetry tick. The browser keeps a copy so the board works with the ground station closed;
+  **the file wins when they disagree** (`logbook.json` beside the database). Two buttons on
+  Settings save a dated copy to the Desktop and export a register as CSV, and neither shows a
+  Teacher a file path. The off-site copy is off until somebody ticks a box.
+- **One switch.** The launcher prints `http://<lan>:4321/student` for the iPads and draws it as
+  a QR code (generated locally, no chart API), carries a Node runtime so nobody is shown a
+  version number, and opens the Teacher's board on `localhost` because a camera is refused
+  anywhere else. Settings Classroom setup shows the same URL, so a Teacher can copy it onto a
+  card without reading a terminal.
+- **A door the school's own drones can knock on.** UDP on 14555 accepting small JSON. Absent
+  means cannot report rather than zero, an unknown id is never invented into a Drone, malformed
+  packets are dropped quietly and the sender's address is remembered per id. Settings Classroom
+  setup offers **School drones (Wi-Fi)** as the school's path; Radio (MAVLink) stays in the
+  tree; the default remains Simulator. Hardware is monitoring-only.
+- **One button fills a Lesson for a demonstration**, pressing what a Teacher presses so every
+  step opens because its condition genuinely holds, including the points a class flies to. It
+  refuses to run on a class with real children on the roll. Step 12 stays shut: sealing is a
+  Teacher's judgement.
+- **`npm run package:school`** writes the folder a technician unzips, with a page they can
+  follow in `docs/SETUP-FOR-A-TECHNICIAN.md`, and copies a Node runtime beside the app so a
+  machine that has never seen Node in PATH still starts.
+- **Both Cloudflare Workers deploy on every push to main.**
+
 ### Fixed
+
+- **Tapping Search and Rescue (or Delivery, or Building Inspection) writes the points a class
+  flies to.** `chooseScenario` was leaving `checkpoints: []`, so a grant took the simulated
+  Drone off the ground with nothing to fly and Approve never appeared. Each built-in Scenario
+  now carries a route inside the classroom window; an empty or unknown Scenario still has none.
+- **A No-fly Zone drawn on the classroom grid hatches on step 7.** The simulated Fleet sat
+  east of the origin, so the Scope's window left the west of the room as a line on the frame:
+  the rail counted the zone, the picture showed clear air, and no leftover sentence. The bench
+  is centred on the origin, the editor draws the classroom, and Control re-reads the Mission
+  when the Teacher draws.
+- **A Student tab on `:3000` no longer invents a second Simulator.** That Fleet was not the
+  Teacher's, so the tablet said Drone 1 was not reporting. The tab names the ground-station
+  address (`:4321`) and Ask to take off still writes a classroom record.
+- **Opening Fleet or Walls mid-lesson no longer drops the class out of the sky.** The classroom
+  Fleet size hydrating rebuilt the ground-station socket and read as six Offline.
+- **Change classroom still names whose tablet it is**, reading the seat key if React had
+  forgotten. Leave still forgets the name.
+- **The Student rail wraps at phone width** so "Connect" is not "Co…" and the page does not
+  scroll sideways.
+- **The poll asked every 2.5 seconds whether or not anything had changed**, which is what
+  emptied a Cloudflare allowance account wide in a day. It backs off to twenty seconds in a
+  quiet room, does not poll at all before there is a classroom, and any write wakes it at once.
+- **The classroom code panel named a dead environment variable, and could not tell "nobody set
+  this up" from "the store refused me".** It names the store it is actually talking to, prints
+  the status and quotes what came back.
 
 - **The store settled a classroom on a clock, and the browser settled it on `rev`.** Two
   runtimes disagreeing about one rule puts the seat glitch straight back: a board and a tablet

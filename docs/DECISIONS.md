@@ -9,6 +9,13 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-21 · A Teacher tapping Search and Rescue is the product.
+
+- **The catalogue is the route until a Teacher can draw points.** There is no points-drawing
+  screen. Each built-in Scenario carries `defaultCheckpoints` inside `CLASSROOM_GEOFENCE`.
+  Changing Scenario replaces the points and the clock, and keeps the zones. An unknown
+  Scenario still has none, so `allPointsReached([])` stays false.
+
 ## 2026-08-21 · Finishing Done A after #672.
 
 - **School, class and teacher have no form.** A Lesson snapshot needs names the schema asks

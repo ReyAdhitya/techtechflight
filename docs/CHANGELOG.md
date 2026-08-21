@@ -37,6 +37,10 @@ would notice.
 
 ### Fixed
 
+- **Tapping Search and Rescue (or Delivery, or Building Inspection) writes the points a class
+  flies to.** `chooseScenario` was leaving `checkpoints: []`, so a grant took the simulated
+  Drone off the ground with nothing to fly and Approve never appeared. Each built-in Scenario
+  now carries a route inside the classroom window; an empty or unknown Scenario still has none.
 - **The poll asked every 2.5 seconds whether or not anything had changed**, which is what
   emptied a Cloudflare allowance account wide in a day. It backs off to twenty seconds in a
   quiet room, does not poll at all before there is a classroom, and any write wakes it at once.

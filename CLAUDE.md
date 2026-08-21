@@ -426,10 +426,13 @@ longer flies or lands anything; lost links, faults and charging stay. A grant ca
 the simulated aircraft playing the child's part, not Commands, and null on hardware.
 `fleet-core/src/simulator/flies-the-route.test.ts` pins both halves.
 
-**`mission.checkpoints` is empty unless something writes it, and two things depend on it.**
-`flyRoute` gets an empty route and `allPointsReached` returns false forever, so Approve never
-appears. `web/lib/demo-mission.ts` is currently the only writer. A Mission with no points is a
-Mission nobody can finish.
+**A built-in Scenario carries the route a class flies.** `chooseScenario` copies
+`defaultCheckpoints` and `defaultLimitMinutes` from `web/lib/mission-scenarios.ts`. Search and
+Rescue, Delivery and Building Inspection each have points inside `CLASSROOM_GEOFENCE` (about
+−4 to 4 m east, −3 to 3 m north), not on the netting. `emptyMission` and an unknown Scenario
+still have `checkpoints: []`, and `allPointsReached([])` stays false — a Mission with no
+points is a Mission nobody can finish. The seed and `demo-mission.ts` still write their own
+points; that is the show path. Do not add a points-drawing screen.
 
 **No Student, no takeoff, and the Student is the classroom seat first.** `studentOnDrone`
 takes the seat a child took on their tablet, then the Logbook assignment. Both the clearance

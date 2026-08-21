@@ -1,6 +1,7 @@
 import type { DroneId } from '@techtechflight/contract'
 import { enclosesAnything, type Zone } from './airspace.ts'
 import { emptyMission, type Mission, type MissionOutcome, type ScenarioId } from './mission.ts'
+import { scenarioById } from './mission-scenarios.ts'
 
 /**
  * The Mission a Teacher is building, kept where the rest of the side records are kept.
@@ -89,14 +90,23 @@ export function readMission(lessonId: string | null): Mission | null {
  * Choose the Scenario, which is where a Mission starts existing.
  *
  * Changing the Scenario on a Mission that has not flown keeps the zones. A Teacher who
- * redraws the area after changing their mind has done the work twice for nothing.
+ * redraws the area after changing their mind has done the work twice for nothing. The
+ * points and the clock come from the catalogue: a Teacher tapping Search and Rescue is
+ * the product, and a Mission with no points is a Mission nobody can finish.
  */
 export function chooseScenario(lessonId: string | null, scenarioId: ScenarioId): Mission {
   const current = readMission(lessonId)
+  const scenario = scenarioById(scenarioId)
+  const checkpoints = scenario === null ? [] : [...scenario.defaultCheckpoints]
+  const limitMinutes = scenario === null ? null : scenario.defaultLimitMinutes
   const next: Mission =
     current === null
-      ? emptyMission(`mission:${lessonId ?? 'no-lesson'}`, scenarioId, '')
-      : { ...current, scenarioId }
+      ? {
+          ...emptyMission(`mission:${lessonId ?? 'no-lesson'}`, scenarioId, ''),
+          checkpoints,
+          limitMinutes,
+        }
+      : { ...current, scenarioId, checkpoints, limitMinutes }
   write({ lessonId, mission: next })
   return next
 }

@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { allPointsReached } from './classroom-session'
+import { emptyMission } from './mission'
 import {
   MISSION_DRAFT_KEY,
   adoptMissionDraft,
@@ -46,6 +48,36 @@ describe('the Mission a Teacher is drawing', () => {
     const mission = chooseScenario(null, 'search-rescue')
     expect(mission.scenarioId).toBe('search-rescue')
     expect(readMission(null)?.scenarioId).toBe('search-rescue')
+  })
+
+  it('writes Search and Rescue a route a class can finish', () => {
+    const mission = chooseScenario('lesson-1', 'search-rescue')
+    expect(mission.checkpoints.length).toBeGreaterThan(0)
+    expect(mission.limitMinutes).toBe(8)
+  })
+
+  it('writes Delivery its own route, not Search and Rescue\'s', () => {
+    const rescue = chooseScenario('lesson-1', 'search-rescue')
+    const delivery = chooseScenario('lesson-1', 'delivery')
+    expect(delivery.checkpoints.length).toBeGreaterThan(0)
+    expect(delivery.checkpoints.map((point) => point.id)).not.toEqual(
+      rescue.checkpoints.map((point) => point.id),
+    )
+    expect(delivery.limitMinutes).toBe(6)
+  })
+
+  it('leaves an empty Mission with no points, so Approve stays off', () => {
+    expect(emptyMission('m1', 'search-rescue', 'Search and Rescue').checkpoints).toEqual([])
+  })
+
+  it('leaves an unknown Scenario with no points', () => {
+    const mission = chooseScenario('lesson-1', 'something-a-teacher-deleted')
+    expect(mission.checkpoints).toEqual([])
+    expect(mission.limitMinutes).toBeNull()
+  })
+
+  it('does not treat an empty route as finished', () => {
+    expect(allPointsReached({ reachedCheckpointIds: [] }, [])).toBe(false)
   })
 
   it('keeps the zones when a Teacher changes their mind about the Scenario', () => {

@@ -9,6 +9,20 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-21 · The lesson path after Done A.
+
+- **A Student tab on a developer preview has no Fleet.** Two origins cannot share a Simulator.
+  `connection === 'unreachable'` is what the screen reads; it does not branch on `demo`. The
+  classroom is `:4321`. Ask to take off is a record and does not need Telemetry on that tab.
+- **The ground-station socket does not depend on the browser Fleet size.** That number is for
+  the in-browser Simulator. Hydrating it used to remount the link and look like six Offline
+  when a Teacher opened Fleet mid-lesson.
+- **Change classroom reads the seat key on the door.** The rule already kept
+  `techtechflight:student-seat`. An empty field was the screen not reading it back.
+- **The Student rail wraps.** A sideways scroller plus full-width chips clipped step names at
+  390. No horizontal overflow; `relative` stays so a future overflow cannot reintroduce the
+  screen-reader swipe.
+
 ## 2026-08-21 · A zone on the grid is on step 7.
 
 - **The editor draws the classroom, not the Scope's current window.** Following the Fleet

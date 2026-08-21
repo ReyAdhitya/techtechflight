@@ -475,12 +475,25 @@ it for `components` and `app`. Anything a screen needs from there is re-exported
 `web/lib` (see `classroom-fleet-size.ts`), and display facts like `COMFORTABLE_BOARD_SIZE`
 belong in `web/lib` outright.
 
+**A Student tab on `:3000` is not a second classroom.** `DEMO_ONLY` used to start a Simulator
+in both `FleetProvider`s. The Teacher had Telemetry; the tablet said Drone 1 was not reporting.
+Do not invent a shared sim across two origins. That tab is `connection: 'unreachable'`, names
+the ground-station URL (`:4321`), and Ask to take off still writes a classroom record. The
+school path is one ground station.
+
+**The classroom Fleet size must not rebuild a ground-station connection.** That number is how
+many Drones the *browser* Simulator runs. Subscribing it on the socket path dropped the link
+when it hydrated and read as six Offline on Fleet and Walls mid-lesson. One `FleetProvider` in
+the Teacher layout is the same Fleet as step 7.
+
 **A scroll container must be a positioning context, or it clips nothing.** `.sr-only` and
 `.visually-hidden` are `position: absolute`, and an `overflow-x: auto` element that is
 `position: static` is not a containing block, so the screen-reader text lays out against a
 further ancestor and escapes the clip. The Student rail shipped that way and a phone scrolled
-856 pixels sideways at 390. Add `relative`. `web/scroll-containers.test.ts` refuses a scroller
-without it; jsdom can see neither the layout nor the cascade, so it is a source scan.
+856 pixels sideways at 390. Add `relative`. The rail now **wraps** at phone width rather than
+scrolling, so "Connect" is not "Co…". `web/scroll-containers.test.ts` refuses a scroller
+without a positioning context; jsdom can see neither the layout nor the cascade, so it is a
+source scan.
 
 **`takeOff` only takes off from the ground.** Home and the hover height are stamped inside a
 `if (drone.airborne) return` guard, because `flyRoute` calls `takeOff` and the demonstration

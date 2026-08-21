@@ -46,6 +46,15 @@ would notice.
   the rail counted the zone, the picture showed clear air, and no leftover sentence. The bench
   is centred on the origin, the editor draws the classroom, and Control re-reads the Mission
   when the Teacher draws.
+- **A Student tab on `:3000` no longer invents a second Simulator.** That Fleet was not the
+  Teacher's, so the tablet said Drone 1 was not reporting. The tab names the ground-station
+  address (`:4321`) and Ask to take off still writes a classroom record.
+- **Opening Fleet or Walls mid-lesson no longer drops the class out of the sky.** The classroom
+  Fleet size hydrating rebuilt the ground-station socket and read as six Offline.
+- **Change classroom still names whose tablet it is**, reading the seat key if React had
+  forgotten. Leave still forgets the name.
+- **The Student rail wraps at phone width** so "Connect" is not "Co…" and the page does not
+  scroll sideways.
 - **The poll asked every 2.5 seconds whether or not anything had changed**, which is what
   emptied a Cloudflare allowance account wide in a day. It backs off to twenty seconds in a
   quiet room, does not poll at all before there is a classroom, and any write wakes it at once.

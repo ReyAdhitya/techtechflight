@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { allPointsReached } from './classroom-session'
+import { allPointsReached, type ClassroomSeat } from './classroom-session'
 import { emptyMission } from './mission'
 import {
   MISSION_DRAFT_KEY,
@@ -77,7 +77,22 @@ describe('the Mission a Teacher is drawing', () => {
   })
 
   it('does not treat an empty route as finished', () => {
-    expect(allPointsReached({ reachedCheckpointIds: [] }, [])).toBe(false)
+    const seat: ClassroomSeat = {
+      studentId: 'stu-1',
+      name: 'Priya',
+      droneId: null,
+      droneName: null,
+      phase: 'briefing',
+      takeoffRequestedAt: null,
+      clearedAt: null,
+      heldAt: null,
+      flownAt: null,
+      reachedCheckpointIds: [],
+      approvedAt: null,
+      score: null,
+      joinedAt: 0,
+    }
+    expect(allPointsReached(seat, [])).toBe(false)
   })
 
   it('keeps the zones when a Teacher changes their mind about the Scenario', () => {

@@ -1045,6 +1045,16 @@ describe('two tabs on one laptop', () => {
     expect(openBoard().code).toBe(first)
   })
 
+  it('keeps whose tablet it is when changing classroom', () => {
+    const room = openBoard()
+    joinClassroomAsStudent(room, 'Priya', 1_000, 'stu-priya')
+
+    changeClassroom()
+
+    expect(window.localStorage.getItem(STUDENT_SEAT_KEY)).not.toBeNull()
+    expect(JSON.parse(window.localStorage.getItem(STUDENT_SEAT_KEY)!).name).toBe('Priya')
+  })
+
   /* An iPad is not a board. Leaving there is still the way out of a room it joined. */
   it('still lets a tablet with no board of its own leave the room', () => {
     const room = openBoard()

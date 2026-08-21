@@ -13,7 +13,10 @@ import { PRE_FLIGHT_SEVEN_KEY, togglePropellersTick } from '@/lib/preflight-seve
 import { TEAMS_KEY, addStudentToTeam, assignDroneToTeam, createTeam, readTeams } from '@/lib/teams'
 import { PINNED_DEMONSTRATION } from '@/test-support/fleet'
 import type { Zone } from '@/lib/airspace'
+import { resetClassroomForTests } from '@/lib/classroom-session'
+import { SimulatedTelemetrySource } from '@techtechflight/fleet-core/simulator'
 import { ControlScreen } from './ControlScreen'
+import { ClassroomOpen } from './ClassroomOpen'
 import { FleetProvider } from './FleetProvider'
 
 const desks: Zone = {
@@ -70,6 +73,7 @@ const wipe = () => {
   for (const key of [MISSION_DRAFT_KEY, CLEARANCES_KEY, TEAMS_KEY, PRE_FLIGHT_SEVEN_KEY]) {
     window.localStorage.removeItem(key)
   }
+  resetClassroomForTests()
 }
 
 function classReadyToFly(zones: readonly Zone[] = [triangle]): string {
@@ -149,6 +153,30 @@ describe('approving takeoff on the live board', () => {
     fireEvent.click(grant!)
 
     expect(readClearances(lessonId).records.some((r) => r.grantedAt !== null)).toBe(true)
+  })
+
+  it('hands flyRoute the Search and Rescue points, not an empty list', () => {
+    const flyRoute = vi.spyOn(SimulatedTelemetrySource.prototype, 'flyRoute')
+    const lessonId = classReadyToFly()
+    const points = readMission(lessonId)!.checkpoints.map((point) => point.at)
+    expect(points.length).toBeGreaterThan(0)
+
+    render(
+      <FleetProvider demonstration={PINNED_DEMONSTRATION}>
+        <ClassroomOpen />
+        <ControlScreen />
+      </FleetProvider>,
+    )
+    settle()
+
+    const grant = screen.queryByRole('button', { name: /Grant takeoff/i })
+    expect(grant, 'nobody reached the queue').not.toBeNull()
+    fireEvent.click(grant!)
+
+    expect(flyRoute).toHaveBeenCalled()
+    const waypoints = flyRoute.mock.calls[0]?.[1]
+    expect(waypoints).toEqual(points)
+    flyRoute.mockRestore()
   })
 
   it('treats opening Control as the Mission being under way', () => {
@@ -240,6 +268,11 @@ describe('a No-fly Zone on step 7', () => {
       .filter((value) => Number.isFinite(value))
     expect(Math.max(...easts) - Math.min(...easts)).toBeGreaterThan(0)
     expect(screen.queryByText(/outside this picture/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Side' }))
+    expect(document.querySelector('[data-zone-kind="no-fly"][data-zone-hatched]')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Front' }))
+    expect(document.querySelector('[data-zone-kind="no-fly"][data-zone-hatched]')).toBeInTheDocument()
   })
 
   it('shows a zone drawn after the flying board has already mounted', () => {

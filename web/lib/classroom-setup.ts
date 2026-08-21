@@ -16,7 +16,7 @@ export function groundStationHttpOrigin(location: {
   return `${location.protocol}//${location.hostname}:4321`
 }
 
-export type ClassroomTelemetrySource = 'simulator' | 'mavlink'
+export type ClassroomTelemetrySource = 'simulator' | 'esp' | 'mavlink'
 
 export interface ClassroomSetupStatus {
   readonly active: ClassroomTelemetrySource
@@ -51,6 +51,20 @@ export async function putClassroomSetup(
     })
     if (!response.ok) return null
     return (await response.json()) as ClassroomSetupStatus
+  } catch {
+    return null
+  }
+}
+
+export async function fetchIpadUrl(
+  origin: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | null> {
+  try {
+    const response = await fetchImpl(`${origin}/api/classroom-address`)
+    if (!response.ok) return null
+    const body = (await response.json()) as { url?: unknown }
+    return typeof body.url === 'string' && body.url !== '' ? body.url : null
   } catch {
     return null
   }

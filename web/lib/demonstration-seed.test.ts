@@ -6,6 +6,8 @@ import {
   readMissionBriefing,
   tickAllMissionBriefRules,
 } from '@/components/MissionBriefing'
+import { breachesAt } from './airspace.ts'
+import { scenarioOrUnknown } from './mission-scenarios.ts'
 import { CLEARANCES_KEY, readClearances } from './clearance-store.ts'
 import { MISSION_DRAFT_KEY, readMission } from './mission-draft.ts'
 import { PRE_FLIGHT_SEVEN_KEY, readPreFlightSeven } from './preflight-seven.ts'
@@ -136,6 +138,58 @@ describe('what the seed leaves behind', () => {
     const session = readClassroomSession()
     expect(session?.seats.length).toBe(3)
     expect(session?.seats.every((seat) => seat.droneId !== null)).toBe(true)
+  })
+
+  /**
+   * A Mission with no points is a Mission nobody can finish.
+   *
+   * The seed shipped without them and a screenshot found it: `flyRoute` was handed an empty
+   * route so nothing ever left the ground, and `allPointsReached` answered false forever so
+   * Approve never appeared. Every step opened onto an empty demonstration.
+   */
+  it('gives the class somewhere to fly to', () => {
+    seedDemonstration({ now: 1_000, tickBrief: tickAllMissionBriefRules })
+    const lessonId = runningLesson(readLogbook())!.id
+
+    expect(readMission(lessonId)?.checkpoints.length).toBeGreaterThan(0)
+    expect((readClassroomSession()?.checkpoints ?? []).length).toBeGreaterThan(0)
+  })
+
+  /* No point may sit inside the zone the same seed drew, or the route breaches by design. */
+  it('keeps every point out of its own No-fly Zone', () => {
+    seedDemonstration({ now: 1_000, tickBrief: tickAllMissionBriefRules })
+    const mission = readMission(runningLesson(readLogbook())!.id)!
+
+    for (const point of mission.checkpoints) {
+      expect(breachesAt(mission.zones, point.at)).toEqual([])
+    }
+  })
+
+  /**
+   * The tablet and the team brief must print the same length for one Mission.
+   *
+   * The seed typed 12 minutes into the classroom session while Search and Rescue's own default
+   * is 8, so a child's screen and the paper in their hand disagreed until the board next
+   * mounted and silently corrected one of them.
+   */
+  it('tells the tablets the same time limit the brief prints', () => {
+    seedDemonstration({ now: 1_000, tickBrief: tickAllMissionBriefRules })
+    const mission = readMission(runningLesson(readLogbook())!.id)!
+    const scenario = scenarioOrUnknown(mission.scenarioId)
+
+    expect(readClassroomSession()?.limitMinutes).toBe(
+      mission.limitMinutes ?? scenario.defaultLimitMinutes,
+    )
+  })
+
+  /* Step 8 is "Stay out of red", so a zone the board draws has to reach the tablets. */
+  it('sends the No-fly Zone to the tablets as well as the Scope', () => {
+    seedDemonstration({ now: 1_000, tickBrief: tickAllMissionBriefRules })
+    const mission = readMission(runningLesson(readLogbook())!.id)!
+
+    expect(readClassroomSession()?.zones.map((zone) => zone.id)).toEqual(
+      mission.zones.map((zone) => zone.id),
+    )
   })
 })
 

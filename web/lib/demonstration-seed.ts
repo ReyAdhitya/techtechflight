@@ -1,10 +1,21 @@
 import type { DroneId } from '@techtechflight/contract'
 import { assignStudent, readLogbook, runningLesson, saveRoll, startLesson } from './logbook.ts'
-import { chooseScenario, setMissionDrones, setMissionZones, startMission } from './mission-draft.ts'
+import type { Zone } from './airspace.ts'
+import type { MissionCheckpoint } from './mission.ts'
+import { scenarioOrUnknown } from './mission-scenarios.ts'
+import {
+  chooseScenario,
+  putMission,
+  readMission,
+  setMissionDrones,
+  setMissionZones,
+  startMission,
+} from './mission-draft.ts'
 import { togglePropellersTick } from './preflight-seven.ts'
 import { addStudentToTeam, assignDroneToTeam, createTeam, readTeams } from './teams.ts'
 import { readClearances, writeClearances } from './clearance-store.ts'
 import { grantClearance } from './clearance.ts'
+import { persistLessonRecords } from './lesson-records.ts'
 import {
   openClassroom,
   seatStudentByHand,
@@ -26,12 +37,53 @@ import {
  * **It writes the same records any lesson writes.** Nothing is faked and no screen is
  * special-cased, so what a demonstration leaves behind can be opened in Reports and exported to
  * a spreadsheet like any other morning.
+ *
+ * **It stops on the ground.** An aircraft leaves the ground in exactly one place — the board's
+ * answer to a takeoff request, where the simulator plays the child who launches it — and this
+ * deliberately does not become a second one. What it leaves is a real classroom moment rather
+ * than an impossible one: every request answered, nobody up yet.
  */
 
 /** The children a demonstration invents. Nobody real, and obviously nobody real. */
 const CAST = ['Demo Amira', 'Demo Josh', 'Demo Sara'] as const
 
 export const DEMONSTRATION_LABEL = 'Demonstration lesson'
+
+/**
+ * The one No-fly Zone, over the desks at the near end of the room.
+ *
+ * Metres east and north of the Fleet's own origin (ADR-0019). It travels to the tablets as
+ * well as to the Scope: step 8 is *Stay out of red*, and a board drawing a zone while the
+ * child's screen shows clear air is the two surfaces disagreeing about the one thing that
+ * matters.
+ */
+const SEED_ZONE: Zone = {
+  id: 'demo-zone-1',
+  kind: 'no-fly',
+  name: 'Over the desks',
+  points: [
+    { eastM: -3, northM: -2 },
+    { eastM: -1, northM: -2 },
+    { eastM: -1, northM: 0 },
+  ],
+}
+
+/**
+ * The three points the class flies to.
+ *
+ * **A Mission with no points is a Mission nobody can finish**, and the demonstration shipped
+ * without them: `flyRoute` was handed an empty route so nothing left the ground, and
+ * `allPointsReached` answered false forever so Approve never appeared. Steps 7 to 10 opened and
+ * had nothing in them, which is the failure this seed exists to prevent.
+ *
+ * Not shared with the two minute demo's route in `demo-mission.ts`. Each demonstration draws
+ * its own zone, and points that are clear of one zone are not clear of the other.
+ */
+const SEED_CHECKPOINTS: readonly MissionCheckpoint[] = [
+  { id: 'demo-point-1', name: 'Point 1', at: { eastM: 4, northM: 2 }, radiusM: 0.6, required: true },
+  { id: 'demo-point-2', name: 'Point 2', at: { eastM: 4, northM: -2 }, radiusM: 0.6, required: true },
+  { id: 'demo-point-3', name: 'Point 3', at: { eastM: 0, northM: 3 }, radiusM: 0.6, required: true },
+]
 
 export interface SeedOutcome {
   readonly seeded: boolean
@@ -104,18 +156,16 @@ export function seedDemonstration(
   chooseScenario(lesson.id, 'search-rescue')
 
   /* Step 2: a zone, drawn where the Scope draws. Optional, and a demonstration shows one. */
-  setMissionZones(lesson.id, [
-    {
-      id: 'demo-zone-1',
-      kind: 'no-fly',
-      name: 'Over the desks',
-      points: [
-        { eastM: -3, northM: -2 },
-        { eastM: -1, northM: -2 },
-        { eastM: -1, northM: 0 },
-      ],
-    },
-  ])
+  setMissionZones(lesson.id, [SEED_ZONE])
+
+  /*
+   * The points, which are the task itself. Written straight onto the Mission because there is
+   * no screen that draws them yet; everything else here presses a button a Teacher presses.
+   */
+  const planned = readMission(lesson.id)
+  if (planned !== null) {
+    putMission(lesson.id, { ...planned, checkpoints: [...SEED_CHECKPOINTS] })
+  }
 
   /* Step 3: teams on craft, and the children on the teams. Step 4 opens on this. */
   const roster = readLogbook().roster
@@ -137,16 +187,28 @@ export function seedDemonstration(
   /* Step 5: the brief said out loud, all of it. Step 6 opens on this. */
   options.tickBrief?.(lesson.id)
 
-  /* The classroom, so children have somewhere to join. */
+  /*
+   * The classroom, so children have somewhere to join.
+   *
+   * The figures come from the Scenario and the Mission rather than being typed here.
+   * `limitMinutes` was a hard 12 while the Scenario's own default is 8, so the tablet and the
+   * team brief printed different lengths for the same Mission until the board next mounted and
+   * quietly corrected one of them. `ClassroomOpen` rewrites this session from the Mission the
+   * moment a Teacher opens the board; what it writes and what this writes must not differ,
+   * because a tablet can join in the seconds before that.
+   */
+  const scenario = scenarioOrUnknown('search-rescue')
   const session = openClassroom({
     lessonId: lesson.id,
     lessonLabel: DEMONSTRATION_LABEL,
     scenarioId: 'search-rescue',
-    scenarioName: 'Search and Rescue',
-    objective: 'Locate a target and reach or identify the correct area.',
+    scenarioName: scenario.name,
+    objective: scenario.objective,
     rules: [],
-    limitMinutes: 12,
-    zones: [],
+    limitMinutes: scenario.defaultLimitMinutes,
+    checkpointCount: SEED_CHECKPOINTS.length,
+    checkpoints: SEED_CHECKPOINTS,
+    zones: [SEED_ZONE],
     drones: drones.map((droneId, index) => ({
       droneId,
       droneName: `Drone ${index + 1}`,
@@ -186,5 +248,6 @@ export function seedDemonstration(
     writeClearances(lesson.id, clearances)
   }
 
+  persistLessonRecords(lesson.id)
   return { seeded: true, refusedBecause: null, lessonId: lesson.id }
 }

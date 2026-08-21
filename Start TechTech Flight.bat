@@ -72,13 +72,17 @@ start "" "http://localhost:4321/"
 
 REM The address for the iPads, printed once and drawn as a QR. Nobody types an IP in front
 REM of a class.
-node "scripts\classroom-address.mjs" 4321
+if defined NODE_EXE (
+  "%NODE_EXE%" "scripts\classroom-address.mjs" 4321
+) else (
+  node "scripts\classroom-address.mjs" 4321
+)
 
 echo.
 echo Ground station window stays open while you teach.
 echo Close that window when the lesson is finished.
 echo.
-echo Your class records are kept on this laptop, in Documents\TechTech Flight.
+echo Your class records are kept on this laptop.
 echo Settings has a button to save a copy to your Desktop.
 echo.
 echo AI detection: http://127.0.0.1:8090 when the AI Service window is running.

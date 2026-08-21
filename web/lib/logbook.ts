@@ -17,9 +17,10 @@ export type { RemedialEntry } from './remedial-queue'
  * nowhere on the ground station to put them: the board is read-only by design and sends
  * nothing back over the socket.
  *
- * So the Logbook lives in this browser first. Dual-write (#93) may mirror a snapshot to
- * Vercel when a sync secret is set — local save still happens first so the classroom works
- * offline. Clearing site data clears the local copy; the cloud copy is last-write-wins.
+ * So the Logbook lives in this browser first, so the board still works with the ground
+ * station closed. Dual-write may mirror a snapshot to the file on this laptop (ADR-0035);
+ * **the file wins when they disagree**. An off-site copy is off until somebody ticks the
+ * Settings box.
  *
  * Trainer identity (Student / trainer Drone / prepared Lesson / LessonDrone /
  * LessonAssignment) lives here too — 3NF-shaped relations in the same browser store
@@ -729,6 +730,7 @@ export function startLesson(
     bookmarks: [],
   }
   save({ ...book, lessons: [lesson, ...book.lessons].slice(0, 100) })
+  void import('./lesson-records').then((mod) => mod.persistLessonRecords(id))
   return id
 }
 
@@ -763,6 +765,7 @@ export function endLesson(
           remedialCandidatesFromLesson({ ...closed, endedAt: at, tally }, book),
         )
   save({ ...book, lessons, remedialQueue })
+  void import('./lesson-records').then((mod) => mod.persistLessonRecords(id))
 }
 
 /** Flag a Drone for remedial follow-up — local Logbook only (ADR-0011). */

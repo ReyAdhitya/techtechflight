@@ -102,6 +102,9 @@ describe('Settings, with the records and keyboard panels gone', () => {
 
     expect(screen.getByText('The ground station')).toBeInTheDocument()
     expect(screen.getByText(/These make the simulated Fleet misbehave/)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Set up a demonstration lesson/ }),
+    ).toBeInTheDocument()
   })
 
   /*
@@ -113,8 +116,8 @@ describe('Settings, with the records and keyboard panels gone', () => {
     show(<SettingsScreen />)
     settle()
 
-    expect(screen.getByRole('note')).toHaveTextContent(/this browser on this laptop/)
-    expect(screen.getByRole('note')).toHaveTextContent(/copy also goes to Vercel/)
+    expect(screen.getByRole('note')).toHaveTextContent(/kept on this laptop/)
+    expect(screen.getByRole('note')).toHaveTextContent(/Nothing is sent anywhere/)
   })
 })
 

@@ -143,6 +143,9 @@ export function sealMission(lessonId: string | null, outcome: MissionOutcome): M
   if (current === null) return null
   const next: Mission = { ...current, outcome }
   write({ lessonId, mission: next })
+  void import('./lesson-records').then((mod) =>
+    mod.persistLessonRecords(lessonId ?? undefined),
+  )
   return next
 }
 

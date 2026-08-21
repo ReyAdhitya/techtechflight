@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { offsiteBackupOn, setOffsiteBackup } from '@/lib/logbook-sync'
+import { groundStationHttpOrigin } from '@/lib/classroom-setup'
 
 /**
  * What a Teacher can do with their records, in two buttons and a box (ADR-0035).
@@ -28,7 +29,8 @@ export function MyRecordsPanel() {
     setBusy(true)
     setSaying(null)
     try {
-      const response = await fetch(path, { method: 'POST' })
+      const origin = groundStationHttpOrigin(window.location)
+      const response = await fetch(`${origin}${path}`, { method: 'POST' })
       const body = (await response.json()) as { savedTo?: string; error?: string }
       setSaying(response.ok && body.savedTo ? `${done} ${filenameOf(body.savedTo)}` : (body.error ?? 'That did not work.'))
     } catch {

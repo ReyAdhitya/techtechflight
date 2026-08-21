@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import {
-  pushClassroomToCloud,
   readClassroomSession,
+  reportClassroomSync,
   subscribeClassroom,
+  type ClassroomSyncReport,
 } from '@/lib/classroom-session'
 
 /**
@@ -14,17 +15,17 @@ import {
  */
 export function ClassroomCodePanel() {
   const [code, setCode] = useState<string | null>(null)
-  const [sync, setSync] = useState<'unknown' | 'ok' | 'skipped' | 'error'>('unknown')
+  const [sync, setSync] = useState<ClassroomSyncReport | null>(null)
 
   useEffect(() => {
     const session = readClassroomSession()
     setCode(session?.code ?? null)
     if (session) {
-      void pushClassroomToCloud(session).then(setSync)
+      void reportClassroomSync(session).then(setSync)
     }
     return subscribeClassroom((next) => {
       setCode(next?.code ?? null)
-      if (next) void pushClassroomToCloud(next).then(setSync)
+      if (next) void reportClassroomSync(next).then(setSync)
     })
   }, [])
 
@@ -37,14 +38,6 @@ export function ClassroomCodePanel() {
     )
   }
 
-  const syncWords =
-    sync === 'ok'
-      ? 'Synced for iPads on the school Wi‑Fi.'
-      : sync === 'skipped'
-        ? 'This laptop only for now. Cloud sync is not configured (need BLOB_READ_WRITE_TOKEN). A second tab here still works.'
-        : sync === 'error'
-          ? 'Could not reach the classroom cloud. Retry, or use a second tab on this laptop.'
-          : 'Checking sync…'
 
   return (
     <div
@@ -56,8 +49,9 @@ export function ClassroomCodePanel() {
         <p className="tnum m-0 font-display text-heading font-medium tracking-[0.2em]">{code}</p>
       </div>
       <p className="m-0 max-w-[40ch] text-value text-ink-subtle">
-        Students open Student on an iPad and join with this code. {syncWords}
+        Students open Student on an iPad and join with this code.
       </p>
+      <SyncWords report={sync} />
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -74,13 +68,58 @@ export function ClassroomCodePanel() {
           onClick={() => {
             const session = readClassroomSession()
             if (!session) return
-            setSync('unknown')
-            void pushClassroomToCloud(session).then(setSync)
+            setSync(null)
+            void reportClassroomSync(session).then(setSync)
           }}
         >
           Retry sync
         </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Which store, and what it said.
+ *
+ * Two lies lived here. It named `BLOB_READ_WRITE_TOKEN`, an environment variable that stopped
+ * meaning anything on 2026-08-12 when the store moved to Cloudflare, so a Teacher chasing the
+ * sentence was chasing a setting nobody has. And it said "not configured" when it meant "the
+ * store refused me", which are different problems with different people to call, and telling
+ * them apart is what would have caught a broken sync in a morning instead of three days.
+ */
+function SyncWords({ report }: { readonly report: ClassroomSyncReport | null }) {
+  if (report === null) {
+    return <p className="m-0 text-value text-ink-muted">Checking sync…</p>
+  }
+
+  if (report.state === 'ok') {
+    return (
+      <p className="m-0 text-value text-ink-subtle">
+        Synced. iPads on this network can join with the code.
+      </p>
+    )
+  }
+
+  if (report.state === 'unconfigured') {
+    return (
+      <p role="status" className="m-0 max-w-[46ch] text-value text-ink">
+        This laptop only. No classroom store is set up at {report.store}. A second tab here
+        still works.
+      </p>
+    )
+  }
+
+  return (
+    <p
+      role="status"
+      className="m-0 max-w-[46ch] border-l-4 border-status-not-ready pl-3 text-value text-ink"
+    >
+      iPads cannot join. {report.state === 'offline' ? 'Nothing answered at ' : 'Refused by '}
+      {report.store}
+      {report.status === null ? '' : <> (<span className="tnum">{report.status}</span>)</>}
+      {report.detail === '' ? '' : `: ${report.detail}`}. A second tab on this laptop still
+      works.
+    </p>
   )
 }

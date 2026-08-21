@@ -9,6 +9,7 @@ import {
   writePreferredClassroomSource,
   type ClassroomTelemetrySource,
 } from './classroom-source.ts'
+import { normalizeCode, readClassroom, writeClassroom } from './classroom-store.ts'
 
 export interface FleetServerOptions {
   readonly station: GroundStation
@@ -52,6 +53,7 @@ export async function startFleetServer(options: FleetServerOptions): Promise<Fle
 
   const http = createServer((request, response) => {
     if (tryClassroomSetup(request, response, activeSource)) return
+    if (tryClassroom(request, response)) return
     void serveStatic(request, response, boardDir)
   })
   const sockets = new WebSocketServer({ server: http, path: '/fleet' })
@@ -121,6 +123,104 @@ function send(socket: { readyState: number; send(data: string): void }, message:
   const OPEN = 1
   if (socket.readyState !== OPEN) return
   socket.send(JSON.stringify(message))
+}
+
+/**
+ * The classroom store, on this laptop.
+ *
+ * `GET /api/classroom?code=XXXX` and `PUT` the same, which is the shape the board already
+ * speaks to Cloudflare. Moving it here takes the classroom off the internet: no account, no
+ * token, no request cap, and it keeps working when somebody pulls the network cable out.
+ *
+ * The merge lives in `classroom-store.ts` and is the Worker's rule ported rather than
+ * rewritten. Nothing is refused: a tablet writing its own seat on a base a second old is the
+ * ordinary case in a room, and refusing it is what made a child invisible for three days.
+ */
+function tryClassroom(request: IncomingMessage, response: ServerResponse): boolean {
+  const url = new URL(request.url ?? '/', 'http://localhost')
+  if (url.pathname !== '/api/classroom') return false
+
+  const cors = {
+    'access-control-allow-origin': '*',
+    'access-control-allow-methods': 'GET, PUT, OPTIONS',
+    'access-control-allow-headers': 'content-type',
+  }
+  const reply = (status: number, body: unknown) => {
+    response.writeHead(status, { 'content-type': 'application/json', ...cors })
+    response.end(JSON.stringify(body))
+  }
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204, cors)
+    response.end()
+    return true
+  }
+
+  const code = normalizeCode(url.searchParams.get('code'))
+  if (code.length < 4) {
+    reply(400, { error: 'Query code must be at least four characters.', store: 'ground-station' })
+    return true
+  }
+
+  if (request.method === 'GET') {
+    const room = readClassroom(code)
+    if (room === null) {
+      reply(404, { error: 'No classroom with that code yet.', store: 'ground-station' })
+      return true
+    }
+    reply(200, room)
+    return true
+  }
+
+  if (request.method === 'PUT') {
+    /*
+     * Size-capped. A classroom document is about five kilobytes; anything a hundred times that
+     * is a mistake or a probe, and a school laptop should not spend its memory finding out.
+     */
+    const LIMIT = 512 * 1024
+    let raw = ''
+    let tooBig = false
+    request.on('data', (chunk: Buffer) => {
+      if (tooBig) return
+      raw += chunk.toString()
+      if (raw.length > LIMIT) {
+        tooBig = true
+        reply(413, { error: 'Classroom document too large.', store: 'ground-station' })
+        request.destroy()
+      }
+    })
+    request.on('end', () => {
+      if (tooBig) return
+      let body: { code?: unknown; updatedAt?: unknown } | null = null
+      try {
+        body = JSON.parse(raw) as { code?: unknown; updatedAt?: unknown }
+      } catch {
+        body = null
+      }
+      if (!body || typeof body !== 'object' || typeof body.updatedAt !== 'number') {
+        reply(400, {
+          error: 'Body must be a classroom session with updatedAt.',
+          store: 'ground-station',
+        })
+        return
+      }
+      if (normalizeCode(body.code) !== code) {
+        reply(400, { error: 'Body code must match query code.', store: 'ground-station' })
+        return
+      }
+      const next = writeClassroom(body as Parameters<typeof writeClassroom>[0])
+      reply(200, {
+        ok: true,
+        rev: next.rev ?? 0,
+        seats: (next.seats ?? []).length,
+        store: 'ground-station',
+      })
+    })
+    return true
+  }
+
+  reply(405, { error: 'Method not allowed', store: 'ground-station' })
+  return true
 }
 
 /**

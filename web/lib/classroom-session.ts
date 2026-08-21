@@ -895,6 +895,8 @@ export function writeClassroomSession(
   try {
     window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(next))
     broadcastClassroom(next)
+    /* Somebody pressed something. Every poll on this device looks now rather than waiting. */
+    wakeClassroomPolls()
   } catch {
     /* ignore */
   }
@@ -1455,6 +1457,19 @@ function broadcastClassroom(session: ClassroomSession): void {
   }
 }
 
+/**
+ * Subscribers waiting to be told to look now.
+ *
+ * A backoff is right for a quiet room and wrong the instant somebody presses something: a
+ * child asking to take off must not wait out twenty seconds of silence before their tablet
+ * checks for the answer. Every write wakes every poll on this device.
+ */
+const classroomPollWakers = new Set<() => void>()
+
+function wakeClassroomPolls(): void {
+  for (const wake of classroomPollWakers) wake()
+}
+
 export function subscribeClassroom(
   onChange: (session: ClassroomSession | null) => void,
 ): () => void {
@@ -1495,28 +1510,92 @@ export function subscribeClassroom(
    * A merge that learned something the store does not hold is pushed straight back, which is
    * what carries a seat the last few metres to the Teacher's board.
    */
-  const poll = window.setInterval(() => {
-    void pullClassroomFromCloud().then((remote) => {
-      if (!remote) return
-      const local = readClassroomSession()
-      const merged = mergeClassroomSessions(local, remote)
-      if (merged === null) return
-      if (classroomsDiffer(merged, local)) {
-        try {
-          window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(merged))
-        } catch {
-          /* ignore */
+  /*
+   * **The poll backs off, and it does not run before there is a Mission.**
+   *
+   * Every device asking every 2.5 seconds is what emptied a Cloudflare allowance account-wide
+   * in a day: thirty iPads is 43,200 requests an hour, and almost all of them learn nothing.
+   * The board's own store now sits on the laptop, where a request costs nothing but the
+   * asking — but a laptop serving thirty tablets is still a laptop, and the hosted copies are
+   * still behind a cap.
+   *
+   * Two rules, and the second matters more than the first:
+   *
+   *  - **Nothing to watch, nothing to ask.** Before a classroom exists there is no document to
+   *    poll for; a tablet sitting on the join door all morning asked anyway.
+   *  - **Quiet rooms are asked about less often.** Every pull that changes nothing lengthens
+   *    the wait, up to twenty seconds; anything that does change snaps it straight back to
+   *    2.5 s, so the moment a Teacher grants a takeoff the room is lively again.
+   *
+   * The ceiling is deliberately short of a minute. A tablet is how a child learns their
+   * takeoff was granted, and a Teacher watching a child wait is not interested in an
+   * allowance.
+   */
+  const QUICK_MS = 2_500
+  const SLOWEST_MS = 20_000
+  let waitMs = QUICK_MS
+  let timer: ReturnType<typeof setTimeout> | null = null
+  let stopped = false
+
+  const tick = async () => {
+    if (stopped) return
+    /* No classroom on this device yet: nothing to ask about, so do not ask. */
+    const before = readClassroomSession()
+    if (before === null) {
+      waitMs = Math.min(SLOWEST_MS, waitMs * 2)
+      schedule()
+      return
+    }
+
+    let learnedSomething = false
+    try {
+      const remote = await pullClassroomFromCloud()
+      if (remote) {
+        const local = readClassroomSession()
+        const merged = mergeClassroomSessions(local, remote)
+        if (merged !== null) {
+          if (classroomsDiffer(merged, local)) {
+            learnedSomething = true
+            try {
+              window.localStorage.setItem(CLASSROOM_SESSION_KEY, JSON.stringify(merged))
+            } catch {
+              /* ignore */
+            }
+            onChange(merged)
+          }
+          if (classroomSeatsDiffer(merged, remote)) {
+            learnedSomething = true
+            scheduleClassroomCloudPush(merged)
+          }
         }
-        onChange(merged)
       }
-      if (classroomSeatsDiffer(merged, remote)) scheduleClassroomCloudPush(merged)
-    })
-  }, 2_500)
+    } catch {
+      /* A store that is not answering is not a reason to stop asking, only to ask slower. */
+    }
+
+    waitMs = learnedSomething ? QUICK_MS : Math.min(SLOWEST_MS, Math.round(waitMs * 1.6))
+    schedule()
+  }
+
+  function schedule(): void {
+    if (stopped) return
+    timer = setTimeout(() => void tick(), waitMs)
+  }
+
+  schedule()
+
+  /** Ask now, and go back to asking often. For a press that must not wait out a backoff. */
+  classroomPollWakers.add(() => {
+    waitMs = QUICK_MS
+    if (timer) clearTimeout(timer)
+    void tick()
+  })
 
   return () => {
+    stopped = true
+    if (timer) clearTimeout(timer)
     window.removeEventListener('storage', onStorage)
     channel?.close()
-    window.clearInterval(poll)
   }
 }
 
@@ -1541,6 +1620,25 @@ const CLASSROOM_STORE_URL = 'https://techtechflight-classroom.classroom-worker.w
 /** Set to `local` to use `/api/classroom` again, or to a URL to point somewhere else. */
 export const CLASSROOM_SYNC_URL_KEY = 'techtechflight:classroom-sync-url'
 
+/**
+ * Whether this board was served by a ground station rather than by a hosted copy.
+ *
+ * The ground station serves the board on `:4321` and holds `/api/classroom` on the same
+ * origin, so a board that arrived from it should talk to it: one hop across a travel router,
+ * no account, no request cap, and it keeps working with the network cable out. A hosted copy
+ * on Cloudflare or Vercel has no such endpoint and keeps the built-in store.
+ *
+ * Decided by the port rather than by a build seed, because a build seed only reaches the
+ * deploy built with it and the laptop launcher serves the same artefact the hosted copies do.
+ */
+function servedByGroundStation(): boolean {
+  try {
+    return window.location.port === '4321'
+  } catch {
+    return false
+  }
+}
+
 export function classroomApiUrl(code: string): string {
   const normalized = normalizeClassroomCode(code)
   if (typeof window === 'undefined') return `${CLASSROOM_STORE_URL}?code=${normalized}`
@@ -1563,6 +1661,8 @@ export function classroomApiUrl(code: string): string {
   if (fromEnv && fromEnv.trim() !== '') {
     return `${fromEnv.trim().replace(/\/$/, '')}?code=${normalized}`
   }
+  /* A board the ground station served talks to the ground station. */
+  if (servedByGroundStation()) return `/api/classroom?code=${normalized}`
   return `${CLASSROOM_STORE_URL}?code=${normalized}`
 }
 
@@ -1593,6 +1693,80 @@ export function scheduleClassroomCloudPush(session: ClassroomSession): void {
  * not in a loop, because the next poll is two and a half seconds away and a retry storm on a
  * classroom store is how the last allowance went.
  */
+/**
+ * What happened when this device last tried to reach the store, and **which store**.
+ *
+ * `'unconfigured'` means nobody set one up. `'refused'` means one answered and said no, and it
+ * carries the status and the words. They were one state for three days while three Blob stores
+ * sat suspended for unpaid billing, and a Teacher reading "not configured" cannot act on a
+ * store that is refusing them.
+ */
+export interface ClassroomSyncReport {
+  readonly state: 'ok' | 'unconfigured' | 'refused' | 'offline'
+  /** Where the board was talking to, in words a Teacher can repeat down a phone. */
+  readonly store: string
+  readonly status: number | null
+  readonly detail: string
+}
+
+/** The store this board is talking to, named for a human rather than as a URL. */
+export function classroomStoreName(): string {
+  const url = classroomApiUrl('ABCD')
+  if (url.startsWith('/api/')) return 'this laptop'
+  if (url.includes('workers.dev')) return 'the Cloudflare classroom store'
+  try {
+    return new URL(url).host
+  } catch {
+    return 'the classroom store'
+  }
+}
+
+async function saidBy(response: Response): Promise<string> {
+  try {
+    const text = (await response.text()).slice(0, 300)
+    if (text.trim() === '') return ''
+    try {
+      const parsed = JSON.parse(text) as { error?: unknown }
+      return typeof parsed.error === 'string' ? parsed.error : text
+    } catch {
+      return text
+    }
+  } catch {
+    return ''
+  }
+}
+
+export async function reportClassroomSync(
+  session: ClassroomSession,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ClassroomSyncReport> {
+  const store = classroomStoreName()
+  try {
+    const response = await fetchImpl(classroomApiUrl(session.code), {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(session),
+    })
+    if (response.ok) return { state: 'ok', store, status: response.status, detail: '' }
+    const detail = await saidBy(response)
+    /*
+     * 503 is the only status meaning "nobody set this up". Everything else is a store that
+     * answered and refused, and the 500 the Blob stores returned for three days belongs firmly
+     * in the second group however much it looked like the first.
+     */
+    if (response.status === 503) return { state: 'unconfigured', store, status: 503, detail }
+    return { state: 'refused', store, status: response.status, detail }
+  } catch (error) {
+    /* Nothing answered at all: a pulled cable, a router reboot, a laptop asleep. */
+    return {
+      state: 'offline',
+      store,
+      status: null,
+      detail: error instanceof Error ? error.message : '',
+    }
+  }
+}
+
 export async function pushClassroomToCloud(
   session: ClassroomSession,
   fetchImpl: typeof fetch = fetch,

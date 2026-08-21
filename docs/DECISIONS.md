@@ -9,6 +9,18 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-21 · A zone on the grid is on step 7.
+
+- **The editor draws the classroom, not the Scope's current window.** Following the Fleet
+  pulled the grid east with the parked row. A Teacher placing a zone against the room was
+  drawing metres the picture on step 7 did not show, and a polygon on the west edge of the
+  frame has no hatch and no leftover sentence. `scopeSpace` still drives the leftover notice.
+- **The simulated bench is centred on the setup point.** Six craft at 0..5 m east was why
+  the 8 m window started at −1.5 m. Same extents as `CLASSROOM_GEOFENCE`; fleet-core cannot
+  import `web/`.
+- **Control re-reads the Mission draft.** The rail already did. A copy from mount left the
+  Scope a zone behind.
+
 ## 2026-08-21 · A Teacher tapping Search and Rescue is the product.
 
 - **The catalogue is the route until a Teacher can draw points.** There is no points-drawing

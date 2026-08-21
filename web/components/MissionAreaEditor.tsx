@@ -86,18 +86,16 @@ export function MissionAreaEditor({
   const [activeZoneId, setActiveZoneId] = useState<string | null>(null)
 
   /*
-   * **Draw the space the Scope draws.** This surface used to be a fixed twenty metres square
-   * running from the origin north-east, and the Scope draws a window around where the Drones
-   * actually are — about eight metres by six, astride the origin, with half of it in negative
-   * metres this grid could not express. So *every* zone a Teacher drew here landed outside the
-   * picture: real, breaching, and invisible on all three views. The rail said "2 no-fly zones"
-   * beside a Scope whose key named no hatch, and both were telling the truth.
-   *
-   * The notice at the foot stays. It is now the exception it was always meant to be — a zone
-   * typed beyond the frame, or drawn before the window grew — rather than the state every
-   * Teacher was in.
+   * **Draw the classroom.** This surface used to be a fixed twenty metres square running
+   * from the origin north-east, and then it followed the Scope's fleet-centred window. The
+   * Scope follows the Drones; a row parked east of the origin pulled that window east and
+   * left the west of the room off the picture. A Teacher drawing on this grid is placing a
+   * zone against the room, so the metres here are the room's (`CLASSROOM_GEOFENCE`). The
+   * notice at the foot still uses the Scope's window, so a zone the picture will not show
+   * is named rather than left as a silent miss.
    */
-  const space = scopeSpace ?? DEFAULT_SPACE
+  const space = DEFAULT_SPACE
+  const noticeWindow = scopeSpace ?? DEFAULT_SPACE
   const widthM = space.eastM - space.westM
   const heightM = space.northM - space.southM
   const midEast = Math.round((space.westM + space.eastM) / 2)
@@ -422,7 +420,7 @@ export function MissionAreaEditor({
         </ul>
       ) : null}
 
-      <ZonesOutsideNotice zones={zones} window={space} />
+      <ZonesOutsideNotice zones={zones} window={noticeWindow} />
     </section>
   )
 }

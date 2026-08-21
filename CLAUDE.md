@@ -380,15 +380,16 @@ axis, so a zone away to the east still bands on Side and is still named there; a
 the edge keeps its key, because the Scope holds a shape on the frame rather than dropping it
 and the boundary line is drawn.
 
-**The drawing surface draws the Scope's window, and that is why zones are visible at all.**
-`MissionAreaEditor` used to be a fixed twenty metres square running north-east from the
-origin. The classroom sits *astride* its origin — roughly -4 to 4 m east, -3 to 3 m north —
-so **every** zone a Teacher drew landed outside the picture: real, breaching, hatched
-nowhere. The rail said "2 no-fly zones" and the Scope's key named no hatch, and neither was
-lying. The surface now takes `scopeSpace` (the Scope's own `scopeWindow`) and falls back to
-`CLASSROOM_GEOFENCE`, clamps a typed corner into it, and reports the metres it covers in
-`data-space`. It draws the blue boundary box too, because a Teacher places a zone against the
-room. Do not put a fixed grid back.
+**The drawing surface draws the classroom, and the simulated Fleet sits in it.**
+`MissionAreaEditor` used to be a twenty-metre square north-east of the origin, then the
+Scope's fleet-centred window. The classroom sits *astride* its origin (about −4 to 4 m east,
+−3 to 3 m north). A row of craft parked at 0, 1, 2, 3, 4, 5 m east pulled the Scope east and
+left the west of the room off the picture: the rail said "1 no-fly zone", Top-down had no
+hatch and no leftover sentence, and both were telling a half-truth — the zone existed, the
+polygon was a line on the west edge. The grid is `CLASSROOM_GEOFENCE`; `scopeSpace` is only
+the leftover notice. The simulator parks the bench centred on the origin and wanders inside
+those same metres. Control re-reads the Mission draft when it is written, so a zone drawn on
+step 2 is on step 7. Do not put a 0–20 grid back, and do not park the set east of the room.
 
 **Count zones that enclose something.** `noFlyZones` in `MissionRunScreen` filters by
 `enclosesAnything`. A shape with two corners is a zone a Teacher started: `breachesAt` ignores

@@ -41,6 +41,11 @@ would notice.
   flies to.** `chooseScenario` was leaving `checkpoints: []`, so a grant took the simulated
   Drone off the ground with nothing to fly and Approve never appeared. Each built-in Scenario
   now carries a route inside the classroom window; an empty or unknown Scenario still has none.
+- **A No-fly Zone drawn on the classroom grid hatches on step 7.** The simulated Fleet sat
+  east of the origin, so the Scope's window left the west of the room as a line on the frame:
+  the rail counted the zone, the picture showed clear air, and no leftover sentence. The bench
+  is centred on the origin, the editor draws the classroom, and Control re-reads the Mission
+  when the Teacher draws.
 - **The poll asked every 2.5 seconds whether or not anything had changed**, which is what
   emptied a Cloudflare allowance account wide in a day. It backs off to twenty seconds in a
   quiet room, does not poll at all before there is a classroom, and any write wakes it at once.

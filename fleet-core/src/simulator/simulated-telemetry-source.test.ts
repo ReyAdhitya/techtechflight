@@ -61,6 +61,27 @@ describe('reporting', () => {
     expect(estimates.length).toBeLessThan(observed.length)
   })
 
+  /*
+   * Parked in a row on the bench, inside the classroom window the Teacher draws on.
+   *
+   * A row running 0, 1, 2, 3, 4, 5 m east pulled the Scope east to hold Drone 6 and left
+   * the west of the room off the picture: a zone drawn on step 2 hatched on the grid and
+   * vanished on step 7, with no leftover sentence because the filter thought it was on the
+   * frame. The classroom is about −4 to 4 m east, −3 to 3 m north.
+   */
+  it('parks every craft inside the classroom, not on the netting', () => {
+    clock.advance(REPORT_INTERVAL)
+
+    for (const observation of observed) {
+      const at = observation.telemetry.position
+      expect(at, observation.droneId).toBeDefined()
+      expect(at!.eastM, observation.droneId).toBeGreaterThan(-4)
+      expect(at!.eastM, observation.droneId).toBeLessThan(4)
+      expect(at!.northM, observation.droneId).toBeGreaterThan(-3)
+      expect(at!.northM, observation.droneId).toBeLessThan(3)
+    }
+  })
+
   it('reports whatever else the aircraft can sense, for the detail view', () => {
     clock.advance(REPORT_INTERVAL)
 

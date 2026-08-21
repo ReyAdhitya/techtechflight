@@ -94,7 +94,7 @@ import {
 } from '@/lib/classroom-session'
 import type { ClearanceState } from '@/lib/clearance'
 import { emptyClearanceState } from '@/lib/clearance'
-import { putMission, readMission, startMission } from '@/lib/mission-draft'
+import { putMission, readMission, startMission, subscribeMissionDraft } from '@/lib/mission-draft'
 import { missionCraftIds } from '@/lib/mission-flow-facts'
 import type { Mission } from '@/lib/mission'
 import { scenarioOrUnknown } from '@/lib/mission-scenarios'
@@ -265,14 +265,23 @@ export function ControlScreen({
      * itself from eligibility (ADR-0021) and eligibility requires an active Mission, so
      * waiting for the first grant to start it would leave the queue permanently empty.
      * Nothing about this reaches an aircraft.
+     *
+     * Re-read when the draft is written, not only when the Lesson id changes. The rail
+     * already calls `readMission` every render; this board used to keep the copy from
+     * mount, so a zone drawn on step 2 (or after Control had opened) never reached the
+     * Scope — 1 no-fly on the rail, clear air on the picture, no leftover sentence.
      */
-    const found = readMission(lessonId)
-    setMission(
-      found !== null && lessonId !== null && found.startedAt === null
-        ? (startMission(lessonId, Date.now()) ?? found)
-        : found,
-    )
-    setClearances(readClearances(lessonId))
+    const load = () => {
+      const found = readMission(lessonId)
+      setMission(
+        found !== null && lessonId !== null && found.startedAt === null
+          ? (startMission(lessonId, Date.now()) ?? found)
+          : found,
+      )
+      setClearances(readClearances(lessonId))
+    }
+    load()
+    return subscribeMissionDraft(load)
   }, [lessonId])
 
   useEffect(() => {

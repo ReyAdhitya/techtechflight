@@ -45,7 +45,8 @@ Two windows open and both stay open while the class runs:
 | The board | What the Teacher works on, at `http://localhost:4321` |
 
 The launcher also prints **the address for the iPads** and draws it as a QR code. That address
-is the laptop's, not `localhost`.
+is `http://<laptop>:4321/student` — the Student door — never `localhost`. Settings shows the
+same URL, so a Teacher can copy it onto the trolley card without reading a terminal window.
 
 > **The Teacher's own board must stay on `localhost`.** The camera is refused on a plain
 > `http://` address that is not localhost, so a board opened at `10.0.0.2` looks like it has a

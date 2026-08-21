@@ -9,6 +9,35 @@ For architecture, see [`docs/adr/`](./adr/). For the design system, see
 
 ---
 
+## 2026-08-21 · Finishing Done A after #672.
+
+- **School, class and teacher have no form.** A Lesson snapshot needs names the schema asks
+  for. Inventing a Settings form would put more words on a screen that already has two buttons
+  for records. Written as `School` / the Lesson label / `Teacher`.
+- **The iPad URL is `/student`, on Settings as well as the launcher.** #672 printed it only in
+  the terminal. A Teacher writing the trolley card should not have to read a console. No second
+  QR library in the board: the square stays in the launcher, the words sit on Classroom setup.
+- **Skip Docker/WSL/Hyper-V when choosing the LAN address.** Those adapters are RFC1918, so
+  "prefer private" printed `172.17` on this laptop. A phone on the classroom Wi-Fi cannot open
+  that. Prefer 192.168, then 10, then other private, and skip the virtual names. If only
+  virtual addresses exist, print nothing rather than a QR nobody can use.
+- **School drones (Wi-Fi) is the third Classroom setup path, not a replacement for Radio.**
+  Radio stays for anyone with a bought controller. Default stays Simulator. Restart still
+  required; nothing hot-swaps.
+- **A vacant browser loses to the file even if it stamped `revisedAt` just now.** Clearing
+  browsing data, then opening the board, writes an empty Logbook with today's time. Comparing
+  clocks would keep the empty copy and throw a term of attendance away. Empty roll and no
+  Lesson means vacant; anything a Teacher has actually typed keeps the timestamp rule.
+- **Persist and hydrate no-op under Vitest** unless a test hands its own `fetch`. Otherwise
+  `npm test` with a ground station already open would write the developer's real records file.
+- **The packager copies the running Node if `runtime/node` is missing.** The 18 August note
+  said staged-never-downloaded, which still holds: nothing is fetched at package time. Copying
+  `dirname(process.execPath)` is how a developer machine produces a zip a technician can
+  double-click without a system Node.
+- **Step 12 stays shut after a demonstration seed.** Opening it would be seeding a judgement.
+
+---
+
 ## 2026-08-18 · The calls made building the local flight deck.
 
 - **The tracker sweep is partial, and says so on its own front page.** 19 closed with evidence,

@@ -11,20 +11,28 @@ would notice.
   by a JSON file, with the Worker's merge ported rather than rewritten. No account, no token and
   no request cap, and it keeps working with the network cable out.
 - **The records live on the laptop (ADR-0035).** The eighteen tables in a SQLite file at
-  `Documents\TechTech Flight\records.db`, written at Lesson boundaries and never per telemetry
-  tick. Two buttons on Settings save a dated copy to the Desktop and export a register as CSV,
-  and neither shows a Teacher a file path. The off-site copy is off until somebody ticks a box.
-- **One switch.** The launcher prints the address for the iPads and draws it as a QR code,
-  carries a Node runtime so nobody is shown a version number, and opens the Teacher's board on
-  `localhost` because a camera is refused anywhere else.
+  `Documents\TechTech Flight\records.db`, written at Lesson start, end and seal, and never per
+  telemetry tick. The browser keeps a copy so the board works with the ground station closed;
+  **the file wins when they disagree** (`logbook.json` beside the database). Two buttons on
+  Settings save a dated copy to the Desktop and export a register as CSV, and neither shows a
+  Teacher a file path. The off-site copy is off until somebody ticks a box.
+- **One switch.** The launcher prints `http://<lan>:4321/student` for the iPads and draws it as
+  a QR code (generated locally, no chart API), carries a Node runtime so nobody is shown a
+  version number, and opens the Teacher's board on `localhost` because a camera is refused
+  anywhere else. Settings Classroom setup shows the same URL, so a Teacher can copy it onto a
+  card without reading a terminal.
 - **A door the school's own drones can knock on.** UDP on 14555 accepting small JSON. Absent
   means cannot report rather than zero, an unknown id is never invented into a Drone, malformed
-  packets are dropped quietly and the sender's address is remembered per id.
+  packets are dropped quietly and the sender's address is remembered per id. Settings Classroom
+  setup offers **School drones (Wi-Fi)** as the school's path; Radio (MAVLink) stays in the
+  tree; the default remains Simulator. Hardware is monitoring-only.
 - **One button fills a Lesson for a demonstration**, pressing what a Teacher presses so every
-  step opens because its condition genuinely holds. It refuses to run on a class with real
-  children on the roll.
+  step opens because its condition genuinely holds, including the points a class flies to. It
+  refuses to run on a class with real children on the roll. Step 12 stays shut: sealing is a
+  Teacher's judgement.
 - **`npm run package:school`** writes the folder a technician unzips, with a page they can
-  follow in `docs/SETUP-FOR-A-TECHNICIAN.md`.
+  follow in `docs/SETUP-FOR-A-TECHNICIAN.md`, and copies a Node runtime beside the app so a
+  machine that has never seen Node in PATH still starts.
 - **Both Cloudflare Workers deploy on every push to main.**
 
 ### Fixed

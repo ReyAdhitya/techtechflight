@@ -102,8 +102,15 @@ defending it.
 
 **Windows classroom start:** double-click `Start TechTech Flight.bat` at the repo root —
 no npm typing. It starts ground-station on **:4321** and opens the board. Default Fleet is
-the Simulator; Settings **Classroom setup** can prefer Radio (MAVLink) for the next launch
-(monitoring only, ADR-0011) — still no hardware `CommandableSource`.
+the Simulator; Settings **Classroom setup** can prefer **School drones (Wi-Fi)** or Radio
+(MAVLink) for the next launch (monitoring only, ADR-0011) — still no hardware
+`CommandableSource`. School drones is this school's path (`TELEMETRY_SOURCE=esp`, UDP 14555);
+Radio stays in the tree and is not the default.
+
+**The iPad URL is `/student`.** The launcher QR and the Copy line on Settings Classroom setup
+both name `http://<lan>:4321/student`. The Teacher board stays on `localhost` (camera). A room
+with no internet cannot fetch a QR, so the square is generated in `scripts/classroom-address.mjs`.
+Skip Docker/WSL/Hyper-V when choosing `<lan>` — those are private too and a phone cannot use them.
 
 **Windows:** `next build` fails with `EBUSY: rmdir 'web/out'` if any shell has that
 directory as its working directory. Git Bash rewrites a bare `/route` argument into a
@@ -111,8 +118,9 @@ Windows path — pass routes to `scripts/shot.mjs` from PowerShell.
 
 **MAVLink is Node-only.** `@techtechflight/fleet-adapters` speaks UDP via `node:dgram` and
 must not be imported from `web/` or `fleet-core/` (ADR-0013). Opt the ground station in with
-`TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). It does not implement
-`CommandableSource` — monitoring only (ADR-0011).
+`TELEMETRY_SOURCE=mavlink` (optional `MAVLINK_HOST` / `MAVLINK_PORT`). School drones use
+`TELEMETRY_SOURCE=esp` (optional `ESP_PORT`, default 14555). Neither implements
+`CommandableSource` — monitoring only (ADR-0011). Land/Stop to hardware is Phase 4, own ADR.
 
 **Lesson/Student Logbook is this browser first, and now has a database behind it.** Records
 live in `localStorage` on the machine running the board, and that stays the record: a school
@@ -506,14 +514,26 @@ board served from port 4321 talks to its own origin and needs no configuration a
 
 **The records are a file, not the browser (ADR-0035).** `Documents\TechTech Flight\records.db`,
 the eighteen tables, written by the ground station **at Lesson boundaries and never per
-telemetry tick**. Outside the app folder because an update is a replaced folder. **No live
-readings ever** — `LessonSnapshot` has nowhere to put one. Nothing leaves the premises until
-somebody ticks the Settings box; a sync secret alone no longer switches it on.
+telemetry tick** — start, end, seal, and the demonstration seed. The browser keeps a copy so
+the board works with the ground station closed; **the file wins when they disagree**, via
+`logbook.json` beside the database (ties go to the file). Outside the app folder because an
+update is a replaced folder. **No live readings ever** — `LessonSnapshot` has nowhere to put
+one. Nothing leaves the premises until somebody ticks the Settings box; a sync secret alone no
+longer switches it on. No Teacher is told a file path except by **Save a copy of my records**
+and **Export for a spreadsheet**. The suite must not PUT into a live ground station: persist
+and hydrate no-op under Vitest unless a test hands its own `fetch`.
 
 **The demonstration seed presses what a Teacher presses.** `web/lib/demonstration-seed.ts` opens
-every step by making its condition true, never by touching a lock. Step 12 stays shut, because
-sealing is a judgement. It refuses to run when the roll holds a name that is not its own cast,
-and the Lesson is labelled a demonstration in the record itself.
+every step by making its condition true, never by touching a lock. It writes the points a class
+flies to, or Approve never appears. Step 12 stays shut, because sealing is a judgement. It
+refuses to run when the roll holds a name that is not its own cast, and the Lesson is labelled
+a demonstration in the record itself.
+
+**The school zip carries Node beside the app.** `npm run package:school` writes
+`dist/TechTech Flight` with the built board, a Node folder (from `runtime/node` or the Node
+that ran the packager), and `Setup notes for a technician.md`. First run may `npm install`;
+it must not fail differently because Node is missing from PATH. `records.db` stays in
+Documents, never in the zip, so replacing the folder cannot destroy a term of attendance.
 
 **A classroom code belongs to one Lesson (2026-08-10).** `openClassroom` mints a new one when
 `lessonId` changes and keeps it while the Lesson does; it used to reuse the first code a board

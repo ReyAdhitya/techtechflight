@@ -119,14 +119,19 @@ writeFileSync(
  * problem, and this whole plan exists because of that day.
  */
 const staged = join(ROOT, 'runtime', 'node')
-if (existsSync(join(staged, 'node.exe'))) {
-  cpSync(staged, join(OUT, 'node'), { recursive: true })
+const running = dirname(process.execPath)
+const fromNode = existsSync(join(staged, 'node.exe'))
+  ? staged
+  : existsSync(join(running, 'node.exe')) || existsSync(join(running, 'node'))
+    ? running
+    : null
+if (fromNode) {
+  cpSync(fromNode, join(OUT, 'node'), { recursive: true })
   console.log('  carried the Node runtime')
 } else {
   console.log('')
-  console.log('  No Node runtime staged, so this folder needs one on the target machine.')
-  console.log('  To carry one: put the unzipped Windows Node build at runtime/node/ and run')
-  console.log('  this again. The launcher uses it in preference to anything installed.')
+  console.log('  No Node runtime to carry, so this folder needs one on the target machine.')
+  console.log('  Put an unzipped Windows Node build at runtime/node/ and run this again.')
 }
 
 const version = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version ?? '0.0.0'
